@@ -119,28 +119,93 @@
     .lightbox {
       position: fixed;
       inset: 0;
-      background: rgba(0, 0, 0, 0.92);
+      background: rgba(0, 0, 0, 0.94);
       backdrop-filter: blur(16px);
       display: none;
       justify-content: center;
       align-items: center;
       z-index: 1000;
-      padding: 2rem;
+      padding: 1.5rem;
+      user-select: none;
+      touch-action: none;
     }
     .lightbox.active {
       display: flex;
     }
+    .lightbox-content {
+      position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      max-width: 92vw;
+      max-height: 86vh;
+    }
     .lightbox img {
       max-width: 92vw;
-      max-height: 88vh;
+      max-height: 84vh;
       border-radius: 16px;
       box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8);
       object-fit: contain;
+      transition: opacity 0.25s ease, transform 0.25s ease;
+      touch-action: pan-y;
+      display: block;
+    }
+    /* 左右切换箭头按钮 */
+    .nav-arrow {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.14);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      color: #ffffff;
+      font-size: 1.6rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      backdrop-filter: blur(10px);
+      transition: all 0.25s ease;
+      z-index: 1010;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .nav-arrow:hover {
+      background: rgba(56, 189, 248, 0.35);
+      border-color: #38bdf8;
+      color: #38bdf8;
+      transform: translateY(-50%) scale(1.1);
+    }
+    .nav-arrow.prev {
+      left: 1.5rem;
+    }
+    .nav-arrow.next {
+      right: 1.5rem;
+    }
+    /* 底部计数器徽章 */
+    .lightbox-counter {
+      position: absolute;
+      bottom: 1.5rem;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 0.4rem 1.1rem;
+      background: rgba(0, 0, 0, 0.55);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 9999px;
+      color: #f1f5f9;
+      font-size: 0.9rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      backdrop-filter: blur(8px);
+      z-index: 1010;
+      pointer-events: none;
     }
     .close-btn {
       position: absolute;
       top: 1.5rem;
-      right: 2rem;
+      right: 1.8rem;
       background: rgba(255, 255, 255, 0.15);
       border: 1px solid rgba(255, 255, 255, 0.2);
       color: #fff;
@@ -152,10 +217,22 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: background 0.2s;
+      transition: background 0.2s, transform 0.2s;
+      z-index: 1020;
     }
     .close-btn:hover {
       background: rgba(239, 68, 68, 0.8);
+      transform: scale(1.08);
+    }
+    @media (max-width: 640px) {
+      .nav-arrow {
+        width: 42px;
+        height: 42px;
+        font-size: 1.3rem;
+      }
+      .nav-arrow.prev { left: 0.6rem; }
+      .nav-arrow.next { right: 0.6rem; }
+      .close-btn { top: 1rem; right: 1rem; width: 40px; height: 40px; font-size: 1.5rem; }
     }
   </style>
 </head>
@@ -176,7 +253,14 @@
 
   <div class="lightbox" id="lightbox" onclick="closeLightbox(event)">
     <button class="close-btn" onclick="closeLightbox()">&times;</button>
-    <img id="lightboxImg" src="" alt="大图预览">
+    <button class="nav-arrow prev" onclick="prevImage(event)" aria-label="上一张">&#10094;</button>
+    
+    <div class="lightbox-content" onclick="event.stopPropagation()">
+      <img id="lightboxImg" src="" alt="大图预览">
+    </div>
+
+    <button class="nav-arrow next" onclick="nextImage(event)" aria-label="下一张">&#10095;</button>
+    <div class="lightbox-counter" id="lightboxCounter">1 / 23</div>
   </div>
 
   <script>
@@ -212,7 +296,7 @@
     images.forEach((imgName, index) => {
       const item = document.createElement('div');
       item.className = 'gallery-item';
-      item.onclick = () => openLightbox(`./s/${imgName}`);
+      item.onclick = () => openLightbox(index);
 
       item.innerHTML = `
         <img src="./s/${imgName}" alt="照片 ${index + 1}" loading="lazy">
@@ -225,22 +309,94 @@
 
     const lightbox = document.getElementById('lightbox');
     const lightboxImg = document.getElementById('lightboxImg');
+    const counterEl = document.getElementById('lightboxCounter');
+    let currentIndex = 0;
 
-    function openLightbox(src) {
-      lightboxImg.src = src;
+    function updateLightbox(direction = 0) {
+      if (direction !== 0) {
+        // 轻微切图动效
+        lightboxImg.style.opacity = '0';
+        lightboxImg.style.transform = `translateX(${direction > 0 ? '25px' : '-25px'}) scale(0.96)`;
+        setTimeout(() => {
+          lightboxImg.src = `./s/${images[currentIndex]}`;
+          counterEl.textContent = `${currentIndex + 1} / ${images.length}`;
+          lightboxImg.style.opacity = '1';
+          lightboxImg.style.transform = 'translateX(0) scale(1)';
+        }, 120);
+      } else {
+        lightboxImg.src = `./s/${images[currentIndex]}`;
+        counterEl.textContent = `${currentIndex + 1} / ${images.length}`;
+        lightboxImg.style.opacity = '1';
+        lightboxImg.style.transform = 'none';
+      }
+    }
+
+    function openLightbox(index) {
+      currentIndex = index;
+      updateLightbox(0);
       lightbox.classList.add('active');
+      document.body.style.overflow = 'hidden'; // 防止背景滚动
     }
 
     function closeLightbox(e) {
       if (!e || e.target === lightbox || e.target.classList.contains('close-btn')) {
         lightbox.classList.remove('active');
         lightboxImg.src = '';
+        document.body.style.overflow = '';
       }
     }
 
+    function prevImage(e) {
+      if (e) e.stopPropagation();
+      currentIndex = (currentIndex - 1 + images.length) % images.length;
+      updateLightbox(-1);
+    }
+
+    function nextImage(e) {
+      if (e) e.stopPropagation();
+      currentIndex = (currentIndex + 1) % images.length;
+      updateLightbox(1);
+    }
+
+    // 键盘左右方向键与 ESC 支持
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') closeLightbox();
+      if (!lightbox.classList.contains('active')) return;
+      if (e.key === 'ArrowLeft') prevImage();
+      else if (e.key === 'ArrowRight') nextImage();
+      else if (e.key === 'Escape') closeLightbox();
     });
+
+    // 触摸屏幕左右滑动手势（手机端流畅滑动支持）
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let touchEndX = 0;
+    let touchEndY = 0;
+
+    lightbox.addEventListener('touchstart', (e) => {
+      touchStartX = e.changedTouches[0].screenX;
+      touchStartY = e.changedTouches[0].screenY;
+    }, { passive: true });
+
+    lightbox.addEventListener('touchend', (e) => {
+      touchEndX = e.changedTouches[0].screenX;
+      touchEndY = e.changedTouches[0].screenY;
+      handleSwipe();
+    }, { passive: true });
+
+    function handleSwipe() {
+      const diffX = touchEndX - touchStartX;
+      const diffY = touchEndY - touchStartY;
+      const threshold = 40; // 滑动阈值 40px
+
+      // 确保水平滑动幅度明显大于垂直滑动幅度
+      if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > threshold) {
+        if (diffX < 0) {
+          nextImage(); // 向左滑 -> 下一张
+        } else {
+          prevImage(); // 向右滑 -> 上一张
+        }
+      }
+    }
   </script>
 </body>
 </html>
