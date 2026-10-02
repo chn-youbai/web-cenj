@@ -1,0 +1,141 @@
+{
+  "meta": {
+    "title": "2026年普通高等学校招生全国统一考试模拟演练",
+    "subject": "数学",
+    "grade": "高三",
+    "duration": 120,
+    "total_score": 150,
+    "show_score_table": true
+  },
+  "sections": [
+    {
+      "section_id": 1,
+      "type": "single_choice",
+      "title": "一、选择题（本大题共 4 小题，每小题 5 分，共 20 分。在每小题给出的四个选项中，只有一项是符合题目要求的）",
+      "questions": [
+        {
+          "number": 1,
+          "score": 5,
+          "stem": "设全集 $U = \\mathbf{R}$，集合 $A = \\{x \\mid x^2 - 2x - 3 < 0\\}$，$B = \\{x \\mid x \\ge 1\\}$，则 $A \\cap (\\complement_U B) = $（　　）",
+          "options": [
+            "A. $(-1, 1)$",
+            "B. $[-1, 1)$",
+            "C. $(-1, 3)$",
+            "D. $[1, 3)$"
+          ]
+        },
+        {
+          "number": 2,
+          "score": 5,
+          "stem": "已知复数 $z$ 满足 $(1-i)z = 2i$，则 $|z| = $（　　）",
+          "options": [
+            "A. $1$",
+            "B. $\\sqrt{2}$",
+            "C. $2$",
+            "D. $4$"
+          ]
+        },
+        {
+          "number": 3,
+          "score": 5,
+          "stem": "已知双曲线 $C: \\frac{x^2}{a^2} - \\frac{y^2}{b^2} = 1\\,(a>0, b>0)$ 的一条渐近线方程为 $y = \\sqrt{3}x$，则双曲线 $C$ 的离心率 $e = $（　　）",
+          "options": [
+            "A. 离心率 $e = \\sqrt{2}$",
+            "B. 离心率 $e = \\sqrt{3}$",
+            "C. 离心率 $e = 2$",
+            "D. 离心率 $e = 4$"
+          ]
+        },
+        {
+          "number": 4,
+          "score": 5,
+          "stem": "已知函数 $f(x) = \\sin(\\omega x + \\varphi)\\,(\\omega > 0, |\\varphi| < \\frac{\\pi}{2})$ 的部分图象关于直线 $x = \\frac{\\pi}{6}$ 对称，则下列说法正确的是（　　）",
+          "options": [
+            "A. 若 $\\omega = 2$，则函数 $f(x)$ 的最小正周期为 $2\\pi$",
+            "B. 若 $\\omega = 2$，则 $\\varphi$ 的一个可能取值为 $\\frac{\\pi}{6}$",
+            "C. 当 $\\omega = 1$ 时，点 $(\\frac{2\\pi}{3}, 0)$ 是函数图象的一个对称中心",
+            "D. 函数 $f(x)$ 在区间 $(0, \\frac{\\pi}{2})$ 上单调递增"
+          ]
+        }
+      ]
+    },
+    {
+      "section_id": 2,
+      "type": "fill_in",
+      "title": "二、填空题（本大题共 2 小题，每小题 5 分，共 10 分）",
+      "questions": [
+        {
+          "number": 5,
+          "score": 5,
+          "stem": "已知平面向量 $\\vec{a} = (1, \\sqrt{3})$，$\\vec{b} = (-2, 0)$，则向量 $\\vec{a}$ 与 $\\vec{b}$ 的夹角大小为 ____________。"
+        },
+        {
+          "number": 6,
+          "score": 5,
+          "stem": "若曲线 $y = x \\ln x$ 在点 $(1, 0)$ 处的切线方程为 $y = kx + b$，则 $k + b = $ ____________。"
+        }
+      ]
+    },
+    {
+      "section_id": 3,
+      "type": "subjective",
+      "title": "三、解答题（本大题共 2 小题，共 30 分。解答应写出文字说明、证明过程或演算步骤）",
+      "questions": [
+        {
+          "number": 7,
+          "score": 15,
+          "stem": "（本小题满分 15 分）\n在 $\\triangle ABC$ 中，内角 $A, B, C$ 所对的边分别为 $a, b, c$，已知 $2b \\cos A = 2c - a$。\n(1) 求角 $B$ 的大小；\n(2) 若 $b = \\sqrt{7}$，且 $\\triangle ABC$ 的面积为 $\\frac{3\\sqrt{3}}{2}$，求 $\\triangle ABC$ 的周长。",
+          "blank_lines": 8
+        },
+        {
+          "number": 8,
+          "score": 15,
+          "stem": "（本小题满分 15 分）\n已知函数 $f(x) = e^x - ax - 1\\,(a \\in \\mathbf{R})$。\n(1) 当 $a = 1$ 时，讨论函数 $f(x)$ 的单调性；\n(2) 当 $x \\ge 0$ 时，若 $f(x) \\ge 0$ 恒成立，求实数 $a$ 的最大值。",
+          "blank_lines": 10
+        }
+      ]
+    }
+  ],
+  "answers": [
+    {
+      "number": 1,
+      "answer": "A",
+      "analysis": "由 $x^2 - 2x - 3 < 0$ 解得 $-1 < x < 3$，故 $A = (-1, 3)$。又 $B = [1, +\\infty)$，所以 $\\complement_U B = (-\\infty, 1)$。因此 $A \\cap (\\complement_U B) = (-1, 1)$，选 A。"
+    },
+    {
+      "number": 2,
+      "answer": "B",
+      "analysis": "由 $(1-i)z = 2i$ 得 $z = \\frac{2i}{1-i} = \\frac{2i(1+i)}{2} = -1 + i$，故 $|z| = \\sqrt{(-1)^2 + 1^2} = \\sqrt{2}$，选 B。"
+    },
+    {
+      "number": 3,
+      "answer": "C",
+      "analysis": "渐近线斜率 $\\frac{b}{a} = \\sqrt{3}$，所以 $e = \\sqrt{1 + (\\frac{b}{a})^2} = \\sqrt{1+3} = 2$，选 C。"
+    },
+    {
+      "number": 4,
+      "answer": "B",
+      "analysis": "当 $\\omega = 2$ 时，$2 \\times \\frac{\\pi}{6} + \\varphi = k\\pi + \\frac{\\pi}{2}$，取 $k=0$ 得 $\\varphi = \\frac{\\pi}{6}$ 符合要求，选 B。"
+    },
+    {
+      "number": 5,
+      "answer": "$\\frac{2\\pi}{3}$（或 $120^\\circ$）",
+      "analysis": "$\\vec{a} \\cdot \\vec{b} = -2$，$|\\vec{a}| = 2$，$|\\vec{b}| = 2$，$\\cos \\theta = -\\frac{1}{2}$，故夹角为 $\\frac{2\\pi}{3}$。"
+    },
+    {
+      "number": 6,
+      "answer": "0",
+      "analysis": "$y' = \\ln x + 1$，$y'(1) = 1$，切线方程为 $y - 0 = 1(x - 1)$ 即 $y = x - 1$，故 $k = 1, b = -1, k + b = 0$。"
+    },
+    {
+      "number": 7,
+      "answer": "周长为 $5 + \\sqrt{7}$",
+      "analysis": "(1) 由正弦定理 $2\\sin B \\cos A = 2\\sin C - \\sin A = 2\\sin(A+B) - \\sin A = 2\\sin A \\cos B + 2\\cos A \\sin B - \\sin A$，化简得 $2\\sin A \\cos B = \\sin A$。因为 $\\sin A \\ne 0$，所以 $\\cos B = \\frac{1}{2}$，又 $0 < B < \\pi$，解得 $B = \\frac{\\pi}{3}$。\n(2) $S = \\frac{1}{2}ac \\sin B = \\frac{\\sqrt{3}}{4}ac = \\frac{3\\sqrt{3}}{2} \\implies ac = 6$。由余弦定理 $b^2 = a^2 + c^2 - 2ac \\cos B = (a+c)^2 - 3ac \\implies 7 = (a+c)^2 - 18 \\implies a+c = 5$。故周长为 $a + c + b = 5 + \\sqrt{7}$。"
+    },
+    {
+      "number": 8,
+      "answer": "实数 $a$ 的最大值为 1",
+      "analysis": "(1) 当 $a=1$ 时，$f'(x) = e^x - 1$。当 $x < 0$ 时 $f'(x) < 0$ 单调递减；当 $x > 0$ 时 $f'(x) > 0$ 单调递增。\n(2) $f(0) = 0$。若 $a \\le 1$，当 $x \\ge 0$ 时 $f'(x) = e^x - a \\ge 1 - a \\ge 0$，$f(x)$ 在 $[0, +\\infty)$ 单调递增，$f(x) \\ge f(0) = 0$ 恒成立；若 $a > 1$，当 $x \\in (0, \\ln a)$ 时 $f'(x) < 0$，$f(x)$ 单调递减，$f(x) < f(0) = 0$ 矛盾。综上，$a$ 的最大值为 1。"
+    }
+  ]
+}

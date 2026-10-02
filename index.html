@@ -146,7 +146,7 @@
       width: 100%;
       margin-top: 0.9rem;
     }
-    .gallery-btn, .pan-btn {
+    .gallery-btn, .pan-btn, .exam-btn {
       display: inline-flex;
       align-items: center;
       justify-content: center;
@@ -175,6 +175,15 @@
     .pan-btn:hover {
       transform: translateY(-2px);
       box-shadow: 0 15px 30px rgba(234, 88, 12, 0.45);
+      color: #ffffff;
+    }
+    .exam-btn {
+      background: linear-gradient(135deg, #8b5cf6, #3b82f6);
+      box-shadow: 0 10px 25px rgba(139, 92, 246, 0.35);
+    }
+    .exam-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 15px 30px rgba(139, 92, 246, 0.45);
       color: #ffffff;
     }
     /* 点赞互动按钮 */
@@ -343,6 +352,10 @@
         <span class="like-badge" id="likeCount">...</span>
       </button>
 
+      <a href="./exam.html" class="exam-btn">
+        <span>📝 AI 试卷智能排版</span>
+        <span style="font-size: 0.85em; opacity: 0.9;">(对话微调/导出) →</span>
+      </a>
       <a href="./gallery.html" class="gallery-btn">
         <span>🖼️ 查看精选图库</span>
         <span style="font-size: 0.85em; opacity: 0.9;">(121张) →</span>
