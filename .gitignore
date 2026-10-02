@@ -1,5 +1,3 @@
-.vercel
-
 # wrangler files
 .wrangler
 .dev.vars*
