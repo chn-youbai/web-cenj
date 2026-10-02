@@ -671,23 +671,75 @@
   <!-- API Key 与模型配置模态框 -->
   <div class="modal-overlay" id="configModal">
     <div class="modal-card">
-      <div class="modal-title">⚙️ 大模型 API 设置</div>
-      <p style="font-size: 0.8rem; color: #94a3b8; margin-bottom: 1rem;">
-        已内置高配 Gemini 3.8 Flash（启用最高思考等级），开箱即用。您也可以填入自己的 Key 或切换其他模型。
-      </p>
+      <div class="modal-title">⚙️ 模型与思考强度配置</div>
       
-      <div class="form-group">
-        <label>选择服务商 / 大模型：</label>
-        <select id="modelProviderSelect" class="form-input" onchange="toggleProviderInput()">
-          <option value="gemini">Google Gemini 3.8 Flash (最高思考等级 · 已启用内置Key)</option>
-          <option value="deepseek">DeepSeek V3 (支持自填Key)</option>
-          <option value="mock">内置模拟智能体 (本地离线体验)</option>
-        </select>
+      <!-- 模式切换：默认模式 vs 自定义模式 -->
+      <div style="display: flex; gap: 0.5rem; margin-bottom: 1.2rem; background: rgba(255, 255, 255, 0.06); padding: 4px; border-radius: 10px;">
+        <button type="button" class="tab-btn active" id="configModeDefaultBtn" onclick="switchConfigMode('default')" style="font-size: 0.85rem; padding: 0.45rem;">
+          🔑 默认模式 (内置Key)
+        </button>
+        <button type="button" class="tab-btn" id="configModeCustomBtn" onclick="switchConfigMode('custom')" style="font-size: 0.85rem; padding: 0.45rem;">
+          🛠️ 自定义模式 (自填Key与模型)
+        </button>
       </div>
 
-      <div class="form-group" id="apiKeyGroup">
-        <label>自定义 API Key（可选，留空则自动使用内置Key）：</label>
-        <input type="password" id="apiKeyInput" class="form-input" placeholder="已启用内置高配Key，可直接留空使用" autocomplete="off">
+      <!-- 1. 默认模式区 (使用内置Key) -->
+      <div id="defaultModeSection">
+        <div style="font-size: 0.8rem; color: #38bdf8; background: rgba(56, 189, 248, 0.1); padding: 0.6rem 0.8rem; border-radius: 8px; border: 1px solid rgba(56, 189, 248, 0.2); margin-bottom: 1rem;">
+          ✨ 已启用内置专属 Key，无需输入凭证，直接选择 Gemini 模型与思考强度即可：
+        </div>
+
+        <div class="form-group">
+          <label>选择 Gemini 模型：</label>
+          <select id="defaultModelSelect" class="form-input">
+            <option value="gemini-3.8-flash">Gemini 3.8 Flash (推荐 · 最新快速推理)</option>
+            <option value="gemini-2.5-flash">Gemini 2.5 Flash (稳定高速 · 极低延迟)</option>
+            <option value="gemini-3.5-flash">Gemini 3.5 Flash (中代大模型)</option>
+            <option value="gemini-2.5-pro">Gemini 2.5 Pro (深度大模型 · 适合超难大题)</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>选择思考强度 (Thinking Intensity)：</label>
+          <select id="defaultThinkingSelect" class="form-input">
+            <option value="-1">🚀 极高 / 动态最高思考 (推荐 · 全力深度推理)</option>
+            <option value="24576">🧠 深度思考 (24k tokens 思考预算)</option>
+            <option value="8192">💡 中度思考 (8k tokens 思考预算)</option>
+            <option value="2048">⚡ 轻度思考 (2k tokens 快速输出)</option>
+            <option value="0">🚫 关闭思考 (直接输出)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- 2. 自定义模式区 (自填Key与模型) -->
+      <div id="customModeSection" style="display: none;">
+        <div class="form-group">
+          <label>接口协议 / 平台类型：</label>
+          <select id="customProviderSelect" class="form-input" onchange="toggleCustomProvider()">
+            <option value="gemini">Google Gemini 官方协议</option>
+            <option value="deepseek">DeepSeek (OpenAI 兼容协议)</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>自定义 API Key：</label>
+          <input type="password" id="customApiKeyInput" class="form-input" placeholder="输入您的 API Key (如 AIzaSy... 或 sk-...)" autocomplete="off">
+        </div>
+
+        <div class="form-group">
+          <label>自定义模型名称 (手动输入)：</label>
+          <input type="text" id="customModelNameInput" class="form-input" placeholder="例如 gemini-3.8-flash 或 deepseek-chat" autocomplete="off">
+        </div>
+
+        <div class="form-group" id="customThinkingGroup">
+          <label>选择思考强度 (Thinking Intensity)：</label>
+          <select id="customThinkingSelect" class="form-input">
+            <option value="-1">🚀 极高 / 动态最高思考 (Gemini 适用)</option>
+            <option value="16384">🧠 深度思考 (16k tokens)</option>
+            <option value="4096">💡 中度思考 (4k tokens)</option>
+            <option value="0">🚫 关闭思考 (直接输出)</option>
+          </select>
+        </div>
       </div>
 
       <div style="display: flex; gap: 0.8rem; justify-content: flex-end; margin-top: 1.5rem;">
@@ -992,20 +1044,28 @@
       const thinkingBubble = appendChatMessage("🧠 正在理解指令并调度排版工具...", "ai");
 
       try {
-        const provider = localStorage.getItem("exam_ai_provider") || "gemini";
-        const customKey = localStorage.getItem("exam_ai_key") || "";
-        const activeKey = customKey || (provider === "gemini" ? BUILTIN_GEMINI_KEY : "");
+        const mode = localStorage.getItem("exam_mode") || "default";
 
-        if (provider === "mock") {
-          // 内置模拟器智能匹配（纯本地离线体验模式）
-          await handleMockToolCalling(prompt, thinkingBubble);
-        } else if (provider === "deepseek") {
-          if (!activeKey) {
-            throw new Error("请先在右上角【⚙️ 模型设置】中填入您的 DeepSeek API Key！");
+        if (mode === "default") {
+          const model = localStorage.getItem("exam_default_model") || "gemini-3.8-flash";
+          const thinkingBudget = parseInt(localStorage.getItem("exam_default_thinking") || "-1", 10);
+          await handleGeminiToolCalling(prompt, BUILTIN_GEMINI_KEY, thinkingBubble, model, thinkingBudget);
+        } else {
+          // 自定义模式
+          const provider = localStorage.getItem("exam_custom_provider") || "gemini";
+          const apiKey = localStorage.getItem("exam_custom_key") || "";
+          const model = localStorage.getItem("exam_custom_model") || "gemini-3.8-flash";
+          const thinkingBudget = parseInt(localStorage.getItem("exam_custom_thinking") || "-1", 10);
+
+          if (!apiKey) {
+            throw new Error("自定义模式下请先在右上角【⚙️ 模型设置】中输入您的 API Key！");
           }
-          await handleDeepSeekToolCalling(prompt, activeKey, thinkingBubble);
-        } else if (provider === "gemini") {
-          await handleGeminiToolCalling(prompt, activeKey, thinkingBubble);
+
+          if (provider === "gemini") {
+            await handleGeminiToolCalling(prompt, apiKey, thinkingBubble, model, thinkingBudget);
+          } else if (provider === "deepseek") {
+            await handleDeepSeekToolCalling(prompt, apiKey, thinkingBubble, model);
+          }
         }
       } catch (err) {
         thinkingBubble.querySelector(".msg-bubble").innerHTML = `❌ 处理出错: ${err.message}`;
@@ -1062,7 +1122,7 @@
     }
 
     // DeepSeek API 真实 Tool Calling 对接
-    async function handleDeepSeekToolCalling(prompt, apiKey, bubbleEl) {
+    async function handleDeepSeekToolCalling(prompt, apiKey, bubbleEl, modelName = "deepseek-chat") {
       const tools = [
         {
           type: "function",
@@ -1118,7 +1178,7 @@
           "Authorization": `Bearer ${apiKey}`
         },
         body: JSON.stringify({
-          model: "deepseek-chat",
+          model: modelName || "deepseek-chat",
           messages: [
             {
               role: "system",
@@ -1167,14 +1227,15 @@
       const reply = message.content || "已根据指令完成试卷排版细节微调！右侧试卷预览已更新。";
       bubbleEl.querySelector(".msg-bubble").innerHTML = `
         ${escapeHtml(reply).replace(/\n/g, '<br>')}
-        ${toolsRun.length > 0 ? `<br><span class="tool-badge">🛠️ 已执行工具: ${toolsRun.join(', ')}</span>` : ''}
+        <br><span class="tool-badge" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8; border-color: rgba(56, 189, 248, 0.3);">🤖 引擎: ${escapeHtml(modelName || "deepseek-chat")}</span>
+        ${toolsRun.length > 0 ? `<span class="tool-badge">🛠️ 已执行工具: ${toolsRun.join(', ')}</span>` : ''}
       `;
     }
 
-    // Google Gemini 3.8 Flash API 对接 (最高思考等级 + 容灾备用)
-    async function handleGeminiToolCalling(prompt, apiKey, bubbleEl) {
+    // Google Gemini API 对接 (支持模型与思考强度动态配置 + 容灾备用)
+    async function handleGeminiToolCalling(prompt, apiKey, bubbleEl, modelName = "gemini-3.8-flash", thinkingBudget = -1) {
       const activeKey = apiKey || BUILTIN_GEMINI_KEY;
-      const primaryModel = "gemini-3.8-flash";
+      const primaryModel = modelName || "gemini-3.8-flash";
       const fallbackModel = "gemini-2.5-flash";
 
       const payload = {
@@ -1187,16 +1248,34 @@
               }
             ]
           }
-        ],
-        generationConfig: {
-          thinkingConfig: {
-            thinkingBudget: -1 // 启用最高/动态深度思考等级
-          }
-        }
+        ]
       };
 
-      async function requestGemini(modelName) {
-        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${activeKey}`;
+      // 动态配置思考预算
+      const genConfig = {};
+      if (thinkingBudget === -1) {
+        genConfig.thinkingConfig = { thinkingBudget: -1 };
+      } else if (thinkingBudget > 0) {
+        genConfig.thinkingConfig = { thinkingBudget: thinkingBudget };
+      } else if (thinkingBudget === 0) {
+        genConfig.thinkingConfig = { thinkingBudget: 0 };
+      }
+      if (Object.keys(genConfig).length > 0) {
+        payload.generationConfig = genConfig;
+      }
+
+      let thinkingDesc = "动态最高思考";
+      if (thinkingBudget === 0) thinkingDesc = "思考关闭";
+      else if (thinkingBudget === 24576) thinkingDesc = "24k 深度思考";
+      else if (thinkingBudget === 16384) thinkingDesc = "16k 深度思考";
+      else if (thinkingBudget === 8192) thinkingDesc = "8k 中度思考";
+      else if (thinkingBudget === 4096) thinkingDesc = "4k 中度思考";
+      else if (thinkingBudget === 2048) thinkingDesc = "2k 轻度思考";
+      else if (thinkingBudget === -1) thinkingDesc = "最高思考";
+      else if (thinkingBudget > 0) thinkingDesc = `${thinkingBudget} tokens 思考`;
+
+      async function requestGemini(targetModel) {
+        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${targetModel}:generateContent?key=${activeKey}`;
         return await fetch(endpoint, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -1205,15 +1284,15 @@
       }
 
       let res = await requestGemini(primaryModel);
-      let usedModelName = "Gemini 3.8 Flash (最高思考)";
+      let usedModelName = `${primaryModel} (${thinkingDesc})`;
 
       // 若 3.8 遇到临时高并发 503，无缝自动重试备用思考模型
-      if (res.status === 503 || !res.ok) {
+      if ((res.status === 503 || !res.ok) && primaryModel === "gemini-3.8-flash") {
         try {
           const retryRes = await requestGemini(fallbackModel);
           if (retryRes.ok) {
             res = retryRes;
-            usedModelName = "Gemini 2.5 Flash (容灾备用)";
+            usedModelName = `${fallbackModel} (备用 · ${thinkingDesc})`;
           }
         } catch(e) {}
       }
@@ -1251,8 +1330,8 @@
       const cleanReply = replyText.replace(/\{[\s\S]*"tool"[\s\S]*\}/, '').trim();
       bubbleEl.querySelector(".msg-bubble").innerHTML = `
         ${escapeHtml(cleanReply).replace(/\n/g, '<br>')}
-        <br><span class="tool-badge" style="background: rgba(168, 85, 247, 0.15); color: #c084fc; border-color: rgba(168, 85, 247, 0.3);">🧠 思考引擎: ${usedModelName}</span>
-        ${toolExecuted ? `<span class="tool-badge">🛠️ 已执行工具: ${toolExecuted}</span>` : ''}
+        <br><span class="tool-badge" style="background: rgba(168, 85, 247, 0.15); color: #c084fc; border-color: rgba(168, 85, 247, 0.3);">🧠 思考引擎: ${escapeHtml(usedModelName)}</span>
+        ${toolExecuted ? `<span class="tool-badge">🛠️ 已执行工具: ${escapeHtml(toolExecuted)}</span>` : ''}
       `;
     }
 
@@ -1333,56 +1412,136 @@
       appendChatMessage("📋 已重置并载入全真高考数学试卷模拟演练！", "ai");
     }
 
-    // Modal 与设置
+    // Modal 与双模式设置 (默认模式 vs 自定义模式)
+    let currentConfigMode = "default";
+
     function openConfigModal() {
+      loadSavedConfig();
       document.getElementById("configModal").classList.add("active");
     }
+
     function closeConfigModal() {
       document.getElementById("configModal").classList.remove("active");
     }
-    function toggleProviderInput() {
-      const provider = document.getElementById("modelProviderSelect").value;
-      const group = document.getElementById("apiKeyGroup");
-      const keyInput = document.getElementById("apiKeyInput");
-      if (provider === "mock") {
-        group.style.display = "none";
-      } else if (provider === "gemini") {
-        group.style.display = "block";
-        keyInput.placeholder = "已默认启用内置 Key，可留空直接使用";
+
+    function switchConfigMode(mode) {
+      currentConfigMode = mode;
+      const defaultBtn = document.getElementById("configModeDefaultBtn");
+      const customBtn = document.getElementById("configModeCustomBtn");
+      const defaultSection = document.getElementById("defaultModeSection");
+      const customSection = document.getElementById("customModeSection");
+
+      if (mode === "default") {
+        defaultBtn.classList.add("active");
+        customBtn.classList.remove("active");
+        defaultSection.style.display = "block";
+        customSection.style.display = "none";
       } else {
-        group.style.display = "block";
-        keyInput.placeholder = "请输入 sk-...";
+        defaultBtn.classList.remove("active");
+        customBtn.classList.add("active");
+        defaultSection.style.display = "none";
+        customSection.style.display = "block";
+        toggleCustomProvider();
+      }
+    }
+
+    function toggleCustomProvider() {
+      const provider = document.getElementById("customProviderSelect").value;
+      const keyInput = document.getElementById("customApiKeyInput");
+      const modelInput = document.getElementById("customModelNameInput");
+      const thinkingGroup = document.getElementById("customThinkingGroup");
+
+      if (provider === "gemini") {
+        keyInput.placeholder = "输入您的 Google Gemini API Key (如 AIzaSy...)";
+        if (!modelInput.value || modelInput.value.includes("deepseek")) {
+          modelInput.value = "gemini-3.8-flash";
+        }
+        thinkingGroup.style.display = "block";
+      } else {
+        keyInput.placeholder = "输入您的 DeepSeek API Key (sk-...)";
+        if (!modelInput.value || modelInput.value.includes("gemini")) {
+          modelInput.value = "deepseek-chat";
+        }
+        thinkingGroup.style.display = "none";
       }
     }
 
     function saveConfig() {
-      const provider = document.getElementById("modelProviderSelect").value;
-      const key = document.getElementById("apiKeyInput").value.trim();
-      localStorage.setItem("exam_ai_provider", provider);
-      localStorage.setItem("exam_ai_key", key);
+      localStorage.setItem("exam_mode", currentConfigMode);
 
-      updateModelBadge(provider, key);
+      if (currentConfigMode === "default") {
+        const defaultModel = document.getElementById("defaultModelSelect").value;
+        const defaultThinking = document.getElementById("defaultThinkingSelect").value;
+        localStorage.setItem("exam_default_model", defaultModel);
+        localStorage.setItem("exam_default_thinking", defaultThinking);
+      } else {
+        const customProvider = document.getElementById("customProviderSelect").value;
+        const customKey = document.getElementById("customApiKeyInput").value.trim();
+        const customModel = document.getElementById("customModelNameInput").value.trim() || (customProvider === "gemini" ? "gemini-3.8-flash" : "deepseek-chat");
+        const customThinking = document.getElementById("customThinkingSelect").value;
+
+        localStorage.setItem("exam_custom_provider", customProvider);
+        localStorage.setItem("exam_custom_key", customKey);
+        localStorage.setItem("exam_custom_model", customModel);
+        localStorage.setItem("exam_custom_thinking", customThinking);
+      }
+
+      updateModelBadge();
       closeConfigModal();
-      appendChatMessage(`⚙️ 设置已保存！当前使用模型：<strong>${document.getElementById("currentModelBadge").textContent}</strong>`, "ai");
+      appendChatMessage(`⚙️ 设置已更新！当前使用引擎：<strong>${document.getElementById("currentModelBadge").textContent}</strong>`, "ai");
     }
 
     function loadSavedConfig() {
-      const provider = localStorage.getItem("exam_ai_provider") || "gemini";
-      const key = localStorage.getItem("exam_ai_key") || "";
-      document.getElementById("modelProviderSelect").value = provider;
-      document.getElementById("apiKeyInput").value = key;
-      toggleProviderInput();
-      updateModelBadge(provider, key);
+      const mode = localStorage.getItem("exam_mode") || "default";
+      currentConfigMode = mode;
+
+      // 默认模式字段读取与回显
+      const defaultModel = localStorage.getItem("exam_default_model") || "gemini-3.8-flash";
+      const defaultThinking = localStorage.getItem("exam_default_thinking") || "-1";
+      const defModelEl = document.getElementById("defaultModelSelect");
+      const defThinkingEl = document.getElementById("defaultThinkingSelect");
+      if (defModelEl) defModelEl.value = defaultModel;
+      if (defThinkingEl) defThinkingEl.value = defaultThinking;
+
+      // 自定义模式字段读取与回显
+      const customProvider = localStorage.getItem("exam_custom_provider") || "gemini";
+      const customKey = localStorage.getItem("exam_custom_key") || "";
+      const customModel = localStorage.getItem("exam_custom_model") || "gemini-3.8-flash";
+      const customThinking = localStorage.getItem("exam_custom_thinking") || "-1";
+
+      const custProvEl = document.getElementById("customProviderSelect");
+      const custKeyEl = document.getElementById("customApiKeyInput");
+      const custModelEl = document.getElementById("customModelNameInput");
+      const custThinkingEl = document.getElementById("customThinkingSelect");
+      if (custProvEl) custProvEl.value = customProvider;
+      if (custKeyEl) custKeyEl.value = customKey;
+      if (custModelEl) custModelEl.value = customModel;
+      if (custThinkingEl) custThinkingEl.value = customThinking;
+
+      switchConfigMode(mode);
+      updateModelBadge();
     }
 
-    function updateModelBadge(provider, key) {
+    function updateModelBadge() {
       const badge = document.getElementById("currentModelBadge");
-      if (provider === "gemini") {
-        badge.textContent = key ? "Gemini 3.8 Flash (自定Key)" : "✨ Gemini 3.8 Flash (最高思考 · 内置)";
-      } else if (provider === "deepseek") {
-        badge.textContent = "DeepSeek V3";
+      if (!badge) return;
+      const mode = localStorage.getItem("exam_mode") || "default";
+
+      if (mode === "default") {
+        const model = localStorage.getItem("exam_default_model") || "gemini-3.8-flash";
+        const thinking = localStorage.getItem("exam_default_thinking") || "-1";
+        let thinkingLabel = "最高思考";
+        if (thinking === "0") thinkingLabel = "无思考";
+        else if (thinking === "24576") thinkingLabel = "24k思考";
+        else if (thinking === "8192") thinkingLabel = "8k思考";
+        else if (thinking === "2048") thinkingLabel = "2k思考";
+        badge.textContent = `✨ ${model} (${thinkingLabel} · 内置Key)`;
       } else {
-        badge.textContent = "内置智能体 (免Key模拟)";
+        const provider = localStorage.getItem("exam_custom_provider") || "gemini";
+        const model = localStorage.getItem("exam_custom_model") || (provider === "gemini" ? "gemini-3.8-flash" : "deepseek-chat");
+        const thinking = localStorage.getItem("exam_custom_thinking") || "-1";
+        let thinkingLabel = thinking === "-1" ? "最高思考" : (thinking === "0" ? "无思考" : `${thinking}预算`);
+        badge.textContent = `🛠️ ${model} (${provider === "gemini" ? thinkingLabel : "自定义Key"})`;
       }
     }
   </script>
