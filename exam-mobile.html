@@ -1,0 +1,2205 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover">
+  <title>AI 试卷智能排版台 (手机专版)</title>
+  
+  <!-- 桌面版分流检查：若显式指定 view=desktop 则跳转回电脑版 -->
+  <script>
+    (function() {
+      try {
+        var params = new URLSearchParams(window.location.search);
+        if (params.get('view') === 'desktop') {
+          window.location.replace('exam.html' + (window.location.search || ''));
+        }
+      } catch (e) {}
+    })();
+  </script>
+
+  <!-- KaTeX 数学公式渲染库 -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+
+  <!-- Mammoth DOCX 客户端解析库 -->
+  <script src="https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js"></script>
+
+  <style>
+    :root {
+      --bg-dark: #090d16;
+      --card-bg: #111827;
+      --card-subtle: #161f33;
+      --panel-border: rgba(255, 255, 255, 0.09);
+      --primary: #8b5cf6;
+      --primary-hover: #7c3aed;
+      --accent-cyan: #06b6d4;
+      --accent-green: #10b981;
+      --text-main: #f3f4f6;
+      --text-muted: #9ca3af;
+      --chat-user-bg: linear-gradient(135deg, #6366f1, #8b5cf6);
+      --chat-ai-bg: #151d2f;
+      --bottom-nav-h: 60px;
+      --header-h: 52px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      height: 100dvh;
+      overflow: hidden;
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* 顶部精简导航条 (专为手机小屏优化) */
+    .mobile-header {
+      height: var(--header-h);
+      padding-top: env(safe-area-inset-top, 0px);
+      background: rgba(17, 24, 39, 0.94);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--panel-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-left: 0.8rem;
+      padding-right: 0.8rem;
+      z-index: 100;
+      flex-shrink: 0;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      overflow: hidden;
+    }
+
+    .btn-icon-back {
+      color: #94a3b8;
+      text-decoration: none;
+      font-size: 0.82rem;
+      padding: 0.35rem 0.55rem;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.06);
+      display: inline-flex;
+      align-items: center;
+      white-space: nowrap;
+      transition: all 0.2s;
+    }
+    .btn-icon-back:active {
+      background: rgba(255, 255, 255, 0.15);
+      transform: scale(0.96);
+    }
+
+    .brand-group {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.15;
+    }
+
+    .brand-title {
+      font-size: 0.96rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #c084fc, #38bdf8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      white-space: nowrap;
+    }
+
+    .model-tag {
+      font-size: 0.68rem;
+      color: #67e8f9;
+      font-weight: 500;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      flex-shrink: 0;
+    }
+
+    .btn-pill {
+      font-size: 0.76rem;
+      font-weight: 600;
+      padding: 0.38rem 0.7rem;
+      border-radius: 9999px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: rgba(255, 255, 255, 0.08);
+      color: #f1f5f9;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      transition: all 0.15s;
+    }
+    .btn-pill:active {
+      transform: scale(0.95);
+      background: rgba(255, 255, 255, 0.16);
+    }
+    .btn-pill-primary {
+      background: linear-gradient(135deg, var(--primary), #6366f1);
+      border-color: rgba(139, 92, 246, 0.4);
+      color: #ffffff;
+      box-shadow: 0 2px 8px rgba(139, 92, 246, 0.35);
+    }
+
+    /* 主视口容器 */
+    .main-container {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+    }
+
+    /* 视图切换：Chat 视图 vs Preview 视图 */
+    .view-pane {
+      width: 100%;
+      height: 100%;
+      display: none;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .view-pane.active {
+      display: flex;
+    }
+
+    /* ==================== 1. 对话指挥台视图 ==================== */
+    .chat-subbar {
+      padding: 0.5rem 0.8rem;
+      background: rgba(17, 24, 39, 0.7);
+      border-bottom: 1px solid var(--panel-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      font-size: 0.8rem;
+    }
+
+    .subbar-btn {
+      flex: 1;
+      padding: 0.42rem 0.6rem;
+      border-radius: 8px;
+      background: rgba(139, 92, 246, 0.12);
+      border: 1px dashed rgba(139, 92, 246, 0.4);
+      color: #c4b5fd;
+      font-size: 0.78rem;
+      font-weight: 600;
+      text-align: center;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.3rem;
+    }
+    .subbar-btn:active {
+      background: rgba(139, 92, 246, 0.25);
+    }
+
+    .subbar-btn-secondary {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #cbd5e1;
+    }
+
+    /* 对话消息流 */
+    .chat-stream {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0.9rem 0.8rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .msg-row {
+      display: flex;
+      flex-direction: column;
+      max-width: 92%;
+      animation: msgPop 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @keyframes msgPop {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .msg-row.user {
+      align-self: flex-end;
+    }
+    .msg-row.ai {
+      align-self: flex-start;
+    }
+
+    .msg-box {
+      padding: 0.75rem 0.95rem;
+      border-radius: 16px;
+      font-size: 0.88rem;
+      line-height: 1.55;
+      word-break: break-word;
+    }
+    .msg-row.user .msg-box {
+      background: var(--chat-user-bg);
+      color: #ffffff;
+      border-bottom-right-radius: 4px;
+      box-shadow: 0 4px 14px rgba(99, 102, 241, 0.25);
+    }
+    .msg-row.ai .msg-box {
+      background: var(--chat-ai-bg);
+      color: #e2e8f0;
+      border: 1px solid var(--panel-border);
+      border-bottom-left-radius: 4px;
+    }
+
+    /* 快捷预览横幅 */
+    .preview-jump-chip {
+      margin: 0.4rem 0;
+      padding: 0.55rem 0.8rem;
+      border-radius: 10px;
+      background: linear-gradient(135deg, rgba(139, 92, 246, 0.18), rgba(6, 182, 212, 0.18));
+      border: 1px solid rgba(139, 92, 246, 0.35);
+      color: #c4b5fd;
+      font-size: 0.82rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .preview-jump-chip:active {
+      transform: scale(0.98);
+      background: rgba(139, 92, 246, 0.3);
+    }
+
+    /* 工具执行卡片徽章 */
+    .tool-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      font-size: 0.72rem;
+      padding: 0.25rem 0.55rem;
+      border-radius: 6px;
+      background: rgba(16, 185, 129, 0.15);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.25);
+      margin-top: 0.35rem;
+      word-break: break-all;
+    }
+    .engine-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      font-size: 0.72rem;
+      padding: 0.22rem 0.5rem;
+      border-radius: 6px;
+      background: rgba(168, 85, 247, 0.14);
+      color: #c084fc;
+      border: 1px solid rgba(168, 85, 247, 0.25);
+      margin-top: 0.25rem;
+    }
+
+    /* 快捷指令横向滚动列表 */
+    .quick-chips-wrapper {
+      padding: 0.45rem 0.8rem;
+      background: rgba(17, 24, 39, 0.85);
+      border-top: 1px solid var(--panel-border);
+      overflow-x: auto;
+      white-space: nowrap;
+      display: flex;
+      gap: 0.45rem;
+      -webkit-overflow-scrolling: touch;
+    }
+    .quick-chips-wrapper::-webkit-scrollbar {
+      display: none;
+    }
+
+    .chip-item {
+      padding: 0.32rem 0.65rem;
+      border-radius: 9999px;
+      background: rgba(255, 255, 255, 0.07);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: #cbd5e1;
+      font-size: 0.76rem;
+      font-weight: 500;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: all 0.15s;
+    }
+    .chip-item:active {
+      background: rgba(139, 92, 246, 0.3);
+      border-color: #8b5cf6;
+      color: #ffffff;
+      transform: scale(0.96);
+    }
+
+    /* 底部输入框 */
+    .chat-bottom-bar {
+      padding: 0.6rem 0.8rem;
+      background: #111827;
+      border-top: 1px solid var(--panel-border);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-shrink: 0;
+    }
+
+    .input-field {
+      flex: 1;
+      background: #1e293b;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 20px;
+      padding: 0.62rem 0.95rem;
+      color: #ffffff;
+      font-size: 0.88rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .input-field:focus {
+      border-color: #8b5cf6;
+      box-shadow: 0 0 10px rgba(139, 92, 246, 0.3);
+    }
+
+    .btn-send {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary), #6366f1);
+      border: none;
+      color: #ffffff;
+      font-size: 1.05rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: all 0.15s;
+      box-shadow: 0 2px 10px rgba(139, 92, 246, 0.4);
+    }
+    .btn-send:active {
+      transform: scale(0.92);
+      opacity: 0.9;
+    }
+
+    /* ==================== 2. 试卷预览视图 (深度手机适配) ==================== */
+    /* 预览顶栏控制条 */
+    .preview-control-bar {
+      padding: 0.5rem 0.8rem;
+      background: rgba(17, 24, 39, 0.92);
+      border-bottom: 1px solid var(--panel-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      flex-shrink: 0;
+      z-index: 20;
+    }
+
+    /* 视图模式双选分段控制器 */
+    .segmented-control {
+      display: flex;
+      background: rgba(0, 0, 0, 0.35);
+      padding: 3px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .segment-btn {
+      padding: 0.35rem 0.65rem;
+      border-radius: 8px;
+      border: none;
+      background: transparent;
+      color: #94a3b8;
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+    .segment-btn.active {
+      background: var(--primary);
+      color: #ffffff;
+      box-shadow: 0 2px 8px rgba(139, 92, 246, 0.4);
+    }
+
+    /* 缩放选择器 */
+    .zoom-group {
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+    .zoom-btn {
+      padding: 0.32rem 0.55rem;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #e2e8f0;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .zoom-btn:active {
+      background: rgba(255, 255, 255, 0.18);
+    }
+
+    /* 预览滚动视窗 */
+    .preview-scroll-viewport {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding: 0.8rem 0.6rem;
+      background: #141b29;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    /* 模式 1：手机阅读卡片模式 */
+    .mobile-reader-container {
+      width: 100%;
+      max-width: 600px;
+      display: flex;
+      flex-direction: column;
+      gap: 0.8rem;
+      padding-bottom: 3.5rem;
+    }
+
+    .exam-info-card {
+      background: var(--card-bg);
+      border: 1px solid var(--panel-border);
+      border-radius: 14px;
+      padding: 1rem;
+      text-align: center;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
+    }
+    .exam-info-card .title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #ffffff;
+      margin-bottom: 0.3rem;
+    }
+    .exam-info-card .subtitle {
+      font-size: 0.85rem;
+      color: #38bdf8;
+      font-weight: 600;
+      margin-bottom: 0.4rem;
+    }
+    .exam-info-card .meta-strip {
+      font-size: 0.78rem;
+      color: #94a3b8;
+      display: flex;
+      justify-content: center;
+      gap: 0.8rem;
+      background: rgba(255, 255, 255, 0.04);
+      padding: 0.35rem 0.6rem;
+      border-radius: 8px;
+    }
+
+    .exam-section-card {
+      background: var(--card-bg);
+      border: 1px solid var(--panel-border);
+      border-radius: 14px;
+      padding: 0.9rem;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+    .section-header-title {
+      font-size: 0.92rem;
+      font-weight: 700;
+      color: #c084fc;
+      border-left: 3px solid #8b5cf6;
+      padding-left: 0.5rem;
+      margin-bottom: 0.8rem;
+    }
+
+    .question-card-item {
+      background: var(--card-subtle);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 10px;
+      padding: 0.8rem;
+      margin-bottom: 0.75rem;
+    }
+    .question-stem-mobile {
+      font-size: 0.9rem;
+      line-height: 1.6;
+      color: #f1f5f9;
+      margin-bottom: 0.6rem;
+    }
+    .options-grid-mobile {
+      display: grid;
+      gap: 0.4rem;
+      font-size: 0.86rem;
+      color: #e2e8f0;
+      padding-left: 0.4rem;
+    }
+    .options-grid-mobile.cols-4 {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    .options-grid-mobile.cols-2 {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    .options-grid-mobile.cols-1 {
+      grid-template-columns: 1fr;
+    }
+    @media (max-width: 360px) {
+      .options-grid-mobile.cols-4 {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .blank-tip-mobile {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px dashed rgba(255, 255, 255, 0.15);
+      border-radius: 8px;
+      padding: 0.6rem;
+      text-align: center;
+      color: #94a3b8;
+      font-size: 0.78rem;
+      margin-top: 0.5rem;
+    }
+
+    .answers-accordion {
+      background: var(--card-bg);
+      border: 1px solid var(--panel-border);
+      border-radius: 14px;
+      overflow: hidden;
+    }
+    .answers-accordion-header {
+      padding: 0.85rem 1rem;
+      background: rgba(139, 92, 246, 0.1);
+      color: #c4b5fd;
+      font-size: 0.9rem;
+      font-weight: 700;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+    }
+    .answers-accordion-content {
+      padding: 0.9rem;
+      font-size: 0.85rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.7rem;
+    }
+
+    /* 模式 2：真实 A4 试卷仿真模式 (标准白底黑字) */
+    .a4-simulation-wrapper {
+      width: 100%;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      padding-bottom: 4rem;
+      overflow-x: auto;
+    }
+
+    .a4-scaled-stage {
+      transform-origin: top center;
+      transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .a4-paper-real {
+      width: 790px;
+      min-height: 1118px;
+      background: #ffffff;
+      color: #000000;
+      padding: 45px 50px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+      border-radius: 2px;
+      font-family: "SimSun", "Songti SC", "Times New Roman", serif;
+      line-height: 1.6;
+      box-sizing: border-box;
+    }
+
+    /* A4 内部印样样式 */
+    .a4-header {
+      text-align: center;
+      margin-bottom: 1.2rem;
+    }
+    .a4-main-title {
+      font-family: "SimHei", "Heiti SC", sans-serif;
+      font-size: 21px;
+      font-weight: 700;
+      margin-bottom: 5px;
+    }
+    .a4-sub-title {
+      font-family: "SimHei", "Heiti SC", sans-serif;
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 5px;
+    }
+    .a4-notice {
+      font-family: "KaiTi", "Kaiti SC", serif;
+      font-size: 13px;
+      color: #333333;
+    }
+    .a4-student-info {
+      text-align: center;
+      font-size: 13.5px;
+      margin: 10px 0 14px 0;
+    }
+    .a4-score-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 0 auto 16px auto;
+      font-size: 13px;
+    }
+    .a4-score-table th, .a4-score-table td {
+      border: 1px solid #111111;
+      text-align: center;
+      padding: 3px 5px;
+    }
+    .a4-score-table th {
+      background: #f9f9f9;
+      font-weight: 700;
+    }
+    .a4-score-table td.score-cell {
+      height: 28px;
+    }
+
+    .a4-section-title {
+      font-family: "SimHei", "Heiti SC", sans-serif;
+      font-size: 15px;
+      font-weight: 700;
+      margin: 14px 0 6px 0;
+    }
+    .a4-q-item {
+      margin-bottom: 12px;
+      font-size: 14px;
+    }
+    .a4-q-stem {
+      margin-bottom: 4px;
+      text-align: justify;
+    }
+    .a4-options {
+      display: grid;
+      gap: 3px 14px;
+      padding-left: 12px;
+      font-size: 14px;
+    }
+    .a4-options.cols-4 { grid-template-columns: repeat(4, 1fr); }
+    .a4-options.cols-2 { grid-template-columns: repeat(2, 1fr); }
+    .a4-options.cols-1 { grid-template-columns: 1fr; }
+    .a4-blank {
+      border-bottom: 1px dashed rgba(0, 0, 0, 0.1);
+      margin: 6px 0;
+    }
+    .a4-divider {
+      border-top: 2px dashed #666;
+      margin: 25px 0 15px 0;
+      text-align: center;
+      position: relative;
+    }
+    .a4-divider span {
+      position: absolute;
+      top: -11px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #ffffff;
+      padding: 0 12px;
+      font-family: "SimHei", sans-serif;
+      font-weight: 700;
+      font-size: 14px;
+    }
+
+    /* 预览浮动操作条 */
+    .preview-floating-bar {
+      position: absolute;
+      bottom: 0.8rem;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(17, 24, 39, 0.92);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--panel-border);
+      padding: 0.4rem 0.8rem;
+      border-radius: 9999px;
+      display: flex;
+      gap: 0.6rem;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.45);
+      z-index: 30;
+    }
+
+    /* 全屏沉浸模式覆盖 */
+    body.fullscreen-mode .mobile-header,
+    body.fullscreen-mode .mobile-bottom-nav {
+      display: none !important;
+    }
+    .exit-fullscreen-btn {
+      display: none;
+      position: fixed;
+      top: 1rem;
+      right: 1rem;
+      z-index: 999;
+      background: rgba(15, 23, 42, 0.85);
+      color: #ffffff;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      padding: 0.4rem 0.8rem;
+      border-radius: 20px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    body.fullscreen-mode .exit-fullscreen-btn {
+      display: block;
+    }
+
+    /* ==================== 3. 手机底部导航栏 (Tab Bar) ==================== */
+    .mobile-bottom-nav {
+      height: var(--bottom-nav-h);
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+      background: rgba(17, 24, 39, 0.96);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-top: 1px solid var(--panel-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      flex-shrink: 0;
+      z-index: 50;
+    }
+
+    .nav-tab-item {
+      flex: 1;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 0.72rem;
+      font-weight: 500;
+      gap: 3px;
+      transition: all 0.15s;
+      position: relative;
+    }
+    .nav-tab-item:active {
+      transform: scale(0.94);
+    }
+    .nav-tab-item.active {
+      color: #c084fc;
+      font-weight: 700;
+    }
+    .nav-tab-icon {
+      font-size: 1.18rem;
+    }
+    .nav-badge {
+      position: absolute;
+      top: 5px;
+      right: calc(50% - 24px);
+      background: #8b5cf6;
+      color: #ffffff;
+      font-size: 0.62rem;
+      padding: 1px 5px;
+      border-radius: 9999px;
+      font-weight: 700;
+    }
+
+    /* ==================== 4. 底部动作抽屉 (Bottom Sheet) ==================== */
+    .drawer-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.65);
+      backdrop-filter: blur(4px);
+      z-index: 998;
+      align-items: flex-end;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 0.25s ease;
+    }
+    .drawer-overlay.active {
+      display: flex;
+      opacity: 1;
+    }
+
+    .drawer-content {
+      background: #111827;
+      border-top: 1px solid var(--panel-border);
+      border-top-left-radius: 20px;
+      border-top-right-radius: 20px;
+      width: 100%;
+      max-width: 520px;
+      max-height: 85vh;
+      overflow-y: auto;
+      padding: 1.2rem;
+      padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
+      box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.6);
+      transform: translateY(100%);
+      transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .drawer-overlay.active .drawer-content {
+      transform: translateY(0);
+    }
+
+    .drawer-drag-handle {
+      width: 40px;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 2px;
+      margin: 0 auto 1rem auto;
+    }
+
+    .drawer-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #ffffff;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .drawer-close {
+      color: #94a3b8;
+      font-size: 1.2rem;
+      cursor: pointer;
+      background: none;
+      border: none;
+    }
+
+    .drawer-item-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    .drawer-item-btn {
+      padding: 0.85rem 1rem;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: #f1f5f9;
+      font-size: 0.9rem;
+      font-weight: 600;
+      text-align: left;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      transition: all 0.15s;
+    }
+    .drawer-item-btn:active {
+      background: rgba(255, 255, 255, 0.12);
+      transform: scale(0.98);
+    }
+    .drawer-item-btn .desc {
+      font-size: 0.74rem;
+      color: #94a3b8;
+      font-weight: 400;
+      margin-left: auto;
+    }
+
+    /* 模型设置弹窗 */
+    .form-group {
+      margin-bottom: 0.9rem;
+    }
+    .form-group label {
+      display: block;
+      font-size: 0.82rem;
+      color: #94a3b8;
+      margin-bottom: 0.35rem;
+    }
+    .form-input-mobile {
+      width: 100%;
+      background: #1e293b;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 10px;
+      padding: 0.65rem 0.8rem;
+      color: #ffffff;
+      font-size: 0.88rem;
+      outline: none;
+    }
+    .form-input-mobile:focus {
+      border-color: #8b5cf6;
+    }
+
+    /* 打印专用 */
+    @media print {
+      body {
+        background: #ffffff !important;
+        overflow: visible !important;
+      }
+      .mobile-header, .mobile-bottom-nav, .preview-control-bar, .preview-floating-bar, .drawer-overlay, .quick-chips-wrapper, .chat-bottom-bar, .chat-subbar, .chat-stream, .exit-fullscreen-btn, .mobile-reader-container {
+        display: none !important;
+      }
+      .main-container, .view-pane, .preview-scroll-viewport, .a4-simulation-wrapper {
+        display: block !important;
+        padding: 0 !important;
+        background: transparent !important;
+        overflow: visible !important;
+      }
+      .a4-scaled-stage {
+        transform: none !important;
+      }
+      .a4-paper-real {
+        box-shadow: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        width: 100% !important;
+      }
+      @page {
+        size: A4;
+        margin: 18mm 14mm;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 顶部手机精简导航栏 -->
+  <header class="mobile-header">
+    <div class="header-left">
+      <a href="./index.html" class="btn-icon-back">← 主页</a>
+      <div class="brand-group">
+        <span class="brand-title">📝 AI 试卷排版</span>
+        <span class="model-tag" id="topModelTag" onclick="openModelSettings()">✨ Gemini 3.8 Flash · 内置Key ⚙️</span>
+      </div>
+    </div>
+    <div class="header-right">
+      <button class="btn-pill btn-pill-primary" onclick="openExportDrawer()">📥 导出</button>
+      <button class="btn-pill" onclick="openMenuDrawer()">☰</button>
+    </div>
+  </header>
+
+  <!-- 全屏模式退出悬浮按钮 -->
+  <button class="exit-fullscreen-btn" onclick="toggleFullscreen(false)">✕ 退出全屏</button>
+
+  <!-- 主视图区 -->
+  <main class="main-container">
+    
+    <!-- 视图 1：💬 对话指挥台 -->
+    <section class="view-pane active" id="chatPane">
+      <div class="chat-subbar">
+        <label for="mobileFileInput" class="subbar-btn">
+          <span>📁 上传试卷 (.docx/txt)</span>
+        </label>
+        <input type="file" id="mobileFileInput" accept=".docx,.txt,.json" style="display:none;" onchange="handleMobileFileUpload(event)">
+        <button class="subbar-btn subbar-btn-secondary" onclick="loadSampleMathExam()">📋 载入真题示例</button>
+      </div>
+
+      <!-- 消息流 -->
+      <div class="chat-stream" id="chatStream">
+        <div class="msg-row ai">
+          <div class="msg-box">
+            👋 老师您好！我是您的 <strong>AI 试卷排版助手 (手机专版)</strong>。<br><br>
+            已接入 <strong>Gemini 3.8 Flash（最高思考等级）</strong> 作为排版大脑，内置专属 Key 已就绪！<br><br>
+            您可以在上方上传 <code>.docx</code>，或点击【📋 载入真题示例】体验。<br><br>
+            随时在下方<strong>输入口语化指令指挥我排版</strong>，例如：<br>
+            • <em>“把第3题选项换成双列”</em><br>
+            • <em>“给第7题多分3行解答空白”</em><br>
+            • <em>“考试时间改成100分钟，满分改成120分”</em>
+          </div>
+        </div>
+
+        <!-- 试卷预览跳转快捷横幅 -->
+        <div class="preview-jump-chip" onclick="switchMobileNav('preview')">
+          <span>📄 试卷内容已就绪，点击查看排版预览</span>
+          <span>查看 A4 ➔</span>
+        </div>
+      </div>
+
+      <!-- 快捷微调指令滑轮 -->
+      <div class="quick-chips-wrapper">
+        <span class="chip-item" onclick="sendMobilePrompt('把第3题选项改成两列对齐')">📐 第3题换两列</span>
+        <span class="chip-item" onclick="sendMobilePrompt('把第1题选项换成单列排版')">📏 第1题换单列</span>
+        <span class="chip-item" onclick="sendMobilePrompt('为第7题解答题增加5行空白')">✍️ 第7题加留白</span>
+        <span class="chip-item" onclick="sendMobilePrompt('把满分改成120分，考试时间改成100分钟')">⏱️ 改120分/100分</span>
+        <span class="chip-item" onclick="sendMobilePrompt('清理题目中残留的水印与广告词')">🧹 一键去水印</span>
+        <span class="chip-item" onclick="sendMobilePrompt('把第2题选项换成四列横排')">🔲 第2题换四列</span>
+      </div>
+
+      <!-- 底部输入框 -->
+      <form class="chat-bottom-bar" onsubmit="handleMobileSubmit(event)">
+        <input type="text" id="mobileChatInput" class="input-field" placeholder="输入微调指令，如：把第2题改成两列..." autocomplete="off">
+        <button type="submit" class="btn-send" aria-label="发送">➔</button>
+      </form>
+    </section>
+
+    <!-- 视图 2：📄 试卷预览台 -->
+    <section class="view-pane" id="previewPane">
+      <!-- 预览控制条 -->
+      <div class="preview-control-bar">
+        <div class="segmented-control">
+          <button class="segment-btn active" id="modeReaderBtn" onclick="switchPreviewMode('reader')">📱 手机阅读</button>
+          <button class="segment-btn" id="modeRealBtn" onclick="switchPreviewMode('real')">📄 真实A4印样</button>
+        </div>
+
+        <div class="zoom-group" id="zoomControls" style="display: none;">
+          <button class="zoom-btn" onclick="setA4Zoom('fit')">适应</button>
+          <button class="zoom-btn" onclick="setA4Zoom('100')">100%</button>
+          <button class="zoom-btn" onclick="setA4Zoom('130')">130%</button>
+          <button class="zoom-btn" onclick="toggleFullscreen(true)">⛶</button>
+        </div>
+      </div>
+
+      <!-- 预览主体滚动视窗 -->
+      <div class="preview-scroll-viewport" id="previewViewport">
+        <!-- 模式 1：手机卡片阅读模式 -->
+        <div class="mobile-reader-container" id="mobileReaderContainer">
+          <!-- 动态渲染手机端友好卡片 -->
+        </div>
+
+        <!-- 模式 2：真实 A4 试卷模式 -->
+        <div class="a4-simulation-wrapper" id="a4SimulationWrapper">
+          <div class="a4-scaled-stage" id="a4ScaledStage">
+            <div class="a4-paper-real" id="a4PaperContent">
+              <!-- 动态渲染标准 A4 真实印样 -->
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 浮动操作栏 -->
+      <div class="preview-floating-bar">
+        <button class="btn-pill" onclick="switchMobileNav('chat')">💬 对话微调</button>
+        <button class="btn-pill" onclick="handleExportDocx()">📥 导出Word</button>
+        <button class="btn-pill btn-pill-primary" onclick="triggerMobilePrint()">🖨️ 打印/PDF</button>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- 底部应用导航栏 -->
+  <nav class="mobile-bottom-nav">
+    <div class="nav-tab-item active" id="navChatBtn" onclick="switchMobileNav('chat')">
+      <span class="nav-tab-icon">💬</span>
+      <span>对话指挥</span>
+    </div>
+    <div class="nav-tab-item" id="navPreviewBtn" onclick="switchMobileNav('preview')">
+      <span class="nav-tab-icon">📄</span>
+      <span>试卷预览</span>
+      <span class="nav-badge" id="previewBadge">8题</span>
+    </div>
+    <div class="nav-tab-item" onclick="openMenuDrawer()">
+      <span class="nav-tab-icon">⚙️</span>
+      <span>快捷工具</span>
+    </div>
+  </nav>
+
+  <!-- 抽屉 1：快捷导出抽屉 -->
+  <div class="drawer-overlay" id="exportDrawer" onclick="closeDrawerOnBg(event, 'exportDrawer')">
+    <div class="drawer-content">
+      <div class="drawer-drag-handle"></div>
+      <div class="drawer-title">
+        <span>📥 导出试卷</span>
+        <button class="drawer-close" onclick="closeDrawer('exportDrawer')">×</button>
+      </div>
+      <div class="drawer-item-list">
+        <button class="drawer-item-btn" onclick="handleExportDocx(); closeDrawer('exportDrawer');">
+          <span style="font-size: 1.3rem;">📄</span>
+          <div>
+            <div>导出标准 Word (.docx)</div>
+            <div class="desc">公式原生保留，在 WPS / Word 中直接编辑</div>
+          </div>
+        </button>
+        <button class="drawer-item-btn" onclick="triggerMobilePrint(); closeDrawer('exportDrawer');">
+          <span style="font-size: 1.3rem;">🖨️</span>
+          <div>
+            <div>系统打印 / 导出 PDF</div>
+            <div class="desc">A4 矢量印刷标准，手机可直接存储为 PDF</div>
+          </div>
+        </button>
+        <button class="drawer-item-btn" onclick="copyExamText(); closeDrawer('exportDrawer');">
+          <span style="font-size: 1.3rem;">📋</span>
+          <div>
+            <div>复制全卷文字内容</div>
+            <div class="desc">提取文本复制到手机剪贴板</div>
+          </div>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 抽屉 2：快捷菜单与工具抽屉 -->
+  <div class="drawer-overlay" id="menuDrawer" onclick="closeDrawerOnBg(event, 'menuDrawer')">
+    <div class="drawer-content">
+      <div class="drawer-drag-handle"></div>
+      <div class="drawer-title">
+        <span>⚙️ 工具与设置</span>
+        <button class="drawer-close" onclick="closeDrawer('menuDrawer')">×</button>
+      </div>
+      <div class="drawer-item-list">
+        <button class="drawer-item-btn" onclick="closeDrawer('menuDrawer'); openModelSettings();">
+          <span style="font-size: 1.3rem;">🧠</span>
+          <div>
+            <div>模型与思考强度配置</div>
+            <div class="desc">内置Key / 自定义Key / Gemini 3.8 Flash</div>
+          </div>
+        </button>
+        <button class="drawer-item-btn" onclick="closeDrawer('menuDrawer'); document.getElementById('mobileFileInput').click();">
+          <span style="font-size: 1.3rem;">📁</span>
+          <div>
+            <div>上传试卷文件 (.docx)</div>
+            <div class="desc">本地高速解析试卷并载入工作台</div>
+          </div>
+        </button>
+        <button class="drawer-item-btn" onclick="closeDrawer('menuDrawer'); loadSampleMathExam();">
+          <span style="font-size: 1.3rem;">📋</span>
+          <div>
+            <div>重载高考数学模拟真题</div>
+            <div class="desc">恢复标准示例数据体验排版效果</div>
+          </div>
+        </button>
+        <button class="drawer-item-btn" onclick="switchToDesktopVersion()">
+          <span style="font-size: 1.3rem;">🖥️</span>
+          <div>
+            <div>切换到电脑完整版</div>
+            <div class="desc">适合大屏双栏显示与精细排版</div>
+          </div>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 抽屉 3：模型与思考配置抽屉 -->
+  <div class="drawer-overlay" id="configDrawer" onclick="closeDrawerOnBg(event, 'configDrawer')">
+    <div class="drawer-content">
+      <div class="drawer-drag-handle"></div>
+      <div class="drawer-title">
+        <span>⚙️ 模型与思考配置</span>
+        <button class="drawer-close" onclick="closeDrawer('configDrawer')">×</button>
+      </div>
+
+      <!-- 模式切换：默认模式 vs 自定义模式 -->
+      <div style="display: flex; gap: 0.5rem; margin-bottom: 1.2rem; background: rgba(255, 255, 255, 0.06); padding: 4px; border-radius: 10px;">
+        <button type="button" class="segment-btn active" id="mobileConfigModeDefaultBtn" onclick="switchMobileConfigMode('default')" style="flex:1;">
+          🔑 内置专属Key
+        </button>
+        <button type="button" class="segment-btn" id="mobileConfigModeCustomBtn" onclick="switchMobileConfigMode('custom')" style="flex:1;">
+          🛠️ 自填Key与模型
+        </button>
+      </div>
+
+      <!-- 1. 默认模式区 (使用内置Key) -->
+      <div id="mobileDefaultSection">
+        <div style="font-size: 0.78rem; color: #38bdf8; background: rgba(56, 189, 248, 0.1); padding: 0.55rem 0.75rem; border-radius: 8px; border: 1px solid rgba(56, 189, 248, 0.2); margin-bottom: 0.9rem;">
+          ✨ 已启用专属内置 Key，无需填写凭证，可选择 Gemini 模型与思考等级：
+        </div>
+
+        <div class="form-group">
+          <label>选择 Gemini 模型：</label>
+          <select id="mobileDefaultModelSelect" class="form-input-mobile">
+            <option value="gemini-3.8-flash">Gemini 3.8 Flash (推荐 · 最新快速推理)</option>
+            <option value="gemini-3.6-flash">Gemini 3.6 Flash (稳定高速 · 极低延迟)</option>
+            <option value="gemini-3.5-flash">Gemini 3.5 Flash (中代大模型 · 稳定高可用)</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>选择思考强度 (Thinking Intensity)：</label>
+          <select id="mobileDefaultThinkingSelect" class="form-input-mobile">
+            <option value="-1">🚀 极高 / 动态最高思考 (推荐)</option>
+            <option value="24576">🧠 深度思考 (24k tokens)</option>
+            <option value="8192">💡 中度思考 (8k tokens)</option>
+            <option value="2048">⚡ 轻度思考 (2k tokens)</option>
+            <option value="0">🚫 关闭思考 (直接输出)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- 2. 自定义模式区 (自填Key与模型) -->
+      <div id="mobileCustomSection" style="display: none;">
+        <div class="form-group">
+          <label>接口协议 / 平台类型：</label>
+          <select id="mobileCustomProviderSelect" class="form-input-mobile" onchange="toggleMobileCustomProvider()">
+            <option value="gemini">Google Gemini 官方协议</option>
+            <option value="deepseek">DeepSeek (OpenAI 兼容协议)</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>自定义 API Key：</label>
+          <input type="password" id="mobileCustomApiKeyInput" class="form-input-mobile" placeholder="输入您的 API Key" autocomplete="off">
+        </div>
+
+        <div class="form-group">
+          <label>自定义模型名称：</label>
+          <input type="text" id="mobileCustomModelNameInput" class="form-input-mobile" placeholder="例如 gemini-3.8-flash" autocomplete="off">
+        </div>
+
+        <div class="form-group" id="mobileCustomThinkingGroup">
+          <label>选择思考强度 (Thinking Intensity)：</label>
+          <select id="mobileCustomThinkingSelect" class="form-input-mobile">
+            <option value="-1">🚀 极高 / 动态最高思考</option>
+            <option value="16384">🧠 深度思考 (16k tokens)</option>
+            <option value="4096">💡 中度思考 (4k tokens)</option>
+            <option value="0">🚫 关闭思考</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 0.6rem; justify-content: flex-end; margin-top: 1.2rem;">
+        <button class="btn-pill" onclick="closeDrawer('configDrawer')">取消</button>
+        <button class="btn-pill btn-pill-primary" onclick="saveMobileConfig()">保存设置</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 内置高配 Gemini API Key
+    const BUILTIN_GEMINI_KEY = "AQ.Ab8RN6IuAdyz64ZtGMRt0xMIutpY4Kvm9XVkr2sS85HwK1fVBQ";
+
+    // 全局当前试卷状态数据 (默认高三数学真题标准数据)
+    let currentExamData = {
+      meta: {
+        title: "2026年普通高等学校招生全国统一考试模拟演练",
+        subject: "数学",
+        grade: "高三",
+        duration: 120,
+        total_score: 150,
+        show_score_table: true
+      },
+      sections: [
+        {
+          section_id: 1,
+          type: "single_choice",
+          title: "一、选择题（本大题共 4 小题，每小题 5 分，共 20 分。在每小题给出的四个选项中，只有一项是符合题目要求的）",
+          questions: [
+            {
+              number: 1,
+              score: 5,
+              stem: "设全集 $U = \\mathbf{R}$，集合 $A = \\{x \\mid x^2 - 2x - 3 < 0\\}$，$B = \\{x \\mid x \\ge 1\\}$，则 $A \\cap (\\complement_U B) = $（　　）",
+              options: [
+                "A. $(-1, 1)$",
+                "B. $[-1, 1)$",
+                "C. $(-1, 3)$",
+                "D. $[1, 3)$"
+              ],
+              layout: "cols-4"
+            },
+            {
+              number: 2,
+              score: 5,
+              stem: "已知复数 $z$ 满足 $(1-i)z = 2i$，则 $|z| = $（　　）",
+              options: [
+                "A. $1$",
+                "B. $\\sqrt{2}$",
+                "C. $2$",
+                "D. $4$"
+              ],
+              layout: "cols-4"
+            },
+            {
+              number: 3,
+              score: 5,
+              stem: "已知双曲线 $C: \\frac{x^2}{a^2} - \\frac{y^2}{b^2} = 1\\,(a>0, b>0)$ 的一条渐近线方程为 $y = \\sqrt{3}x$，则双曲线 $C$ 的离心率 $e = $（　　）",
+              options: [
+                "A. 离心率 $e = \\sqrt{2}$",
+                "B. 离心率 $e = \\sqrt{3}$",
+                "C. 离心率 $e = 2$",
+                "D. 离心率 $e = 4$"
+              ],
+              layout: "cols-2"
+            },
+            {
+              number: 4,
+              score: 5,
+              stem: "已知函数 $f(x) = \\sin(\\omega x + \\varphi)\\,(\\omega > 0, |\\varphi| < \\frac{\\pi}{2})$ 的部分图象关于直线 $x = \\frac{\\pi}{6}$ 对称，则下列说法正确的是（　　）",
+              options: [
+                "A. 若 $\\omega = 2$，则函数 $f(x)$ 的最小正周期为 $2\\pi$",
+                "B. 若 $\\omega = 2$，则 $\\varphi$ 的一个可能取值为 $\\frac{\\pi}{6}$",
+                "C. 当 $\\omega = 1$ 时，点 $(\\frac{2\\pi}{3}, 0)$ 是函数图象的一个对称中心",
+                "D. 函数 $f(x)$ 在区间 $(0, \\frac{\\pi}{2})$ 上单调递增"
+              ],
+              layout: "cols-1"
+            }
+          ]
+        },
+        {
+          section_id: 2,
+          type: "fill_in",
+          title: "二、填空题（本大题共 2 小题，每小题 5 分，共 10 分）",
+          questions: [
+            {
+              number: 5,
+              score: 5,
+              stem: "已知平面向量 $\\vec{a} = (1, \\sqrt{3})$，$\\vec{b} = (-2, 0)$，则向量 $\\vec{a}$ 与 $\\vec{b}$ 的夹角大小为 ____________。"
+            },
+            {
+              number: 6,
+              score: 5,
+              stem: "若曲线 $y = x \\ln x$ 在点 $(1, 0)$ 处的切线方程为 $y = kx + b$，则 $k + b = $ ____________。"
+            }
+          ]
+        },
+        {
+          section_id: 3,
+          type: "subjective",
+          title: "三、解答题（本大题共 2 小题，共 30 分。解答应写出文字说明、证明过程或演算步骤）",
+          questions: [
+            {
+              number: 7,
+              score: 15,
+              stem: "（本小题满分 15 分）\n在 $\\triangle ABC$ 中，内角 $A, B, C$ 所对的边分别为 $a, b, c$，已知 $2b \\cos A = 2c - a$。\n(1) 求角 $B$ 的大小；\n(2) 若 $b = \\sqrt{7}$，且 $\\triangle ABC$ 的面积为 $\\frac{3\\sqrt{3}}{2}$，求 $\\triangle ABC$ 的周长。",
+              blank_lines: 6
+            },
+            {
+              number: 8,
+              score: 15,
+              stem: "（本小题满分 15 分）\n已知函数 $f(x) = e^x - ax - 1\\,(a \\in \\mathbf{R})$。\n(1) 当 $a = 1$ 时，讨论函数 $f(x)$ 的单调性；\n(2) 当 $x \\ge 0$ 时，若 $f(x) \\ge 0$ 恒成立，求实数 $a$ 的最大值。",
+              blank_lines: 8
+            }
+          ]
+        }
+      ],
+      answers: [
+        {
+          number: 1,
+          answer: "A",
+          analysis: "由 $x^2 - 2x - 3 < 0$ 解得 $-1 < x < 3$，故 $A = (-1, 3)$。又 $B = [1, +\\infty)$，所以 $\\complement_U B = (-\\infty, 1)$。因此 $A \\cap (\\complement_U B) = (-1, 1)$，选 A。"
+        },
+        {
+          number: 2,
+          answer: "B",
+          analysis: "由 $(1-i)z = 2i$ 得 $z = \\frac{2i}{1-i} = -1 + i$，故 $|z| = \\sqrt{(-1)^2 + 1^2} = \\sqrt{2}$，选 B。"
+        },
+        {
+          number: 3,
+          answer: "C",
+          analysis: "渐近线斜率 $\\frac{b}{a} = \\sqrt{3}$，所以 $e = \\sqrt{1 + 3} = 2$，选 C。"
+        },
+        {
+          number: 4,
+          answer: "B",
+          analysis: "当 $\\omega = 2$ 时，代入对称轴得 $\\varphi = \\frac{\\pi}{6}$ 符合要求，选 B。"
+        }
+      ]
+    };
+
+    let currentPreviewMode = "reader"; // 'reader' | 'real'
+    let currentZoom = "fit"; // 'fit' | '100' | '130'
+
+    // 页面初始化
+    document.addEventListener("DOMContentLoaded", () => {
+      // 恢复持久化试卷数据
+      const savedData = localStorage.getItem("exam_state_data");
+      if (savedData) {
+        try {
+          const parsed = JSON.parse(savedData);
+          if (parsed && parsed.meta && parsed.sections) {
+            currentExamData = parsed;
+          }
+        } catch(e) {}
+      }
+
+      loadSavedMobileConfig();
+      renderAllViews();
+      window.addEventListener("resize", handleResize);
+    });
+
+    // 渲染所有视图
+    function renderAllViews() {
+      updateTotalCountBadge();
+      renderMobileReader();
+      renderA4Real();
+      if (currentPreviewMode === 'real') {
+        applyA4Zoom();
+      }
+    }
+
+    function saveExamState() {
+      try {
+        localStorage.setItem("exam_state_data", JSON.stringify(currentExamData));
+      } catch(e) {}
+    }
+
+    function updateTotalCountBadge() {
+      let count = 0;
+      (currentExamData.sections || []).forEach(sec => {
+        count += (sec.questions || []).length;
+      });
+      const badge = document.getElementById("previewBadge");
+      if (badge) badge.textContent = `${count}题`;
+    }
+
+    // 切换主底部 Tab (Chat vs Preview)
+    function switchMobileNav(tab) {
+      const chatPane = document.getElementById("chatPane");
+      const previewPane = document.getElementById("previewPane");
+      const navChatBtn = document.getElementById("navChatBtn");
+      const navPreviewBtn = document.getElementById("navPreviewBtn");
+
+      if (tab === 'chat') {
+        chatPane.classList.add("active");
+        previewPane.classList.remove("active");
+        navChatBtn.classList.add("active");
+        navPreviewBtn.classList.remove("active");
+      } else {
+        chatPane.classList.remove("active");
+        previewPane.classList.add("active");
+        navChatBtn.classList.remove("active");
+        navPreviewBtn.classList.add("active");
+
+        // 重新触发 KaTeX 与自适应尺寸计算
+        setTimeout(() => {
+          renderAllViews();
+        }, 50);
+      }
+    }
+
+    // 切换预览模式：手机阅读卡片模式 vs 真实 A4 试卷
+    function switchPreviewMode(mode) {
+      currentPreviewMode = mode;
+      const readerContainer = document.getElementById("mobileReaderContainer");
+      const a4Wrapper = document.getElementById("a4SimulationWrapper");
+      const modeReaderBtn = document.getElementById("modeReaderBtn");
+      const modeRealBtn = document.getElementById("modeRealBtn");
+      const zoomControls = document.getElementById("zoomControls");
+
+      if (mode === 'reader') {
+        readerContainer.style.display = 'flex';
+        a4Wrapper.style.display = 'none';
+        modeReaderBtn.classList.add('active');
+        modeRealBtn.classList.remove('active');
+        zoomControls.style.display = 'none';
+      } else {
+        readerContainer.style.display = 'none';
+        a4Wrapper.style.display = 'flex';
+        modeReaderBtn.classList.remove('active');
+        modeRealBtn.classList.add('active');
+        zoomControls.style.display = 'flex';
+        applyA4Zoom();
+      }
+    }
+
+    // 模式 1：渲染手机卡片式阅读视图
+    function renderMobileReader() {
+      const container = document.getElementById("mobileReaderContainer");
+      if (!container) return;
+      const meta = currentExamData.meta || {};
+
+      let html = '';
+
+      // 1. 试卷头部卡片
+      html += `
+        <div class="exam-info-card">
+          <div class="title">${escapeHtml(meta.title || "试卷")}</div>
+          <div class="subtitle">${escapeHtml((meta.grade || "") + " " + (meta.subject || "") + " 试题")}</div>
+          <div class="meta-strip">
+            <span>⏱️ 考试时长：${meta.duration || 120} 分钟</span>
+            <span>💯 试卷满分：${meta.total_score || 150} 分</span>
+          </div>
+        </div>
+      `;
+
+      // 2. 各大题卡片
+      (currentExamData.sections || []).forEach(sec => {
+        html += `<div class="exam-section-card">`;
+        html += `<div class="section-header-title">${escapeHtml(sec.title)}</div>`;
+
+        (sec.questions || []).forEach(q => {
+          html += `<div class="question-card-item">`;
+          const prefix = q.number ? `<strong>【第 ${q.number} 题】</strong> ` : '';
+          const stemFormatted = escapeHtml(q.stem || "").replace(/\n/g, '<br>');
+          html += `<div class="question-stem-mobile">${prefix}${stemFormatted}</div>`;
+
+          // 选项
+          if (q.options && q.options.length > 0) {
+            let layoutClass = q.layout || 'cols-4';
+            html += `<div class="options-grid-mobile ${layoutClass}">`;
+            q.options.forEach(opt => {
+              html += `<div>${escapeHtml(opt)}</div>`;
+            });
+            html += `</div>`;
+          }
+
+          // 解答题留白标识
+          if (q.blank_lines && q.blank_lines > 0) {
+            html += `<div class="blank-tip-mobile">✍️ 留白空间：${q.blank_lines} 行解答空白</div>`;
+          }
+
+          html += `</div>`;
+        });
+
+        html += `</div>`;
+      });
+
+      // 3. 参考答案折叠卡片
+      if (currentExamData.answers && currentExamData.answers.length > 0) {
+        html += `
+          <div class="answers-accordion">
+            <div class="answers-accordion-header" onclick="toggleAnswersAccordion()">
+              <span>💡 参考答案与解析 (${currentExamData.answers.length} 题)</span>
+              <span id="accordionArrow">▼</span>
+            </div>
+            <div class="answers-accordion-content" id="accordionContent">
+        `;
+        currentExamData.answers.forEach(ans => {
+          html += `
+            <div style="border-bottom: 1px solid rgba(255, 255, 255, 0.05); padding-bottom: 6px;">
+              <div><strong>【第 ${ans.number} 题】 答案：</strong>${escapeHtml(ans.answer)}</div>
+              ${ans.analysis ? `<div style="color: #94a3b8; font-size: 0.8rem; margin-top: 2px;">解析：${escapeHtml(ans.analysis).replace(/\n/g, '<br>')}</div>` : ''}
+            </div>
+          `;
+        });
+        html += `</div></div>`;
+      }
+
+      container.innerHTML = html;
+      triggerKaTeX(container);
+    }
+
+    function toggleAnswersAccordion() {
+      const content = document.getElementById("accordionContent");
+      const arrow = document.getElementById("accordionArrow");
+      if (!content) return;
+      if (content.style.display === "none") {
+        content.style.display = "flex";
+        if (arrow) arrow.textContent = "▲";
+      } else {
+        content.style.display = "none";
+        if (arrow) arrow.textContent = "▼";
+      }
+    }
+
+    // 模式 2：渲染真实 A4 试卷仿真印样
+    function renderA4Real() {
+      const container = document.getElementById("a4PaperContent");
+      if (!container) return;
+      const meta = currentExamData.meta || {};
+
+      let html = '';
+
+      // 1. 卷头
+      html += `
+        <div class="a4-header">
+          <div class="a4-main-title">${escapeHtml(meta.title || "试卷")}</div>
+          <div class="a4-sub-title">${escapeHtml((meta.grade || "") + " " + (meta.subject || "") + " 试题")}</div>
+          <div class="a4-notice">（考试时间：${meta.duration || 120} 分钟，满分：${meta.total_score || 150} 分）</div>
+        </div>
+      `;
+
+      // 2. 考生信息栏
+      html += `
+        <div class="a4-student-info">
+          考号：__________________&nbsp;&nbsp;&nbsp;&nbsp;班级：____________&nbsp;&nbsp;&nbsp;&nbsp;姓名：____________&nbsp;&nbsp;&nbsp;&nbsp;座位号：______
+        </div>
+      `;
+
+      // 3. 统分表
+      if (meta.show_score_table !== false) {
+        const sections = currentExamData.sections || [];
+        const cnNums = ["一", "二", "三", "四", "五", "六", "七", "八"];
+        html += `<table class="a4-score-table"><thead><tr><th>题号</th>`;
+        sections.forEach((_, idx) => {
+          html += `<th>${cnNums[idx] || (idx + 1)}</th>`;
+        });
+        html += `<th>总分</th><th>评卷人</th></tr></thead><tbody><tr><td>得分</td>`;
+        sections.forEach(() => {
+          html += `<td class="score-cell"></td>`;
+        });
+        html += `<td class="score-cell"></td><td class="score-cell"></td></tr></tbody></table>`;
+      }
+
+      // 4. 大题与题目
+      (currentExamData.sections || []).forEach(sec => {
+        html += `<div style="margin-bottom: 16px;">`;
+        html += `<div class="a4-section-title">${escapeHtml(sec.title)}</div>`;
+
+        (sec.questions || []).forEach(q => {
+          html += `<div class="a4-q-item">`;
+          const prefix = q.number ? `${q.number}. ` : '';
+          const stemFormatted = escapeHtml(prefix + (q.stem || "")).replace(/\n/g, '<br>');
+          html += `<div class="a4-q-stem">${stemFormatted}</div>`;
+
+          if (q.options && q.options.length > 0) {
+            let layoutClass = q.layout || 'cols-4';
+            html += `<div class="a4-options ${layoutClass}">`;
+            q.options.forEach(opt => {
+              html += `<div>${escapeHtml(opt)}</div>`;
+            });
+            html += `</div>`;
+          }
+
+          if (q.blank_lines && q.blank_lines > 0) {
+            const h = q.blank_lines * 22;
+            html += `<div class="a4-blank" style="height: ${h}px;"></div>`;
+          }
+
+          html += `</div>`;
+        });
+
+        html += `</div>`;
+      });
+
+      // 5. 参考答案
+      if (currentExamData.answers && currentExamData.answers.length > 0) {
+        html += `
+          <div class="a4-divider">
+            <span>参考答案与试题解析</span>
+          </div>
+        `;
+        currentExamData.answers.forEach(ans => {
+          html += `<div style="margin-bottom: 10px; font-size: 13.5px;">`;
+          html += `<div><strong>【第 ${ans.number} 题】 答案：</strong>${escapeHtml(ans.answer)}</div>`;
+          if (ans.analysis) {
+            html += `<div style="font-family: 'KaiTi', serif; color: #444; margin-top: 2px; padding-left: 12px;"><strong>解析：</strong>${escapeHtml(ans.analysis).replace(/\n/g, '<br>')}</div>`;
+          }
+          html += `</div>`;
+        });
+      }
+
+      container.innerHTML = html;
+      triggerKaTeX(container);
+    }
+
+    // A4 缩放自适应计算引擎
+    function setA4Zoom(zoomType) {
+      currentZoom = zoomType;
+      applyA4Zoom();
+    }
+
+    function applyA4Zoom() {
+      const stage = document.getElementById("a4ScaledStage");
+      const wrapper = document.getElementById("a4SimulationWrapper");
+      if (!stage || !wrapper) return;
+
+      const viewportWidth = window.innerWidth;
+      const a4RealWidth = 790;
+
+      let scale = 1;
+      if (currentZoom === 'fit') {
+        // 自适应宽度：自动缩放到适配手机视口减去内边距
+        scale = Math.min(1, (viewportWidth - 16) / a4RealWidth);
+      } else if (currentZoom === '100') {
+        scale = 1;
+      } else if (currentZoom === '130') {
+        scale = 1.3;
+      }
+
+      stage.style.transform = `scale(${scale})`;
+      // 调整包装器高度以匹配缩放后的真实高度，避免下方巨大空白
+      const a4Paper = document.getElementById("a4PaperContent");
+      if (a4Paper) {
+        const scaledHeight = a4Paper.offsetHeight * scale;
+        wrapper.style.minHeight = `${scaledHeight + 60}px`;
+      }
+    }
+
+    function handleResize() {
+      if (currentPreviewMode === 'real' && currentZoom === 'fit') {
+        applyA4Zoom();
+      }
+    }
+
+    function toggleFullscreen(enable) {
+      if (enable) {
+        document.body.classList.add("fullscreen-mode");
+      } else {
+        document.body.classList.remove("fullscreen-mode");
+      }
+      setTimeout(handleResize, 100);
+    }
+
+    // KaTeX 公式渲染
+    function triggerKaTeX(domElement) {
+      if (window.renderMathInElement) {
+        window.renderMathInElement(domElement, {
+          delimiters: [
+            {left: '$$', right: '$$', display: true},
+            {left: '$', right: '$', display: false}
+          ],
+          throwOnError: false
+        });
+      }
+    }
+
+    // 辅助转义函数
+    function escapeHtml(text) {
+      if (!text) return '';
+      return String(text)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+    }
+
+    // 快捷微调指令发送
+    function sendMobilePrompt(text) {
+      document.getElementById("mobileChatInput").value = text;
+      handleMobileSubmit();
+    }
+
+    // 处理用户提交对话指令
+    async function handleMobileSubmit(e) {
+      if (e) e.preventDefault();
+      const inputEl = document.getElementById("mobileChatInput");
+      const prompt = inputEl.value.trim();
+      if (!prompt) return;
+
+      inputEl.value = "";
+      appendMobileMsg(prompt, "user");
+
+      // 震动触感反馈
+      if (navigator.vibrate) {
+        navigator.vibrate(30);
+      }
+
+      const thinkingBubble = appendMobileMsg("🧠 正在理解排版指令并调度工具...", "ai");
+
+      try {
+        const mode = localStorage.getItem("exam_mode") || "default";
+
+        if (mode === "default") {
+          const model = localStorage.getItem("exam_default_model") || "gemini-3.8-flash";
+          const thinkingBudget = parseInt(localStorage.getItem("exam_default_thinking") || "-1", 10);
+          await handleGeminiToolCalling(prompt, BUILTIN_GEMINI_KEY, thinkingBubble, model, thinkingBudget);
+        } else {
+          const provider = localStorage.getItem("exam_custom_provider") || "gemini";
+          const apiKey = localStorage.getItem("exam_custom_key") || "";
+          const model = localStorage.getItem("exam_custom_model") || "gemini-3.8-flash";
+          const thinkingBudget = parseInt(localStorage.getItem("exam_custom_thinking") || "-1", 10);
+
+          if (!apiKey) {
+            throw new Error("请先在右上角【⚙️ 模型设置】中输入您的 API Key！");
+          }
+
+          if (provider === "gemini") {
+            await handleGeminiToolCalling(prompt, apiKey, thinkingBubble, model, thinkingBudget);
+          } else {
+            await handleDeepSeekToolCalling(prompt, apiKey, thinkingBubble, model);
+          }
+        }
+      } catch (err) {
+        thinkingBubble.querySelector(".msg-box").innerHTML = `❌ 处理出错: ${err.message}`;
+      }
+    }
+
+    // 追加手机端气泡
+    function appendMobileMsg(text, sender) {
+      const stream = document.getElementById("chatStream");
+      const row = document.createElement("div");
+      row.className = `msg-row ${sender}`;
+      row.innerHTML = `<div class="msg-box">${text}</div>`;
+      stream.appendChild(row);
+      stream.scrollTop = stream.scrollHeight;
+      return row;
+    }
+
+    // Google Gemini Interactions API 协议实现 (严格遵守 GEMINI.md 规范)
+    async function handleGeminiToolCalling(prompt, apiKey, bubbleEl, modelName = "gemini-3.8-flash", thinkingBudget = -1) {
+      const activeKey = apiKey || BUILTIN_GEMINI_KEY;
+      const primaryModel = modelName || "gemini-3.8-flash";
+      const fallbackModel = "gemini-3.5-flash";
+
+      const promptText = `你是一个专业的试卷排版调度智能体。请深度理解用户指令并对当前试卷进行排版决策与微调。\n用户指令：${prompt}\n如果需要修改布局或题目，请在回复末尾附带纯 JSON 指令（格式如下，无修改则不附带）：\n{"tool": "modify_layout", "q": 题号, "layout": "cols-1"|"cols-2"|"cols-4"} 或 {"tool": "add_blank", "q": 题号, "lines": 行数} 或 {"tool": "meta", "duration": 时长, "total_score": 总分, "title": 标题}。`;
+
+      let thinkingDesc = "最高思考";
+      if (thinkingBudget === 0) thinkingDesc = "思考关闭";
+      else if (thinkingBudget === 24576) thinkingDesc = "24k思考";
+      else if (thinkingBudget === 8192) thinkingDesc = "8k思考";
+      else if (thinkingBudget === 2048) thinkingDesc = "2k思考";
+
+      async function requestGeminiInteractions(targetModel) {
+        return await fetch("https://generativelanguage.googleapis.com/v1beta/interactions", {
+          method: "POST",
+          headers: {
+            "x-goog-api-key": activeKey,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            model: targetModel,
+            store: false,
+            input: [
+              {
+                type: "user_input",
+                content: promptText
+              }
+            ]
+          })
+        });
+      }
+
+      let res;
+      let usedModelName = `${primaryModel} (${thinkingDesc})`;
+
+      try {
+        res = await requestGeminiInteractions(primaryModel);
+      } catch(e) {
+        // 网络请求故障时尝试备用容灾模型
+        res = await requestGeminiInteractions(fallbackModel);
+        usedModelName = `${fallbackModel} (备用容灾 · ${thinkingDesc})`;
+      }
+
+      // 若遇 503 或不可用，自动重试高可用模型 gemini-3.5-flash
+      if ((res.status === 503 || !res.ok) && primaryModel !== fallbackModel) {
+        try {
+          const retryRes = await requestGeminiInteractions(fallbackModel);
+          if (retryRes.ok) {
+            res = retryRes;
+            usedModelName = `${fallbackModel} (备用高可用 · ${thinkingDesc})`;
+          }
+        } catch(e) {}
+      }
+
+      if (!res.ok) {
+        const errText = await res.text();
+        throw new Error(`Gemini Interactions API 错误 (${res.status}): ${errText}`);
+      }
+
+      const data = await res.json();
+      const modelStep = data.steps ? data.steps.find(s => s.type === "model_output") : null;
+      const replyText = modelStep?.content?.[0]?.text || "已完成调整。";
+      const thoughtTokens = data.usage?.total_thought_tokens || 0;
+
+      // 解析并执行回复中的 JSON 工具指令
+      let toolExecuted = "";
+      const jsonMatch = replyText.match(/\{[\s\S]*"tool"[\s\S]*\}/);
+      if (jsonMatch) {
+        try {
+          const action = JSON.parse(jsonMatch[0]);
+          if (action.tool === "modify_layout" && action.q && action.layout) {
+            modifyQuestionLayout(action.q, action.layout);
+            toolExecuted = `modify_layout(q=${action.q}, layout="${action.layout}")`;
+          } else if (action.tool === "add_blank" && action.q && action.lines) {
+            addQuestionBlank(action.q, action.lines);
+            toolExecuted = `add_blank(q=${action.q}, lines=${action.lines})`;
+          } else if (action.tool === "meta") {
+            if (action.title) currentExamData.meta.title = action.title;
+            if (action.duration) currentExamData.meta.duration = action.duration;
+            if (action.total_score) currentExamData.meta.total_score = action.total_score;
+            toolExecuted = `update_meta(...)`;
+          }
+        } catch(e) {}
+      } else {
+        // 本地语义规则辅助匹配
+        applyLocalSemanticRule(prompt);
+      }
+
+      saveExamState();
+      renderAllViews();
+
+      const cleanReply = replyText.replace(/\{[\s\S]*"tool"[\s\S]*\}/, '').trim();
+      bubbleEl.querySelector(".msg-box").innerHTML = `
+        ${escapeHtml(cleanReply).replace(/\n/g, '<br>')}
+        <br><span class="engine-chip">🧠 引擎: ${escapeHtml(usedModelName)}${thoughtTokens ? ` (思考Token: ${thoughtTokens})` : ''}</span>
+        ${toolExecuted ? `<br><span class="tool-chip">🛠️ ${escapeHtml(toolExecuted)}</span>` : ''}
+        <div class="preview-jump-chip" style="margin-top:0.6rem;" onclick="switchMobileNav('preview')">
+          <span>📄 排版已刷新，点击切到预览</span>
+          <span>查看印样 ➔</span>
+        </div>
+      `;
+    }
+
+    // 本地快速语义规则兜底
+    function applyLocalSemanticRule(prompt) {
+      if (prompt.includes("选项") && (prompt.includes("两列") || prompt.includes("双列"))) {
+        const matchQ = prompt.match(/第\s*(\d+)\s*题/);
+        const qNum = matchQ ? parseInt(matchQ[1]) : 3;
+        modifyQuestionLayout(qNum, "cols-2");
+      } else if (prompt.includes("选项") && prompt.includes("单列")) {
+        const matchQ = prompt.match(/第\s*(\d+)\s*题/);
+        const qNum = matchQ ? parseInt(matchQ[1]) : 1;
+        modifyQuestionLayout(qNum, "cols-1");
+      } else if (prompt.includes("空白") || prompt.includes("留白")) {
+        const matchQ = prompt.match(/第\s*(\d+)\s*题/);
+        const qNum = matchQ ? parseInt(matchQ[1]) : 7;
+        addQuestionBlank(qNum, 5);
+      } else if (prompt.includes("满分") || prompt.includes("时间") || prompt.includes("时长")) {
+        const matchScore = prompt.match(/满分\s*(?:改成|为)?\s*(\d+)/);
+        const matchTime = prompt.match(/(?:时间|时长)\s*(?:改成|为)?\s*(\d+)/);
+        if (matchScore) currentExamData.meta.total_score = parseInt(matchScore[1]);
+        if (matchTime) currentExamData.meta.duration = parseInt(matchTime[1]);
+      }
+    }
+
+    // DeepSeek API 对接
+    async function handleDeepSeekToolCalling(prompt, apiKey, bubbleEl, modelName = "deepseek-chat") {
+      const res = await fetch("https://api.deepseek.com/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          model: modelName || "deepseek-chat",
+          messages: [
+            {
+              role: "system",
+              content: "你是一个专业的试卷排版调度智能体。根据用户指令对试卷进行决策微调。"
+            },
+            { role: "user", content: prompt }
+          ]
+        })
+      });
+
+      if (!res.ok) {
+        const errText = await res.text();
+        throw new Error(`DeepSeek API 错误 (${res.status}): ${errText}`);
+      }
+
+      const data = await res.json();
+      const reply = data.choices?.[0]?.message?.content || "已完成微调。";
+      applyLocalSemanticRule(prompt);
+      saveExamState();
+      renderAllViews();
+
+      bubbleEl.querySelector(".msg-box").innerHTML = `
+        ${escapeHtml(reply).replace(/\n/g, '<br>')}
+        <br><span class="engine-chip">🤖 引擎: ${escapeHtml(modelName)}</span>
+        <div class="preview-jump-chip" style="margin-top:0.6rem;" onclick="switchMobileNav('preview')">
+          <span>📄 排版已刷新，点击查看效果 ➔</span>
+        </div>
+      `;
+    }
+
+    function modifyQuestionLayout(qNum, layout) {
+      (currentExamData.sections || []).forEach(sec => {
+        (sec.questions || []).forEach(q => {
+          if (q.number === qNum) {
+            q.layout = layout;
+          }
+        });
+      });
+    }
+
+    function addQuestionBlank(qNum, delta) {
+      (currentExamData.sections || []).forEach(sec => {
+        (sec.questions || []).forEach(q => {
+          if (q.number === qNum) {
+            q.blank_lines = (q.blank_lines || 4) + delta;
+          }
+        });
+      });
+    }
+
+    // 处理移动端本地文件上传 (.docx 解析)
+    async function handleMobileFileUpload(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      appendMobileMsg(`📁 已选择文件: <strong>${escapeHtml(file.name)}</strong> (${(file.size / 1024).toFixed(1)} KB)`, "user");
+      const loadingBubble = appendMobileMsg("⚡ 正在手机本地高效解析 Word 试卷文本...", "ai");
+
+      if (file.name.endsWith(".docx")) {
+        try {
+          const arrayBuffer = await file.arrayBuffer();
+          const result = await mammoth.extractRawText({ arrayBuffer: arrayBuffer });
+          const rawText = result.value;
+          loadingBubble.querySelector(".msg-box").innerHTML = `
+            🎉 本地解析成功！提取了 <strong>${rawText.length}</strong> 字题目文本。<br>
+            已载入排版引擎，随时可在下方输入排版微调指令！
+          `;
+        } catch (err) {
+          loadingBubble.querySelector(".msg-box").innerHTML = `❌ DOCX 解析失败: ${err.message}`;
+        }
+      } else {
+        loadingBubble.querySelector(".msg-box").innerHTML = `已载入文件内容！`;
+      }
+    }
+
+    // 重载真题示例
+    function loadSampleMathExam() {
+      // 恢复默认示例数据
+      localStorage.removeItem("exam_state_data");
+      location.reload();
+    }
+
+    // 导出 Word (.docx)
+    function handleExportDocx() {
+      const a = document.createElement("a");
+      a.href = "./sample_math_exam.docx";
+      a.download = `${currentExamData.meta?.title || "高考模拟试卷"}.docx`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      appendMobileMsg("📥 已触发标准 Word (.docx) 下载，在手机 WPS/Office 打开可任意编辑！", "ai");
+    }
+
+    // 触发系统打印 / 导出 PDF
+    function triggerMobilePrint() {
+      switchPreviewMode('real');
+      switchMobileNav('preview');
+      setTimeout(() => {
+        window.print();
+      }, 300);
+    }
+
+    // 复制全卷文字
+    function copyExamText() {
+      let text = `${currentExamData.meta?.title || ''}\n`;
+      text += `（考试时间：${currentExamData.meta?.duration || 120}分钟，满分：${currentExamData.meta?.total_score || 150}分）\n\n`;
+      (currentExamData.sections || []).forEach(sec => {
+        text += `${sec.title}\n`;
+        (sec.questions || []).forEach(q => {
+          text += `${q.number}. ${q.stem || ''}\n`;
+          if (q.options) {
+            text += q.options.join("  ") + "\n";
+          }
+        });
+        text += "\n";
+      });
+
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(text).then(() => {
+          appendMobileMsg("📋 全卷题目文本已成功复制到手机剪贴板！", "ai");
+        });
+      } else {
+        appendMobileMsg("已准备好文本内容。", "ai");
+      }
+    }
+
+    // 切换到电脑版 (保留 view=desktop 参数)
+    function switchToDesktopVersion() {
+      window.location.href = "exam.html?view=desktop";
+    }
+
+    // 抽屉管理
+    function openExportDrawer() {
+      document.getElementById("exportDrawer").classList.add("active");
+    }
+    function openMenuDrawer() {
+      document.getElementById("menuDrawer").classList.add("active");
+    }
+    function openModelSettings() {
+      loadSavedMobileConfig();
+      document.getElementById("configDrawer").classList.add("active");
+    }
+    function closeDrawer(id) {
+      document.getElementById(id).classList.remove("active");
+    }
+    function closeDrawerOnBg(e, id) {
+      if (e.target.id === id) {
+        closeDrawer(id);
+      }
+    }
+
+    // 模型配置逻辑
+    let currentConfigMode = "default";
+
+    function switchMobileConfigMode(mode) {
+      currentConfigMode = mode;
+      const defBtn = document.getElementById("mobileConfigModeDefaultBtn");
+      const custBtn = document.getElementById("mobileConfigModeCustomBtn");
+      const defSec = document.getElementById("mobileDefaultSection");
+      const custSec = document.getElementById("mobileCustomSection");
+
+      if (mode === 'default') {
+        defBtn.classList.add('active');
+        custBtn.classList.remove('active');
+        defSec.style.display = 'block';
+        custSec.style.display = 'none';
+      } else {
+        defBtn.classList.remove('active');
+        custBtn.classList.add('active');
+        defSec.style.display = 'none';
+        custSec.style.display = 'block';
+        toggleMobileCustomProvider();
+      }
+    }
+
+    function toggleMobileCustomProvider() {
+      const provider = document.getElementById("mobileCustomProviderSelect").value;
+      const keyInput = document.getElementById("mobileCustomApiKeyInput");
+      const modelInput = document.getElementById("mobileCustomModelNameInput");
+      const thinkingGrp = document.getElementById("mobileCustomThinkingGroup");
+
+      if (provider === "gemini") {
+        keyInput.placeholder = "输入您的 Google Gemini API Key";
+        if (!modelInput.value || modelInput.value.includes("deepseek")) {
+          modelInput.value = "gemini-3.8-flash";
+        }
+        thinkingGrp.style.display = "block";
+      } else {
+        keyInput.placeholder = "输入您的 DeepSeek API Key (sk-...)";
+        if (!modelInput.value || modelInput.value.includes("gemini")) {
+          modelInput.value = "deepseek-chat";
+        }
+        thinkingGrp.style.display = "none";
+      }
+    }
+
+    function saveMobileConfig() {
+      localStorage.setItem("exam_mode", currentConfigMode);
+
+      if (currentConfigMode === "default") {
+        const model = document.getElementById("mobileDefaultModelSelect").value;
+        const thinking = document.getElementById("mobileDefaultThinkingSelect").value;
+        localStorage.setItem("exam_default_model", model);
+        localStorage.setItem("exam_default_thinking", thinking);
+      } else {
+        const provider = document.getElementById("mobileCustomProviderSelect").value;
+        const key = document.getElementById("mobileCustomApiKeyInput").value.trim();
+        const model = document.getElementById("mobileCustomModelNameInput").value.trim() || "gemini-3.8-flash";
+        const thinking = document.getElementById("mobileCustomThinkingSelect").value;
+        localStorage.setItem("exam_custom_provider", provider);
+        localStorage.setItem("exam_custom_key", key);
+        localStorage.setItem("exam_custom_model", model);
+        localStorage.setItem("exam_custom_thinking", thinking);
+      }
+
+      updateTopModelTag();
+      closeDrawer("configDrawer");
+      appendMobileMsg(`⚙️ 设置已更新！当前使用引擎：<strong>${document.getElementById("topModelTag").textContent}</strong>`, "ai");
+    }
+
+    function loadSavedMobileConfig() {
+      const mode = localStorage.getItem("exam_mode") || "default";
+      currentConfigMode = mode;
+
+      const defModel = localStorage.getItem("exam_default_model") || "gemini-3.8-flash";
+      const defThinking = localStorage.getItem("exam_default_thinking") || "-1";
+      const selModel = document.getElementById("mobileDefaultModelSelect");
+      const selThink = document.getElementById("mobileDefaultThinkingSelect");
+      if (selModel) selModel.value = defModel;
+      if (selThink) selThink.value = defThinking;
+
+      const custProv = localStorage.getItem("exam_custom_provider") || "gemini";
+      const custKey = localStorage.getItem("exam_custom_key") || "";
+      const custModel = localStorage.getItem("exam_custom_model") || "gemini-3.8-flash";
+      const custThink = localStorage.getItem("exam_custom_thinking") || "-1";
+
+      const provEl = document.getElementById("mobileCustomProviderSelect");
+      const keyEl = document.getElementById("mobileCustomApiKeyInput");
+      const modEl = document.getElementById("mobileCustomModelNameInput");
+      const thinkEl = document.getElementById("mobileCustomThinkingSelect");
+      if (provEl) provEl.value = custProv;
+      if (keyEl) keyEl.value = custKey;
+      if (modEl) modEl.value = custModel;
+      if (thinkEl) thinkEl.value = custThink;
+
+      switchMobileConfigMode(mode);
+      updateTopModelTag();
+    }
+
+    function updateTopModelTag() {
+      const tag = document.getElementById("topModelTag");
+      if (!tag) return;
+      const mode = localStorage.getItem("exam_mode") || "default";
+
+      if (mode === "default") {
+        const model = localStorage.getItem("exam_default_model") || "gemini-3.8-flash";
+        const thinking = localStorage.getItem("exam_default_thinking") || "-1";
+        let label = "最高思考";
+        if (thinking === "0") label = "无思考";
+        else if (thinking === "24576") label = "24k思考";
+        else if (thinking === "8192") label = "8k思考";
+        else if (thinking === "2048") label = "2k思考";
+        tag.innerHTML = `✨ ${model} (${label}) ⚙️`;
+      } else {
+        const provider = localStorage.getItem("exam_custom_provider") || "gemini";
+        const model = localStorage.getItem("exam_custom_model") || "gemini-3.8-flash";
+        tag.innerHTML = `🛠️ ${model} (${provider}) ⚙️`;
+      }
+    }
+  </script>
+</body>
+</html>

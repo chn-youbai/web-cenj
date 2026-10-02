@@ -352,7 +352,7 @@
         <span class="like-badge" id="likeCount">...</span>
       </button>
 
-      <a href="./exam.html" class="exam-btn">
+      <a href="./exam.html" class="exam-btn" id="examLink">
         <span>📝 AI 试卷智能排版</span>
         <span style="font-size: 0.85em; opacity: 0.9;">(对话微调/导出) →</span>
       </a>
@@ -379,6 +379,14 @@
 
     let currentVal = 0;
     const icons = ['💖', '🎉', '✨', '🔥', '👏', '🌟', '🚀', '💯'];
+
+    // 智能识别移动端，优化排版入口直达
+    try {
+      if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile/i.test(navigator.userAgent)) {
+        const linkEl = document.getElementById('examLink');
+        if (linkEl) linkEl.href = './exam-mobile.html';
+      }
+    } catch (e) {}
 
     // 格式化数字
     function formatCount(num) {
