@@ -435,17 +435,11 @@
     const ACCESS_PASSWORD = "227929";
     let isSubUnlocked = false;
 
-    // 检查历史解锁状态
-    if (sessionStorage.getItem('sub_unlocked') === 'true') {
-      doUnlock();
-    }
-
     function unlockSubscribe(e) {
       if (e) e.preventDefault();
       const pwd = document.getElementById('unlockInput').value.trim();
       if (pwd === ACCESS_PASSWORD) {
         doUnlock();
-        sessionStorage.setItem('sub_unlocked', 'true');
         showToast("🎉 解锁成功！已展示完整订阅地址");
       } else {
         showToast("❌ 密码错误，请重新输入");
