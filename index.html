@@ -300,8 +300,7 @@
     // 初始化获取云端最新计次
     async function initCount() {
       try {
-        // 先尝试自己的私有 Cloudflare API
-        const res = await fetch(LOCAL_API);
+        const res = await fetch(`${LOCAL_API}?t=${Date.now()}`, { cache: 'no-store' });
         if (res.ok) {
           const data = await res.json();
           if (data && typeof data.value === 'number') {
@@ -314,7 +313,7 @@
 
       // 备用降级逻辑
       try {
-        const res = await fetch(`${FALLBACK_API_BASE}/get/${FALLBACK_KEY}`);
+        const res = await fetch(`${FALLBACK_API_BASE}/get/${FALLBACK_KEY}?t=${Date.now()}`, { cache: 'no-store' });
         if (res.ok) {
           const data = await res.json();
           currentVal = data.value || 0;
@@ -327,10 +326,77 @@
       }
     }
 
+    // 批量同步队列：防止快速连点丢失
+    let pendingClicks = 0;
+    let syncTimer = null;
+    let isSyncing = false;
+
+    async function flushClicks() {
+      if (pendingClicks <= 0 || isSyncing) return;
+      const countToSend = pendingClicks;
+      pendingClicks = 0;
+      isSyncing = true;
+
+      try {
+        const res = await fetch(LOCAL_API, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ amount: countToSend }),
+          keepalive: true
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data && typeof data.value === 'number') {
+            currentVal = Math.max(currentVal, data.value + pendingClicks);
+            countEl.textContent = formatCount(currentVal);
+          }
+        } else {
+          // 若失败归还计数
+          pendingClicks += countToSend;
+        }
+      } catch (e) {
+        pendingClicks += countToSend;
+      } finally {
+        isSyncing = false;
+        // 如果在发送期间又有新的点击，继续发送
+        if (pendingClicks > 0) {
+          syncTimer = setTimeout(flushClicks, 400);
+        }
+      }
+    }
+
+    // 页面跳转或切后台时，使用 sendBeacon / keepalive 立即刷入云端
+    function flushOnLeave() {
+      if (pendingClicks > 0) {
+        const payload = JSON.stringify({ amount: pendingClicks });
+        pendingClicks = 0;
+        if (navigator.sendBeacon) {
+          const blob = new Blob([payload], { type: 'application/json' });
+          navigator.sendBeacon(LOCAL_API, blob);
+        } else {
+          fetch(LOCAL_API, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: payload,
+            keepalive: true
+          });
+        }
+      }
+    }
+
+    window.addEventListener('pagehide', flushOnLeave);
+    window.addEventListener('beforeunload', flushOnLeave);
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden') {
+        flushOnLeave();
+      }
+    });
+
     // 点击事件：动画特效 + 云端计数 +1
-    async function handleClick(e) {
-      // 1. 瞬时界面反馈（先自增，视觉无延迟）
+    function handleClick(e) {
+      // 1. 瞬时界面反馈（视觉无延迟）
       currentVal++;
+      pendingClicks++;
       countEl.textContent = formatCount(currentVal);
 
       // 2. 按钮波纹与弹跳动画
@@ -341,30 +407,9 @@
       // 3. 产生漂浮粒子特效
       spawnParticle(e);
 
-      // 4. 同步请求自己私有的 Cloudflare 后端接口
-      try {
-        const res = await fetch(LOCAL_API, { method: 'POST' });
-        if (res.ok) {
-          const data = await res.json();
-          if (data && typeof data.value === 'number') {
-            currentVal = Math.max(currentVal, data.value);
-            countEl.textContent = formatCount(currentVal);
-            return;
-          }
-        }
-      } catch (e) {}
-
-      // 备用同步请求
-      try {
-        const res = await fetch(`${FALLBACK_API_BASE}/hit/${FALLBACK_KEY}`);
-        if (res.ok) {
-          const data = await res.json();
-          if (data && typeof data.value === 'number') {
-            currentVal = Math.max(currentVal, data.value);
-            countEl.textContent = formatCount(currentVal);
-          }
-        }
-      } catch (err) {}
+      // 4. 防抖批量同步：连点时 350ms 内合并批量提交，减少网络阻塞
+      if (syncTimer) clearTimeout(syncTimer);
+      syncTimer = setTimeout(flushClicks, 350);
     }
 
     // 漂浮飞升粒子特效
