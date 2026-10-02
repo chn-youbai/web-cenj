@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>绮惧僵鍥惧簱 - Photo Gallery</title>
+  <title>精彩图库 - Photo Gallery</title>
   <style>
     * {
       margin: 0;
@@ -150,7 +150,7 @@
       touch-action: pan-y;
       display: block;
     }
-    /* 宸﹀彸鍒囨崲绠ご鎸夐挳 */
+    /* 左右切换箭头按钮 */
     .nav-arrow {
       position: absolute;
       top: 50%;
@@ -184,7 +184,7 @@
     .nav-arrow.next {
       right: 1.5rem;
     }
-    /* 搴曢儴璁℃暟鍣ㄥ窘绔?*/
+    /* 底部计数器徽章 */
     .lightbox-counter {
       position: absolute;
       bottom: 1.5rem;
@@ -239,12 +239,12 @@
 <body>
   <div class="header">
     <div class="title-group">
-      <h1>馃摲 绮惧僵鎽勫奖鍥惧簱</h1>
-      <p>绮鹃€夌収鐗囧睍绀?路 鍏?<span id="count">0</span> 寮犱綔鍝?/p>
+      <h1>📷 精彩摄影图库</h1>
+      <p>精选照片展示 · 共 <span id="count">0</span> 张作品</p>
     </div>
     <div style="display: flex; gap: 0.8rem; flex-wrap: wrap;">
       <a href="./index.html" class="back-btn">
-        <span>鈫?/span> 杩斿洖涓婚〉
+        <span>←</span> 返回主页
       </a>
     </div>
   </div>
@@ -253,117 +253,140 @@
 
   <div class="lightbox" id="lightbox" onclick="closeLightbox(event)">
     <button class="close-btn" onclick="closeLightbox()">&times;</button>
-    <button class="nav-arrow prev" onclick="prevImage(event)" aria-label="涓婁竴寮?>&#10094;</button>
+    <button class="nav-arrow prev" onclick="prevImage(event)" aria-label="上一张">&#10094;</button>
     
     <div class="lightbox-content" onclick="event.stopPropagation()">
-      <img id="lightboxImg" src="" alt="澶у浘棰勮">
+      <img id="lightboxImg" src="" alt="大图预览">
     </div>
 
-    <button class="nav-arrow next" onclick="nextImage(event)" aria-label="涓嬩竴寮?>&#10095;</button>
+    <button class="nav-arrow next" onclick="nextImage(event)" aria-label="下一张">&#10095;</button>
     <div class="lightbox-counter" id="lightboxCounter">1 / 23</div>
   </div>
 
   <script>
     const images = [
-    "DJI_20250305163705_0198_D_edit_38161710462120.jpg",
-    "DJI_20250306131311_0208_D.JPG",
-    "DJI_20250306131505_0213_D.JPG",
-    "DJI_20250306131507_0214_D.JPG",
-    "DJI_20250307131153_0234_D_edit_38153742230966.jpg",
-    "DJI_20250307131709_0242_D_edit_38147606627658.jpg",
-    "DJI_20250307131921_0246_D_edit_38141239496811.jpg",
-    "DJI_20250307132003_0250_D_edit_38134488609811.jpg",
-    "DJI_20250307133759_0266_D.JPG",
-    "DJI_20251218105514_0534_D.JPG",
-    "DJI_20251220095625_0562_D.JPG",
-    "DJI_20251220095646_0565_D_edit_38124802701810.jpg",
-    "DJI_20251220100013_0570_D_edit_38117386931887.jpg",
-    "DJI_20251220172319_0580_D_edit_38112745228809.jpg",
-    "DJI_20251231090908_0610_D.JPG",
-    "DJI_20260120155848_0684_D_edit_38107367192271.jpg",
-    "DJI_20260120155915_0686_D_edit_38099886073732.jpg",
-    "DJI_20260120160149_0695_D_edit_38094903471039.jpg",
-    "DJI_20260120160204_0696_D_edit_38088556275270.jpg",
-    "DJI_20260120160353_0700_D_edit_38083411592192.jpg",
-    "DJI_20260120160955_0705_D_edit_38076609266115.jpg",
-    "DJI_20260120161141_0707_D.JPG",
-    "DJI_20260120161158_0708_D.JPG",
-    "DJI_20260402184719_0944_D.JPG",
-    "DJI_20260407110221_0972_D_edit_38064149670653.jpg",
-    "DJI_20260407110341_0975_D.JPG",
-    "DJI_20260407155116_0980_D.JPG",
-    "DJI_20260407185959_0995_D.JPG",
-    "DJI_20260408102025_0013_D.JPG",
-    "DJI_20260408102051_0015_D.JPG",
-    "DJI_20260408102316_0018_D.JPG",
-    "DJI_20260408102833_0020_D.JPG",
-    "DJI_20260409112109_0035_D.JPG",
-    "DJI_20260414125522_0122_D.JPG",
-    "DJI_20260416112357_0149_D_edit_38050617174113.jpg",
-    "DJI_20260416112547_0151_D_edit_38045701026652.jpg",
-    "DJI_20260416112811_0153_D.JPG",
-    "DJI_20260427092228_0186_D.JPG",
-    "DJI_20260427092353_0188_D_edit_38033734383343.jpg",
-    "DJI_20260427092459_0189_D_edit_38026836357497.jpg",
-    "DJI_20260427191056_0200_D.JPG",
-    "DJI_20260430093218_0223_D_edit_38020714672496.jpg",
-    "DJI_20260512115048_0251_D.JPG",
-    "DJI_20260516210730_0305_D.JPG",
-    "IMG_8932.JPG",
-    "mmexport1761964075514_edit_35181118828634.jpg",
-    "retouch_2026050915542361.jpg",
-    "Screenshot_20260329_221100.jpg",
-    "Videoframe_20260403_154615_com.huawei.himovie.jpg",
-    "Videoframe_20260403_154700_com.huawei.himovie.jpg",
-    "Videoframe_20260417_165421_com.huawei.himovie.jpg",
-    "Videoframe_20260417_165442_com.huawei.himovie.jpg",
-    "Videoframe_20260417_165447_com.huawei.himovie.jpg",
-    "Videoframe_20260417_165450_com.huawei.himovie.jpg",
-    "Videoframe_20260417_165557_com.huawei.himovie.jpg",
-    "Videoframe_20260417_165602_com.huawei.himovie.jpg",
-    "Videoframe_20260508_183914_com.huawei.himovie.jpg",
-    "Videoframe_20260508_183917_com.huawei.himovie.jpg",
-    "Videoframe_20260508_183933_com.huawei.himovie.jpg",
-    "Videoframe_20260508_183938_com.huawei.himovie.jpg",
-    "Videoframe_20260508_183956_com.huawei.himovie.jpg",
-    "Videoframe_20260520_085842_com.huawei.himovie.jpg",
-    "Videoframe_20260520_085950_com.huawei.himovie.jpg",
-    "Videoframe_20260520_085958_com.huawei.himovie.jpg",
-    "Videoframe_20260520_090002_com.huawei.himovie.jpg",
-    "Videoframe_20260520_091506_com.huawei.himovie.jpg",
-    "Videoframe_20260520_091531_com.huawei.himovie.jpg",
-    "Videoframe_20260520_091843_com.huawei.himovie.jpg",
-    "Videoframe_20260520_091930_com.huawei.himovie_edit_38003858282034.jpg",
-    "Videoframe_20260520_091938_com.huawei.himovie_edit_37997638551649.jpg",
-    "Videoframe_20260520_092032_com.huawei.himovie.jpg",
-    "Videoframe_20260520_092443_com.huawei.himovie.jpg",
-    "Videoframe_20260520_092558_com.huawei.himovie_edit_37988512816879.jpg",
-    "Videoframe_20260520_092612_com.huawei.himovie_edit_37982106350417.jpg",
-    "Videoframe_20260520_092647_com.huawei.himovie.jpg",
-    "Videoframe_20260520_092655_com.huawei.himovie.jpg",
-    "Videoframe_20260520_092656_com.huawei.himovie.jpg",
-    "Videoframe_20260520_092706_com.huawei.himovie.jpg",
-    "Videoframe_20260520_092959_com.huawei.himovie_edit_37966109713724.jpg",
-    "Videoframe_20260520_093008_com.huawei.himovie_edit_37959284636262.jpg",
-    "Videoframe_20260520_093024_com.huawei.himovie.jpg",
-    "Videoframe_20260520_093031_com.huawei.himovie.jpg",
-    "Videoframe_20260520_093100_com.huawei.himovie_edit_37950185861415.jpg",
-    "Videoframe_20260520_093122_com.huawei.himovie_edit_37943835163261.jpg",
-    "Videoframe_20260520_093149_com.huawei.himovie_edit_37926929654952.jpg",
-    "Videoframe_20260520_093204_com.huawei.himovie_edit_37920403723029.jpg",
-    "Videoframe_20260520_094326_com.huawei.himovie_edit_37914658672875.jpg",
-    "Videoframe_20260520_094413_com.huawei.himovie.jpg",
-    "Videoframe_20260520_094431_com.huawei.himovie.jpg",
-    "Videoframe_20260520_094514_com.huawei.himovie.jpg",
-    "Videoframe_20260520_094619_com.huawei.himovie.jpg",
-    "Videoframe_20260520_094707_com.huawei.himovie_edit_37901414971258.jpg",
-    "Videoframe_20260520_094723_com.huawei.himovie.jpg",
-    "Videoframe_20260520_094901_com.huawei.himovie.jpg",
-    "Videoframe_20260520_095049_com.huawei.himovie_edit_37894034945412.jpg",
-    "Videoframe_20260520_095141_com.huawei.himovie_edit_37886467805796.jpg",
-    "Videoframe_20260520_095229_com.huawei.himovie.jpg",
-    "Videoframe_20260520_095300_com.huawei.himovie.jpg"
-];
+      "./s/DJI_20260402150308_0942_D.JPG",
+      "./s/DJI_20260407162817_0988_D.JPG",
+      "./s/DJI_20260407185959_0995_D.JPG",
+      "./s/DJI_20260408102025_0013_D.JPG",
+      "./s/DJI_20260408102051_0015_D.JPG",
+      "./s/DJI_20260409112109_0035_D.JPG",
+      "./s/DJI_20260415150747_0133_D_edit_123733433409913.jpg",
+      "./s/DJI_20260415203400_0139_D.JPG",
+      "./s/DJI_20260416085446_0141_D_edit_123724521604989.jpg",
+      "./s/DJI_20260430093149_0221_D.JPG",
+      "./s/DJI_20260430093211_0222_D.JPG",
+      "./s/DJI_20260430093218_0223_D.JPG",
+      "./s/retouch_2026050915542361.jpg",
+      "./s/Videoframe_20260403_154700_com.huawei.himovie.jpg",
+      "./s/Videoframe_20260417_165442_com.huawei.himovie.jpg",
+      "./s/Videoframe_20260417_165444_com.huawei.himovie.jpg",
+      "./s/Videoframe_20260417_165447_com.huawei.himovie.jpg",
+      "./s/Videoframe_20260417_165453_com.huawei.himovie.jpg",
+      "./s/Videoframe_20260508_183914_com.huawei.himovie.jpg",
+      "./s/Videoframe_20260508_183917_com.huawei.himovie.jpg",
+      "./s/Videoframe_20260508_183933_com.huawei.himovie.jpg",
+      "./s/Videoframe_20260508_183938_com.huawei.himovie.jpg",
+      "./s/Videoframe_20260508_183956_com.huawei.himovie.jpg",
+      "./p/DJI_20250305163705_0198_D_edit_38161710462120.jpg",
+      "./p/DJI_20250306131311_0208_D.JPG",
+      "./p/DJI_20250306131505_0213_D.JPG",
+      "./p/DJI_20250306131507_0214_D.JPG",
+      "./p/DJI_20250307131153_0234_D_edit_38153742230966.jpg",
+      "./p/DJI_20250307131709_0242_D_edit_38147606627658.jpg",
+      "./p/DJI_20250307131921_0246_D_edit_38141239496811.jpg",
+      "./p/DJI_20250307132003_0250_D_edit_38134488609811.jpg",
+      "./p/DJI_20250307133759_0266_D.JPG",
+      "./p/DJI_20251218105514_0534_D.JPG",
+      "./p/DJI_20251220095625_0562_D.JPG",
+      "./p/DJI_20251220095646_0565_D_edit_38124802701810.jpg",
+      "./p/DJI_20251220100013_0570_D_edit_38117386931887.jpg",
+      "./p/DJI_20251220172319_0580_D_edit_38112745228809.jpg",
+      "./p/DJI_20251231090908_0610_D.JPG",
+      "./p/DJI_20260120155848_0684_D_edit_38107367192271.jpg",
+      "./p/DJI_20260120155915_0686_D_edit_38099886073732.jpg",
+      "./p/DJI_20260120160149_0695_D_edit_38094903471039.jpg",
+      "./p/DJI_20260120160204_0696_D_edit_38088556275270.jpg",
+      "./p/DJI_20260120160353_0700_D_edit_38083411592192.jpg",
+      "./p/DJI_20260120160955_0705_D_edit_38076609266115.jpg",
+      "./p/DJI_20260120161141_0707_D.JPG",
+      "./p/DJI_20260120161158_0708_D.JPG",
+      "./p/DJI_20260402184719_0944_D.JPG",
+      "./p/DJI_20260407110221_0972_D_edit_38064149670653.jpg",
+      "./p/DJI_20260407110341_0975_D.JPG",
+      "./p/DJI_20260407155116_0980_D.JPG",
+      "./p/DJI_20260407185959_0995_D.JPG",
+      "./p/DJI_20260408102025_0013_D.JPG",
+      "./p/DJI_20260408102051_0015_D.JPG",
+      "./p/DJI_20260408102316_0018_D.JPG",
+      "./p/DJI_20260408102833_0020_D.JPG",
+      "./p/DJI_20260409112109_0035_D.JPG",
+      "./p/DJI_20260414125522_0122_D.JPG",
+      "./p/DJI_20260416112357_0149_D_edit_38050617174113.jpg",
+      "./p/DJI_20260416112547_0151_D_edit_38045701026652.jpg",
+      "./p/DJI_20260416112811_0153_D.JPG",
+      "./p/DJI_20260427092228_0186_D.JPG",
+      "./p/DJI_20260427092353_0188_D_edit_38033734383343.jpg",
+      "./p/DJI_20260427092459_0189_D_edit_38026836357497.jpg",
+      "./p/DJI_20260427191056_0200_D.JPG",
+      "./p/DJI_20260430093218_0223_D_edit_38020714672496.jpg",
+      "./p/DJI_20260512115048_0251_D.JPG",
+      "./p/DJI_20260516210730_0305_D.JPG",
+      "./p/IMG_8932.JPG",
+      "./p/mmexport1761964075514_edit_35181118828634.jpg",
+      "./p/retouch_2026050915542361.jpg",
+      "./p/Screenshot_20260329_221100.jpg",
+      "./p/Videoframe_20260403_154615_com.huawei.himovie.jpg",
+      "./p/Videoframe_20260403_154700_com.huawei.himovie.jpg",
+      "./p/Videoframe_20260417_165421_com.huawei.himovie.jpg",
+      "./p/Videoframe_20260417_165442_com.huawei.himovie.jpg",
+      "./p/Videoframe_20260417_165447_com.huawei.himovie.jpg",
+      "./p/Videoframe_20260417_165450_com.huawei.himovie.jpg",
+      "./p/Videoframe_20260417_165557_com.huawei.himovie.jpg",
+      "./p/Videoframe_20260417_165602_com.huawei.himovie.jpg",
+      "./p/Videoframe_20260508_183914_com.huawei.himovie.jpg",
+      "./p/Videoframe_20260508_183917_com.huawei.himovie.jpg",
+      "./p/Videoframe_20260508_183933_com.huawei.himovie.jpg",
+      "./p/Videoframe_20260508_183938_com.huawei.himovie.jpg",
+      "./p/Videoframe_20260508_183956_com.huawei.himovie.jpg",
+      "./p/Videoframe_20260520_085842_com.huawei.himovie.jpg",
+      "./p/Videoframe_20260520_085950_com.huawei.himovie.jpg",
+      "./p/Videoframe_20260520_085958_com.huawei.himovie.jpg",
+      "./p/Videoframe_20260520_090002_com.huawei.himovie.jpg",
+      "./p/Videoframe_20260520_091506_com.huawei.himovie.jpg",
+      "./p/Videoframe_20260520_091531_com.huawei.himovie.jpg",
+      "./p/Videoframe_20260520_091843_com.huawei.himovie.jpg",
+      "./p/Videoframe_20260520_091930_com.huawei.himovie_edit_38003858282034.jpg",
+      "./p/Videoframe_20260520_091938_com.huawei.himovie_edit_37997638551649.jpg",
+      "./p/Videoframe_20260520_092032_com.huawei.himovie.jpg",
+      "./p/Videoframe_20260520_092443_com.huawei.himovie.jpg",
+      "./p/Videoframe_20260520_092558_com.huawei.himovie_edit_37988512816879.jpg",
+      "./p/Videoframe_20260520_092612_com.huawei.himovie_edit_37982106350417.jpg",
+      "./p/Videoframe_20260520_092647_com.huawei.himovie.jpg",
+      "./p/Videoframe_20260520_092655_com.huawei.himovie.jpg",
+      "./p/Videoframe_20260520_092656_com.huawei.himovie.jpg",
+      "./p/Videoframe_20260520_092706_com.huawei.himovie.jpg",
+      "./p/Videoframe_20260520_092959_com.huawei.himovie_edit_37966109713724.jpg",
+      "./p/Videoframe_20260520_093008_com.huawei.himovie_edit_37959284636262.jpg",
+      "./p/Videoframe_20260520_093024_com.huawei.himovie.jpg",
+      "./p/Videoframe_20260520_093031_com.huawei.himovie.jpg",
+      "./p/Videoframe_20260520_093100_com.huawei.himovie_edit_37950185861415.jpg",
+      "./p/Videoframe_20260520_093122_com.huawei.himovie_edit_37943835163261.jpg",
+      "./p/Videoframe_20260520_093149_com.huawei.himovie_edit_37926929654952.jpg",
+      "./p/Videoframe_20260520_093204_com.huawei.himovie_edit_37920403723029.jpg",
+      "./p/Videoframe_20260520_094326_com.huawei.himovie_edit_37914658672875.jpg",
+      "./p/Videoframe_20260520_094413_com.huawei.himovie.jpg",
+      "./p/Videoframe_20260520_094431_com.huawei.himovie.jpg",
+      "./p/Videoframe_20260520_094514_com.huawei.himovie.jpg",
+      "./p/Videoframe_20260520_094619_com.huawei.himovie.jpg",
+      "./p/Videoframe_20260520_094707_com.huawei.himovie_edit_37901414971258.jpg",
+      "./p/Videoframe_20260520_094723_com.huawei.himovie.jpg",
+      "./p/Videoframe_20260520_094901_com.huawei.himovie.jpg",
+      "./p/Videoframe_20260520_095049_com.huawei.himovie_edit_37894034945412.jpg",
+      "./p/Videoframe_20260520_095141_com.huawei.himovie_edit_37886467805796.jpg",
+      "./p/Videoframe_20260520_095229_com.huawei.himovie.jpg",
+      "./p/Videoframe_20260520_095300_com.huawei.himovie.jpg"
+    ];
 
     document.getElementById('count').textContent = images.length;
     const grid = document.getElementById('galleryGrid');
@@ -374,9 +397,9 @@
       item.onclick = () => openLightbox(index);
 
       item.innerHTML = `
-        <img src="./p/${imgName}" alt="鐓х墖 ${index + 1}" loading="lazy">
+        <img src="${imgName}" alt="照片 ${index + 1}" loading="lazy">
         <div class="overlay">
-          <span>浣滃搧 #${index + 1}</span>
+          <span>作品 #${index + 1}</span>
         </div>
       `;
       grid.appendChild(item);
@@ -389,17 +412,17 @@
 
     function updateLightbox(direction = 0) {
       if (direction !== 0) {
-        // 杞诲井鍒囧浘鍔ㄦ晥
+        // 轻微切图动效
         lightboxImg.style.opacity = '0';
         lightboxImg.style.transform = `translateX(${direction > 0 ? '25px' : '-25px'}) scale(0.96)`;
         setTimeout(() => {
-          lightboxImg.src = `./p/${images[currentIndex]}`;
+          lightboxImg.src = `${images[currentIndex]}`;
           counterEl.textContent = `${currentIndex + 1} / ${images.length}`;
           lightboxImg.style.opacity = '1';
           lightboxImg.style.transform = 'translateX(0) scale(1)';
         }, 120);
       } else {
-        lightboxImg.src = `./p/${images[currentIndex]}`;
+        lightboxImg.src = `${images[currentIndex]}`;
         counterEl.textContent = `${currentIndex + 1} / ${images.length}`;
         lightboxImg.style.opacity = '1';
         lightboxImg.style.transform = 'none';
@@ -410,7 +433,7 @@
       currentIndex = index;
       updateLightbox(0);
       lightbox.classList.add('active');
-      document.body.style.overflow = 'hidden'; // 闃叉鑳屾櫙婊氬姩
+      document.body.style.overflow = 'hidden'; // 防止背景滚动
     }
 
     function closeLightbox(e) {
@@ -433,7 +456,7 @@
       updateLightbox(1);
     }
 
-    // 閿洏宸﹀彸鏂瑰悜閿笌 ESC 鏀寔
+    // 键盘左右方向键与 ESC 支持
     document.addEventListener('keydown', (e) => {
       if (!lightbox.classList.contains('active')) return;
       if (e.key === 'ArrowLeft') prevImage();
@@ -441,7 +464,8 @@
       else if (e.key === 'Escape') closeLightbox();
     });
 
-    // 瑙︽懜灞忓箷宸﹀彸婊戝姩鎵嬪娍锛堟墜鏈虹娴佺晠婊戝姩鏀寔锛?    let touchStartX = 0;
+    // 触摸屏幕左右滑动手势（手机端流畅滑动支持）
+    let touchStartX = 0;
     let touchStartY = 0;
     let touchEndX = 0;
     let touchEndY = 0;
@@ -460,16 +484,17 @@
     function handleSwipe() {
       const diffX = touchEndX - touchStartX;
       const diffY = touchEndY - touchStartY;
-      const threshold = 40; // 婊戝姩闃堝€?40px
+      const threshold = 40; // 滑动阈值 40px
 
-      // 纭繚姘村钩婊戝姩骞呭害鏄庢樉澶т簬鍨傜洿婊戝姩骞呭害
+      // 确保水平滑动幅度明显大于垂直滑动幅度
       if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > threshold) {
         if (diffX < 0) {
-          nextImage(); // 鍚戝乏婊?-> 涓嬩竴寮?        } else {
-          prevImage(); // 鍚戝彸婊?-> 涓婁竴寮?        }
+          nextImage(); // 向左滑 -> 下一张
+        } else {
+          prevImage(); // 向右滑 -> 上一张
+        }
       }
     }
   </script>
 </body>
 </html>
-
