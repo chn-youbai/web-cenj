@@ -2094,43 +2094,89 @@
       return row;
     }
 
-    // 健壮的 JSON 工具提取器 (支持 Markdown 代码块与平衡大括号，防止数学公式与贪婪正则破坏解析)
-    function extractJsonAction(text) {
-      if (!text) return null;
-      // 1. 尝试提取 ```json ... ``` 代码块
-      const codeBlockMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/);
-      if (codeBlockMatch) {
+    // 健壮的 JSON 工具提取器 (支持单对象、数组批量与多个独立代码块)
+    function extractJsonActions(text) {
+      if (!text) return [];
+      const actions = [];
+
+      // 1. 尝试从 ```json ... ``` 代码块中提取
+      const codeBlockMatches = [...text.matchAll(/```(?:json)?\s*([\s\S]*?)```/g)];
+      for (const m of codeBlockMatches) {
         try {
-          const parsed = JSON.parse(codeBlockMatch[1].trim());
-          if (parsed && (parsed.tool || parsed.action)) return parsed;
+          const parsed = JSON.parse(m[1].trim());
+          if (Array.isArray(parsed)) {
+            parsed.forEach(item => {
+              if (item && (item.tool || item.action)) actions.push(item);
+            });
+          } else if (parsed && (parsed.tool || parsed.action)) {
+            actions.push(parsed);
+          }
         } catch(e) {}
       }
-      // 2. 尝试平衡大括号提取包含 "tool" 的最小闭合 JSON
-      const toolIdx = text.indexOf('"tool"');
-      if (toolIdx !== -1) {
-        const startIdx = text.lastIndexOf('{', toolIdx);
-        if (startIdx !== -1) {
+
+      // 2. 尝试从文本中的 [ { ... }, { ... } ] 数组提取
+      if (actions.length === 0) {
+        const arrayMatch = text.match(/\[\s*\{[\s\S]*?"tool"[\s\S]*?\}\s*\]/);
+        if (arrayMatch) {
+          try {
+            const parsed = JSON.parse(arrayMatch[0]);
+            if (Array.isArray(parsed)) {
+              parsed.forEach(item => {
+                if (item && (item.tool || item.action)) actions.push(item);
+              });
+            }
+          } catch(e) {}
+        }
+      }
+
+      // 3. 逐个提取所有独立的 { "tool": ... } 对象
+      if (actions.length === 0) {
+        let searchIdx = 0;
+        while (searchIdx < text.length) {
+          const toolIdx = text.indexOf('"tool"', searchIdx);
+          if (toolIdx === -1) break;
+          const startIdx = text.lastIndexOf('{', toolIdx);
+          if (startIdx === -1) {
+            searchIdx = toolIdx + 6;
+            continue;
+          }
           let depth = 0;
+          let foundEnd = -1;
           for (let i = startIdx; i < text.length; i++) {
             if (text[i] === '{') depth++;
             else if (text[i] === '}') {
               depth--;
               if (depth === 0) {
-                try {
-                  const candidate = text.substring(startIdx, i + 1);
-                  const parsed = JSON.parse(candidate);
-                  if (parsed && (parsed.tool || parsed.action)) return parsed;
-                } catch(e) {}
+                foundEnd = i;
                 break;
               }
             }
           }
+          if (foundEnd !== -1) {
+            try {
+              const candidate = text.substring(startIdx, foundEnd + 1);
+              const parsed = JSON.parse(candidate);
+              if (parsed && (parsed.tool || parsed.action)) {
+                actions.push(parsed);
+              }
+            } catch(e) {}
+            searchIdx = foundEnd + 1;
+          } else {
+            searchIdx = toolIdx + 6;
+          }
         }
       }
-      return null;
+
+      return actions;
     }
 
-    // 执行排版与题目修改动作
+    // 兼容旧接口
+    function extractJsonAction(text) {
+      const all = extractJsonActions(text);
+      return all.length > 0 ? all[0] : null;
+    }
+
+    // 执行排版与题目修改动作 (支持批量与清空动作)
     function executeAction(action) {
       if (!action || !action.tool) return "";
       let executed = "";
@@ -2142,9 +2188,9 @@
         addQuestionBlank(action.q, action.lines);
         executed = `add_blank(第${action.q}题, 调整留白=${action.lines}行)`;
       } else if (action.tool === "meta") {
-        if (action.title) currentExamData.meta.title = action.title;
-        if (action.duration) currentExamData.meta.duration = parseInt(action.duration, 10);
-        if (action.total_score) currentExamData.meta.total_score = parseInt(action.total_score, 10);
+        if (action.title !== undefined) currentExamData.meta.title = action.title;
+        if (action.duration !== undefined) currentExamData.meta.duration = parseInt(action.duration, 10);
+        if (action.total_score !== undefined) currentExamData.meta.total_score = parseInt(action.total_score, 10);
         if (action.subject) currentExamData.meta.subject = action.subject;
         if (action.grade) currentExamData.meta.grade = action.grade;
         executed = `update_meta(标题="${currentExamData.meta.title}", 时长=${currentExamData.meta.duration}分, 总分=${currentExamData.meta.total_score}分)`;
@@ -2169,11 +2215,27 @@
           });
         });
         executed = `modify_score(第${action.q}题分值已更新为${action.score}分)`;
-      } else if (action.tool === "delete_question" && action.q) {
+      } else if (action.tool === "clear_all" || action.tool === "delete_all" || (action.tool === "delete_question" && (action.q === "all" || action.q === "*" || action.all))) {
+        let totalCount = 0;
         (currentExamData.sections || []).forEach(sec => {
-          sec.questions = (sec.questions || []).filter(q => q.number !== action.q);
+          totalCount += (sec.questions || []).length;
+          sec.questions = [];
         });
-        executed = `delete_question(已删除第${action.q}题)`;
+        executed = `clear_all(已清空全卷所有题目共 ${totalCount} 道)`;
+      } else if (action.tool === "delete_question" && action.q !== undefined) {
+        if (Array.isArray(action.q)) {
+          const qSet = new Set(action.q.map(n => parseInt(n, 10)));
+          (currentExamData.sections || []).forEach(sec => {
+            sec.questions = (sec.questions || []).filter(q => !qSet.has(q.number));
+          });
+          executed = `delete_question(已批量删除题目: 第${action.q.join(', ')}题)`;
+        } else {
+          const targetQ = parseInt(action.q, 10);
+          (currentExamData.sections || []).forEach(sec => {
+            sec.questions = (sec.questions || []).filter(q => q.number !== targetQ);
+          });
+          executed = `delete_question(已删除第${targetQ}题)`;
+        }
       }
       return executed;
     }
@@ -2198,14 +2260,15 @@
 
 用户指令：${prompt}
 
-请根据用户指令进行决策并回答用户。如果需要修改试卷，必须在回复末尾附带标准纯 JSON 指令（格式如下，无修改则不附带）：
+请根据用户指令进行决策并回答用户。如果需要修改试卷，必须在回复末尾附带标准纯 JSON 指令（格式如下，支持单个对象或数组批量执行多项调整，无修改则不附带）：
 1. 选项列数: {"tool": "modify_layout", "q": 题号, "layout": "cols-1"|"cols-2"|"cols-4"}
 2. 大题留白: {"tool": "add_blank", "q": 题号, "lines": 行数增减如 3 或 -2}
 3. 卷头信息: {"tool": "meta", "title": "新标题", "duration": 分钟, "total_score": 总分}
 4. 修改题干: {"tool": "modify_stem", "q": 题号, "stem": "新题干内容"}
 5. 修改选项: {"tool": "modify_options", "q": 题号, "options": ["A. ...", "B. ...", "C. ...", "D. ..."]}
 6. 修改单题分值: {"tool": "modify_score", "q": 题号, "score": 分数}
-7. 删除题目: {"tool": "delete_question", "q": 题号}`;
+7. 删除单题或多题: {"tool": "delete_question", "q": 题号或[题号列表]}
+8. 清空所有题目/清卷: {"tool": "clear_all"}`;
 
       let thinkingDesc = "最高思考";
       if (thinkingBudget === 0) thinkingDesc = "思考关闭";
@@ -2296,11 +2359,12 @@
       const thoughts = (data.steps || []).filter(s => s.type === "thought");
       const thoughtContent = thoughts.map(s => s.content?.[0]?.text || '').filter(Boolean).join('\n');
 
-      // 解析并执行回复中的 JSON 工具指令
+      // 解析并执行回复中的 JSON 工具指令 (支持数组批量与单指令)
       let toolExecuted = "";
-      const action = extractJsonAction(replyText);
-      if (action) {
-        toolExecuted = executeAction(action);
+      const actions = extractJsonActions(replyText);
+      if (actions.length > 0) {
+        const executedList = actions.map(act => executeAction(act)).filter(Boolean);
+        toolExecuted = executedList.join('；');
       }
       // 如果 AI 未能输出有效工具或解析为空，则用本地语义规则兜底
       if (!toolExecuted) {
@@ -2311,7 +2375,11 @@
       saveExamState();
       renderAllViews();
 
-      const cleanReply = replyText.replace(/```(?:json)?[\s\S]*?```/g, '').replace(/\{[\s\S]*"tool"[\s\S]*\}/g, '').trim();
+      const cleanReply = replyText
+        .replace(/```(?:json)?[\s\S]*?```/g, '')
+        .replace(/\[\s*\{[\s\S]*?"tool"[\s\S]*?\}\s*\]/g, '')
+        .replace(/\{[\s\S]*"tool"[\s\S]*\}/g, '')
+        .trim();
       let thoughtHtml = '';
       if (thoughtContent) {
         thoughtHtml = `
@@ -2339,7 +2407,15 @@
       let executedTool = "";
       let replyMessage = "已根据指令完成微调！右侧试卷预览已实时更新。";
 
-      if (prompt.includes("选项") && (prompt.includes("两列") || prompt.includes("双列"))) {
+      if (prompt.includes("清空") || prompt.includes("删掉所有") || prompt.includes("删除所有") || prompt.includes("全部删除") || prompt.includes("删掉全部") || prompt.includes("删除全部") || prompt.includes("所有内容都删") || prompt.includes("所有题目都删") || prompt.includes("删掉所有题目") || prompt.includes("删除所有题目")) {
+        let totalCount = 0;
+        (currentExamData.sections || []).forEach(sec => {
+          totalCount += (sec.questions || []).length;
+          sec.questions = [];
+        });
+        executedTool = `clear_all(已清空全卷所有题目共 ${totalCount} 道)`;
+        replyMessage = `已成功清空试卷中的全部题目！您现在可以上传新试卷或输入新题目进行编排。`;
+      } else if (prompt.includes("选项") && (prompt.includes("两列") || prompt.includes("双列"))) {
         const matchQ = prompt.match(/第\s*(\d+)\s*题/);
         const qNum = matchQ ? parseInt(matchQ[1]) : 3;
         modifyQuestionLayout(qNum, "cols-2");
@@ -2375,6 +2451,17 @@
       } else if (prompt.includes("水印") || prompt.includes("广告")) {
         executedTool = `clean_watermarks()`;
         replyMessage = `已全卷扫描并清除题目中残留的水印与广告词！`;
+      } else if (prompt.includes("删") && (prompt.includes("题") || prompt.includes("第"))) {
+        const matchNums = prompt.match(/\d+/g);
+        if (matchNums) {
+          const qNums = matchNums.map(n => parseInt(n, 10));
+          const qSet = new Set(qNums);
+          (currentExamData.sections || []).forEach(sec => {
+            sec.questions = (sec.questions || []).filter(q => !qSet.has(q.number));
+          });
+          executedTool = `delete_question(已删除题目: 第${qNums.join(', ')}题)`;
+          replyMessage = `已成功删除 <strong>第 ${qNums.join('、')} 题</strong>！右侧试卷预览已更新。`;
+        }
       }
 
       return { reply: replyMessage, tool: executedTool };
@@ -2399,14 +2486,15 @@
 
 用户指令：${prompt}
 
-请根据用户指令进行决策并回答用户。如果需要修改试卷，必须在回复末尾附带标准纯 JSON 指令（格式如下，无修改则不附带）：
+请根据用户指令进行决策并回答用户。如果需要修改试卷，必须在回复末尾附带标准纯 JSON 指令（格式如下，支持单个对象或数组批量执行多项调整，无修改则不附带）：
 1. 选项列数: {"tool": "modify_layout", "q": 题号, "layout": "cols-1"|"cols-2"|"cols-4"}
 2. 大题留白: {"tool": "add_blank", "q": 题号, "lines": 行数增减如 3 或 -2}
 3. 卷头信息: {"tool": "meta", "title": "新标题", "duration": 分钟, "total_score": 总分}
 4. 修改题干: {"tool": "modify_stem", "q": 题号, "stem": "新题干内容"}
 5. 修改选项: {"tool": "modify_options", "q": 题号, "options": ["A. ...", "B. ...", "C. ...", "D. ..."]}
 6. 修改单题分值: {"tool": "modify_score", "q": 题号, "score": 分数}
-7. 删除题目: {"tool": "delete_question", "q": 题号}`;
+7. 删除单题或多题: {"tool": "delete_question", "q": 题号或[题号列表]}
+8. 清空所有题目/清卷: {"tool": "clear_all"}`;
 
       const reqBody = {
         model: targetModel,
@@ -2449,11 +2537,12 @@
       const reasoningContent = message?.reasoning_content || "";
       const reasoningTokens = data.usage?.completion_tokens_details?.reasoning_tokens || 0;
 
-      // 解析并执行回复中的 JSON 工具指令
+      // 解析并执行回复中的 JSON 工具指令 (支持数组批量与单指令)
       let toolExecuted = "";
-      const action = extractJsonAction(replyText);
-      if (action) {
-        toolExecuted = executeAction(action);
+      const actions = extractJsonActions(replyText);
+      if (actions.length > 0) {
+        const executedList = actions.map(act => executeAction(act)).filter(Boolean);
+        toolExecuted = executedList.join('；');
       }
       if (!toolExecuted) {
         const fallbackRes = applyLocalSemanticRule(prompt);
@@ -2463,7 +2552,11 @@
       saveExamState();
       renderAllViews();
 
-      const cleanReply = replyText.replace(/```(?:json)?[\s\S]*?```/g, '').replace(/\{[\s\S]*"tool"[\s\S]*\}/g, '').trim();
+      const cleanReply = replyText
+        .replace(/```(?:json)?[\s\S]*?```/g, '')
+        .replace(/\[\s*\{[\s\S]*?"tool"[\s\S]*?\}\s*\]/g, '')
+        .replace(/\{[\s\S]*"tool"[\s\S]*\}/g, '')
+        .trim();
       let thoughtHtml = '';
       if (reasoningContent) {
         thoughtHtml = `
