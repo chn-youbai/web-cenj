@@ -1053,6 +1053,174 @@
       `;
     }
 
+    // DeepSeek API 真实 Tool Calling 对接
+    async function handleDeepSeekToolCalling(prompt, apiKey, bubbleEl) {
+      const tools = [
+        {
+          type: "function",
+          function: {
+            name: "modify_question_layout",
+            description: "调整指定题目的选项排列列数（1列、2列或4列）",
+            parameters: {
+              type: "object",
+              properties: {
+                question_number: { type: "integer", description: "题目序号，例如 1 或 3" },
+                layout: { type: "string", enum: ["cols-1", "cols-2", "cols-4"], description: "选项布局，单列选cols-1，双列选cols-2，四列选cols-4" }
+              },
+              required: ["question_number", "layout"]
+            }
+          }
+        },
+        {
+          type: "function",
+          function: {
+            name: "add_question_blank",
+            description: "为解答题增加或减少作答空白行数",
+            parameters: {
+              type: "object",
+              properties: {
+                question_number: { type: "integer", description: "解答题题号，例如 7 或 8" },
+                blank_lines: { type: "integer", description: "调整的行数，例如 5" }
+              },
+              required: ["question_number", "blank_lines"]
+            }
+          }
+        },
+        {
+          type: "function",
+          function: {
+            name: "update_exam_meta",
+            description: "更新试卷标题、考试时间或总分",
+            parameters: {
+              type: "object",
+              properties: {
+                title: { type: "string", description: "试卷新标题" },
+                duration: { type: "integer", description: "考试时长（分钟）" },
+                total_score: { type: "integer", description: "试卷总分" }
+              }
+            }
+          }
+        }
+      ];
+
+      const res = await fetch("https://api.deepseek.com/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          model: "deepseek-chat",
+          messages: [
+            {
+              role: "system",
+              content: "你是一个专业的试卷排版调度智能体。当前试卷数据已在前端就绪，用户会用自然语言指挥你微调试卷。请根据用户指令选择合适的工具进行调用。"
+            },
+            {
+              role: "user",
+              content: prompt
+            }
+          ],
+          tools: tools,
+          tool_choice: "auto"
+        })
+      });
+
+      if (!res.ok) {
+        const errText = await res.text();
+        throw new Error(`DeepSeek API 错误 (${res.status}): ${errText}`);
+      }
+
+      const data = await res.json();
+      const choice = data.choices[0];
+      const message = choice.message;
+      let toolsRun = [];
+
+      if (message.tool_calls && message.tool_calls.length > 0) {
+        for (const call of message.tool_calls) {
+          const fn = call.function;
+          const args = JSON.parse(fn.arguments);
+          if (fn.name === "modify_question_layout") {
+            modifyQuestionLayout(args.question_number, args.layout);
+            toolsRun.push(`modify_question_layout(q=${args.question_number}, layout="${args.layout}")`);
+          } else if (fn.name === "add_question_blank") {
+            addQuestionBlank(args.question_number, args.blank_lines);
+            toolsRun.push(`add_question_blank(q=${args.question_number}, lines=${args.blank_lines})`);
+          } else if (fn.name === "update_exam_meta") {
+            if (args.title) currentExamData.meta.title = args.title;
+            if (args.duration) currentExamData.meta.duration = args.duration;
+            if (args.total_score) currentExamData.meta.total_score = args.total_score;
+            toolsRun.push(`update_exam_meta(...)`);
+          }
+        }
+        renderExamPaper();
+      }
+
+      const reply = message.content || "已根据指令完成试卷排版细节微调！右侧试卷预览已更新。";
+      bubbleEl.querySelector(".msg-bubble").innerHTML = `
+        ${escapeHtml(reply).replace(/\n/g, '<br>')}
+        ${toolsRun.length > 0 ? `<br><span class="tool-badge">🛠️ 已执行工具: ${toolsRun.join(', ')}</span>` : ''}
+      `;
+    }
+
+    // Google Gemini API 对接
+    async function handleGeminiToolCalling(prompt, apiKey, bubbleEl) {
+      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+      const payload = {
+        contents: [
+          {
+            role: "user",
+            parts: [
+              {
+                text: `你是一个试卷排版调度助手。请分析用户指令并返回必须执行的操作。\n当前试卷包含选择题、填空题和解答题。\n用户指令：${prompt}\n若需要修改布局或参数，请在回复最后附带一段纯 JSON：{"tool": "modify_layout", "q": 题号, "layout": "cols-1"|"cols-2"|"cols-4"} 或 {"tool": "add_blank", "q": 题号, "lines": 行数} 或 {"tool": "meta", "duration": 时长, "total_score": 总分}。若无工具调用只需给出回答。`
+              }
+            ]
+          }
+        ]
+      };
+
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) {
+        const errText = await res.text();
+        throw new Error(`Gemini API 错误 (${res.status}): ${errText}`);
+      }
+
+      const data = await res.json();
+      const replyText = data.candidates?.[0]?.content?.parts?.[0]?.text || "已完成调整。";
+      
+      // 解析回复中的 JSON 指令
+      let toolExecuted = "";
+      const jsonMatch = replyText.match(/\{[\s\S]*"tool"[\s\S]*\}/);
+      if (jsonMatch) {
+        try {
+          const action = JSON.parse(jsonMatch[0]);
+          if (action.tool === "modify_layout" && action.q && action.layout) {
+            modifyQuestionLayout(action.q, action.layout);
+            toolExecuted = `modify_layout(q=${action.q}, layout="${action.layout}")`;
+          } else if (action.tool === "add_blank" && action.q && action.lines) {
+            addQuestionBlank(action.q, action.lines);
+            toolExecuted = `add_blank(q=${action.q}, lines=${action.lines})`;
+          } else if (action.tool === "meta") {
+            if (action.duration) currentExamData.meta.duration = action.duration;
+            if (action.total_score) currentExamData.meta.total_score = action.total_score;
+            toolExecuted = `update_meta(...)`;
+          }
+          renderExamPaper();
+        } catch(e) {}
+      }
+
+      const cleanReply = replyText.replace(/\{[\s\S]*"tool"[\s\S]*\}/, '').trim();
+      bubbleEl.querySelector(".msg-bubble").innerHTML = `
+        ${escapeHtml(cleanReply).replace(/\n/g, '<br>')}
+        ${toolExecuted ? `<br><span class="tool-badge">🛠️ 已执行工具: ${toolExecuted}</span>` : ''}
+      `;
+    }
+
     // 状态机修改函数
     function modifyQuestionLayout(qNum, layout) {
       (currentExamData.sections || []).forEach(sec => {
