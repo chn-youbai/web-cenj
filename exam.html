@@ -693,9 +693,8 @@
           <label>选择 Gemini 模型：</label>
           <select id="defaultModelSelect" class="form-input">
             <option value="gemini-3.8-flash">Gemini 3.8 Flash (推荐 · 最新快速推理)</option>
-            <option value="gemini-2.5-flash">Gemini 2.5 Flash (稳定高速 · 极低延迟)</option>
-            <option value="gemini-3.5-flash">Gemini 3.5 Flash (中代大模型)</option>
-            <option value="gemini-2.5-pro">Gemini 2.5 Pro (深度大模型 · 适合超难大题)</option>
+            <option value="gemini-3.6-flash">Gemini 3.6 Flash (稳定高速 · 极低延迟)</option>
+            <option value="gemini-3.5-flash">Gemini 3.5 Flash (中代大模型 · 稳定高可用)</option>
           </select>
         </div>
 
@@ -1232,37 +1231,13 @@
       `;
     }
 
-    // Google Gemini API 对接 (支持模型与思考强度动态配置 + 容灾备用)
+    // Google Gemini Interactions API 对接 (官方最新规范 + 高可用容灾备用)
     async function handleGeminiToolCalling(prompt, apiKey, bubbleEl, modelName = "gemini-3.8-flash", thinkingBudget = -1) {
       const activeKey = apiKey || BUILTIN_GEMINI_KEY;
       const primaryModel = modelName || "gemini-3.8-flash";
-      const fallbackModel = "gemini-2.5-flash";
+      const fallbackModel = "gemini-3.5-flash";
 
-      const payload = {
-        contents: [
-          {
-            role: "user",
-            parts: [
-              {
-                text: `你是一个专业的试卷排版调度智能体。请深度理解用户指令并对当前试卷进行排版决策与微调。\n用户指令：${prompt}\n如果需要修改布局或题目，请在回复末尾附带纯 JSON 指令（格式如下，无修改则不附带）：\n{"tool": "modify_layout", "q": 题号, "layout": "cols-1"|"cols-2"|"cols-4"} 或 {"tool": "add_blank", "q": 题号, "lines": 行数} 或 {"tool": "meta", "duration": 时长, "total_score": 总分, "title": 标题}。`
-              }
-            ]
-          }
-        ]
-      };
-
-      // 动态配置思考预算
-      const genConfig = {};
-      if (thinkingBudget === -1) {
-        genConfig.thinkingConfig = { thinkingBudget: -1 };
-      } else if (thinkingBudget > 0) {
-        genConfig.thinkingConfig = { thinkingBudget: thinkingBudget };
-      } else if (thinkingBudget === 0) {
-        genConfig.thinkingConfig = { thinkingBudget: 0 };
-      }
-      if (Object.keys(genConfig).length > 0) {
-        payload.generationConfig = genConfig;
-      }
+      const promptText = `你是一个专业的试卷排版调度智能体。请深度理解用户指令并对当前试卷进行排版决策与微调。\n用户指令：${prompt}\n如果需要修改布局或题目，请在回复末尾附带纯 JSON 指令（格式如下，无修改则不附带）：\n{"tool": "modify_layout", "q": 题号, "layout": "cols-1"|"cols-2"|"cols-4"} 或 {"tool": "add_blank", "q": 题号, "lines": 行数} 或 {"tool": "meta", "duration": 时长, "total_score": 总分, "title": 标题}。`;
 
       let thinkingDesc = "动态最高思考";
       if (thinkingBudget === 0) thinkingDesc = "思考关闭";
@@ -1274,36 +1249,49 @@
       else if (thinkingBudget === -1) thinkingDesc = "最高思考";
       else if (thinkingBudget > 0) thinkingDesc = `${thinkingBudget} tokens 思考`;
 
-      async function requestGemini(targetModel) {
-        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${targetModel}:generateContent?key=${activeKey}`;
-        return await fetch(endpoint, {
+      async function requestGeminiInteractions(targetModel) {
+        return await fetch("https://generativelanguage.googleapis.com/v1beta/interactions", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
+          headers: {
+            "x-goog-api-key": activeKey,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            model: targetModel,
+            store: false,
+            input: [
+              {
+                type: "user_input",
+                content: promptText
+              }
+            ]
+          })
         });
       }
 
-      let res = await requestGemini(primaryModel);
+      let res = await requestGeminiInteractions(primaryModel);
       let usedModelName = `${primaryModel} (${thinkingDesc})`;
 
-      // 若 3.8 遇到临时高并发 503，无缝自动重试备用思考模型
-      if ((res.status === 503 || !res.ok) && primaryModel === "gemini-3.8-flash") {
+      // 若当前模型遇到临时 503 或不可用，无缝自动重试备用高可用模型 gemini-3.5-flash
+      if ((res.status === 503 || !res.ok) && primaryModel !== fallbackModel) {
         try {
-          const retryRes = await requestGemini(fallbackModel);
+          const retryRes = await requestGeminiInteractions(fallbackModel);
           if (retryRes.ok) {
             res = retryRes;
-            usedModelName = `${fallbackModel} (备用 · ${thinkingDesc})`;
+            usedModelName = `${fallbackModel} (备用高可用 · ${thinkingDesc})`;
           }
         } catch(e) {}
       }
 
       if (!res.ok) {
         const errText = await res.text();
-        throw new Error(`Gemini API 错误 (${res.status}): ${errText}`);
+        throw new Error(`Gemini Interactions API 错误 (${res.status}): ${errText}`);
       }
 
       const data = await res.json();
-      const replyText = data.candidates?.[0]?.content?.parts?.[0]?.text || "已完成调整。";
+      const modelStep = data.steps ? data.steps.find(s => s.type === "model_output") : null;
+      const replyText = modelStep?.content?.[0]?.text || "已完成调整。";
+      const thoughtTokens = data.usage?.total_thought_tokens || 0;
       
       // 解析回复中的 JSON 指令
       let toolExecuted = "";
@@ -1330,7 +1318,7 @@
       const cleanReply = replyText.replace(/\{[\s\S]*"tool"[\s\S]*\}/, '').trim();
       bubbleEl.querySelector(".msg-bubble").innerHTML = `
         ${escapeHtml(cleanReply).replace(/\n/g, '<br>')}
-        <br><span class="tool-badge" style="background: rgba(168, 85, 247, 0.15); color: #c084fc; border-color: rgba(168, 85, 247, 0.3);">🧠 思考引擎: ${escapeHtml(usedModelName)}</span>
+        <br><span class="tool-badge" style="background: rgba(168, 85, 247, 0.15); color: #c084fc; border-color: rgba(168, 85, 247, 0.3);">🧠 思考引擎: ${escapeHtml(usedModelName)}${thoughtTokens ? ` (思考Token: ${thoughtTokens})` : ''}</span>
         ${toolExecuted ? `<span class="tool-badge">🛠️ 已执行工具: ${escapeHtml(toolExecuted)}</span>` : ''}
       `;
     }
