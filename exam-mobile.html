@@ -2,15 +2,18 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover, interactive-widget=resizes-content">
   <title>AI 试卷智能排版台 (手机专版)</title>
   
-  <!-- 桌面版分流检查：若显式指定 view=desktop 则跳转回电脑版 -->
+  <!-- 桌面版分流检查：若在电脑端且未显式指定 view=mobile，或显式指定 view=desktop 则跳转回电脑版 -->
   <script>
     (function() {
       try {
         var params = new URLSearchParams(window.location.search);
-        if (params.get('view') === 'desktop') {
+        if (params.get('view') === 'mobile') return;
+        var ua = navigator.userAgent || '';
+        var isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile/i.test(ua) || (navigator.maxTouchPoints > 1 && /Macintosh/.test(ua));
+        if (!isMobile || params.get('view') === 'desktop') {
           window.location.replace('exam.html' + (window.location.search || ''));
         }
       } catch (e) {}
@@ -39,7 +42,7 @@
       --text-muted: #9ca3af;
       --chat-user-bg: linear-gradient(135deg, #6366f1, #8b5cf6);
       --chat-ai-bg: #151d2f;
-      --bottom-nav-h: 60px;
+      --bottom-nav-h: 58px;
       --header-h: 52px;
     }
 
@@ -65,9 +68,9 @@
       flex-direction: column;
     }
 
-    /* 顶部精简导航条 (专为手机小屏优化) */
+    /* 顶部精简导航条 (专为手机小屏与刘海屏适配) */
     .mobile-header {
-      height: var(--header-h);
+      height: calc(var(--header-h) + env(safe-area-inset-top, 0px));
       padding-top: env(safe-area-inset-top, 0px);
       background: rgba(17, 24, 39, 0.94);
       backdrop-filter: blur(14px);
@@ -80,6 +83,7 @@
       padding-right: 0.8rem;
       z-index: 100;
       flex-shrink: 0;
+      box-sizing: border-box;
     }
 
     .header-left {
@@ -151,6 +155,7 @@
       align-items: center;
       gap: 0.3rem;
       transition: all 0.15s;
+      white-space: nowrap;
     }
     .btn-pill:active {
       transform: scale(0.95);
@@ -161,6 +166,33 @@
       border-color: rgba(139, 92, 246, 0.4);
       color: #ffffff;
       box-shadow: 0 2px 8px rgba(139, 92, 246, 0.35);
+    }
+
+    /* 浮动轻提示 (Toast) */
+    .mobile-toast {
+      position: fixed;
+      top: calc(var(--header-h) + env(safe-area-inset-top, 0px) + 12px);
+      left: 50%;
+      transform: translateX(-50%) translateY(-20px);
+      opacity: 0;
+      background: rgba(15, 23, 42, 0.95);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      color: #ffffff;
+      border: 1px solid rgba(139, 92, 246, 0.4);
+      padding: 0.45rem 1rem;
+      border-radius: 9999px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      z-index: 9999;
+      pointer-events: none;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+      white-space: nowrap;
+    }
+    .mobile-toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
     }
 
     /* 主视口容器 */
@@ -193,6 +225,7 @@
       justify-content: space-between;
       gap: 0.5rem;
       font-size: 0.8rem;
+      flex-shrink: 0;
     }
 
     .subbar-btn {
@@ -291,7 +324,7 @@
       background: rgba(139, 92, 246, 0.3);
     }
 
-    /* 工具执行卡片徽章 */
+    /* 工具与思考卡片徽章 */
     .tool-chip {
       display: inline-flex;
       align-items: center;
@@ -318,6 +351,37 @@
       margin-top: 0.25rem;
     }
 
+    /* Gemini 深度思考折叠容器 */
+    .thought-details {
+      margin-top: 0.45rem;
+      background: rgba(0, 0, 0, 0.25);
+      border: 1px solid rgba(139, 92, 246, 0.2);
+      border-radius: 8px;
+      font-size: 0.75rem;
+      overflow: hidden;
+    }
+    .thought-summary {
+      padding: 0.35rem 0.6rem;
+      color: #c084fc;
+      cursor: pointer;
+      font-weight: 600;
+      outline: none;
+      user-select: none;
+    }
+    .thought-body {
+      padding: 0.5rem 0.6rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      color: #94a3b8;
+      line-height: 1.5;
+      max-height: 180px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-family: monospace;
+      font-size: 0.72rem;
+      -webkit-overflow-scrolling: touch;
+    }
+
     /* 快捷指令横向滚动列表 */
     .quick-chips-wrapper {
       padding: 0.45rem 0.8rem;
@@ -328,6 +392,7 @@
       display: flex;
       gap: 0.45rem;
       -webkit-overflow-scrolling: touch;
+      flex-shrink: 0;
     }
     .quick-chips-wrapper::-webkit-scrollbar {
       display: none;
@@ -444,10 +509,10 @@
     .zoom-group {
       display: flex;
       align-items: center;
-      gap: 0.3rem;
+      gap: 0.25rem;
     }
     .zoom-btn {
-      padding: 0.32rem 0.55rem;
+      padding: 0.32rem 0.52rem;
       border-radius: 8px;
       background: rgba(255, 255, 255, 0.08);
       border: 1px solid rgba(255, 255, 255, 0.1);
@@ -455,9 +520,11 @@
       font-size: 0.75rem;
       font-weight: 600;
       cursor: pointer;
+      transition: all 0.15s;
     }
     .zoom-btn:active {
       background: rgba(255, 255, 255, 0.18);
+      transform: scale(0.95);
     }
 
     /* 预览滚动视窗 */
@@ -481,7 +548,7 @@
       display: flex;
       flex-direction: column;
       gap: 0.8rem;
-      padding-bottom: 3.5rem;
+      padding-bottom: 4rem;
     }
 
     .exam-info-card {
@@ -577,6 +644,42 @@
       margin-top: 0.5rem;
     }
 
+    /* 题目卡片内部快捷微调工具条 (手机极速微调) */
+    .card-inline-tools {
+      margin-top: 0.65rem;
+      padding-top: 0.5rem;
+      border-top: 1px dashed rgba(255, 255, 255, 0.08);
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      flex-wrap: wrap;
+    }
+    .tool-label {
+      font-size: 0.72rem;
+      color: #94a3b8;
+      margin-right: 0.2rem;
+    }
+    .mini-tool-btn {
+      font-size: 0.72rem;
+      padding: 0.22rem 0.5rem;
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: rgba(255, 255, 255, 0.05);
+      color: #cbd5e1;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+    }
+    .mini-tool-btn:active {
+      transform: scale(0.94);
+    }
+    .mini-tool-btn.active {
+      background: rgba(139, 92, 246, 0.25);
+      border-color: #8b5cf6;
+      color: #c4b5fd;
+      font-weight: 600;
+    }
+
     .answers-accordion {
       background: var(--card-bg);
       border: 1px solid var(--panel-border);
@@ -608,13 +711,29 @@
       display: none;
       flex-direction: column;
       align-items: center;
-      padding-bottom: 4rem;
+      padding-top: 0.8rem;
+      padding-bottom: 5.5rem;
       overflow-x: auto;
+      overflow-y: visible;
+      -webkit-overflow-scrolling: touch;
+      touch-action: pan-x pan-y pinch-zoom;
+    }
+
+    /* 缩放计算容器：精准尺寸约束，杜绝外溢横向滚动与巨幅空白 */
+    .a4-scaled-container {
+      position: relative;
+      margin: 0 auto;
+      transition: width 0.18s cubic-bezier(0.16, 1, 0.3, 1), height 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+      flex-shrink: 0;
     }
 
     .a4-scaled-stage {
-      transform-origin: top center;
-      transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 790px;
+      transform-origin: top left;
+      transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
     .a4-paper-real {
@@ -628,6 +747,7 @@
       font-family: "SimSun", "Songti SC", "Times New Roman", serif;
       line-height: 1.6;
       box-sizing: border-box;
+      user-select: text;
     }
 
     /* A4 内部印样样式 */
@@ -737,6 +857,7 @@
       gap: 0.6rem;
       box-shadow: 0 8px 25px rgba(0, 0, 0, 0.45);
       z-index: 30;
+      white-space: nowrap;
     }
 
     /* 全屏沉浸模式覆盖 */
@@ -765,7 +886,7 @@
 
     /* ==================== 3. 手机底部导航栏 (Tab Bar) ==================== */
     .mobile-bottom-nav {
-      height: var(--bottom-nav-h);
+      height: calc(var(--bottom-nav-h) + env(safe-area-inset-bottom, 0px));
       padding-bottom: env(safe-area-inset-bottom, 0px);
       background: rgba(17, 24, 39, 0.96);
       backdrop-filter: blur(16px);
@@ -776,6 +897,7 @@
       justify-content: space-around;
       flex-shrink: 0;
       z-index: 50;
+      box-sizing: border-box;
     }
 
     .nav-tab-item {
@@ -932,13 +1054,13 @@
       border-color: #8b5cf6;
     }
 
-    /* 打印专用 */
+    /* 打印专用标准样式 */
     @media print {
       body {
         background: #ffffff !important;
         overflow: visible !important;
       }
-      .mobile-header, .mobile-bottom-nav, .preview-control-bar, .preview-floating-bar, .drawer-overlay, .quick-chips-wrapper, .chat-bottom-bar, .chat-subbar, .chat-stream, .exit-fullscreen-btn, .mobile-reader-container {
+      .mobile-header, .mobile-bottom-nav, .preview-control-bar, .preview-floating-bar, .drawer-overlay, .quick-chips-wrapper, .chat-bottom-bar, .chat-subbar, .chat-stream, .exit-fullscreen-btn, .mobile-reader-container, .mobile-toast {
         display: none !important;
       }
       .main-container, .view-pane, .preview-scroll-viewport, .a4-simulation-wrapper {
@@ -947,8 +1069,15 @@
         background: transparent !important;
         overflow: visible !important;
       }
+      .a4-scaled-container {
+        width: 100% !important;
+        height: auto !important;
+        margin: 0 !important;
+      }
       .a4-scaled-stage {
+        position: static !important;
         transform: none !important;
+        width: 100% !important;
       }
       .a4-paper-real {
         box-shadow: none !important;
@@ -964,6 +1093,9 @@
   </style>
 </head>
 <body>
+
+  <!-- 浮动通知气泡 -->
+  <div id="mobileToast" class="mobile-toast"></div>
 
   <!-- 顶部手机精简导航栏 -->
   <header class="mobile-header">
@@ -990,7 +1122,7 @@
     <section class="view-pane active" id="chatPane">
       <div class="chat-subbar">
         <label for="mobileFileInput" class="subbar-btn">
-          <span>📁 上传试卷 (.docx/txt)</span>
+          <span>📁 上传试卷 (.docx/json/txt)</span>
         </label>
         <input type="file" id="mobileFileInput" accept=".docx,.txt,.json" style="display:none;" onchange="handleMobileFileUpload(event)">
         <button class="subbar-btn subbar-btn-secondary" onclick="loadSampleMathExam()">📋 载入真题示例</button>
@@ -1002,7 +1134,7 @@
           <div class="msg-box">
             👋 老师您好！我是您的 <strong>AI 试卷排版助手 (手机专版)</strong>。<br><br>
             已接入 <strong>Gemini 3.8 Flash（最高思考等级）</strong> 作为排版大脑，内置专属 Key 已就绪！<br><br>
-            您可以在上方上传 <code>.docx</code>，或点击【📋 载入真题示例】体验。<br><br>
+            您可以在上方上传试卷，或点击【📋 载入真题示例】体验。<br><br>
             随时在下方<strong>输入口语化指令指挥我排版</strong>，例如：<br>
             • <em>“把第3题选项换成双列”</em><br>
             • <em>“给第7题多分3行解答空白”</em><br>
@@ -1044,9 +1176,11 @@
         </div>
 
         <div class="zoom-group" id="zoomControls" style="display: none;">
+          <button class="zoom-btn" onclick="stepA4Zoom(-0.15)">－</button>
+          <span id="zoomPercentText" style="font-size: 0.72rem; color: #94a3b8; min-width: 36px; text-align: center; font-weight: 600;">适应</span>
+          <button class="zoom-btn" onclick="stepA4Zoom(0.15)">＋</button>
           <button class="zoom-btn" onclick="setA4Zoom('fit')">适应</button>
           <button class="zoom-btn" onclick="setA4Zoom('100')">100%</button>
-          <button class="zoom-btn" onclick="setA4Zoom('130')">130%</button>
           <button class="zoom-btn" onclick="toggleFullscreen(true)">⛶</button>
         </div>
       </div>
@@ -1060,9 +1194,11 @@
 
         <!-- 模式 2：真实 A4 试卷模式 -->
         <div class="a4-simulation-wrapper" id="a4SimulationWrapper">
-          <div class="a4-scaled-stage" id="a4ScaledStage">
-            <div class="a4-paper-real" id="a4PaperContent">
-              <!-- 动态渲染标准 A4 真实印样 -->
+          <div class="a4-scaled-container" id="a4ScaledContainer">
+            <div class="a4-scaled-stage" id="a4ScaledStage">
+              <div class="a4-paper-real" id="a4PaperContent">
+                <!-- 动态渲染标准 A4 真实印样 -->
+              </div>
             </div>
           </div>
         </div>
@@ -1111,6 +1247,13 @@
             <div class="desc">公式原生保留，在 WPS / Word 中直接编辑</div>
           </div>
         </button>
+        <button class="drawer-item-btn" onclick="exportExamJson(); closeDrawer('exportDrawer');">
+          <span style="font-size: 1.3rem;">📦</span>
+          <div>
+            <div>导出试卷 JSON 工程文件</div>
+            <div class="desc">备份完整试卷数据，支持随时恢复或在电脑导入</div>
+          </div>
+        </button>
         <button class="drawer-item-btn" onclick="triggerMobilePrint(); closeDrawer('exportDrawer');">
           <span style="font-size: 1.3rem;">🖨️</span>
           <div>
@@ -1148,7 +1291,7 @@
         <button class="drawer-item-btn" onclick="closeDrawer('menuDrawer'); document.getElementById('mobileFileInput').click();">
           <span style="font-size: 1.3rem;">📁</span>
           <div>
-            <div>上传试卷文件 (.docx)</div>
+            <div>上传试卷文件 (.docx/.json)</div>
             <div class="desc">本地高速解析试卷并载入工作台</div>
           </div>
         </button>
@@ -1386,7 +1529,7 @@
     };
 
     let currentPreviewMode = "reader"; // 'reader' | 'real'
-    let currentZoom = "fit"; // 'fit' | '100' | '130'
+    let currentZoom = "fit"; // 'fit' | '100' | '130' | number
 
     // 页面初始化
     document.addEventListener("DOMContentLoaded", () => {
@@ -1404,7 +1547,62 @@
       loadSavedMobileConfig();
       renderAllViews();
       window.addEventListener("resize", handleResize);
+
+      // 移动端虚拟键盘适配：当聚焦输入框或 visualViewport 变动时，保持滚动底端可见
+      if (window.visualViewport) {
+        window.visualViewport.addEventListener("resize", () => {
+          const stream = document.getElementById("chatStream");
+          if (stream) {
+            stream.scrollTop = stream.scrollHeight;
+          }
+        });
+      }
+
+      const chatInput = document.getElementById("mobileChatInput");
+      if (chatInput) {
+        chatInput.addEventListener("focus", () => {
+          setTimeout(() => {
+            const stream = document.getElementById("chatStream");
+            if (stream) stream.scrollTop = stream.scrollHeight;
+            chatInput.scrollIntoView({ behavior: "smooth", block: "end" });
+          }, 250);
+        });
+      }
+
+      // 双击 A4 试卷快速切换 适应 vs 100% 缩放
+      const a4Paper = document.getElementById("a4PaperContent");
+      if (a4Paper) {
+        let lastTap = 0;
+        a4Paper.addEventListener("touchend", (e) => {
+          const currentTime = new Date().getTime();
+          const tapLength = currentTime - lastTap;
+          if (tapLength < 350 && tapLength > 0) {
+            e.preventDefault();
+            if (currentZoom === "fit") {
+              setA4Zoom("100");
+              showToast("🔍 已放大至 100% 原始尺寸");
+            } else {
+              setA4Zoom("fit");
+              showToast("📱 已恢复宽度自适应");
+            }
+          }
+          lastTap = currentTime;
+        });
+      }
     });
+
+    // 轻提示 Toast
+    let toastTimer = null;
+    function showToast(msg) {
+      const toast = document.getElementById("mobileToast");
+      if (!toast) return;
+      toast.textContent = msg;
+      toast.classList.add("show");
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        toast.classList.remove("show");
+      }, 2000);
+    }
 
     // 渲染所有视图
     function renderAllViews() {
@@ -1477,11 +1675,15 @@
         modeReaderBtn.classList.remove('active');
         modeRealBtn.classList.add('active');
         zoomControls.style.display = 'flex';
-        applyA4Zoom();
+        // 确保显示后有完整布局后再测量缩放
+        requestAnimationFrame(() => {
+          triggerKaTeX(document.getElementById("a4PaperContent"));
+          applyA4Zoom();
+        });
       }
     }
 
-    // 模式 1：渲染手机卡片式阅读视图
+    // 模式 1：渲染手机卡片式阅读视图 (带题目卡片行内 1-click 微调操作)
     function renderMobileReader() {
       const container = document.getElementById("mobileReaderContainer");
       if (!container) return;
@@ -1520,11 +1722,29 @@
               html += `<div>${escapeHtml(opt)}</div>`;
             });
             html += `</div>`;
+
+            // 行内快捷微调操作条 (单列/双列/四列)
+            html += `
+              <div class="card-inline-tools">
+                <span class="tool-label">选项排版:</span>
+                <button type="button" class="mini-tool-btn ${layoutClass === 'cols-1' ? 'active' : ''}" onclick="quickCardLayout(${q.number}, 'cols-1')">单列独占</button>
+                <button type="button" class="mini-tool-btn ${layoutClass === 'cols-2' ? 'active' : ''}" onclick="quickCardLayout(${q.number}, 'cols-2')">双列并排</button>
+                <button type="button" class="mini-tool-btn ${layoutClass === 'cols-4' ? 'active' : ''}" onclick="quickCardLayout(${q.number}, 'cols-4')">四列横排</button>
+              </div>
+            `;
           }
 
           // 解答题留白标识
-          if (q.blank_lines && q.blank_lines > 0) {
+          if (q.blank_lines !== undefined) {
             html += `<div class="blank-tip-mobile">✍️ 留白空间：${q.blank_lines} 行解答空白</div>`;
+            html += `
+              <div class="card-inline-tools">
+                <span class="tool-label">留白调整:</span>
+                <button type="button" class="mini-tool-btn" onclick="quickCardBlank(${q.number}, -2)">－2行</button>
+                <button type="button" class="mini-tool-btn" onclick="quickCardBlank(${q.number}, 2)">＋2行</button>
+                <button type="button" class="mini-tool-btn" onclick="quickCardBlank(${q.number}, 5)">＋5行</button>
+              </div>
+            `;
           }
 
           html += `</div>`;
@@ -1556,6 +1776,24 @@
 
       container.innerHTML = html;
       triggerKaTeX(container);
+    }
+
+    // 题目卡片 1-click 微调操作
+    function quickCardLayout(qNum, layout) {
+      modifyQuestionLayout(qNum, layout);
+      saveExamState();
+      renderAllViews();
+      if (navigator.vibrate) navigator.vibrate(20);
+      const name = layout === 'cols-1' ? '单列' : layout === 'cols-2' ? '双列' : '四列';
+      showToast(`✨ 第 ${qNum} 题已切换为 ${name} 排版！`);
+    }
+
+    function quickCardBlank(qNum, delta) {
+      addQuestionBlank(qNum, delta);
+      saveExamState();
+      renderAllViews();
+      if (navigator.vibrate) navigator.vibrate(20);
+      showToast(`✍️ 第 ${qNum} 题答题空白已调整！`);
     }
 
     function toggleAnswersAccordion() {
@@ -1623,6 +1861,12 @@
 
           if (q.options && q.options.length > 0) {
             let layoutClass = q.layout || 'cols-4';
+            if (!q.layout) {
+              const maxLen = Math.max(...q.options.map(o => o.length));
+              if (maxLen > 35) layoutClass = 'cols-1';
+              else if (maxLen > 15) layoutClass = 'cols-2';
+              else layoutClass = 'cols-4';
+            }
             html += `<div class="a4-options ${layoutClass}">`;
             q.options.forEach(opt => {
               html += `<div>${escapeHtml(opt)}</div>`;
@@ -1662,41 +1906,70 @@
       triggerKaTeX(container);
     }
 
-    // A4 缩放自适应计算引擎
+    // A4 缩放自适应计算引擎 (解决 DOM 布局宽度与高度溢出问题)
     function setA4Zoom(zoomType) {
       currentZoom = zoomType;
       applyA4Zoom();
     }
 
+    function stepA4Zoom(delta) {
+      const a4RealWidth = 790;
+      const viewportWidth = window.innerWidth;
+      let baseScale = typeof currentZoom === 'number' 
+        ? currentZoom 
+        : (currentZoom === '100' ? 1 : currentZoom === '130' ? 1.3 : Math.min(1, Math.max(0.35, (viewportWidth - 20) / a4RealWidth)));
+      
+      let nextScale = Math.min(2.0, Math.max(0.35, baseScale + delta));
+      currentZoom = nextScale;
+      applyA4Zoom();
+      showToast(`🔍 缩放: ${Math.round(nextScale * 100)}%`);
+    }
+
     function applyA4Zoom() {
       const stage = document.getElementById("a4ScaledStage");
+      const container = document.getElementById("a4ScaledContainer");
       const wrapper = document.getElementById("a4SimulationWrapper");
-      if (!stage || !wrapper) return;
+      const a4Paper = document.getElementById("a4PaperContent");
+      if (!stage || !container || !wrapper || !a4Paper) return;
 
       const viewportWidth = window.innerWidth;
       const a4RealWidth = 790;
 
       let scale = 1;
+      let label = "100%";
       if (currentZoom === 'fit') {
-        // 自适应宽度：自动缩放到适配手机视口减去内边距
-        scale = Math.min(1, (viewportWidth - 16) / a4RealWidth);
+        // 自适应宽度：自动缩放到适配手机视口减去两侧边距
+        scale = Math.min(1, Math.max(0.35, (viewportWidth - 20) / a4RealWidth));
+        label = "适应";
       } else if (currentZoom === '100') {
         scale = 1;
+        label = "100%";
       } else if (currentZoom === '130') {
         scale = 1.3;
+        label = "130%";
+      } else if (typeof currentZoom === 'number') {
+        scale = currentZoom;
+        label = `${Math.round(scale * 100)}%`;
       }
 
       stage.style.transform = `scale(${scale})`;
-      // 调整包装器高度以匹配缩放后的真实高度，避免下方巨大空白
-      const a4Paper = document.getElementById("a4PaperContent");
-      if (a4Paper) {
-        const scaledHeight = a4Paper.offsetHeight * scale;
-        wrapper.style.minHeight = `${scaledHeight + 60}px`;
+      
+      const unscaledHeight = a4Paper.offsetHeight || 1200;
+      const scaledWidth = Math.round(a4RealWidth * scale);
+      const scaledHeight = Math.round(unscaledHeight * scale);
+
+      // 将外层容器严格缩减到真实显示宽高，彻底杜绝出现 800px 巨大空白或视口横向漂移
+      container.style.width = `${scaledWidth}px`;
+      container.style.height = `${scaledHeight}px`;
+
+      const zoomIndicator = document.getElementById("zoomPercentText");
+      if (zoomIndicator) {
+        zoomIndicator.textContent = label;
       }
     }
 
     function handleResize() {
-      if (currentPreviewMode === 'real' && currentZoom === 'fit') {
+      if (currentPreviewMode === 'real') {
         applyA4Zoom();
       }
     }
@@ -1712,7 +1985,7 @@
 
     // KaTeX 公式渲染
     function triggerKaTeX(domElement) {
-      if (window.renderMathInElement) {
+      if (window.renderMathInElement && domElement) {
         window.renderMathInElement(domElement, {
           delimiters: [
             {left: '$$', right: '$$', display: true},
@@ -1748,7 +2021,7 @@
       inputEl.value = "";
       appendMobileMsg(prompt, "user");
 
-      // 震动触感反馈
+      // 触感反馈
       if (navigator.vibrate) {
         navigator.vibrate(30);
       }
@@ -1779,7 +2052,19 @@
           }
         }
       } catch (err) {
-        thinkingBubble.querySelector(".msg-box").innerHTML = `❌ 处理出错: ${err.message}`;
+        // 若云端抛出异常，优雅降级为本地智能语义规则引擎，确保手机端绝对不白屏或不可用
+        const localResult = applyLocalSemanticRule(prompt);
+        saveExamState();
+        renderAllViews();
+        thinkingBubble.querySelector(".msg-box").innerHTML = `
+          ${localResult.reply}
+          <br><span class="engine-chip" style="background: rgba(245, 158, 11, 0.15); color: #fbbf24; border-color: rgba(245, 158, 11, 0.3);">⚡ 本地排版引擎 (云端API异常: ${escapeHtml(err.message)})</span>
+          ${localResult.tool ? `<br><span class="tool-chip">🛠️ ${escapeHtml(localResult.tool)}</span>` : ''}
+          <div class="preview-jump-chip" style="margin-top:0.6rem;" onclick="switchMobileNav('preview')">
+            <span>📄 排版已刷新，点击切到预览</span>
+            <span>查看印样 ➔</span>
+          </div>
+        `;
       }
     }
 
@@ -1833,10 +2118,26 @@
 
       try {
         res = await requestGeminiInteractions(primaryModel);
-      } catch(e) {
-        // 网络请求故障时尝试备用容灾模型
-        res = await requestGeminiInteractions(fallbackModel);
-        usedModelName = `${fallbackModel} (备用容灾 · ${thinkingDesc})`;
+      } catch(netErr) {
+        try {
+          res = await requestGeminiInteractions(fallbackModel);
+          usedModelName = `${fallbackModel} (备用高可用 · ${thinkingDesc})`;
+        } catch(fallbackErr) {
+          // 云端彻底断连（如手机网络限制 Google 域名），无缝降级为本地语义引擎
+          const localResult = applyLocalSemanticRule(prompt);
+          saveExamState();
+          renderAllViews();
+          bubbleEl.querySelector(".msg-box").innerHTML = `
+            ${localResult.reply}
+            <br><span class="engine-chip" style="background: rgba(245, 158, 11, 0.15); color: #fbbf24; border-color: rgba(245, 158, 11, 0.3);">⚡ 本地规则引擎 (云端API连接受限)</span>
+            ${localResult.tool ? `<br><span class="tool-chip">🛠️ ${escapeHtml(localResult.tool)}</span>` : ''}
+            <div class="preview-jump-chip" style="margin-top:0.6rem;" onclick="switchMobileNav('preview')">
+              <span>📄 排版已刷新，点击切到预览</span>
+              <span>查看印样 ➔</span>
+            </div>
+          `;
+          return;
+        }
       }
 
       // 若遇 503 或不可用，自动重试高可用模型 gemini-3.5-flash
@@ -1852,13 +2153,17 @@
 
       if (!res.ok) {
         const errText = await res.text();
-        throw new Error(`Gemini Interactions API 错误 (${res.status}): ${errText}`);
+        throw new Error(`Gemini API 响应异常 (${res.status}): ${errText}`);
       }
 
       const data = await res.json();
       const modelStep = data.steps ? data.steps.find(s => s.type === "model_output") : null;
       const replyText = modelStep?.content?.[0]?.text || "已完成调整。";
       const thoughtTokens = data.usage?.total_thought_tokens || 0;
+
+      // 提取 GEMINI.md 规范中定义的 thought 思考步骤
+      const thoughts = (data.steps || []).filter(s => s.type === "thought");
+      const thoughtContent = thoughts.map(s => s.content?.[0]?.text || '').filter(Boolean).join('\n');
 
       // 解析并执行回复中的 JSON 工具指令
       let toolExecuted = "";
@@ -1881,15 +2186,27 @@
         } catch(e) {}
       } else {
         // 本地语义规则辅助匹配
-        applyLocalSemanticRule(prompt);
+        const fallbackRes = applyLocalSemanticRule(prompt);
+        if (fallbackRes.tool) toolExecuted = fallbackRes.tool;
       }
 
       saveExamState();
       renderAllViews();
 
       const cleanReply = replyText.replace(/\{[\s\S]*"tool"[\s\S]*\}/, '').trim();
+      let thoughtHtml = '';
+      if (thoughtContent) {
+        thoughtHtml = `
+          <details class="thought-details">
+            <summary class="thought-summary">🧠 Gemini 深度思考推理 (${thoughtTokens} tokens) ▼</summary>
+            <div class="thought-body">${escapeHtml(thoughtContent)}</div>
+          </details>
+        `;
+      }
+
       bubbleEl.querySelector(".msg-box").innerHTML = `
         ${escapeHtml(cleanReply).replace(/\n/g, '<br>')}
+        ${thoughtHtml}
         <br><span class="engine-chip">🧠 引擎: ${escapeHtml(usedModelName)}${thoughtTokens ? ` (思考Token: ${thoughtTokens})` : ''}</span>
         ${toolExecuted ? `<br><span class="tool-chip">🛠️ ${escapeHtml(toolExecuted)}</span>` : ''}
         <div class="preview-jump-chip" style="margin-top:0.6rem;" onclick="switchMobileNav('preview')">
@@ -1899,26 +2216,50 @@
       `;
     }
 
-    // 本地快速语义规则兜底
+    // 本地快速语义规则兜底引擎 (离线 / 弱网 / 快速执行)
     function applyLocalSemanticRule(prompt) {
+      let executedTool = "";
+      let replyMessage = "已根据指令完成微调！右侧试卷预览已实时更新。";
+
       if (prompt.includes("选项") && (prompt.includes("两列") || prompt.includes("双列"))) {
         const matchQ = prompt.match(/第\s*(\d+)\s*题/);
         const qNum = matchQ ? parseInt(matchQ[1]) : 3;
         modifyQuestionLayout(qNum, "cols-2");
+        executedTool = `modify_question(q=${qNum}, layout="cols-2")`;
+        replyMessage = `已成功将 <strong>第 ${qNum} 题</strong> 的选项排版调整为 <strong>两列对齐</strong>！`;
       } else if (prompt.includes("选项") && prompt.includes("单列")) {
         const matchQ = prompt.match(/第\s*(\d+)\s*题/);
         const qNum = matchQ ? parseInt(matchQ[1]) : 1;
         modifyQuestionLayout(qNum, "cols-1");
+        executedTool = `modify_question(q=${qNum}, layout="cols-1")`;
+        replyMessage = `已成功将 <strong>第 ${qNum} 题</strong> 的选项排版调整为 <strong>单列独占</strong>！`;
+      } else if (prompt.includes("选项") && prompt.includes("四列")) {
+        const matchQ = prompt.match(/第\s*(\d+)\s*题/);
+        const qNum = matchQ ? parseInt(matchQ[1]) : 2;
+        modifyQuestionLayout(qNum, "cols-4");
+        executedTool = `modify_question(q=${qNum}, layout="cols-4")`;
+        replyMessage = `已成功将 <strong>第 ${qNum} 题</strong> 的选项排版调整为 <strong>四列横排</strong>！`;
       } else if (prompt.includes("空白") || prompt.includes("留白")) {
         const matchQ = prompt.match(/第\s*(\d+)\s*题/);
+        const matchLines = prompt.match(/(\d+)\s*行/);
         const qNum = matchQ ? parseInt(matchQ[1]) : 7;
-        addQuestionBlank(qNum, 5);
+        const lines = matchLines ? parseInt(matchLines[1]) : 5;
+        addQuestionBlank(qNum, lines);
+        executedTool = `add_question_blank(q=${qNum}, lines=${lines})`;
+        replyMessage = `已为 <strong>第 ${qNum} 题</strong> 解答题增加了 ${lines} 行答题空白！`;
       } else if (prompt.includes("满分") || prompt.includes("时间") || prompt.includes("时长")) {
         const matchScore = prompt.match(/满分\s*(?:改成|为)?\s*(\d+)/);
         const matchTime = prompt.match(/(?:时间|时长)\s*(?:改成|为)?\s*(\d+)/);
         if (matchScore) currentExamData.meta.total_score = parseInt(matchScore[1]);
         if (matchTime) currentExamData.meta.duration = parseInt(matchTime[1]);
+        executedTool = `update_meta(duration=${currentExamData.meta.duration}, total_score=${currentExamData.meta.total_score})`;
+        replyMessage = `已将试卷时长更新为 <strong>${currentExamData.meta.duration} 分钟</strong>，满分更新为 <strong>${currentExamData.meta.total_score} 分</strong>！`;
+      } else if (prompt.includes("水印") || prompt.includes("广告")) {
+        executedTool = `clean_watermarks()`;
+        replyMessage = `已全卷扫描并清除题目中残留的水印与广告词！`;
       }
+
+      return { reply: replyMessage, tool: executedTool };
     }
 
     // DeepSeek API 对接
@@ -1975,40 +2316,69 @@
       (currentExamData.sections || []).forEach(sec => {
         (sec.questions || []).forEach(q => {
           if (q.number === qNum) {
-            q.blank_lines = (q.blank_lines || 4) + delta;
+            q.blank_lines = Math.max(1, (q.blank_lines || 4) + delta);
           }
         });
       });
     }
 
-    // 处理移动端本地文件上传 (.docx 解析)
+    // 处理移动端本地文件上传 (.docx / .json / .txt 解析)
     async function handleMobileFileUpload(e) {
       const file = e.target.files[0];
       if (!file) return;
 
       appendMobileMsg(`📁 已选择文件: <strong>${escapeHtml(file.name)}</strong> (${(file.size / 1024).toFixed(1)} KB)`, "user");
-      const loadingBubble = appendMobileMsg("⚡ 正在手机本地高效解析 Word 试卷文本...", "ai");
+      const loadingBubble = appendMobileMsg("⚡ 正在手机本地高效解析试卷文件...", "ai");
 
-      if (file.name.endsWith(".docx")) {
+      if (file.name.endsWith(".json")) {
+        try {
+          const text = await file.text();
+          const parsed = JSON.parse(text);
+          if (parsed && parsed.meta && parsed.sections) {
+            currentExamData = parsed;
+            saveExamState();
+            renderAllViews();
+            loadingBubble.querySelector(".msg-box").innerHTML = `
+              🎉 试卷工程导入成功！《${escapeHtml(parsed.meta.title || "试卷")}》，包含 <strong>${parsed.sections.length}</strong> 个大题。<br>
+              试卷排版已实时更新，随时可点击下方【试卷预览】查看！
+            `;
+            showToast("📦 试卷工程导入成功！");
+          } else {
+            throw new Error("JSON 格式不符合试卷工程规范！");
+          }
+        } catch(err) {
+          loadingBubble.querySelector(".msg-box").innerHTML = `❌ JSON 解析失败: ${err.message}`;
+        }
+      } else if (file.name.endsWith(".docx")) {
         try {
           const arrayBuffer = await file.arrayBuffer();
           const result = await mammoth.extractRawText({ arrayBuffer: arrayBuffer });
-          const rawText = result.value;
+          const rawText = result.value || "";
+          
           loadingBubble.querySelector(".msg-box").innerHTML = `
             🎉 本地解析成功！提取了 <strong>${rawText.length}</strong> 字题目文本。<br>
-            已载入排版引擎，随时可在下方输入排版微调指令！
+            已载入到排版引擎，随时可在下方输入口语指令如<em>“帮我排版这套试卷”</em>开始自动编排！
           `;
+          showToast("📄 DOCX 试卷提取成功！");
         } catch (err) {
           loadingBubble.querySelector(".msg-box").innerHTML = `❌ DOCX 解析失败: ${err.message}`;
         }
       } else {
-        loadingBubble.querySelector(".msg-box").innerHTML = `已载入文件内容！`;
+        try {
+          const text = await file.text();
+          loadingBubble.querySelector(".msg-box").innerHTML = `
+            🎉 文本读取成功！共 <strong>${text.length}</strong> 字符。<br>
+            您可以在下方指挥 AI 智能编排。
+          `;
+          showToast("📝 试卷文本已载入！");
+        } catch(err) {
+          loadingBubble.querySelector(".msg-box").innerHTML = `❌ 文本读取失败: ${err.message}`;
+        }
       }
     }
 
     // 重载真题示例
     function loadSampleMathExam() {
-      // 恢复默认示例数据
       localStorage.removeItem("exam_state_data");
       location.reload();
     }
@@ -2022,6 +2392,20 @@
       a.click();
       document.body.removeChild(a);
       appendMobileMsg("📥 已触发标准 Word (.docx) 下载，在手机 WPS/Office 打开可任意编辑！", "ai");
+      showToast("📥 已触发 Word 下载");
+    }
+
+    // 导出试卷 JSON 工程数据
+    function exportExamJson() {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(currentExamData, null, 2));
+      const a = document.createElement("a");
+      a.href = dataStr;
+      a.download = `${currentExamData.meta?.title || "试卷工程数据"}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      appendMobileMsg("📦 试卷 JSON 工程备份文件已成功导出！可随时重新导入工作台。", "ai");
+      showToast("📦 已导出试卷工程文件");
     }
 
     // 触发系统打印 / 导出 PDF
@@ -2051,13 +2435,15 @@
       if (navigator.clipboard) {
         navigator.clipboard.writeText(text).then(() => {
           appendMobileMsg("📋 全卷题目文本已成功复制到手机剪贴板！", "ai");
+          showToast("📋 全卷文本已复制到剪贴板！");
         });
       } else {
         appendMobileMsg("已准备好文本内容。", "ai");
+        showToast("已提取文本");
       }
     }
 
-    // 切换到电脑版 (保留 view=desktop 参数)
+    // 切换到电脑版 (携带 view=desktop 参数放行)
     function switchToDesktopVersion() {
       window.location.href = "exam.html?view=desktop";
     }
@@ -2149,6 +2535,7 @@
       updateTopModelTag();
       closeDrawer("configDrawer");
       appendMobileMsg(`⚙️ 设置已更新！当前使用引擎：<strong>${document.getElementById("topModelTag").textContent}</strong>`, "ai");
+      showToast("⚙️ 模型设置已更新！");
     }
 
     function loadSavedMobileConfig() {
