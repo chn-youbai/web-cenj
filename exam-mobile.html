@@ -2079,13 +2079,118 @@
       return row;
     }
 
+    // 健壮的 JSON 工具提取器 (支持 Markdown 代码块与平衡大括号，防止数学公式与贪婪正则破坏解析)
+    function extractJsonAction(text) {
+      if (!text) return null;
+      // 1. 尝试提取 ```json ... ``` 代码块
+      const codeBlockMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/);
+      if (codeBlockMatch) {
+        try {
+          const parsed = JSON.parse(codeBlockMatch[1].trim());
+          if (parsed && (parsed.tool || parsed.action)) return parsed;
+        } catch(e) {}
+      }
+      // 2. 尝试平衡大括号提取包含 "tool" 的最小闭合 JSON
+      const toolIdx = text.indexOf('"tool"');
+      if (toolIdx !== -1) {
+        const startIdx = text.lastIndexOf('{', toolIdx);
+        if (startIdx !== -1) {
+          let depth = 0;
+          for (let i = startIdx; i < text.length; i++) {
+            if (text[i] === '{') depth++;
+            else if (text[i] === '}') {
+              depth--;
+              if (depth === 0) {
+                try {
+                  const candidate = text.substring(startIdx, i + 1);
+                  const parsed = JSON.parse(candidate);
+                  if (parsed && (parsed.tool || parsed.action)) return parsed;
+                } catch(e) {}
+                break;
+              }
+            }
+          }
+        }
+      }
+      return null;
+    }
+
+    // 执行排版与题目修改动作
+    function executeAction(action) {
+      if (!action || !action.tool) return "";
+      let executed = "";
+
+      if (action.tool === "modify_layout" && action.q && action.layout) {
+        modifyQuestionLayout(action.q, action.layout);
+        executed = `modify_layout(第${action.q}题, 选项布局="${action.layout}")`;
+      } else if (action.tool === "add_blank" && action.q && action.lines !== undefined) {
+        addQuestionBlank(action.q, action.lines);
+        executed = `add_blank(第${action.q}题, 调整留白=${action.lines}行)`;
+      } else if (action.tool === "meta") {
+        if (action.title) currentExamData.meta.title = action.title;
+        if (action.duration) currentExamData.meta.duration = parseInt(action.duration, 10);
+        if (action.total_score) currentExamData.meta.total_score = parseInt(action.total_score, 10);
+        if (action.subject) currentExamData.meta.subject = action.subject;
+        if (action.grade) currentExamData.meta.grade = action.grade;
+        executed = `update_meta(标题="${currentExamData.meta.title}", 时长=${currentExamData.meta.duration}分, 总分=${currentExamData.meta.total_score}分)`;
+      } else if (action.tool === "modify_stem" && action.q && action.stem) {
+        (currentExamData.sections || []).forEach(sec => {
+          (sec.questions || []).forEach(q => {
+            if (q.number === action.q) q.stem = action.stem;
+          });
+        });
+        executed = `modify_stem(第${action.q}题题干已更新)`;
+      } else if (action.tool === "modify_options" && action.q && Array.isArray(action.options)) {
+        (currentExamData.sections || []).forEach(sec => {
+          (sec.questions || []).forEach(q => {
+            if (q.number === action.q) q.options = action.options;
+          });
+        });
+        executed = `modify_options(第${action.q}题选项已更新)`;
+      } else if (action.tool === "modify_score" && action.q && action.score) {
+        (currentExamData.sections || []).forEach(sec => {
+          (sec.questions || []).forEach(q => {
+            if (q.number === action.q) q.score = parseInt(action.score, 10);
+          });
+        });
+        executed = `modify_score(第${action.q}题分值已更新为${action.score}分)`;
+      } else if (action.tool === "delete_question" && action.q) {
+        (currentExamData.sections || []).forEach(sec => {
+          sec.questions = (sec.questions || []).filter(q => q.number !== action.q);
+        });
+        executed = `delete_question(已删除第${action.q}题)`;
+      }
+      return executed;
+    }
+
     // Google Gemini Interactions API 协议实现 (严格遵守 GEMINI.md 规范)
     async function handleGeminiToolCalling(prompt, apiKey, bubbleEl, modelName = "gemini-3.8-flash", thinkingBudget = -1) {
       const activeKey = apiKey || BUILTIN_GEMINI_KEY;
       const primaryModel = modelName || "gemini-3.8-flash";
       const fallbackModel = "gemini-3.5-flash";
 
-      const promptText = `你是一个专业的试卷排版调度智能体。请深度理解用户指令并对当前试卷进行排版决策与微调。\n用户指令：${prompt}\n如果需要修改布局或题目，请在回复末尾附带纯 JSON 指令（格式如下，无修改则不附带）：\n{"tool": "modify_layout", "q": 题号, "layout": "cols-1"|"cols-2"|"cols-4"} 或 {"tool": "add_blank", "q": 题号, "lines": 行数} 或 {"tool": "meta", "duration": 时长, "total_score": 总分, "title": 标题}。`;
+      // 提取试卷当前大纲给 AI 提供感知上下文
+      const briefQuestions = (currentExamData.sections || []).flatMap(s => (s.questions || []).map(q => ({
+        q: q.number,
+        type: s.type,
+        layout: q.layout || "none",
+        stem: (q.stem || "").slice(0, 30) + "..."
+      })));
+
+      const promptText = `你是一个专业的试卷排版调度智能体。当前试卷信息如下：
+- 标题: "${currentExamData.meta?.title || "未命名"}", 时长: ${currentExamData.meta?.duration || 120}分钟, 满分: ${currentExamData.meta?.total_score || 150}分
+- 题目列表: ${JSON.stringify(briefQuestions)}
+
+用户指令：${prompt}
+
+请根据用户指令进行决策并回答用户。如果需要修改试卷，必须在回复末尾附带标准纯 JSON 指令（格式如下，无修改则不附带）：
+1. 选项列数: {"tool": "modify_layout", "q": 题号, "layout": "cols-1"|"cols-2"|"cols-4"}
+2. 大题留白: {"tool": "add_blank", "q": 题号, "lines": 行数增减如 3 或 -2}
+3. 卷头信息: {"tool": "meta", "title": "新标题", "duration": 分钟, "total_score": 总分}
+4. 修改题干: {"tool": "modify_stem", "q": 题号, "stem": "新题干内容"}
+5. 修改选项: {"tool": "modify_options", "q": 题号, "options": ["A. ...", "B. ...", "C. ...", "D. ..."]}
+6. 修改单题分值: {"tool": "modify_score", "q": 题号, "score": 分数}
+7. 删除题目: {"tool": "delete_question", "q": 题号}`;
 
       let thinkingDesc = "最高思考";
       if (thinkingBudget === 0) thinkingDesc = "思考关闭";
@@ -2093,34 +2198,45 @@
       else if (thinkingBudget === 8192) thinkingDesc = "8k思考";
       else if (thinkingBudget === 2048) thinkingDesc = "2k思考";
 
-      async function requestGeminiInteractions(targetModel) {
-        return await fetch("https://generativelanguage.googleapis.com/v1beta/interactions", {
-          method: "POST",
-          headers: {
-            "x-goog-api-key": activeKey,
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            model: targetModel,
-            store: false,
-            input: [
-              {
-                type: "user_input",
-                content: promptText
-              }
-            ]
-          })
-        });
+      async function requestGeminiInteractions(targetModel, timeoutMs = 8000) {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+        try {
+          const resp = await fetch("https://generativelanguage.googleapis.com/v1beta/interactions", {
+            method: "POST",
+            signal: controller.signal,
+            headers: {
+              "x-goog-api-key": activeKey,
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              model: targetModel,
+              store: false,
+              input: [
+                {
+                  type: "user_input",
+                  content: promptText
+                }
+              ]
+            })
+          });
+          clearTimeout(timeoutId);
+          return resp;
+        } catch(e) {
+          clearTimeout(timeoutId);
+          throw e;
+        }
       }
 
       let res;
       let usedModelName = `${primaryModel} (${thinkingDesc})`;
 
       try {
-        res = await requestGeminiInteractions(primaryModel);
+        // 首选模型限时 4.5 秒，超时自动切换到秒级响应的备用模型 3.5-flash
+        res = await requestGeminiInteractions(primaryModel, 4500);
       } catch(netErr) {
         try {
-          res = await requestGeminiInteractions(fallbackModel);
+          res = await requestGeminiInteractions(fallbackModel, 8000);
           usedModelName = `${fallbackModel} (备用高可用 · ${thinkingDesc})`;
         } catch(fallbackErr) {
           // 云端彻底断连（如手机网络限制 Google 域名），无缝降级为本地语义引擎
@@ -2143,7 +2259,7 @@
       // 若遇 503 或不可用，自动重试高可用模型 gemini-3.5-flash
       if ((res.status === 503 || !res.ok) && primaryModel !== fallbackModel) {
         try {
-          const retryRes = await requestGeminiInteractions(fallbackModel);
+          const retryRes = await requestGeminiInteractions(fallbackModel, 8000);
           if (retryRes.ok) {
             res = retryRes;
             usedModelName = `${fallbackModel} (备用高可用 · ${thinkingDesc})`;
@@ -2167,25 +2283,12 @@
 
       // 解析并执行回复中的 JSON 工具指令
       let toolExecuted = "";
-      const jsonMatch = replyText.match(/\{[\s\S]*"tool"[\s\S]*\}/);
-      if (jsonMatch) {
-        try {
-          const action = JSON.parse(jsonMatch[0]);
-          if (action.tool === "modify_layout" && action.q && action.layout) {
-            modifyQuestionLayout(action.q, action.layout);
-            toolExecuted = `modify_layout(q=${action.q}, layout="${action.layout}")`;
-          } else if (action.tool === "add_blank" && action.q && action.lines) {
-            addQuestionBlank(action.q, action.lines);
-            toolExecuted = `add_blank(q=${action.q}, lines=${action.lines})`;
-          } else if (action.tool === "meta") {
-            if (action.title) currentExamData.meta.title = action.title;
-            if (action.duration) currentExamData.meta.duration = action.duration;
-            if (action.total_score) currentExamData.meta.total_score = action.total_score;
-            toolExecuted = `update_meta(...)`;
-          }
-        } catch(e) {}
-      } else {
-        // 本地语义规则辅助匹配
+      const action = extractJsonAction(replyText);
+      if (action) {
+        toolExecuted = executeAction(action);
+      }
+      // 如果 AI 未能输出有效工具或解析为空，则用本地语义规则兜底
+      if (!toolExecuted) {
         const fallbackRes = applyLocalSemanticRule(prompt);
         if (fallbackRes.tool) toolExecuted = fallbackRes.tool;
       }
@@ -2193,7 +2296,7 @@
       saveExamState();
       renderAllViews();
 
-      const cleanReply = replyText.replace(/\{[\s\S]*"tool"[\s\S]*\}/, '').trim();
+      const cleanReply = replyText.replace(/```(?:json)?[\s\S]*?```/g, '').replace(/\{[\s\S]*"tool"[\s\S]*\}/g, '').trim();
       let thoughtHtml = '';
       if (thoughtContent) {
         thoughtHtml = `
