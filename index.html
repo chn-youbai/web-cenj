@@ -280,9 +280,11 @@
   </div>
 
   <script>
-    // 云端共享计数器配置
-    const COUNTER_KEY = 'web_cenj_shared_clicks_v1';
-    const API_BASE = 'https://countapi.mileshilliard.com/api/v1';
+    // 计数器配置：优先调用 Cloudflare Pages 原生私有后端 /api/click，降级支持公共 API
+    const LOCAL_API = '/api/click';
+    const FALLBACK_API_BASE = 'https://countapi.mileshilliard.com/api/v1';
+    const FALLBACK_KEY = 'web_cenj_shared_clicks_v1';
+
     const countEl = document.getElementById('likeCount');
     const likeBtn = document.getElementById('likeBtn');
     const likeIcon = document.getElementById('likeIcon');
@@ -298,7 +300,21 @@
     // 初始化获取云端最新计次
     async function initCount() {
       try {
-        const res = await fetch(`${API_BASE}/get/${COUNTER_KEY}`);
+        // 先尝试自己的私有 Cloudflare API
+        const res = await fetch(LOCAL_API);
+        if (res.ok) {
+          const data = await res.json();
+          if (data && typeof data.value === 'number') {
+            currentVal = data.value;
+            countEl.textContent = formatCount(currentVal);
+            return;
+          }
+        }
+      } catch (e) {}
+
+      // 备用降级逻辑
+      try {
+        const res = await fetch(`${FALLBACK_API_BASE}/get/${FALLBACK_KEY}`);
         if (res.ok) {
           const data = await res.json();
           currentVal = data.value || 0;
@@ -307,7 +323,6 @@
           countEl.textContent = '0';
         }
       } catch (err) {
-        console.warn('获取云端计数失败，使用默认值', err);
         countEl.textContent = currentVal || '0';
       }
     }
@@ -326,9 +341,22 @@
       // 3. 产生漂浮粒子特效
       spawnParticle(e);
 
-      // 4. 同步请求云端递增计数器
+      // 4. 同步请求自己私有的 Cloudflare 后端接口
       try {
-        const res = await fetch(`${API_BASE}/hit/${COUNTER_KEY}`);
+        const res = await fetch(LOCAL_API, { method: 'POST' });
+        if (res.ok) {
+          const data = await res.json();
+          if (data && typeof data.value === 'number') {
+            currentVal = Math.max(currentVal, data.value);
+            countEl.textContent = formatCount(currentVal);
+            return;
+          }
+        }
+      } catch (e) {}
+
+      // 备用同步请求
+      try {
+        const res = await fetch(`${FALLBACK_API_BASE}/hit/${FALLBACK_KEY}`);
         if (res.ok) {
           const data = await res.json();
           if (data && typeof data.value === 'number') {
@@ -336,9 +364,7 @@
             countEl.textContent = formatCount(currentVal);
           }
         }
-      } catch (err) {
-        console.warn('云端同步稍后重试', err);
-      }
+      } catch (err) {}
     }
 
     // 漂浮飞升粒子特效
