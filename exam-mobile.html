@@ -2221,20 +2221,53 @@
           totalCount += (sec.questions || []).length;
           sec.questions = [];
         });
-        executed = `clear_all(已清空全卷所有题目共 ${totalCount} 道)`;
+        currentExamData.answers = [];
+        executed = `clear_all(已清空全卷所有题目与对应答案共 ${totalCount} 道)`;
+      } else if (action.tool === "clear_answers") {
+        const count = (currentExamData.answers || []).length;
+        currentExamData.answers = [];
+        executed = `clear_answers(已清空全卷 ${count} 题参考答案与解析)`;
+      } else if (action.tool === "delete_answer" && action.q !== undefined) {
+        const targetQSet = new Set(Array.isArray(action.q) ? action.q.map(n => parseInt(n, 10)) : [parseInt(action.q, 10)]);
+        if (currentExamData.answers) {
+          currentExamData.answers = currentExamData.answers.filter(a => !targetQSet.has(a.number));
+        }
+        executed = `delete_answer(已删除第 ${Array.from(targetQSet).join(', ')} 题的答案)`;
+      } else if (action.tool === "modify_answer" && action.q !== undefined) {
+        if (!currentExamData.answers) currentExamData.answers = [];
+        const qNum = parseInt(action.q, 10);
+        const existing = currentExamData.answers.find(a => a.number === qNum);
+        if (existing) {
+          if (action.answer !== undefined) existing.answer = action.answer;
+          if (action.analysis !== undefined) existing.analysis = action.analysis;
+        } else {
+          currentExamData.answers.push({
+            number: qNum,
+            answer: action.answer || "",
+            analysis: action.analysis || ""
+          });
+          currentExamData.answers.sort((a, b) => a.number - b.number);
+        }
+        executed = `modify_answer(已更新第${qNum}题参考答案为"${action.answer}")`;
       } else if (action.tool === "delete_question" && action.q !== undefined) {
         if (Array.isArray(action.q)) {
           const qSet = new Set(action.q.map(n => parseInt(n, 10)));
           (currentExamData.sections || []).forEach(sec => {
             sec.questions = (sec.questions || []).filter(q => !qSet.has(q.number));
           });
-          executed = `delete_question(已批量删除题目: 第${action.q.join(', ')}题)`;
+          if (currentExamData.answers) {
+            currentExamData.answers = currentExamData.answers.filter(a => !qSet.has(a.number));
+          }
+          executed = `delete_question(已批量删除题目及对应答案: 第${action.q.join(', ')}题)`;
         } else {
           const targetQ = parseInt(action.q, 10);
           (currentExamData.sections || []).forEach(sec => {
             sec.questions = (sec.questions || []).filter(q => q.number !== targetQ);
           });
-          executed = `delete_question(已删除第${targetQ}题)`;
+          if (currentExamData.answers) {
+            currentExamData.answers = currentExamData.answers.filter(a => a.number !== targetQ);
+          }
+          executed = `delete_question(已删除第${targetQ}题及对应答案)`;
         }
       }
       return executed;
@@ -2246,7 +2279,7 @@
       const primaryModel = modelName || "gemini-3.8-flash";
       const fallbackModel = "gemini-3.5-flash";
 
-      // 提取试卷当前大纲给 AI 提供感知上下文
+      // 提取试卷当前大纲与参考答案给 AI 提供感知上下文 (保证一一对应)
       const briefQuestions = (currentExamData.sections || []).flatMap(s => (s.questions || []).map(q => ({
         q: q.number,
         type: s.type,
@@ -2254,21 +2287,33 @@
         stem: (q.stem || "").slice(0, 30) + "..."
       })));
 
+      const briefAnswers = (currentExamData.answers || []).map(a => ({
+        q: a.number,
+        ans: a.answer,
+        has_analysis: Boolean(a.analysis)
+      }));
+
       const promptText = `你是一个专业的试卷排版调度智能体。当前试卷信息如下：
 - 标题: "${currentExamData.meta?.title || "未命名"}", 时长: ${currentExamData.meta?.duration || 120}分钟, 满分: ${currentExamData.meta?.total_score || 150}分
-- 题目列表: ${JSON.stringify(briefQuestions)}
+- 题目列表 (${briefQuestions.length}题): ${JSON.stringify(briefQuestions)}
+- 参考答案列表 (${briefAnswers.length}题): ${JSON.stringify(briefAnswers)}
+
+注意：试题与参考答案必须严格保持一一对应关系。删除试题时对应答案会自动同步清除。
 
 用户指令：${prompt}
 
-请根据用户指令进行决策并回答用户。如果需要修改试卷，必须在回复末尾附带标准纯 JSON 指令（格式如下，支持单个对象或数组批量执行多项调整，无修改则不附带）：
+请根据用户指令进行决策并回答用户。如果需要修改试卷或答案，必须在回复末尾附带标准纯 JSON 指令（格式如下，支持单个对象或数组批量执行多项调整，无修改则不附带）：
 1. 选项列数: {"tool": "modify_layout", "q": 题号, "layout": "cols-1"|"cols-2"|"cols-4"}
 2. 大题留白: {"tool": "add_blank", "q": 题号, "lines": 行数增减如 3 或 -2}
 3. 卷头信息: {"tool": "meta", "title": "新标题", "duration": 分钟, "total_score": 总分}
 4. 修改题干: {"tool": "modify_stem", "q": 题号, "stem": "新题干内容"}
 5. 修改选项: {"tool": "modify_options", "q": 题号, "options": ["A. ...", "B. ...", "C. ...", "D. ..."]}
 6. 修改单题分值: {"tool": "modify_score", "q": 题号, "score": 分数}
-7. 删除单题或多题: {"tool": "delete_question", "q": 题号或[题号列表]}
-8. 清空所有题目/清卷: {"tool": "clear_all"}`;
+7. 删除单题或多题(试题与对应答案自动同步删除): {"tool": "delete_question", "q": 题号或[题号列表]}
+8. 清空所有题目与答案(全卷重置): {"tool": "clear_all"}
+9. 清空所有参考答案与解析(保留试题): {"tool": "clear_answers"}
+10. 修改或新增参考答案: {"tool": "modify_answer", "q": 题号, "answer": "正确答案", "analysis": "解析内容"}
+11. 删除指定题目答案: {"tool": "delete_answer", "q": 题号或[题号列表]}`;
 
       let thinkingDesc = "最高思考";
       if (thinkingBudget === 0) thinkingDesc = "思考关闭";
@@ -2407,14 +2452,48 @@
       let executedTool = "";
       let replyMessage = "已根据指令完成微调！右侧试卷预览已实时更新。";
 
-      if (prompt.includes("清空") || prompt.includes("删掉所有") || prompt.includes("删除所有") || prompt.includes("全部删除") || prompt.includes("删掉全部") || prompt.includes("删除全部") || prompt.includes("所有内容都删") || prompt.includes("所有题目都删") || prompt.includes("删掉所有题目") || prompt.includes("删除所有题目")) {
+      if (prompt.includes("清空答案") || prompt.includes("清空全部答案") || prompt.includes("清空所有答案") || prompt.includes("删除所有答案") || prompt.includes("删掉所有答案") || (prompt.includes("答案") && (prompt.includes("清空") || prompt.includes("全部删除") || prompt.includes("删掉全部") || prompt.includes("全都删")))) {
+        const count = (currentExamData.answers || []).length;
+        currentExamData.answers = [];
+        executedTool = `clear_answers(已清空全卷 ${count} 题参考答案与解析)`;
+        replyMessage = `已成功清空试卷中的全部参考答案与解析！试题题干与选项已完整保留。`;
+      } else if (prompt.includes("答案") && (prompt.includes("删") || prompt.includes("去除"))) {
+        const matchNums = prompt.match(/\d+/g);
+        if (matchNums) {
+          const qNums = matchNums.map(n => parseInt(n, 10));
+          const qSet = new Set(qNums);
+          if (currentExamData.answers) {
+            currentExamData.answers = currentExamData.answers.filter(a => !qSet.has(a.number));
+          }
+          executedTool = `delete_answer(已删除第 ${qNums.join(', ')} 题参考答案)`;
+          replyMessage = `已成功删除 <strong>第 ${qNums.join('、')} 题</strong> 的参考答案与解析！`;
+        }
+      } else if (prompt.includes("答案") && (prompt.includes("改成") || prompt.includes("修改为") || prompt.includes("设为") || prompt.includes("设置为") || prompt.includes("换成") || prompt.includes("改为"))) {
+        const matchQ = prompt.match(/第?\s*(\d+)\s*题?/);
+        const matchAns = prompt.match(/(?:改成|修改为|设为|设置为|换成|改为)\s*([A-Za-z0-9\u4e00-\u9fa5\+\-\*\/\=\.\,\(\)]+)/);
+        if (matchQ && matchAns) {
+          const qNum = parseInt(matchQ[1], 10);
+          const newAns = matchAns[1].trim();
+          if (!currentExamData.answers) currentExamData.answers = [];
+          const existing = currentExamData.answers.find(a => a.number === qNum);
+          if (existing) {
+            existing.answer = newAns;
+          } else {
+            currentExamData.answers.push({ number: qNum, answer: newAns, analysis: "" });
+            currentExamData.answers.sort((a, b) => a.number - b.number);
+          }
+          executedTool = `modify_answer(第${qNum}题答案已更新为"${newAns}")`;
+          replyMessage = `已成功将 <strong>第 ${qNum} 题</strong> 的参考答案修改为 <strong>${newAns}</strong>！`;
+        }
+      } else if (prompt.includes("清空") || prompt.includes("删掉所有") || prompt.includes("删除所有") || prompt.includes("全部删除") || prompt.includes("删掉全部") || prompt.includes("删除全部") || prompt.includes("所有内容都删") || prompt.includes("所有题目都删") || prompt.includes("删掉所有题目") || prompt.includes("删除所有题目") || prompt.includes("清卷") || prompt.includes("重置试卷")) {
         let totalCount = 0;
         (currentExamData.sections || []).forEach(sec => {
           totalCount += (sec.questions || []).length;
           sec.questions = [];
         });
-        executedTool = `clear_all(已清空全卷所有题目共 ${totalCount} 道)`;
-        replyMessage = `已成功清空试卷中的全部题目！您现在可以上传新试卷或输入新题目进行编排。`;
+        currentExamData.answers = [];
+        executedTool = `clear_all(已清空全卷所有题目及参考答案共 ${totalCount} 道)`;
+        replyMessage = `已成功清空试卷中的全部题目与对应参考答案！您现在可以上传新试卷或输入新题目进行编排。`;
       } else if (prompt.includes("选项") && (prompt.includes("两列") || prompt.includes("双列"))) {
         const matchQ = prompt.match(/第\s*(\d+)\s*题/);
         const qNum = matchQ ? parseInt(matchQ[1]) : 3;
@@ -2459,8 +2538,11 @@
           (currentExamData.sections || []).forEach(sec => {
             sec.questions = (sec.questions || []).filter(q => !qSet.has(q.number));
           });
-          executedTool = `delete_question(已删除题目: 第${qNums.join(', ')}题)`;
-          replyMessage = `已成功删除 <strong>第 ${qNums.join('、')} 题</strong>！右侧试卷预览已更新。`;
+          if (currentExamData.answers) {
+            currentExamData.answers = currentExamData.answers.filter(a => !qSet.has(a.number));
+          }
+          executedTool = `delete_question(已删除题目及对应答案: 第${qNums.join(', ')}题)`;
+          replyMessage = `已成功删除 <strong>第 ${qNums.join('、')} 题</strong> 及其对应答案！右侧试卷预览已更新。`;
         }
       }
 
@@ -2472,7 +2554,7 @@
       const activeKey = apiKey || BUILTIN_DEEPSEEK_KEY;
       const targetModel = modelName || "deepseek-flash";
 
-      // 提取试卷当前大纲给 DeepSeek 提供感知上下文
+      // 提取试卷当前大纲与参考答案给 DeepSeek 提供感知上下文 (保证一一对应)
       const briefQuestions = (currentExamData.sections || []).flatMap(s => (s.questions || []).map(q => ({
         q: q.number,
         type: s.type,
@@ -2480,21 +2562,33 @@
         stem: (q.stem || "").slice(0, 30) + "..."
       })));
 
+      const briefAnswers = (currentExamData.answers || []).map(a => ({
+        q: a.number,
+        answer: a.answer || "",
+        analysis: (a.analysis || "").slice(0, 30) + (a.analysis?.length > 30 ? "..." : "")
+      }));
+
       const promptText = `你是一个专业的试卷排版调度智能体。当前试卷信息如下：
 - 标题: "${currentExamData.meta?.title || "未命名"}", 时长: ${currentExamData.meta?.duration || 120}分钟, 满分: ${currentExamData.meta?.total_score || 150}分
 - 题目列表: ${JSON.stringify(briefQuestions)}
+- 参考答案与解析列表: ${JSON.stringify(briefAnswers)}
+
+注意：试题与参考答案必须严格保持一一对应关系。删除试题时对应答案会自动同步清除。
 
 用户指令：${prompt}
 
-请根据用户指令进行决策并回答用户。如果需要修改试卷，必须在回复末尾附带标准纯 JSON 指令（格式如下，支持单个对象或数组批量执行多项调整，无修改则不附带）：
+请根据用户指令进行决策并回答用户。如果需要修改试卷或答案，必须在回复末尾附带标准纯 JSON 指令（格式如下，支持单个对象或数组批量执行多项调整，无修改则不附带）：
 1. 选项列数: {"tool": "modify_layout", "q": 题号, "layout": "cols-1"|"cols-2"|"cols-4"}
 2. 大题留白: {"tool": "add_blank", "q": 题号, "lines": 行数增减如 3 或 -2}
 3. 卷头信息: {"tool": "meta", "title": "新标题", "duration": 分钟, "total_score": 总分}
 4. 修改题干: {"tool": "modify_stem", "q": 题号, "stem": "新题干内容"}
 5. 修改选项: {"tool": "modify_options", "q": 题号, "options": ["A. ...", "B. ...", "C. ...", "D. ..."]}
 6. 修改单题分值: {"tool": "modify_score", "q": 题号, "score": 分数}
-7. 删除单题或多题: {"tool": "delete_question", "q": 题号或[题号列表]}
-8. 清空所有题目/清卷: {"tool": "clear_all"}`;
+7. 删除单题或多题(试题与对应答案自动同步删除): {"tool": "delete_question", "q": 题号或[题号列表]}
+8. 清空所有题目与答案(全卷重置): {"tool": "clear_all"}
+9. 清空所有参考答案与解析(保留试题): {"tool": "clear_answers"}
+10. 修改或新增参考答案: {"tool": "modify_answer", "q": 题号, "answer": "正确答案", "analysis": "解析内容"}
+11. 删除指定题目答案: {"tool": "delete_answer", "q": 题号或[题号列表]}`;
 
       const reqBody = {
         model: targetModel,
