@@ -1103,7 +1103,7 @@
       <a href="./index.html" class="btn-icon-back">← 主页</a>
       <div class="brand-group">
         <span class="brand-title">📝 AI 试卷排版</span>
-        <span class="model-tag" id="topModelTag" onclick="openModelSettings()">✨ Gemini 3.8 Flash · 内置Key ⚙️</span>
+        <span class="model-tag" id="topModelTag" onclick="openModelSettings()">✨ DeepSeek V4.1 Flash (最高思考) ⚙️</span>
       </div>
     </div>
     <div class="header-right">
@@ -1133,7 +1133,7 @@
         <div class="msg-row ai">
           <div class="msg-box">
             👋 老师您好！我是您的 <strong>AI 试卷排版助手 (手机专版)</strong>。<br><br>
-            已接入 <strong>Gemini 3.8 Flash（最高思考等级）</strong> 作为排版大脑，内置专属 Key 已就绪！<br><br>
+            已接入 <strong>DeepSeek V4.1 Flash（最高思考等级）</strong> 作为排版推理大脑，<strong>内置专属 Key 已就绪</strong>，无需任何额外配置！<br><br>
             您可以在上方上传试卷，或点击【📋 载入真题示例】体验。<br><br>
             随时在下方<strong>输入口语化指令指挥我排版</strong>，例如：<br>
             • <em>“把第3题选项换成双列”</em><br>
@@ -1335,26 +1335,27 @@
       <!-- 1. 默认模式区 (使用内置Key) -->
       <div id="mobileDefaultSection">
         <div style="font-size: 0.78rem; color: #38bdf8; background: rgba(56, 189, 248, 0.1); padding: 0.55rem 0.75rem; border-radius: 8px; border: 1px solid rgba(56, 189, 248, 0.2); margin-bottom: 0.9rem;">
-          ✨ 已启用专属内置 Key，无需填写凭证，可选择 Gemini 模型与思考等级：
+          ✨ 已启用专属内置 Key，默认使用 <strong>DeepSeek V4.1 Flash (最高思考等级)</strong>，无需填写凭证：
         </div>
 
         <div class="form-group">
-          <label>选择 Gemini 模型：</label>
+          <label>选择排版大模型：</label>
           <select id="mobileDefaultModelSelect" class="form-input-mobile">
-            <option value="gemini-3.8-flash">Gemini 3.8 Flash (推荐 · 最新快速推理)</option>
-            <option value="gemini-3.6-flash">Gemini 3.6 Flash (稳定高速 · 极低延迟)</option>
-            <option value="gemini-3.5-flash">Gemini 3.5 Flash (中代大模型 · 稳定高可用)</option>
+            <option value="deepseek-flash" selected>DeepSeek V4.1 Flash (默认 · 最高推理性能)</option>
+            <option value="deepseek-reasoner">DeepSeek Reasoner (R1 · 深度数理推导)</option>
+            <option value="deepseek-chat">DeepSeek Chat (V3 · 极速通用对话)</option>
+            <option value="gemini-3.8-flash">Gemini 3.8 Flash (备用 · Google 快速推理)</option>
+            <option value="gemini-3.6-flash">Gemini 3.6 Flash (备用 · Google 稳定极速)</option>
           </select>
         </div>
 
         <div class="form-group">
           <label>选择思考强度 (Thinking Intensity)：</label>
           <select id="mobileDefaultThinkingSelect" class="form-input-mobile">
-            <option value="-1">🚀 极高 / 动态最高思考 (推荐)</option>
-            <option value="24576">🧠 深度思考 (24k tokens)</option>
-            <option value="8192">💡 中度思考 (8k tokens)</option>
-            <option value="2048">⚡ 轻度思考 (2k tokens)</option>
-            <option value="0">🚫 关闭思考 (直接输出)</option>
+            <option value="max" selected>🚀 极高思考 (max / 动态最高深度推理)</option>
+            <option value="high">🧠 深度思考 (high / 24k 思考预算)</option>
+            <option value="low">💡 轻度思考 (low / 4k 思考预算)</option>
+            <option value="off">🚫 关闭思考 (直接输出)</option>
           </select>
         </div>
       </div>
@@ -1364,28 +1365,28 @@
         <div class="form-group">
           <label>接口协议 / 平台类型：</label>
           <select id="mobileCustomProviderSelect" class="form-input-mobile" onchange="toggleMobileCustomProvider()">
+            <option value="deepseek" selected>DeepSeek (OpenAI 兼容协议)</option>
             <option value="gemini">Google Gemini 官方协议</option>
-            <option value="deepseek">DeepSeek (OpenAI 兼容协议)</option>
           </select>
         </div>
 
         <div class="form-group">
           <label>自定义 API Key：</label>
-          <input type="password" id="mobileCustomApiKeyInput" class="form-input-mobile" placeholder="输入您的 API Key" autocomplete="off">
+          <input type="password" id="mobileCustomApiKeyInput" class="form-input-mobile" placeholder="输入您的 API Key (如 sk-... 或 AIzaSy...)" autocomplete="off">
         </div>
 
         <div class="form-group">
           <label>自定义模型名称：</label>
-          <input type="text" id="mobileCustomModelNameInput" class="form-input-mobile" placeholder="例如 gemini-3.8-flash" autocomplete="off">
+          <input type="text" id="mobileCustomModelNameInput" class="form-input-mobile" placeholder="例如 deepseek-flash 或 gemini-3.8-flash" autocomplete="off">
         </div>
 
         <div class="form-group" id="mobileCustomThinkingGroup">
           <label>选择思考强度 (Thinking Intensity)：</label>
           <select id="mobileCustomThinkingSelect" class="form-input-mobile">
-            <option value="-1">🚀 极高 / 动态最高思考</option>
-            <option value="16384">🧠 深度思考 (16k tokens)</option>
-            <option value="4096">💡 中度思考 (4k tokens)</option>
-            <option value="0">🚫 关闭思考</option>
+            <option value="max">🚀 极高思考 (max / 最高深度推理)</option>
+            <option value="high">🧠 深度思考 (high)</option>
+            <option value="low">💡 轻度思考 (low)</option>
+            <option value="off">🚫 关闭思考</option>
           </select>
         </div>
       </div>
@@ -1398,7 +1399,8 @@
   </div>
 
   <script>
-    // 内置高配 Gemini API Key
+    // 内置 API Keys
+    const BUILTIN_DEEPSEEK_KEY = "sk-2d1d216cb2d249769cba218baefc7f5e";
     const BUILTIN_GEMINI_KEY = "AQ.Ab8RN6IuAdyz64ZtGMRt0xMIutpY4Kvm9XVkr2sS85HwK1fVBQ";
 
     // 全局当前试卷状态数据 (默认高三数学真题标准数据)
@@ -2032,23 +2034,36 @@
         const mode = localStorage.getItem("exam_mode") || "default";
 
         if (mode === "default") {
-          const model = localStorage.getItem("exam_default_model") || "gemini-3.8-flash";
-          const thinkingBudget = parseInt(localStorage.getItem("exam_default_thinking") || "-1", 10);
-          await handleGeminiToolCalling(prompt, BUILTIN_GEMINI_KEY, thinkingBubble, model, thinkingBudget);
+          const model = localStorage.getItem("exam_default_model") || "deepseek-flash";
+          const thinking = localStorage.getItem("exam_default_thinking") || "max";
+
+          if (model.startsWith("deepseek")) {
+            await handleDeepSeekToolCalling(prompt, BUILTIN_DEEPSEEK_KEY, thinkingBubble, model, thinking);
+          } else {
+            let budget = -1;
+            if (thinking === "off" || thinking === "0") budget = 0;
+            else if (thinking === "high" || thinking === "24576") budget = 24576;
+            else if (thinking === "low" || thinking === "4096") budget = 4096;
+            await handleGeminiToolCalling(prompt, BUILTIN_GEMINI_KEY, thinkingBubble, model, budget);
+          }
         } else {
-          const provider = localStorage.getItem("exam_custom_provider") || "gemini";
+          const provider = localStorage.getItem("exam_custom_provider") || "deepseek";
           const apiKey = localStorage.getItem("exam_custom_key") || "";
-          const model = localStorage.getItem("exam_custom_model") || "gemini-3.8-flash";
-          const thinkingBudget = parseInt(localStorage.getItem("exam_custom_thinking") || "-1", 10);
+          const model = localStorage.getItem("exam_custom_model") || "deepseek-flash";
+          const thinking = localStorage.getItem("exam_custom_thinking") || "max";
 
           if (!apiKey) {
             throw new Error("请先在右上角【⚙️ 模型设置】中输入您的 API Key！");
           }
 
-          if (provider === "gemini") {
-            await handleGeminiToolCalling(prompt, apiKey, thinkingBubble, model, thinkingBudget);
+          if (provider === "deepseek") {
+            await handleDeepSeekToolCalling(prompt, apiKey, thinkingBubble, model, thinking);
           } else {
-            await handleDeepSeekToolCalling(prompt, apiKey, thinkingBubble, model);
+            let budget = -1;
+            if (thinking === "off" || thinking === "0") budget = 0;
+            else if (thinking === "high" || thinking === "16384" || thinking === "24576") budget = 16384;
+            else if (thinking === "low" || thinking === "4096") budget = 4096;
+            await handleGeminiToolCalling(prompt, apiKey, thinkingBubble, model, budget);
           }
         }
       } catch (err) {
@@ -2365,24 +2380,62 @@
       return { reply: replyMessage, tool: executedTool };
     }
 
-    // DeepSeek API 对接
-    async function handleDeepSeekToolCalling(prompt, apiKey, bubbleEl, modelName = "deepseek-chat") {
+    // DeepSeek API 对接 (支持深度思考 reasoning_content、动态 token 统计与试卷排版工具调度)
+    async function handleDeepSeekToolCalling(prompt, apiKey, bubbleEl, modelName = "deepseek-flash", thinkingEffort = "max") {
+      const activeKey = apiKey || BUILTIN_DEEPSEEK_KEY;
+      const targetModel = modelName || "deepseek-flash";
+
+      // 提取试卷当前大纲给 DeepSeek 提供感知上下文
+      const briefQuestions = (currentExamData.sections || []).flatMap(s => (s.questions || []).map(q => ({
+        q: q.number,
+        type: s.type,
+        layout: q.layout || "none",
+        stem: (q.stem || "").slice(0, 30) + "..."
+      })));
+
+      const promptText = `你是一个专业的试卷排版调度智能体。当前试卷信息如下：
+- 标题: "${currentExamData.meta?.title || "未命名"}", 时长: ${currentExamData.meta?.duration || 120}分钟, 满分: ${currentExamData.meta?.total_score || 150}分
+- 题目列表: ${JSON.stringify(briefQuestions)}
+
+用户指令：${prompt}
+
+请根据用户指令进行决策并回答用户。如果需要修改试卷，必须在回复末尾附带标准纯 JSON 指令（格式如下，无修改则不附带）：
+1. 选项列数: {"tool": "modify_layout", "q": 题号, "layout": "cols-1"|"cols-2"|"cols-4"}
+2. 大题留白: {"tool": "add_blank", "q": 题号, "lines": 行数增减如 3 或 -2}
+3. 卷头信息: {"tool": "meta", "title": "新标题", "duration": 分钟, "total_score": 总分}
+4. 修改题干: {"tool": "modify_stem", "q": 题号, "stem": "新题干内容"}
+5. 修改选项: {"tool": "modify_options", "q": 题号, "options": ["A. ...", "B. ...", "C. ...", "D. ..."]}
+6. 修改单题分值: {"tool": "modify_score", "q": 题号, "score": 分数}
+7. 删除题目: {"tool": "delete_question", "q": 题号}`;
+
+      const reqBody = {
+        model: targetModel,
+        messages: [
+          {
+            role: "system",
+            content: "你是一个专业的试卷排版调度智能体。根据用户排版指令进行决策。如果需要调整试卷，务必在回答末尾输出纯 JSON 动作指令。"
+          },
+          {
+            role: "user",
+            content: promptText
+          }
+        ]
+      };
+
+      if (thinkingEffort && thinkingEffort !== "off" && thinkingEffort !== "0") {
+        reqBody.thinking = { type: "enabled" };
+        if (targetModel.includes("flash") || targetModel.includes("reasoner")) {
+          reqBody.reasoning_effort = (thinkingEffort === "high" || thinkingEffort === "low") ? thinkingEffort : "max";
+        }
+      }
+
       const res = await fetch("https://api.deepseek.com/chat/completions", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${apiKey}`
+          "Authorization": `Bearer ${activeKey}`
         },
-        body: JSON.stringify({
-          model: modelName || "deepseek-chat",
-          messages: [
-            {
-              role: "system",
-              content: "你是一个专业的试卷排版调度智能体。根据用户指令对试卷进行决策微调。"
-            },
-            { role: "user", content: prompt }
-          ]
-        })
+        body: JSON.stringify(reqBody)
       });
 
       if (!res.ok) {
@@ -2391,16 +2444,44 @@
       }
 
       const data = await res.json();
-      const reply = data.choices?.[0]?.message?.content || "已完成微调。";
-      applyLocalSemanticRule(prompt);
+      const message = data.choices?.[0]?.message;
+      const replyText = message?.content || "已根据指令完成微调。";
+      const reasoningContent = message?.reasoning_content || "";
+      const reasoningTokens = data.usage?.completion_tokens_details?.reasoning_tokens || 0;
+
+      // 解析并执行回复中的 JSON 工具指令
+      let toolExecuted = "";
+      const action = extractJsonAction(replyText);
+      if (action) {
+        toolExecuted = executeAction(action);
+      }
+      if (!toolExecuted) {
+        const fallbackRes = applyLocalSemanticRule(prompt);
+        if (fallbackRes.tool) toolExecuted = fallbackRes.tool;
+      }
+
       saveExamState();
       renderAllViews();
 
+      const cleanReply = replyText.replace(/```(?:json)?[\s\S]*?```/g, '').replace(/\{[\s\S]*"tool"[\s\S]*\}/g, '').trim();
+      let thoughtHtml = '';
+      if (reasoningContent) {
+        thoughtHtml = `
+          <details class="thought-details">
+            <summary class="thought-summary">🧠 DeepSeek 深度思考推理 (${reasoningTokens} tokens) ▼</summary>
+            <div class="thought-body">${escapeHtml(reasoningContent)}</div>
+          </details>
+        `;
+      }
+
       bubbleEl.querySelector(".msg-box").innerHTML = `
-        ${escapeHtml(reply).replace(/\n/g, '<br>')}
-        <br><span class="engine-chip">🤖 引擎: ${escapeHtml(modelName)}</span>
+        ${escapeHtml(cleanReply).replace(/\n/g, '<br>')}
+        ${thoughtHtml}
+        <br><span class="engine-chip">🤖 引擎: ${escapeHtml(targetModel)}${reasoningTokens ? ` (思考Token: ${reasoningTokens})` : ''}</span>
+        ${toolExecuted ? `<br><span class="tool-chip">🛠️ ${escapeHtml(toolExecuted)}</span>` : ''}
         <div class="preview-jump-chip" style="margin-top:0.6rem;" onclick="switchMobileNav('preview')">
-          <span>📄 排版已刷新，点击查看效果 ➔</span>
+          <span>📄 排版已刷新，点击切到预览</span>
+          <span>查看印样 ➔</span>
         </div>
       `;
     }
@@ -2602,7 +2683,7 @@
       const thinkingGrp = document.getElementById("mobileCustomThinkingGroup");
 
       if (provider === "gemini") {
-        keyInput.placeholder = "输入您的 Google Gemini API Key";
+        keyInput.placeholder = "输入您的 Google Gemini API Key (AIzaSy...)";
         if (!modelInput.value || modelInput.value.includes("deepseek")) {
           modelInput.value = "gemini-3.8-flash";
         }
@@ -2610,9 +2691,9 @@
       } else {
         keyInput.placeholder = "输入您的 DeepSeek API Key (sk-...)";
         if (!modelInput.value || modelInput.value.includes("gemini")) {
-          modelInput.value = "deepseek-chat";
+          modelInput.value = "deepseek-flash";
         }
-        thinkingGrp.style.display = "none";
+        thinkingGrp.style.display = "block";
       }
     }
 
@@ -2627,7 +2708,7 @@
       } else {
         const provider = document.getElementById("mobileCustomProviderSelect").value;
         const key = document.getElementById("mobileCustomApiKeyInput").value.trim();
-        const model = document.getElementById("mobileCustomModelNameInput").value.trim() || "gemini-3.8-flash";
+        const model = document.getElementById("mobileCustomModelNameInput").value.trim() || (provider === "gemini" ? "gemini-3.8-flash" : "deepseek-flash");
         const thinking = document.getElementById("mobileCustomThinkingSelect").value;
         localStorage.setItem("exam_custom_provider", provider);
         localStorage.setItem("exam_custom_key", key);
@@ -2642,20 +2723,27 @@
     }
 
     function loadSavedMobileConfig() {
+      // 检查并升级默认模型为 DeepSeek V4.1 Flash (最高思考等级)
+      if (!localStorage.getItem("exam_default_migrated_v4")) {
+        localStorage.setItem("exam_default_model", "deepseek-flash");
+        localStorage.setItem("exam_default_thinking", "max");
+        localStorage.setItem("exam_default_migrated_v4", "true");
+      }
+
       const mode = localStorage.getItem("exam_mode") || "default";
       currentConfigMode = mode;
 
-      const defModel = localStorage.getItem("exam_default_model") || "gemini-3.8-flash";
-      const defThinking = localStorage.getItem("exam_default_thinking") || "-1";
+      const defModel = localStorage.getItem("exam_default_model") || "deepseek-flash";
+      const defThinking = localStorage.getItem("exam_default_thinking") || "max";
       const selModel = document.getElementById("mobileDefaultModelSelect");
       const selThink = document.getElementById("mobileDefaultThinkingSelect");
       if (selModel) selModel.value = defModel;
       if (selThink) selThink.value = defThinking;
 
-      const custProv = localStorage.getItem("exam_custom_provider") || "gemini";
+      const custProv = localStorage.getItem("exam_custom_provider") || "deepseek";
       const custKey = localStorage.getItem("exam_custom_key") || "";
-      const custModel = localStorage.getItem("exam_custom_model") || "gemini-3.8-flash";
-      const custThink = localStorage.getItem("exam_custom_thinking") || "-1";
+      const custModel = localStorage.getItem("exam_custom_model") || "deepseek-flash";
+      const custThink = localStorage.getItem("exam_custom_thinking") || "max";
 
       const provEl = document.getElementById("mobileCustomProviderSelect");
       const keyEl = document.getElementById("mobileCustomApiKeyInput");
@@ -2676,17 +2764,17 @@
       const mode = localStorage.getItem("exam_mode") || "default";
 
       if (mode === "default") {
-        const model = localStorage.getItem("exam_default_model") || "gemini-3.8-flash";
-        const thinking = localStorage.getItem("exam_default_thinking") || "-1";
+        const model = localStorage.getItem("exam_default_model") || "deepseek-flash";
+        const thinking = localStorage.getItem("exam_default_thinking") || "max";
         let label = "最高思考";
-        if (thinking === "0") label = "无思考";
-        else if (thinking === "24576") label = "24k思考";
-        else if (thinking === "8192") label = "8k思考";
-        else if (thinking === "2048") label = "2k思考";
+        if (thinking === "off" || thinking === "0") label = "无思考";
+        else if (thinking === "high" || thinking === "24576") label = "深度思考";
+        else if (thinking === "low" || thinking === "4096") label = "轻度思考";
+        else if (thinking === "max" || thinking === "-1") label = "最高思考";
         tag.innerHTML = `✨ ${model} (${label}) ⚙️`;
       } else {
-        const provider = localStorage.getItem("exam_custom_provider") || "gemini";
-        const model = localStorage.getItem("exam_custom_model") || "gemini-3.8-flash";
+        const provider = localStorage.getItem("exam_custom_provider") || "deepseek";
+        const model = localStorage.getItem("exam_custom_model") || "deepseek-flash";
         tag.innerHTML = `🛠️ ${model} (${provider}) ⚙️`;
       }
     }
