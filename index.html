@@ -546,6 +546,9 @@
         // 反重力：向上缓慢漂浮
         this.vy = -(Math.random() * 0.7 + 0.3);
         this.vx = (Math.random() - 0.5) * 0.5;
+        // 冲击外力速度
+        this.blastVx = 0;
+        this.blastVy = 0;
         this.baseSize = Math.random() * 2 + 1;
         this.size = this.baseSize;
         this.alpha = Math.random() * 0.5 + 0.2;
@@ -553,11 +556,15 @@
       }
 
       update() {
-        // 自然向上浮动
-        this.y += this.vy;
-        this.x += this.vx;
+        // 自然向上浮动与冲击力衰减
+        this.y += this.vy + this.blastVy;
+        this.x += this.vx + this.blastVx;
 
-        // 鼠标交互：反重力排斥力场
+        // 冲击波惯性物理阻尼衰减
+        this.blastVx *= 0.92;
+        this.blastVy *= 0.92;
+
+        // 鼠标常规悬停交互：反重力排斥力场
         const dx = this.x - mouseX;
         const dy = this.y - mouseY;
         const dist = Math.sqrt(dx * dx + dy * dy);
@@ -573,9 +580,22 @@
           this.size = this.baseSize;
         }
 
-        // 飞出顶部后循环到底部重置
-        if (this.y < -10 || this.x < -10 || this.x > width + 10) {
+        // 飞出屏幕边缘后循环到底部重置
+        if (this.y < -20 || this.x < -30 || this.x > width + 30 || this.y > height + 30) {
           this.reset();
+        }
+      }
+
+      // 施加冲击波爆炸推力
+      applyBlast(bx, by, power, maxRadius) {
+        const dx = this.x - bx;
+        const dy = this.y - by;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < maxRadius && dist > 1) {
+          const force = (1 - dist / maxRadius) * power;
+          const angle = Math.atan2(dy, dx);
+          this.blastVx += Math.cos(angle) * force;
+          this.blastVy += Math.sin(angle) * force;
         }
       }
 
@@ -590,6 +610,67 @@
       }
     }
 
+    // 冲击波能量环系统
+    const shockwaves = [];
+    class Shockwave {
+      constructor(x, y) {
+        this.x = x;
+        this.y = y;
+        this.radius = 5;
+        this.maxRadius = 240;
+        this.speed = 10;
+        this.alpha = 0.8;
+      }
+      update() {
+        this.radius += this.speed;
+        this.alpha = (1 - this.radius / this.maxRadius) * 0.8;
+      }
+      draw() {
+        if (this.alpha <= 0) return;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.strokeStyle = `rgba(56, 189, 248, ${this.alpha * 0.6})`;
+        ctx.lineWidth = 2.5;
+        ctx.shadowBlur = 12;
+        ctx.shadowColor = 'rgba(56, 189, 248, 0.8)';
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+      }
+    }
+
+    // 监听全屏点击：若点击卡片外的空白区域，触发强力冲击波冲开粒子
+    window.addEventListener('pointerdown', (e) => {
+      // 判断点击是否在卡片内部（如果在卡片内，则保持卡片按钮的原有交互，不触发全屏冲击）
+      if (tiltCard && tiltCard.contains(e.target)) {
+        return;
+      }
+
+      const clickX = e.clientX;
+      const clickY = e.clientY;
+
+      // 1. 生成向外扩散的科技冲击波能量光环
+      shockwaves.push(new Shockwave(clickX, clickY));
+
+      // 2. 强力冲开四周的粒子（高能引力爆破）
+      particles.forEach(p => {
+        p.applyBlast(clickX, clickY, 22, 280);
+      });
+
+      // 3. 产生额外的冲击火花碎片
+      for (let i = 0; i < 18; i++) {
+        const spark = new Particle();
+        spark.x = clickX + (Math.random() - 0.5) * 15;
+        spark.y = clickY + (Math.random() - 0.5) * 15;
+        const angle = Math.random() * Math.PI * 2;
+        const speed = Math.random() * 12 + 4;
+        spark.blastVx = Math.cos(angle) * speed;
+        spark.blastVy = Math.sin(angle) * speed;
+        spark.size = Math.random() * 2.5 + 1.2;
+        spark.alpha = 0.9;
+        particles.push(spark);
+      }
+    });
+
     function initParticles() {
       particles.length = 0;
       for (let i = 0; i < PARTICLE_COUNT; i++) {
@@ -599,6 +680,20 @@
 
     function renderParticles() {
       ctx.clearRect(0, 0, width, height);
+
+      // 绘制并更新冲击波能量环
+      for (let i = shockwaves.length - 1; i >= 0; i--) {
+        shockwaves[i].update();
+        shockwaves[i].draw();
+        if (shockwaves[i].radius >= shockwaves[i].maxRadius) {
+          shockwaves.splice(i, 1);
+        }
+      }
+
+      // 限制粒子总数，防止爆炸碎片无限累积
+      if (particles.length > PARTICLE_COUNT + 60) {
+        particles.splice(0, particles.length - (PARTICLE_COUNT + 40));
+      }
 
       // 绘制粒子间连线（距离近时产生连接星座效果）
       for (let i = 0; i < particles.length; i++) {
