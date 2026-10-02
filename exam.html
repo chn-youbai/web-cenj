@@ -625,7 +625,7 @@
           <span>📁 上传试卷 (.docx / 文本)</span>
         </label>
         <input type="file" id="fileInput" accept=".docx,.txt,.json" onchange="handleFileUpload(event)">
-        <span class="model-badge" id="currentModelBadge" onclick="openConfigModal()">DeepSeek V3 (免Key模拟)</span>
+        <span class="model-badge" id="currentModelBadge" onclick="openConfigModal()">✨ Gemini 3.8 Flash (最高思考 · 内置)</span>
       </div>
 
       <!-- 对话历史 -->
@@ -633,8 +633,9 @@
         <div class="msg ai">
           <div class="msg-bubble">
             👋 老师您好！我是您的 <strong>AI 试卷排版助手</strong>。<br><br>
+            已为您接入 <strong>Gemini 3.8 Flash（最高思考等级）</strong> 作为排版推理大脑，<strong>内置专属 Key 已就绪</strong>，无需任何额外配置！<br><br>
             您可以在上方上传从学科网等下载的 <code>.docx</code> 试卷，或者直接点击右上角【📋 加载真题示例】体验。<br><br>
-            您随时可以在下方<strong>通过自然语言指挥我微调细节</strong>，例如：<br>
+            随时在下方<strong>通过对话指挥我微调细节</strong>，例如：<br>
             • <em>“把选择题选项换成双列”</em><br>
             • <em>“给第7题多分3行解答空白”</em><br>
             • <em>“把考试时间改成100分钟，满分改成120分”</em><br>
@@ -672,21 +673,21 @@
     <div class="modal-card">
       <div class="modal-title">⚙️ 大模型 API 设置</div>
       <p style="font-size: 0.8rem; color: #94a3b8; margin-bottom: 1rem;">
-        Key 仅保存在您手机/电脑的本地浏览器中（LocalStorage），绝不上传到任何服务器。不填也可使用内置的模拟排版器进行测试。
+        已内置高配 Gemini 3.8 Flash（启用最高思考等级），开箱即用。您也可以填入自己的 Key 或切换其他模型。
       </p>
       
       <div class="form-group">
         <label>选择服务商 / 大模型：</label>
         <select id="modelProviderSelect" class="form-input" onchange="toggleProviderInput()">
-          <option value="deepseek">DeepSeek (推荐，理科数学强，超便宜)</option>
-          <option value="gemini">Google Gemini (多模态与PDF识别强)</option>
-          <option value="mock">内置模拟智能体 (无需任何 API Key，极速体验)</option>
+          <option value="gemini">Google Gemini 3.8 Flash (最高思考等级 · 已启用内置Key)</option>
+          <option value="deepseek">DeepSeek V3 (支持自填Key)</option>
+          <option value="mock">内置模拟智能体 (本地离线体验)</option>
         </select>
       </div>
 
       <div class="form-group" id="apiKeyGroup">
-        <label>API Key：</label>
-        <input type="password" id="apiKeyInput" class="form-input" placeholder="sk-..." autocomplete="off">
+        <label>自定义 API Key（可选，留空则自动使用内置Key）：</label>
+        <input type="password" id="apiKeyInput" class="form-input" placeholder="已启用内置高配Key，可直接留空使用" autocomplete="off">
       </div>
 
       <div style="display: flex; gap: 0.8rem; justify-content: flex-end; margin-top: 1.5rem;">
@@ -974,6 +975,9 @@
       handleUserSubmit();
     }
 
+    // 内置高配 Gemini API Key
+    const BUILTIN_GEMINI_KEY = "AQ.Ab8RN6IuAdyz64ZtGMRt0xMIutpY4Kvm9XVkr2sS85HwK1fVBQ";
+
     // 对话发送与 Tool Calling 执行逻辑
     async function handleUserSubmit(e) {
       if (e) e.preventDefault();
@@ -988,16 +992,20 @@
       const thinkingBubble = appendChatMessage("🧠 正在理解指令并调度排版工具...", "ai");
 
       try {
-        const provider = localStorage.getItem("exam_ai_provider") || "mock";
-        const apiKey = localStorage.getItem("exam_ai_key") || "";
+        const provider = localStorage.getItem("exam_ai_provider") || "gemini";
+        const customKey = localStorage.getItem("exam_ai_key") || "";
+        const activeKey = customKey || (provider === "gemini" ? BUILTIN_GEMINI_KEY : "");
 
-        if (provider === "mock" || !apiKey) {
-          // 内置模拟器智能匹配（免Key体验模式）
+        if (provider === "mock") {
+          // 内置模拟器智能匹配（纯本地离线体验模式）
           await handleMockToolCalling(prompt, thinkingBubble);
         } else if (provider === "deepseek") {
-          await handleDeepSeekToolCalling(prompt, apiKey, thinkingBubble);
+          if (!activeKey) {
+            throw new Error("请先在右上角【⚙️ 模型设置】中填入您的 DeepSeek API Key！");
+          }
+          await handleDeepSeekToolCalling(prompt, activeKey, thinkingBubble);
         } else if (provider === "gemini") {
-          await handleGeminiToolCalling(prompt, apiKey, thinkingBubble);
+          await handleGeminiToolCalling(prompt, activeKey, thinkingBubble);
         }
       } catch (err) {
         thinkingBubble.querySelector(".msg-bubble").innerHTML = `❌ 处理出错: ${err.message}`;
@@ -1163,27 +1171,52 @@
       `;
     }
 
-    // Google Gemini API 对接
+    // Google Gemini 3.8 Flash API 对接 (最高思考等级 + 容灾备用)
     async function handleGeminiToolCalling(prompt, apiKey, bubbleEl) {
-      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+      const activeKey = apiKey || BUILTIN_GEMINI_KEY;
+      const primaryModel = "gemini-3.8-flash";
+      const fallbackModel = "gemini-2.5-flash";
+
       const payload = {
         contents: [
           {
             role: "user",
             parts: [
               {
-                text: `你是一个试卷排版调度助手。请分析用户指令并返回必须执行的操作。\n当前试卷包含选择题、填空题和解答题。\n用户指令：${prompt}\n若需要修改布局或参数，请在回复最后附带一段纯 JSON：{"tool": "modify_layout", "q": 题号, "layout": "cols-1"|"cols-2"|"cols-4"} 或 {"tool": "add_blank", "q": 题号, "lines": 行数} 或 {"tool": "meta", "duration": 时长, "total_score": 总分}。若无工具调用只需给出回答。`
+                text: `你是一个专业的试卷排版调度智能体。请深度理解用户指令并对当前试卷进行排版决策与微调。\n用户指令：${prompt}\n如果需要修改布局或题目，请在回复末尾附带纯 JSON 指令（格式如下，无修改则不附带）：\n{"tool": "modify_layout", "q": 题号, "layout": "cols-1"|"cols-2"|"cols-4"} 或 {"tool": "add_blank", "q": 题号, "lines": 行数} 或 {"tool": "meta", "duration": 时长, "total_score": 总分, "title": 标题}。`
               }
             ]
           }
-        ]
+        ],
+        generationConfig: {
+          thinkingConfig: {
+            thinkingBudget: -1 // 启用最高/动态深度思考等级
+          }
+        }
       };
 
-      const res = await fetch(endpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      });
+      async function requestGemini(modelName) {
+        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${activeKey}`;
+        return await fetch(endpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+      }
+
+      let res = await requestGemini(primaryModel);
+      let usedModelName = "Gemini 3.8 Flash (最高思考)";
+
+      // 若 3.8 遇到临时高并发 503，无缝自动重试备用思考模型
+      if (res.status === 503 || !res.ok) {
+        try {
+          const retryRes = await requestGemini(fallbackModel);
+          if (retryRes.ok) {
+            res = retryRes;
+            usedModelName = "Gemini 2.5 Flash (容灾备用)";
+          }
+        } catch(e) {}
+      }
 
       if (!res.ok) {
         const errText = await res.text();
@@ -1206,6 +1239,7 @@
             addQuestionBlank(action.q, action.lines);
             toolExecuted = `add_blank(q=${action.q}, lines=${action.lines})`;
           } else if (action.tool === "meta") {
+            if (action.title) currentExamData.meta.title = action.title;
             if (action.duration) currentExamData.meta.duration = action.duration;
             if (action.total_score) currentExamData.meta.total_score = action.total_score;
             toolExecuted = `update_meta(...)`;
@@ -1217,7 +1251,8 @@
       const cleanReply = replyText.replace(/\{[\s\S]*"tool"[\s\S]*\}/, '').trim();
       bubbleEl.querySelector(".msg-bubble").innerHTML = `
         ${escapeHtml(cleanReply).replace(/\n/g, '<br>')}
-        ${toolExecuted ? `<br><span class="tool-badge">🛠️ 已执行工具: ${toolExecuted}</span>` : ''}
+        <br><span class="tool-badge" style="background: rgba(168, 85, 247, 0.15); color: #c084fc; border-color: rgba(168, 85, 247, 0.3);">🧠 思考引擎: ${usedModelName}</span>
+        ${toolExecuted ? `<span class="tool-badge">🛠️ 已执行工具: ${toolExecuted}</span>` : ''}
       `;
     }
 
@@ -1308,33 +1343,47 @@
     function toggleProviderInput() {
       const provider = document.getElementById("modelProviderSelect").value;
       const group = document.getElementById("apiKeyGroup");
-      group.style.display = provider === "mock" ? "none" : "block";
+      const keyInput = document.getElementById("apiKeyInput");
+      if (provider === "mock") {
+        group.style.display = "none";
+      } else if (provider === "gemini") {
+        group.style.display = "block";
+        keyInput.placeholder = "已默认启用内置 Key，可留空直接使用";
+      } else {
+        group.style.display = "block";
+        keyInput.placeholder = "请输入 sk-...";
+      }
     }
+
     function saveConfig() {
       const provider = document.getElementById("modelProviderSelect").value;
       const key = document.getElementById("apiKeyInput").value.trim();
       localStorage.setItem("exam_ai_provider", provider);
       localStorage.setItem("exam_ai_key", key);
 
-      const badge = document.getElementById("currentModelBadge");
-      if (provider === "mock") badge.textContent = "内置智能体 (免Key)";
-      else if (provider === "deepseek") badge.textContent = "DeepSeek V3";
-      else if (provider === "gemini") badge.textContent = "Google Gemini";
-
+      updateModelBadge(provider, key);
       closeConfigModal();
-      appendChatMessage(`⚙️ 设置已保存！当前使用模型模式：<strong>${badge.textContent}</strong>`, "ai");
+      appendChatMessage(`⚙️ 设置已保存！当前使用模型：<strong>${document.getElementById("currentModelBadge").textContent}</strong>`, "ai");
     }
+
     function loadSavedConfig() {
-      const provider = localStorage.getItem("exam_ai_provider") || "mock";
+      const provider = localStorage.getItem("exam_ai_provider") || "gemini";
       const key = localStorage.getItem("exam_ai_key") || "";
       document.getElementById("modelProviderSelect").value = provider;
       document.getElementById("apiKeyInput").value = key;
       toggleProviderInput();
+      updateModelBadge(provider, key);
+    }
 
+    function updateModelBadge(provider, key) {
       const badge = document.getElementById("currentModelBadge");
-      if (provider === "mock") badge.textContent = "内置智能体 (免Key)";
-      else if (provider === "deepseek") badge.textContent = "DeepSeek V3";
-      else if (provider === "gemini") badge.textContent = "Google Gemini";
+      if (provider === "gemini") {
+        badge.textContent = key ? "Gemini 3.8 Flash (自定Key)" : "✨ Gemini 3.8 Flash (最高思考 · 内置)";
+      } else if (provider === "deepseek") {
+        badge.textContent = "DeepSeek V3";
+      } else {
+        badge.textContent = "内置智能体 (免Key模拟)";
+      }
     }
   </script>
 </body>
