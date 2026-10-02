@@ -1,5 +1,5 @@
 // Cloudflare Pages Functions 全局路由中间件
-// 自动根据 User-Agent 智能分流手机版与电脑版页面
+// 自动根据 User-Agent 智能分流手机版与电脑版页面 (适配 Cloudflare Pages Clean URLs 规范)
 
 export async function onRequest(context) {
   const url = new URL(context.request.url);
@@ -12,44 +12,43 @@ export async function onRequest(context) {
     ? url.pathname.slice(0, -1) 
     : url.pathname;
 
-  // 1. 对 /exam 和 /exam.html 进行智能分流
+  // 1. 访问 /exam 或 /exam.html
   if (cleanPath === "/exam" || cleanPath === "/exam.html") {
     // 若显式指定电脑版视图
     if (view === "desktop") {
-      if (cleanPath !== "/exam.html") {
-        url.pathname = "/exam.html";
-        return Response.redirect(url.toString(), 302);
+      if (cleanPath === "/exam.html") {
+        url.pathname = "/exam";
+        return Response.redirect(url.toString(), 308);
       }
       return context.next();
     }
-    // 移动端或显式指定手机版，重定向至手机版
+    // 移动端或显式指定手机版，重定向至手机版规范路由 /exam-mobile
     if (view === "mobile" || isMobile) {
-      url.pathname = "/exam-mobile.html";
+      url.pathname = "/exam-mobile";
       return Response.redirect(url.toString(), 302);
     }
-    // 电脑端默认：重定向至电脑版 exam.html
-    if (cleanPath !== "/exam.html") {
-      url.pathname = "/exam.html";
-      return Response.redirect(url.toString(), 302);
+    // 电脑端默认：若请求带 .html，规范化为 /exam
+    if (cleanPath === "/exam.html") {
+      url.pathname = "/exam";
+      return Response.redirect(url.toString(), 308);
     }
     return context.next();
   }
 
-  // 2. 对 /exam-mobile 和 /exam-mobile.html 进行智能分流
+  // 2. 访问 /exam-mobile 或 /exam-mobile.html
   if (cleanPath === "/exam-mobile" || cleanPath === "/exam-mobile.html") {
-    // 若显式指定电脑版，或在电脑端访问且未显式指定 view=mobile，则重定向至电脑版
+    // 若显式指定电脑版，或在电脑端访问且未显式指定 view=mobile，则重定向至电脑版 /exam
     if (view === "desktop" || (!isMobile && view !== "mobile")) {
-      url.pathname = "/exam.html";
+      url.pathname = "/exam";
       return Response.redirect(url.toString(), 302);
     }
-    // 移动端访问 /exam-mobile，标准化重定向至 /exam-mobile.html
-    if (cleanPath === "/exam-mobile") {
-      url.pathname = "/exam-mobile.html";
-      return Response.redirect(url.toString(), 302);
+    // 若请求带 .html，规范化为 /exam-mobile
+    if (cleanPath === "/exam-mobile.html") {
+      url.pathname = "/exam-mobile";
+      return Response.redirect(url.toString(), 308);
     }
     return context.next();
   }
 
   return context.next();
 }
-

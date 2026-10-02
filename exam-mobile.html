@@ -14,7 +14,7 @@
         var ua = navigator.userAgent || '';
         var isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile/i.test(ua) || (navigator.maxTouchPoints > 1 && /Macintosh/.test(ua));
         if (!isMobile || params.get('view') === 'desktop') {
-          window.location.replace('exam.html' + (window.location.search || ''));
+          window.location.replace('exam' + (window.location.search || ''));
         }
       } catch (e) {}
     })();
@@ -2445,7 +2445,7 @@
 
     // 切换到电脑版 (携带 view=desktop 参数放行)
     function switchToDesktopVersion() {
-      window.location.href = "exam.html?view=desktop";
+      window.location.href = "exam?view=desktop";
     }
 
     // 抽屉管理
