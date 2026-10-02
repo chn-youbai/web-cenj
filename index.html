@@ -16,29 +16,55 @@
       flex-direction: column;
       justify-content: center;
       align-items: center;
-      background: radial-gradient(circle at 50% 25%, #1e293b, #0f172a);
+      background: radial-gradient(circle at 50% 25%, #0f172a, #030712);
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
       color: #f8fafc;
       padding: 1.5rem;
+      overflow-x: hidden;
+      perspective: 1000px;
+      position: relative;
+    }
+    /* 反重力动态粒子全屏画布 */
+    #gravityCanvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 1;
+    }
+    /* 鼠标交互聚光灯背景光晕 */
+    .mouse-glow {
+      position: fixed;
+      width: 600px;
+      height: 600px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(56, 189, 248, 0.12) 0%, rgba(139, 92, 246, 0.05) 45%, transparent 70%);
+      pointer-events: none;
+      transform: translate(-50%, -50%);
+      z-index: 1;
+      transition: opacity 0.3s ease;
+      will-change: transform;
     }
     .card {
+      position: relative;
+      z-index: 10;
       display: flex;
       flex-direction: column;
       align-items: center;
       text-align: center;
       padding: 2.5rem 3.2rem;
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: rgba(15, 23, 42, 0.65);
+      border: 1px solid rgba(255, 255, 255, 0.15);
       border-radius: 28px;
-      backdrop-filter: blur(20px);
-      box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.6);
-      animation: float 4s ease-in-out infinite alternate;
+      backdrop-filter: blur(25px);
+      box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.7), 0 0 40px rgba(56, 189, 248, 0.08);
       max-width: 580px;
       width: 100%;
-    }
-    @keyframes float {
-      0% { transform: translateY(0px); }
-      100% { transform: translateY(-8px); }
+      transform-style: preserve-3d;
+      transition: transform 0.15s ease-out, box-shadow 0.3s ease;
+      will-change: transform;
     }
     .avatar-row {
       display: flex;
@@ -244,7 +270,12 @@
   </style>
 </head>
 <body>
-  <div class="card">
+  <!-- 反重力动态粒子全屏交互画布 -->
+  <canvas id="gravityCanvas"></canvas>
+  <!-- 鼠标交互光晕 -->
+  <div class="mouse-glow" id="mouseGlow"></div>
+
+  <div class="card" id="tiltCard">
     <div class="avatar-row">
       <div class="avatar-item">
         <img src="./left_avatar.png" alt="图片1" class="avatar-img">
@@ -442,6 +473,161 @@
 
     // 页面加载时拉取
     initCount();
+
+    /* ========================================================
+       🌌 Antigravity 官网风格鼠标交互特效引擎
+       1. 鼠标悬停 3D 卡片倾斜与视差跟随 (3D Tilt & Parallax)
+       2. 鼠标聚光灯光晕跟随 (Spotlight Glow)
+       3. 动态反重力星尘粒子系统 (Floating Gravitational Particles)
+          - 鼠标靠近时光速排斥 / 引力扩散 (Magnetic Repulsion)
+          - 粒子连线形成动态神经网络星座 (Interactive Constellation)
+       ======================================================== */
+
+    // 1. 鼠标光晕与 3D 卡片倾斜效果
+    const tiltCard = document.getElementById('tiltCard');
+    const mouseGlow = document.getElementById('mouseGlow');
+    let mouseX = window.innerWidth / 2;
+    let mouseY = window.innerHeight / 2;
+
+    window.addEventListener('mousemove', (e) => {
+      mouseX = e.clientX;
+      mouseY = e.clientY;
+
+      // 移动光晕
+      mouseGlow.style.left = `${mouseX}px`;
+      mouseGlow.style.top = `${mouseY}px`;
+
+      // 计算卡片 3D 偏转
+      if (tiltCard) {
+        const rect = tiltCard.getBoundingClientRect();
+        const cardCenterX = rect.left + rect.width / 2;
+        const cardCenterY = rect.top + rect.height / 2;
+        const deltaX = (e.clientX - cardCenterX) / (window.innerWidth / 2);
+        const deltaY = (e.clientY - cardCenterY) / (window.innerHeight / 2);
+
+        // 最大倾斜角度 12 度
+        const rotateY = deltaX * 10;
+        const rotateX = -deltaY * 10;
+        tiltCard.style.transform = `perspective(1000px) rotateX(${rotateX.toFixed(2)}deg) rotateY(${rotateY.toFixed(2)}deg) translateY(-4px)`;
+      }
+    });
+
+    window.addEventListener('mouseleave', () => {
+      if (tiltCard) {
+        tiltCard.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) translateY(0px)';
+      }
+    });
+
+    // 2. 反重力动态粒子全屏交互引擎
+    const canvas = document.getElementById('gravityCanvas');
+    const ctx = canvas.getContext('2d');
+
+    let width = (canvas.width = window.innerWidth);
+    let height = (canvas.height = window.innerHeight);
+
+    window.addEventListener('resize', () => {
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
+      initParticles();
+    });
+
+    const particles = [];
+    const PARTICLE_COUNT = Math.min(Math.floor((width * height) / 12000), 90);
+
+    class Particle {
+      constructor() {
+        this.reset();
+        this.y = Math.random() * height; // 初次随机高度
+      }
+
+      reset() {
+        this.x = Math.random() * width;
+        this.y = height + 10;
+        // 反重力：向上缓慢漂浮
+        this.vy = -(Math.random() * 0.7 + 0.3);
+        this.vx = (Math.random() - 0.5) * 0.5;
+        this.baseSize = Math.random() * 2 + 1;
+        this.size = this.baseSize;
+        this.alpha = Math.random() * 0.5 + 0.2;
+        this.color = Math.random() > 0.4 ? '56, 189, 248' : '168, 85, 247'; // 霓虹天蓝或浅紫
+      }
+
+      update() {
+        // 自然向上浮动
+        this.y += this.vy;
+        this.x += this.vx;
+
+        // 鼠标交互：反重力排斥力场
+        const dx = this.x - mouseX;
+        const dy = this.y - mouseY;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        const maxDist = 130;
+
+        if (dist < maxDist) {
+          const force = (1 - dist / maxDist) * 3.5;
+          const angle = Math.atan2(dy, dx);
+          this.x += Math.cos(angle) * force;
+          this.y += Math.sin(angle) * force;
+          this.size = this.baseSize * 1.5;
+        } else {
+          this.size = this.baseSize;
+        }
+
+        // 飞出顶部后循环到底部重置
+        if (this.y < -10 || this.x < -10 || this.x > width + 10) {
+          this.reset();
+        }
+      }
+
+      draw() {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(${this.color}, ${this.alpha})`;
+        ctx.shadowBlur = 8;
+        ctx.shadowColor = `rgba(${this.color}, 0.8)`;
+        ctx.fill();
+        ctx.shadowBlur = 0;
+      }
+    }
+
+    function initParticles() {
+      particles.length = 0;
+      for (let i = 0; i < PARTICLE_COUNT; i++) {
+        particles.push(new Particle());
+      }
+    }
+
+    function renderParticles() {
+      ctx.clearRect(0, 0, width, height);
+
+      // 绘制粒子间连线（距离近时产生连接星座效果）
+      for (let i = 0; i < particles.length; i++) {
+        for (let j = i + 1; j < particles.length; j++) {
+          const dx = particles[i].x - particles[j].x;
+          const dy = particles[i].y - particles[j].y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < 95) {
+            ctx.beginPath();
+            ctx.moveTo(particles[i].x, particles[i].y);
+            ctx.lineTo(particles[j].x, particles[j].y);
+            ctx.strokeStyle = `rgba(56, 189, 248, ${(1 - dist / 95) * 0.18})`;
+            ctx.lineWidth = 0.8;
+            ctx.stroke();
+          }
+        }
+      }
+
+      // 更新和绘制每个粒子
+      for (let i = 0; i < particles.length; i++) {
+        particles[i].update();
+        particles[i].draw();
+      }
+
+      requestAnimationFrame(renderParticles);
+    }
+
+    initParticles();
+    renderParticles();
   </script>
 </body>
 </html>
