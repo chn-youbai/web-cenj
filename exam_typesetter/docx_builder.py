@@ -2,6 +2,9 @@
 Exam Paper DOCX Builder
 Transforms structured Exam JSON into a standardized, professionally typeset Word document.
 """
+import os
+import base64
+from io import BytesIO
 import docx
 from docx.shared import Inches, Pt, Cm, RGBColor
 from docx.enum.text import WD_ALIGN_PARAGRAPH
@@ -214,12 +217,37 @@ class ExamDocxBuilder:
         p_q.paragraph_format.keep_with_next = True
         append_text_with_math(p_q, full_stem, font_name="宋体", ascii_font="Times New Roman", font_size_pt=10.5)
 
-        # 2. 选择题选项处理
+        # 2. 试题附图渲染
+        images = q.get("images", [])
+        if images and isinstance(images, list):
+            for img_item in images:
+                try:
+                    img_src = img_item if isinstance(img_item, str) else (img_item.get("src") or img_item.get("url") or "")
+                    if img_src and "base64," in img_src:
+                        _, b64_str = img_src.split("base64,", 1)
+                        img_bytes = base64.b64decode(b64_str)
+                        p_img = self.doc.add_paragraph()
+                        p_img.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                        p_img.paragraph_format.space_before = Pt(4)
+                        p_img.paragraph_format.space_after = Pt(6)
+                        p_img.paragraph_format.keep_with_next = True
+                        p_img.add_run().add_picture(BytesIO(img_bytes), width=Cm(7.0))
+                    elif img_src and os.path.exists(img_src):
+                        p_img = self.doc.add_paragraph()
+                        p_img.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                        p_img.paragraph_format.space_before = Pt(4)
+                        p_img.paragraph_format.space_after = Pt(6)
+                        p_img.paragraph_format.keep_with_next = True
+                        p_img.add_run().add_picture(img_src, width=Cm(7.0))
+                except Exception as img_err:
+                    print(f"[WARN] Failed to embed question image in docx: {img_err}")
+
+        # 3. 选择题选项处理
         options = q.get("options", [])
         if options and (sec_type == "single_choice" or sec_type == "multiple_choice" or len(options) == 4):
             self.render_options(options)
 
-        # 3. 解答题留白处理
+        # 4. 解答题留白处理
         blank_lines = q.get("blank_lines", 0)
         if blank_lines > 0:
             for _ in range(blank_lines):
@@ -318,3 +346,25 @@ class ExamDocxBuilder:
                 r_tag = p_ana.add_run("解析：")
                 r_tag.font.bold = True
                 append_text_with_math(p_ana, analysis, font_name="楷体", ascii_font="Times New Roman", font_size_pt=10)
+
+            ans_imgs = item.get("images", [])
+            if ans_imgs and isinstance(ans_imgs, list):
+                for img_item in ans_imgs:
+                    try:
+                        img_src = img_item if isinstance(img_item, str) else (img_item.get("src") or img_item.get("url") or "")
+                        if img_src and "base64," in img_src:
+                            _, b64_str = img_src.split("base64,", 1)
+                            img_bytes = base64.b64decode(b64_str)
+                            p_img = self.doc.add_paragraph()
+                            p_img.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                            p_img.paragraph_format.space_before = Pt(3)
+                            p_img.paragraph_format.space_after = Pt(4)
+                            p_img.add_run().add_picture(BytesIO(img_bytes), width=Cm(6.5))
+                        elif img_src and os.path.exists(img_src):
+                            p_img = self.doc.add_paragraph()
+                            p_img.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                            p_img.paragraph_format.space_before = Pt(3)
+                            p_img.paragraph_format.space_after = Pt(4)
+                            p_img.add_run().add_picture(img_src, width=Cm(6.5))
+                    except Exception as img_err:
+                        print(f"[WARN] Failed to embed answer image in docx: {img_err}")

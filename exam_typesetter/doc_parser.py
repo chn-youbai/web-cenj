@@ -6,6 +6,7 @@ preserves table layouts (e.g. choice options), and extracts embedded images.
 import os
 import re
 import zipfile
+import base64
 from io import BytesIO
 from lxml import etree
 import docx
@@ -235,20 +236,44 @@ def omml_to_latex(elem) -> str:
     # Default fallback: concatenate all children
     return ''.join(omml_to_latex(c) for c in elem)
 
-def extract_paragraph_content(p_elem) -> str:
+def extract_paragraph_content(p_elem, rel_map: dict = None, images_map: dict = None) -> str:
     """
-    Extracts text and math formulas from a <w:p> element in order.
-    Normal text is preserved, OMML formulas are wrapped in $...$.
+    Extracts text, math formulas, and embedded images from a <w:p> element in sequential order.
+    Normal text is preserved, OMML formulas are wrapped in $...$,
+    and embedded images are marked as [IMAGE:imageX.png] tokens.
     """
     parts = []
+
+    def _find_blip_or_vml(node):
+        found = []
+        if rel_map and images_map:
+            # 1. DrawingML blip
+            for blip in node.findall('.//{http://schemas.openxmlformats.org/drawingml/2006/main}blip'):
+                embed_id = blip.attrib.get('{http://schemas.openxmlformats.org/officeDocument/2006/relationships}embed')
+                if embed_id and embed_id in rel_map:
+                    bn = os.path.basename(rel_map[embed_id])
+                    if bn in images_map and bn not in found:
+                        found.append(bn)
+            # 2. VML imagedata
+            for vml in node.findall('.//{urn:schemas-microsoft-com:vml}imagedata'):
+                rel_id = vml.attrib.get('{http://schemas.openxmlformats.org/officeDocument/2006/relationships}id')
+                if rel_id and rel_id in rel_map:
+                    bn = os.path.basename(rel_map[rel_id])
+                    if bn in images_map and bn not in found:
+                        found.append(bn)
+        return found
+
     for child in p_elem:
         tag = etree.QName(child).localname
         if tag == 'r':
-            # Run
+            # Run: can contain text, drawing, or pict
             t_elems = child.findall('{http://schemas.openxmlformats.org/wordprocessingml/2006/main}t')
             for t in t_elems:
                 if t.text:
                     parts.append(t.text)
+            imgs = _find_blip_or_vml(child)
+            for img in imgs:
+                parts.append(f" [IMAGE:{img}] ")
         elif tag == 'oMath':
             latex = omml_to_latex(child).strip()
             if latex:
@@ -257,8 +282,20 @@ def extract_paragraph_content(p_elem) -> str:
             latex = omml_to_latex(child).strip()
             if latex:
                 parts.append(f'\n$${latex}$$\n')
+        elif tag in ('drawing', 'pict'):
+            imgs = _find_blip_or_vml(child)
+            for img in imgs:
+                parts.append(f" [IMAGE:{img}] ")
         elif tag in ('hyperlink', 'smartTag'):
-            parts.append(extract_paragraph_content(child))
+            parts.append(extract_paragraph_content(child, rel_map=rel_map, images_map=images_map))
+
+    # Fallback: check if entire paragraph has drawings that were not in runs
+    if rel_map and images_map:
+        all_p_imgs = _find_blip_or_vml(p_elem)
+        for img in all_p_imgs:
+            token = f"[IMAGE:{img}]"
+            if token not in ''.join(parts):
+                parts.append(f" {token} ")
 
     raw_line = ''.join(parts).strip()
     # Normalize spaces inside and outside math
@@ -267,44 +304,81 @@ def extract_paragraph_content(p_elem) -> str:
     raw_line = re.sub(r' +\$', '$', raw_line)
     return raw_line
 
+def extract_images_and_rels(file_source, output_dir: str = None) -> tuple:
+    """
+    Extracts rel_map (rId -> target_filename), images_map (target_filename -> base64 data URL),
+    and list of image metadata dicts from Word DOCX.
+    """
+    rel_map = {}
+    images_map = {}
+    images_list = []
+    try:
+        zf = zipfile.ZipFile(file_source if isinstance(file_source, (str, BytesIO)) else BytesIO(file_source))
+        
+        # 1. Parse document relationships
+        if 'word/_rels/document.xml.rels' in zf.namelist():
+            rels_xml = zf.read('word/_rels/document.xml.rels')
+            rels_root = etree.fromstring(rels_xml)
+            for rel in rels_root:
+                rId = rel.attrib.get('Id')
+                target = rel.attrib.get('Target')
+                if rId and target:
+                    rel_map[rId] = target
+
+        # 2. Extract media files
+        for name in zf.namelist():
+            if name.startswith('word/media/'):
+                bname = os.path.basename(name)
+                ext = os.path.splitext(bname)[1].lower().replace('.', '')
+                if ext == 'jpg': ext = 'jpeg'
+                img_bytes = zf.read(name)
+                b64 = base64.b64encode(img_bytes).decode('utf-8')
+                data_url = f"data:image/{ext};base64,{b64}"
+                images_map[bname] = data_url
+                
+                target_path = ""
+                if output_dir:
+                    os.makedirs(output_dir, exist_ok=True)
+                    target_path = os.path.join(output_dir, bname)
+                    with open(target_path, 'wb') as f:
+                        f.write(img_bytes)
+
+                images_list.append({
+                    'filename': bname,
+                    'path': target_path,
+                    'size': len(img_bytes),
+                    'data_url': data_url,
+                    'data': img_bytes
+                })
+    except Exception as e:
+        print(f"[WARN] Failed to extract docx images and rels: {e}")
+    return rel_map, images_map, images_list
+
 def extract_images_from_docx(file_source, output_dir: str = None) -> list:
     """
     Extracts embedded images from Word DOCX zip structure.
-    Returns list of dicts: [{'filename': str, 'path': str, 'size': int}]
+    Returns list of dicts: [{'filename': str, 'path': str, 'size': int, 'data_url': str}]
     """
-    images = []
-    try:
-        zf = zipfile.ZipFile(file_source if isinstance(file_source, (str, BytesIO)) else BytesIO(file_source))
-        media_files = [f for f in zf.namelist() if f.startswith('word/media/')]
-        for mf in media_files:
-            bname = os.path.basename(mf)
-            img_data = zf.read(mf)
-            target_path = ""
-            if output_dir:
-                os.makedirs(output_dir, exist_ok=True)
-                target_path = os.path.join(output_dir, bname)
-                with open(target_path, 'wb') as f:
-                    f.write(img_data)
-            images.append({
-                'filename': bname,
-                'path': target_path,
-                'size': len(img_data),
-                'data': img_data
-            })
-    except Exception as e:
-        print(f"[WARN] Failed to extract docx images: {e}")
+    _, _, images = extract_images_and_rels(file_source, output_dir=output_dir)
     return images
 
 def parse_docx(file_source, output_media_dir: str = None) -> dict:
     """
     Comprehensive Word DOCX parser:
-    1. Parses all paragraphs in sequential order with OMML converted to LaTeX;
-    2. Identifies choice option tables (e.g. 4-column tables A, B, C, D) and flattens them appropriately;
-    3. Extracts embedded diagrams and charts;
-    4. Produces a cohesive, clean text stream ready for AI structuring.
+    1. Extracts embedded diagrams, charts, and XML relationship mappings;
+    2. Parses all paragraphs in sequential order with OMML converted to LaTeX and [IMAGE:xxx] tokens;
+    3. Identifies choice option tables and flattens them appropriately;
+    4. Produces a cohesive, clean text stream ready for AI structuring with full images_map.
     """
     if isinstance(file_source, bytes):
         file_source = BytesIO(file_source)
+    elif isinstance(file_source, BytesIO):
+        file_source.seek(0)
+
+    rel_map, images_map, images = extract_images_and_rels(file_source, output_dir=output_media_dir)
+
+    if isinstance(file_source, BytesIO):
+        file_source.seek(0)
 
     doc = docx.Document(file_source)
     paragraphs = []
@@ -313,7 +387,7 @@ def parse_docx(file_source, output_media_dir: str = None) -> dict:
     for elem in doc._body._element:
         tag = etree.QName(elem).localname
         if tag == 'p':
-            p_text = extract_paragraph_content(elem)
+            p_text = extract_paragraph_content(elem, rel_map=rel_map, images_map=images_map)
             if p_text:
                 paragraphs.append(p_text)
         elif tag == 'tbl':
@@ -324,7 +398,7 @@ def parse_docx(file_source, output_media_dir: str = None) -> dict:
                 for tc in r.findall('{http://schemas.openxmlformats.org/wordprocessingml/2006/main}tc'):
                     cell_text_parts = []
                     for p in tc.findall('{http://schemas.openxmlformats.org/wordprocessingml/2006/main}p'):
-                        c_text = extract_paragraph_content(p)
+                        c_text = extract_paragraph_content(p, rel_map=rel_map, images_map=images_map)
                         if c_text:
                             cell_text_parts.append(c_text)
                     row_cells.append(' '.join(cell_text_parts).strip())
@@ -333,18 +407,17 @@ def parse_docx(file_source, output_media_dir: str = None) -> dict:
             
             # Format table content
             for row in table_rows:
-                # If row looks like choice options (contains A., B., C., D.), join nicely
                 row_str = '    '.join([c for c in row if c])
                 if row_str:
                     paragraphs.append(row_str)
 
     full_text = '\n\n'.join(paragraphs)
-    images = extract_images_from_docx(file_source, output_dir=output_media_dir)
 
     return {
         "full_text": full_text,
         "paragraphs": paragraphs,
         "images": images,
+        "images_map": images_map,
         "paragraph_count": len(paragraphs),
         "image_count": len(images)
     }

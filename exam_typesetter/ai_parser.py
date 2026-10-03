@@ -25,7 +25,9 @@ SYSTEM_PROMPT = """你是一位专业的中小学及高考理科试卷排版与�
    - 解答题必须包含 blank_lines 字段（整数），指示在试卷中为学生预留的书写空行数（一般小题留 4~6 行，综合大题留 8~12 行）。
 4. 试题与答案必须一一对应：
    - 如果原文包含参考答案或解析，必须在 answers 列表中按题号对应输出；如果没有提供答案，answers 数组可以为空列表 []。
-5. 输出格式：
+5. 试题附图与插图标记保留（至关重要）：
+   - 如果文本中包含形如 `[IMAGE:xxx.png]` 的插图标注，请务必保留在对应题目的 `stem`（题干）或 `images` 数组中，或者答案解析 `analysis` 中，绝不可擅自丢弃或删除！
+6. 输出格式：
    - 必须只输出合法的标准纯 JSON 代码块（```json ... ```），不要包含任何额外的客套话或多余解释。
 
 ### 目标 JSON 结构示例：
@@ -121,6 +123,11 @@ def validate_and_normalize_exam_data(data: dict) -> dict:
         for q_idx, q in enumerate(questions):
             q.setdefault("number", q_idx + 1)
             q.setdefault("stem", "")
+            if "images" in q and not isinstance(q["images"], list):
+                q["images"] = [q["images"]] if q["images"] else []
+            elif "images" not in q:
+                q["images"] = []
+
             if "options" in q and isinstance(q["options"], list):
                 if not q.get("layout"):
                     # Auto select layout based on option length
@@ -132,7 +139,14 @@ def validate_and_normalize_exam_data(data: dict) -> dict:
                     else:
                         q["layout"] = "cols-1"
 
-    data.setdefault("answers", [])
+    answers = data.setdefault("answers", [])
+    if isinstance(answers, list):
+        for a in answers:
+            if "images" in a and not isinstance(a["images"], list):
+                a["images"] = [a["images"]] if a["images"] else []
+            elif "images" not in a:
+                a["images"] = []
+
     return data
 
 def call_deepseek_structuring(raw_text: str, api_key: str = None, model: str = "deepseek-flash") -> dict:
@@ -231,7 +245,7 @@ if __name__ == "__main__":
         sys.stdout.reconfigure(encoding='utf-8')
     except Exception:
         pass
-    sample_text = """
+    sample_text = r"""
     2026年期末考试 高三数学试卷 满分150分 考试时间120分钟
     一、单选题（每题5分，共10分）
     1. 设集合 A={x | x^2 - 1 = 0}, B={1, 2}，则 A交B 为（ ）

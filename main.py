@@ -5,6 +5,7 @@ Fully accessible from mobile devices on 4G/5G/Wi-Fi without local PC.
 """
 import os
 import io
+import re
 import sys
 import base64
 import tempfile
@@ -111,6 +112,97 @@ def handle_chat_action(req: ChatActionRequest):
         raise HTTPException(status_code=500, detail=f"执行指令失败: {str(e)}")
 
 
+def bind_images_to_exam_data(exam_data: dict, images_map: dict, paragraphs: list) -> dict:
+    """
+    Binds extracted images (as base64 data URLs) to questions and answers in exam_data.
+    1. First checks for explicit [IMAGE:xxx] tokens in question stems and answer analyses.
+    2. Uses deterministic sequential document paragraph scanning as fallback.
+    """
+    if not isinstance(exam_data, dict) or not images_map:
+        return exam_data
+
+    assigned_images = set()
+
+    # Step 1: Scan exam_data for explicit [IMAGE:xxx] tokens
+    for sec in exam_data.get("sections", []):
+        for q in sec.get("questions", []):
+            stem = q.get("stem", "")
+            tokens = re.findall(r'\[IMAGE:([^\]]+)\]', stem)
+            if tokens:
+                q_imgs = q.setdefault("images", [])
+                for tok in tokens:
+                    if tok in images_map:
+                        img_url = images_map[tok]
+                        if img_url not in q_imgs:
+                            q_imgs.append(img_url)
+                        assigned_images.add(tok)
+                clean_stem = re.sub(r'\s*\[IMAGE:[^\]]+\]\s*', '', stem).strip()
+                q["stem"] = clean_stem
+
+    for ans in exam_data.get("answers", []):
+        analysis = ans.get("analysis", "")
+        tokens = re.findall(r'\[IMAGE:([^\]]+)\]', analysis)
+        if tokens:
+            ans_imgs = ans.setdefault("images", [])
+            for tok in tokens:
+                if tok in images_map:
+                    img_url = images_map[tok]
+                    if img_url not in ans_imgs:
+                        ans_imgs.append(img_url)
+                    assigned_images.add(tok)
+            clean_analysis = re.sub(r'\s*\[IMAGE:[^\]]+\]\s*', '', analysis).strip()
+            ans["analysis"] = clean_analysis
+
+    # Step 2: Fallback scanning on original paragraphs
+    q_bindings = {}
+    a_bindings = {}
+    in_ans = False
+    curr_q = None
+
+    for p in paragraphs:
+        if any(kw in p for kw in ("参考答案", "答案与解析", "参考答案及评分标准", "答案及解析")):
+            in_ans = True
+            curr_q = None
+
+        m = re.search(r'(?:^|\n)\s*(?:【第\s*)?(\d+)[\.．、\s]', p)
+        if m:
+            curr_q = int(m.group(1))
+
+        imgs = re.findall(r'\[IMAGE:([^\]]+)\]', p)
+        for img in imgs:
+            if img in assigned_images:
+                continue
+            if in_ans and curr_q is not None:
+                a_bindings.setdefault(curr_q, []).append(img)
+            elif curr_q is not None:
+                q_bindings.setdefault(curr_q, []).append(img)
+
+    # Attach bindings to exam_data questions
+    if q_bindings:
+        for sec in exam_data.get("sections", []):
+            for q in sec.get("questions", []):
+                num = q.get("number")
+                if num in q_bindings:
+                    q_imgs = q.setdefault("images", [])
+                    for img_name in q_bindings[num]:
+                        if img_name in images_map and images_map[img_name] not in q_imgs:
+                            q_imgs.append(images_map[img_name])
+                            assigned_images.add(img_name)
+
+    # Attach bindings to exam_data answers
+    if a_bindings:
+        for ans in exam_data.get("answers", []):
+            num = ans.get("number")
+            if num in a_bindings:
+                ans_imgs = ans.setdefault("images", [])
+                for img_name in a_bindings[num]:
+                    if img_name in images_map and images_map[img_name] not in ans_imgs:
+                        ans_imgs.append(images_map[img_name])
+                        assigned_images.add(img_name)
+
+    return exam_data
+
+
 @app.post("/api/upload_base64")
 def handle_upload_base64(req: UploadBase64Request):
     """
@@ -130,21 +222,27 @@ def handle_upload_base64(req: UploadBase64Request):
 
     try:
         # 1. Parse text & equations
+        images_map = {}
+        paragraphs = []
         if ext == ".docx":
             parsed = parse_docx(tmp_path)
             raw_text = parsed.get("full_text", "")
+            images_map = parsed.get("images_map", {})
+            paragraphs = parsed.get("paragraphs", [])
             summary = {
-                "paragraph_count": parsed.get("paragraph_count", len(parsed.get("paragraphs", []))),
-                "image_count": parsed.get("image_count", len(parsed.get("images", []))),
+                "paragraph_count": parsed.get("paragraph_count", len(paragraphs)),
+                "image_count": parsed.get("image_count", len(images_map)),
                 "table_count": parsed.get("table_count", 0)
             }
         elif ext == ".pdf":
             parsed = parse_pdf(tmp_path)
             raw_text = parsed.get("full_text", "")
+            images_map = parsed.get("images_map", {})
+            paragraphs = parsed.get("paragraphs", [])
             summary = {
                 "page_count": parsed.get("page_count", 1),
-                "paragraph_count": len(parsed.get("paragraphs", [])),
-                "image_count": parsed.get("image_count", len(parsed.get("images", [])))
+                "paragraph_count": len(paragraphs),
+                "image_count": parsed.get("image_count", len(images_map))
             }
         else:
             raw_text = file_bytes.decode("utf-8", errors="ignore")
@@ -157,6 +255,11 @@ def handle_upload_base64(req: UploadBase64Request):
             api_key=req.api_key,
             model=req.model
         )
+
+        # 3. Deterministically bind images to questions and answers
+        if images_map:
+            exam_data = bind_images_to_exam_data(exam_data, images_map, paragraphs)
+
         return {
             "success": True,
             "filename": filename,
@@ -193,21 +296,27 @@ async def handle_upload_file(
         tmp_path = tmp.name
 
     try:
+        images_map = {}
+        paragraphs = []
         if ext == ".docx":
             parsed = parse_docx(tmp_path)
             raw_text = parsed.get("full_text", "")
+            images_map = parsed.get("images_map", {})
+            paragraphs = parsed.get("paragraphs", [])
             summary = {
-                "paragraph_count": parsed.get("paragraph_count", len(parsed.get("paragraphs", []))),
-                "image_count": parsed.get("image_count", len(parsed.get("images", []))),
+                "paragraph_count": parsed.get("paragraph_count", len(paragraphs)),
+                "image_count": parsed.get("image_count", len(images_map)),
                 "table_count": parsed.get("table_count", 0)
             }
         elif ext == ".pdf":
             parsed = parse_pdf(tmp_path)
             raw_text = parsed.get("full_text", "")
+            images_map = parsed.get("images_map", {})
+            paragraphs = parsed.get("paragraphs", [])
             summary = {
                 "page_count": parsed.get("page_count", 1),
-                "paragraph_count": len(parsed.get("paragraphs", [])),
-                "image_count": parsed.get("image_count", len(parsed.get("images", [])))
+                "paragraph_count": len(paragraphs),
+                "image_count": parsed.get("image_count", len(images_map))
             }
         else:
             raw_text = content.decode("utf-8", errors="ignore")
@@ -219,6 +328,10 @@ async def handle_upload_file(
             api_key=api_key,
             model=model
         )
+
+        if images_map:
+            exam_data = bind_images_to_exam_data(exam_data, images_map, paragraphs)
+
         return {
             "success": True,
             "filename": filename,

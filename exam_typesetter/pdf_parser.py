@@ -3,6 +3,7 @@ PDF Parser for Educational Exam Papers
 Extracts text blocks, mathematical notation, and embedded diagrams using PyMuPDF.
 """
 import os
+import base64
 from io import BytesIO
 
 try:
@@ -18,11 +19,13 @@ try:
 except ImportError:
     pypdf = None
 
-def extract_images_from_pdf(doc, output_dir: str = None) -> list:
+def extract_images_from_pdf(doc, output_dir: str = None) -> tuple:
     """
     Extracts embedded images from PDF pages.
+    Returns (images_list, images_map).
     """
     images = []
+    images_map = {}
     image_idx = 1
     for page_idx in range(len(doc)):
         page = doc[page_idx]
@@ -33,6 +36,12 @@ def extract_images_from_pdf(doc, output_dir: str = None) -> list:
             image_bytes = base_image["image"]
             image_ext = base_image["ext"]
             filename = f"img_p{page_idx+1}_{image_idx}.{image_ext}"
+            
+            b64 = base64.b64encode(image_bytes).decode('utf-8')
+            mime = "jpeg" if image_ext.lower() == "jpg" else image_ext.lower()
+            data_url = f"data:image/{mime};base64,{b64}"
+            images_map[filename] = data_url
+
             target_path = ""
             if output_dir:
                 os.makedirs(output_dir, exist_ok=True)
@@ -44,10 +53,11 @@ def extract_images_from_pdf(doc, output_dir: str = None) -> list:
                 "filename": filename,
                 "path": target_path,
                 "size": len(image_bytes),
+                "data_url": data_url,
                 "data": image_bytes
             })
             image_idx += 1
-    return images
+    return images, images_map
 
 def parse_pdf(file_source, output_media_dir: str = None) -> dict:
     """
@@ -69,6 +79,7 @@ def parse_pdf(file_source, output_media_dir: str = None) -> dict:
             "page_count": len(page_texts),
             "paragraphs": page_texts,
             "images": [],
+            "images_map": {},
             "image_count": 0
         }
     else:
@@ -89,7 +100,7 @@ def parse_pdf(file_source, output_media_dir: str = None) -> dict:
         all_blocks.extend(block_texts)
 
     full_text = "\n\n".join(page_texts)
-    images = extract_images_from_pdf(doc, output_dir=output_media_dir)
+    images, images_map = extract_images_from_pdf(doc, output_dir=output_media_dir)
     doc.close()
 
     return {
@@ -97,6 +108,7 @@ def parse_pdf(file_source, output_media_dir: str = None) -> dict:
         "page_count": len(page_texts),
         "paragraphs": all_blocks,
         "images": images,
+        "images_map": images_map,
         "image_count": len(images)
     }
 

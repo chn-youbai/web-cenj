@@ -644,6 +644,26 @@
       margin-top: 0.5rem;
     }
 
+    /* 手机卡片配图展示 */
+    .mobile-q-figures {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+      align-items: center;
+      margin: 8px 0;
+      width: 100%;
+    }
+    .mobile-figure {
+      max-width: 95%;
+      max-height: 220px;
+      object-fit: contain;
+      border-radius: 6px;
+      background: #ffffff;
+      padding: 3px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+    }
+
     /* 题目卡片内部快捷微调工具条 (手机极速微调) */
     .card-inline-tools {
       margin-top: 0.65rem;
@@ -883,6 +903,28 @@
     .a4-blank {
       border-bottom: 1px dashed rgba(0, 0, 0, 0.1);
       margin: 6px 0;
+    }
+
+    /* 试题与解析配图 */
+    .question-figures, .a4-q-figures {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      justify-content: center;
+      align-items: center;
+      margin: 8px 0;
+      width: 100%;
+      text-align: center;
+    }
+    .exam-figure, .a4-figure {
+      max-width: 85%;
+      max-height: 200px;
+      object-fit: contain;
+      border-radius: 4px;
+      display: inline-block;
+      margin: 4px auto;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+      background: #ffffff;
     }
     .a4-divider {
       border-top: 2px dashed #666;
@@ -1200,6 +1242,18 @@
         overflow: visible !important;
       }
       .question-item, .a4-q-item, .exam-section-header, .a4-section-header, .answer-item, .a4-ans-item {
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+      }
+      .question-figures, .a4-q-figures {
+        margin: 6px 0 !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+      }
+      .exam-figure, .a4-figure {
+        max-width: 80% !important;
+        max-height: 175px !important;
+        box-shadow: none !important;
         page-break-inside: avoid !important;
         break-inside: avoid !important;
       }
@@ -1835,6 +1889,18 @@
           const stemFormatted = escapeHtml(q.stem || "").replace(/\n/g, '<br>');
           html += `<div class="question-stem-mobile">${prefix}${stemFormatted}</div>`;
 
+          // 题目附图
+          if (q.images && Array.isArray(q.images) && q.images.length > 0) {
+            html += `<div class="mobile-q-figures">`;
+            q.images.forEach(img => {
+              const src = typeof img === 'string' ? img : (img.src || img.url || '');
+              if (src) {
+                html += `<img src="${src}" alt="试题插图" class="mobile-figure" loading="lazy" />`;
+              }
+            });
+            html += `</div>`;
+          }
+
           // 选项
           if (q.options && q.options.length > 0) {
             let layoutClass = q.layout || 'cols-4';
@@ -1889,6 +1955,14 @@
             <div style="border-bottom: 1px solid rgba(255, 255, 255, 0.05); padding-bottom: 6px;">
               <div><strong>【第 ${ans.number} 题】 答案：</strong>${escapeHtml(ans.answer)}</div>
               ${ans.analysis ? `<div style="color: #94a3b8; font-size: 0.8rem; margin-top: 2px;">解析：${escapeHtml(ans.analysis).replace(/\n/g, '<br>')}</div>` : ''}
+              ${ans.images && Array.isArray(ans.images) && ans.images.length > 0 ? `
+                <div class="mobile-q-figures" style="margin-top: 6px;">
+                  ${ans.images.map(img => {
+                    const src = typeof img === 'string' ? img : (img.src || img.url || '');
+                    return src ? `<img src="${src}" alt="解析插图" class="mobile-figure" loading="lazy" />` : '';
+                  }).join('')}
+                </div>
+              ` : ''}
             </div>
           `;
         });
@@ -1931,16 +2005,16 @@
     }
 
     // 模式 2：渲染真实 A4 试卷仿真印样 (WPS / Office 真实多页离散排版流式计算引擎)
-    function renderA4Real() {
+    async function renderA4Real() {
       const container = document.getElementById("a4PaperContent");
       if (!container) return;
-      renderPaginatedExam(container);
+      await renderPaginatedExam(container);
       if (currentPreviewMode === 'real') {
         applyA4Zoom();
       }
     }
 
-    function renderPaginatedExam(container) {
+    async function renderPaginatedExam(container) {
       if (!container) return;
       const meta = currentExamData.meta || {};
 
@@ -1976,6 +2050,18 @@
           const stemFormatted = escapeHtml(prefix + (q.stem || "")).replace(/\n/g, '<br>');
           let qHtml = `<div class="question-item a4-q-item">`;
           qHtml += `<div class="question-stem a4-q-stem">${stemFormatted}</div>`;
+
+          // 试题附图
+          if (q.images && Array.isArray(q.images) && q.images.length > 0) {
+            qHtml += `<div class="question-figures a4-q-figures">`;
+            q.images.forEach(img => {
+              const src = typeof img === 'string' ? img : (img.src || img.url || '');
+              if (src) {
+                qHtml += `<img src="${src}" alt="试题插图" class="exam-figure a4-figure" loading="eager" />`;
+              }
+            });
+            qHtml += `</div>`;
+          }
 
           // 选择题选项
           if (q.options && q.options.length > 0) {
@@ -2027,6 +2113,16 @@
           if (ans.analysis) {
             ansHtml += `<div style="font-family: 'KaiTi', serif; color: #444; margin-top: 3px; padding-left: 12px;"><strong>解析：</strong>${escapeHtml(ans.analysis).replace(/\n/g, '<br>')}</div>`;
           }
+          if (ans.images && Array.isArray(ans.images) && ans.images.length > 0) {
+            ansHtml += `<div class="question-figures a4-q-figures" style="margin-top: 6px;">`;
+            ans.images.forEach(img => {
+              const src = typeof img === 'string' ? img : (img.src || img.url || '');
+              if (src) {
+                ansHtml += `<img src="${src}" alt="解析插图" class="exam-figure a4-figure" loading="eager" />`;
+              }
+            });
+            ansHtml += `</div>`;
+          }
           ansHtml += `</div>`;
 
           blocks.push({
@@ -2051,6 +2147,15 @@
           ${b.html}
         </div>
       `).join('');
+
+      // 如果存在附图，等待图片加载以获取真实渲染高度
+      const pendingImgs = Array.from(sandbox.querySelectorAll("img")).filter(img => !img.complete);
+      if (pendingImgs.length > 0) {
+        await Promise.all(pendingImgs.map(img => new Promise(resolve => {
+          img.onload = img.onerror = resolve;
+          setTimeout(resolve, 300);
+        })));
+      }
 
       // 在沙箱内渲染公式以获取公式撑开后的精确物理高度
       triggerKaTeX(sandbox);
