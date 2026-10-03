@@ -143,10 +143,11 @@ def fast_match_command(instruction: str, exam_data: Dict[str, Any]) -> Tuple[boo
     
     # 0. Clear all content (full reset)
     if text in [
+        "清空整卷", "清空全卷", "整卷清空", "全卷清空", "清空整份试卷", "清空试卷全部内容", "删除整卷", "删掉整卷",
         "清空试卷", "清空所有题目", "删除全部题目", "删除所有题目", "清空所有试题", "删除全部试题",
         "全部删除", "清空全部", "删掉所有内容", "清空所有内容", "清空内容", "清卷", "重置试卷",
-        "清空所有", "全删", "全卷清空", "清空试题", "删除试卷"
-    ]:
+        "清空所有", "全删", "全卷清空", "清空试题", "删除试卷", "清空", "删空"
+    ] or text.strip() == "清空":
         updated = clear_all_content(exam_data)
         return True, "已为您清空试卷中的全部题目与参考答案。试卷已重置。", updated, "clear_all_content"
 

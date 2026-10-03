@@ -2583,6 +2583,54 @@
           executedTool = `delete_question(已删除题目及对应答案: 第${qNums.join(', ')}题)`;
           replyMessage = `已成功删除 <strong>第 ${qNums.join('、')} 题</strong> 及其对应答案！右侧试卷预览已更新。`;
         }
+      } else if (prompt.includes("重新编号") || prompt.includes("全卷重新编号") || prompt.includes("自动编号") || prompt.includes("规范题号")) {
+        let globalNum = 1;
+        (currentExamData.sections || []).forEach(sec => {
+          (sec.questions || []).forEach(q => {
+            q.number = globalNum++;
+          });
+        });
+        if (currentExamData.answers) {
+          currentExamData.answers.forEach((ans, idx) => {
+            if (idx < globalNum - 1) ans.number = idx + 1;
+          });
+        }
+        executedTool = `renumber_all(已对全卷题目顺次连续编号 1..${globalNum-1})`;
+        replyMessage = `已对全卷所有题目与答案完成顺次连续重新编号（1, 2, 3...）！`;
+      } else if (prompt.includes("删除解答题") || prompt.includes("删除全部解答题") || prompt.includes("删除所有解答题") || prompt.includes("清空解答题")) {
+        let count = 0;
+        currentExamData.sections = (currentExamData.sections || []).filter(sec => {
+          const isSol = sec.type === "solution" || (sec.title && (sec.title.includes("解答") || sec.title.includes("大题") || sec.title.includes("计算") || sec.title.includes("证明")));
+          if (isSol) {
+            count += (sec.questions || []).length;
+            return false;
+          }
+          return true;
+        });
+        let gNum = 1;
+        (currentExamData.sections || []).forEach(sec => {
+          (sec.questions || []).forEach(q => { q.number = gNum++; });
+        });
+        executedTool = `delete_section(已删除解答题大题共 ${count} 道)`;
+        replyMessage = `已成功删除全卷所有解答题大题，剩余题目已重新连续编号！`;
+      } else if (prompt.includes("删除选择题") || prompt.includes("删除全部选择题") || prompt.includes("删除所有选择题")) {
+        let count = 0;
+        currentExamData.sections = (currentExamData.sections || []).filter(sec => {
+          const isChoice = sec.type === "choice" || sec.type === "single_choice" || sec.type === "multiple_choice" || (sec.title && sec.title.includes("选择"));
+          if (isChoice) {
+            count += (sec.questions || []).length;
+            return false;
+          }
+          return true;
+        });
+        let gNum = 1;
+        (currentExamData.sections || []).forEach(sec => {
+          (sec.questions || []).forEach(q => { q.number = gNum++; });
+        });
+        executedTool = `delete_section(已删除选择题大题共 ${count} 道)`;
+        replyMessage = `已成功删除全卷所有选择题，剩余题目已重新连续编号！`;
+      } else if (prompt.trim() === "执行删除" || prompt.trim() === "删除") {
+        replyMessage = `请告诉我具体要删除的目标：<br>• <strong>删除单题</strong>：输入如“删除第1题”<br>• <strong>批量删除</strong>：输入如“删除第1、2题”<br>• <strong>删除大题</strong>：输入如“删除全部解答题”<br>• <strong>清空全卷</strong>：点击输入框上方的【🗑️ 清空整卷】按钮`;
       }
 
       return { reply: replyMessage, tool: executedTool };
