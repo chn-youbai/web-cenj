@@ -43,6 +43,8 @@ class ChatActionRequest(BaseModel):
     instruction: str
     exam_data: Dict[str, Any]
     api_key: Optional[str] = None
+    history: Optional[list] = None
+    model: Optional[str] = "deepseek-flash"
 
 
 class ExportRequest(BaseModel):
@@ -88,14 +90,16 @@ def get_status():
 def handle_chat_action(req: ChatActionRequest):
     """
     Receives instruction from mobile chat or quick chips,
-    executes deterministic Python tools or DeepSeek Function Calling,
+    executes deterministic Python tools or DeepSeek Function Calling with 1M context,
     and returns updated exam_data + message.
     """
     try:
         reply_msg, updated_data, tool_name = route_chat_action(
             instruction=req.instruction,
             exam_data=req.exam_data,
-            api_key=req.api_key
+            api_key=req.api_key,
+            history=req.history,
+            model=req.model or "deepseek-flash"
         )
         return {
             "success": True,

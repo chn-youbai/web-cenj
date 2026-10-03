@@ -219,11 +219,17 @@ def fast_match_command(instruction: str, exam_data: Dict[str, Any]) -> Tuple[boo
     return False, "", exam_data, ""
 
 
-def route_chat_action(instruction: str, exam_data: Dict[str, Any], api_key: str = None) -> Tuple[str, Dict[str, Any], str]:
+def route_chat_action(
+    instruction: str,
+    exam_data: Dict[str, Any],
+    api_key: str = None,
+    history: list = None,
+    model: str = "deepseek-flash"
+) -> Tuple[str, Dict[str, Any], str]:
     """
-    Main entry point for handling chat actions from mobile.
+    Main entry point for handling chat actions from mobile / desktop.
     1. Checks fast-path rule engine (<1ms).
-    2. Dispatches to DeepSeek Function Calling for intelligent tool selection.
+    2. Dispatches to DeepSeek Function Calling with 1M context and multi-turn history.
     Returns: (message: str, exam_data: dict, tool_name: str)
     """
     # Step 1: Fast-path
@@ -231,8 +237,9 @@ def route_chat_action(instruction: str, exam_data: Dict[str, Any], api_key: str 
     if hit:
         return reply_msg, updated_data, tool_name
 
-    # Step 2: DeepSeek Function Calling
+    # Step 2: DeepSeek Function Calling with 1M context
     key = api_key or os.environ.get("DEEPSEEK_API_KEY", DEEPSEEK_KEY)
+    target_model = model or "deepseek-flash"
     
     # Summary of current exam for LLM context
     meta = exam_data.get("meta", {})
@@ -243,20 +250,25 @@ def route_chat_action(instruction: str, exam_data: Dict[str, Any], api_key: str 
     ans_count = len(exam_data.get("answers", []))
     
     system_prompt = (
-        "你是一个专业的试卷排版与数据处理引擎。用户正在手机端调整一份试卷。\n"
+        "你是一个专业的试卷排版与数据处理引擎。用户正在调整一份试卷。\n"
         f"当前试卷信息：\n"
         f"- 标题：{meta.get('title', '未命名')}\n"
         f"- 结构：{'; '.join(sections_summary)}\n"
         f"- 当前答案条目数：{ans_count}\n\n"
-        "请根据用户的指令调用最匹配的工具函数（tools）。如果用户的指令需要删除、清空答案、重排或修改属性，务必调用对应的函数！"
+        "请根据多轮对话上下文与用户的最新指令调用最匹配的工具函数（tools）。如果用户的指令需要删除、清空答案、重排或修改属性，务必调用对应的函数！"
     )
+
+    messages = [{"role": "system", "content": system_prompt}]
+    if history and isinstance(history, list):
+        for h in history[-20:]:
+            if isinstance(h, dict) and "role" in h and "content" in h:
+                if h["role"] in ["user", "assistant"]:
+                    messages.append({"role": h["role"], "content": str(h["content"])})
+    messages.append({"role": "user", "content": instruction})
     
     payload = {
-        "model": "deepseek-chat",
-        "messages": [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": instruction}
-        ],
+        "model": target_model,
+        "messages": messages,
         "tools": TOOL_SCHEMAS,
         "tool_choice": "auto",
         "temperature": 0.1

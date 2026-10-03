@@ -756,11 +756,11 @@
         <div class="form-group">
           <label>选择排版大模型：</label>
           <select id="defaultModelSelect" class="form-input">
-            <option value="deepseek-flash" selected>DeepSeek V4.1 Flash (默认 · 最高推理性能)</option>
+            <option value="deepseek-flash" selected>DeepSeek V4.1 Flash (1M 超长上下文 · 推荐主力)</option>
             <option value="deepseek-reasoner">DeepSeek Reasoner (R1 · 深度数理推导)</option>
             <option value="deepseek-chat">DeepSeek Chat (V3 · 极速通用对话)</option>
-            <option value="gemini-3.8-flash">Gemini 3.8 Flash (备用 · Google 快速推理)</option>
-            <option value="gemini-3.6-flash">Gemini 3.6 Flash (备用 · Google 稳定极速)</option>
+            <option value="gemini-3.8-flash">Gemini 3.8 Flash (1M 超长上下文 · Google 快速推理)</option>
+            <option value="gemini-3.6-flash">Gemini 3.6 Flash (1M 超长上下文 · Google 稳定极速)</option>
           </select>
         </div>
 
@@ -1094,6 +1094,9 @@
     const BUILTIN_DEEPSEEK_KEY = "sk-2d1d216cb2d249769cba218baefc7f5e";
     const BUILTIN_GEMINI_KEY = "AQ.Ab8RN6IuAdyz64ZtGMRt0xMIutpY4Kvm9XVkr2sS85HwK1fVBQ";
 
+    // 客户端多轮对话上下文历史队列 (支持 1M 超大上下文与连续记忆)
+    let chatConversationHistory = [];
+
     // 对话发送与 Tool Calling 执行逻辑
     async function handleUserSubmit(e) {
       if (e) e.preventDefault();
@@ -1103,6 +1106,12 @@
 
       inputEl.value = "";
       appendChatMessage(prompt, "user");
+
+      // 记入对话历史
+      chatConversationHistory.push({ role: "user", content: prompt });
+      if (chatConversationHistory.length > 50) {
+        chatConversationHistory = chatConversationHistory.slice(-50);
+      }
 
       // 显示正在思考气泡
       const thinkingBubble = appendChatMessage("🧠 正在理解指令并调度排版工具...", "ai");
@@ -1117,13 +1126,18 @@
           body: JSON.stringify({
             instruction: prompt,
             exam_data: currentExamData,
-            api_key: customKey || undefined
+            api_key: customKey || undefined,
+            history: chatConversationHistory.slice(0, -1),
+            model: "deepseek-flash"
           })
         });
         if (resp.ok) {
           const data = await resp.json();
           if (data.success && data.exam_data) {
             isPythonBackendConnected = true;
+            if (data.message) {
+              chatConversationHistory.push({ role: "assistant", content: data.message });
+            }
             if (data.tool_executed) {
               currentExamData = data.exam_data;
               saveExamState();
@@ -1197,6 +1211,7 @@
         const localResult = applyLocalSemanticRule(prompt);
         saveExamState();
         renderPreview();
+        chatConversationHistory.push({ role: "assistant", content: localResult.reply.replace(/<[^>]+>/g, '') });
         thinkingBubble.querySelector(".msg-bubble").innerHTML = `
           ${localResult.reply}
           <div class="tool-tag" style="margin-top:0.5rem; background:rgba(245, 158, 11, 0.15); color:#fbbf24;">⚡ 本地排版引擎 (云端API异常: ${escapeHtml(err.message)})</div>
@@ -1408,13 +1423,16 @@
 10. 修改或新增参考答案: {"tool": "modify_answer", "q": 题号, "answer": "正确答案", "analysis": "解析内容"}
 11. 删除指定题目答案: {"tool": "delete_answer", "q": 题号或[题号列表]}`;
 
+      // 提取前序多轮历史 (保留最近20轮)，确保具备持续记忆上下文 (1M 上下文)
+      const historyTurns = (chatConversationHistory || []).slice(0, -1).slice(-20);
       const reqBody = {
         model: targetModel,
         messages: [
           {
             role: "system",
-            content: "你是一个专业的试卷排版调度智能体。根据用户排版指令进行决策。如果需要调整试卷，务必在回答末尾输出纯 JSON 动作指令。"
+            content: "你是一个专业的试卷排版调度智能体。根据多轮对话历史与用户指令进行决策。如果需要调整试卷，务必在回答末尾输出纯 JSON 动作指令。"
           },
+          ...historyTurns,
           {
             role: "user",
             content: promptText
@@ -1468,6 +1486,7 @@
         .replace(/\[\s*\{[\s\S]*?"tool"[\s\S]*?\}\s*\]/g, '')
         .replace(/\{[\s\S]*"tool"[\s\S]*\}/g, '')
         .trim();
+      chatConversationHistory.push({ role: "assistant", content: cleanReply });
       let thoughtHtml = '';
       if (reasoningContent) {
         thoughtHtml = `
@@ -2195,7 +2214,8 @@
         else if (thinking === "high" || thinking === "24576") thinkingLabel = "深度思考";
         else if (thinking === "low" || thinking === "4096") thinkingLabel = "轻度思考";
         else if (thinking === "max" || thinking === "-1") thinkingLabel = "极高思考";
-        badge.textContent = `✨ ${model} (${thinkingLabel} · 内置Key)`;
+        const is1M = model.includes("flash") || model.includes("gemini");
+        badge.textContent = `✨ ${model} (${is1M ? "1M上下文 · " : ""}${thinkingLabel})`;
       } else {
         const provider = localStorage.getItem("exam_custom_provider") || "deepseek";
         const model = localStorage.getItem("exam_custom_model") || "deepseek-flash";
