@@ -1800,7 +1800,7 @@
         clearTimeout(timeoutId);
         if (resp.ok) {
           const data = await resp.json();
-          if (data.status === "online") {
+          if (data.status === "online" || data.status === "ok") {
             isPythonBackendConnected = true;
             if (badge) {
               badge.innerHTML = "🟢 Python引擎已连接 (OMML真导出)";

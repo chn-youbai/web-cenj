@@ -1150,14 +1150,15 @@
         </div>
       </div>
 
-      <!-- 快捷微调指令滑轮 -->
+      <!-- 快捷微调指令滑轮 (含确定性 Python 工具) -->
       <div class="quick-chips-wrapper">
+        <span class="chip-item" style="border-color: rgba(239, 68, 68, 0.4); background: rgba(239, 68, 68, 0.1); color: #fca5a5;" onclick="sendMobilePrompt('清空所有答案')">🗑️ 清空所有答案</span>
+        <span class="chip-item" style="border-color: rgba(59, 130, 246, 0.4); background: rgba(59, 130, 246, 0.1); color: #93c5fd;" onclick="sendMobilePrompt('全卷重新编号')">🔢 全卷重新编号</span>
+        <span class="chip-item" style="border-color: rgba(245, 158, 11, 0.4); background: rgba(245, 158, 11, 0.1); color: #fcd34d;" onclick="sendMobilePrompt('删除所有解答题')">✂️ 删除全部解答题</span>
+        <span class="chip-item" onclick="sendMobilePrompt('清空选择题答案')">📝 清空选择题答案</span>
         <span class="chip-item" onclick="sendMobilePrompt('把第3题选项改成两列对齐')">📐 第3题换两列</span>
-        <span class="chip-item" onclick="sendMobilePrompt('把第1题选项换成单列排版')">📏 第1题换单列</span>
-        <span class="chip-item" onclick="sendMobilePrompt('为第7题解答题增加5行空白')">✍️ 第7题加留白</span>
-        <span class="chip-item" onclick="sendMobilePrompt('把满分改成120分，考试时间改成100分钟')">⏱️ 改120分/100分</span>
-        <span class="chip-item" onclick="sendMobilePrompt('清理题目中残留的水印与广告词')">🧹 一键去水印</span>
-        <span class="chip-item" onclick="sendMobilePrompt('把第2题选项换成四列横排')">🔲 第2题换四列</span>
+        <span class="chip-item" onclick="sendMobilePrompt('把满分改成150分，考试时间改成120分钟')">⏱️ 设150分/120分</span>
+        <span class="chip-item" onclick="loadSampleMathExam()">🔄 重置示范卷</span>
       </div>
 
       <!-- 底部输入框 -->
@@ -1255,11 +1256,11 @@
             <div class="desc">备份完整试卷数据，支持随时恢复或在电脑导入</div>
           </div>
         </button>
-        <button class="drawer-item-btn" onclick="triggerMobilePrint(); closeDrawer('exportDrawer');">
+        <button class="drawer-item-btn" onclick="handleExportPdf(); closeDrawer('exportDrawer');">
           <span style="font-size: 1.3rem;">🖨️</span>
           <div>
-            <div>系统打印 / 导出 PDF</div>
-            <div class="desc">A4 矢量印刷标准，手机可直接存储为 PDF</div>
+            <div>导出矢量 PDF 文件</div>
+            <div class="desc">A4 矢量印刷标准，支持手机直下与系统打印保存</div>
           </div>
         </button>
         <button class="drawer-item-btn" onclick="copyExamText(); closeDrawer('exportDrawer');">
@@ -2060,6 +2061,42 @@
 
       const thinkingBubble = appendMobileMsg("🧠 正在理解排版指令并调度工具...", "ai");
 
+      // 1. 若云端/本地 Python 引擎已连接，优先交由 Python 确定性工具箱执行（0% 误差、绝无漏题）
+      if (isPythonBackendConnected) {
+        try {
+          const backendUrl = getPythonBackendUrl();
+          const customKey = localStorage.getItem("exam_custom_key") || "";
+          const resp = await fetch(`${backendUrl}/api/chat_action`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              instruction: prompt,
+              exam_data: currentExamData,
+              api_key: customKey || undefined
+            })
+          });
+          if (resp.ok) {
+            const data = await resp.json();
+            if (data.success && data.exam_data) {
+              currentExamData = data.exam_data;
+              saveExamState();
+              renderAllViews();
+              thinkingBubble.querySelector(".msg-box").innerHTML = `
+                ${escapeHtml(data.message)}
+                <br><span class="engine-chip" style="background: rgba(34, 197, 94, 0.15); color: #4ade80; border-color: rgba(34, 197, 94, 0.3);">⚡ 云端 Python 引擎执行 (0%误差)</span>
+                <div class="preview-jump-chip" style="margin-top:0.6rem;" onclick="switchMobileNav('preview')">
+                  <span>📄 排版已刷新，点击切到预览</span>
+                  <span>查看印样 ➔</span>
+                </div>
+              `;
+              return;
+            }
+          }
+        } catch (backendErr) {
+          console.warn("Cloud backend execution error, fallback to client AI:", backendErr);
+        }
+      }
+
       try {
         const mode = localStorage.getItem("exam_mode") || "default";
 
@@ -2746,14 +2783,14 @@
         clearTimeout(timeoutId);
         if (resp.ok) {
           const data = await resp.json();
-          if (data.status === "online") {
+          if (data.status === "online" || data.status === "ok") {
             isPythonBackendConnected = true;
             if (badge) {
-              badge.innerHTML = "🟢 Python已连接";
+              badge.innerHTML = "🟢 云端引擎已连接 (免电脑)";
               badge.style.color = "#4ade80";
               badge.style.borderColor = "rgba(74, 222, 128, 0.4)";
             }
-            if (drawerDesc) drawerDesc.textContent = `🟢 已连接 (Python ${data.python || ''} · 端口 8765)`;
+            if (drawerDesc) drawerDesc.textContent = `🟢 已连接 (${data.service || 'Python云端引擎'})`;
             return true;
           }
         }
@@ -2761,11 +2798,11 @@
 
       isPythonBackendConnected = false;
       if (badge) {
-        badge.innerHTML = "🟡 Python未连接";
+        badge.innerHTML = "🟡 点击配置云端引擎";
         badge.style.color = "#fbbf24";
         badge.style.borderColor = "rgba(251, 191, 36, 0.4)";
       }
-      if (drawerDesc) drawerDesc.textContent = "🟡 未连接电脑服务 · 点击配置局域网IP";
+      if (drawerDesc) drawerDesc.textContent = "🟡 未连接公网服务 · 点击输入云端域名";
       return false;
     }
 
@@ -2783,19 +2820,20 @@
       if (isPythonBackendConnected) {
         html += `
           <div style="background: rgba(34, 197, 94, 0.12); border: 1px solid rgba(34, 197, 94, 0.3); color: #4ade80; padding: 0.75rem; border-radius: 8px; margin-bottom: 0.8rem;">
-            ✅ <strong>已成功连接到电脑端 Python 强算力引擎！</strong><br>
-            • 上传 Word/PDF 试卷自动由本地 Python 深度提取数学公式并由 AI 智能编排；<br>
-            • 点击导出 Word 时动态生成<strong>原生可双击修改的 OMML 矢量公式试卷</strong>！
+            ✅ <strong>已成功连接到公网云端 Python 引擎！</strong><br>
+            • <strong>免开电脑</strong>：脱离个人电脑依赖，手机 4G/5G 随时随地全功能运行；<br>
+            • <strong>0 手机算力</strong>：复杂公式解析与 Word/PDF 生成全部由云端执行；<br>
+            • <strong>0% 误差确定性执行</strong>：清空答案、删除题目由 Python 代码精准完成，试题与答案严格 1:1 对应！
           </div>
         `;
       } else {
         html += `
           <div style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); padding: 0.75rem; border-radius: 8px; margin-bottom: 0.8rem;">
-            <strong>手机端如何连接电脑上的 Python 服务？</strong><br>
-            1. 请确保手机与电脑连接在<strong>同一个 WiFi / 局域网</strong>；<br>
-            2. 在电脑项目目录中双击运行 <strong><code>start_server.bat</code></strong>；<br>
-            3. 在电脑黑框控制台中查看 <em>“📱 手机/局域网访问: http://192.168.x.x:8765”</em>；<br>
-            4. 将该地址填入下方输入框，点击“测试并连接”即可！
+            <strong>☁️ 如何连接免电脑的公网云端引擎？</strong><br>
+            1. 在 <strong>Zeabur</strong> 等平台部署项目后，获取公网 HTTPS 域名（如 <code>https://xxx.zeabur.app</code>）；<br>
+            2. 将该公网域名填入下方输入框，点击“测试并连接”；<br>
+            3. 保存后手机将永久记住该域名，以后打开网页即可直接使用！<br>
+            <em>（若在本地电脑开发测试，亦可填 <code>http://127.0.0.1:8765</code>）</em>
           </div>
         `;
       }
@@ -2897,8 +2935,9 @@
               }
 
               const result = await resp.json();
-              if (result.success && result.data) {
-                currentExamData = result.data;
+              const newExamData = result.exam_data || result.data;
+              if (result.success && newExamData) {
+                currentExamData = newExamData;
                 saveExamState();
                 renderAllViews();
                 loadingBubble.querySelector(".msg-box").innerHTML = `
@@ -2977,7 +3016,41 @@
         } catch(e) {}
       }
 
-      openBackendGuideModal("导出包含原生可双击修改公式（OMML）的真实 Word 试卷，需要连接电脑端 Python 伴生引擎。请在电脑运行 start_server.bat 即可激活！");
+      openBackendGuideModal("导出包含原生可双击修改公式（OMML）的真实 Word 试卷，需要连接云端 Python 引擎。请先配置云端服务域名！");
+    }
+
+    // 动态导出矢量 PDF
+    async function handleExportPdf() {
+      const backendUrl = getPythonBackendUrl();
+      if (isPythonBackendConnected) {
+        showToast("⚙️ 正在由云端 Python 编译矢量 PDF 试卷...");
+        try {
+          const resp = await fetch(`${backendUrl}/api/export/pdf`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(currentExamData)
+          });
+          if (resp.ok) {
+            const blob = await resp.blob();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            const docTitle = currentExamData.meta?.title || "国家考试标准数学试卷";
+            a.download = `${docTitle}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            appendMobileMsg("📥 <strong>矢量 PDF 试卷已成功生成并下载！</strong>", "ai");
+            showToast("📥 矢量 PDF 导出成功！");
+            return;
+          }
+        } catch(e) {}
+      }
+
+      // 若云端转换不可用，无缝调用手机浏览器自带的打印/存为PDF功能
+      showToast("📄 正在调起手机系统打印（可选择另存为 PDF）...");
+      triggerMobilePrint();
     }
 
     // 导出试卷 JSON 工程数据
