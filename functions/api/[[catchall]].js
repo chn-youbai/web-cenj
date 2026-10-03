@@ -3,7 +3,7 @@ export async function onRequest(context) {
   const url = new URL(context.request.url);
 
   // Upstream Vercel endpoint: Read from CF Pages env var or fallback to default
-  const upstreamBase = context.env.VERCEL_UPSTREAM_URL || "https://web-cenj.vercel.app";
+  const upstreamBase = context.env.VERCEL_UPSTREAM_URL || "https://web-cenj-cgqh.vercel.app";
   const upstreamUrl = new URL(url.pathname + url.search, upstreamBase);
 
   // Handle preflight OPTIONS
