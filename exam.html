@@ -540,11 +540,78 @@
     .options-grid.cols-1 {
       grid-template-columns: 1fr;
     }
+    .options-grid.cols-mixed {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    .options-grid.cols-mixed .opt-full {
+      grid-column: 1 / -1;
+      width: 100%;
+    }
 
-    /* 解答题留白 */
+    /* 选择题右侧附图图文并排：图片在右侧，选项在左侧，图片高度与选项行数整体高度一致 */
+    .choice-with-figure-wrap {
+      display: flex;
+      flex-direction: row;
+      align-items: stretch;
+      justify-content: space-between;
+      gap: 16px;
+      margin-top: 5px;
+      width: 100%;
+    }
+    .choice-options-left {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    .choice-options-left .options-grid {
+      padding-left: 6px;
+    }
+    .choice-figure-right {
+      flex-shrink: 0;
+      max-width: 36%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .choice-col-figure {
+      max-width: 100%;
+      max-height: 100%;
+      min-height: 60px;
+      object-fit: contain;
+      border-radius: 2px;
+      display: block;
+      margin-left: auto;
+    }
+
+    /* 解答题留白与左上角内嵌附图 */
     .blank-space {
       border-bottom: 1px dashed rgba(0, 0, 0, 0.08);
       margin: 8px 0;
+    }
+    .blank-space.with-corner-fig {
+      position: relative;
+      border-bottom: 1px dashed rgba(0, 0, 0, 0.08);
+      margin: 6px 0;
+      padding: 4px;
+      display: flow-root;
+    }
+    .blank-corner-fig-box {
+      float: left;
+      margin: 0 16px 8px 0;
+      max-width: 35%;
+      max-height: 140px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .blank-corner-figure {
+      max-width: 100%;
+      max-height: 135px;
+      object-fit: contain;
+      border-radius: 2px;
+      display: block;
     }
 
     /* 试题与解析配图 */
@@ -560,7 +627,7 @@
     }
     .exam-figure, .a4-figure {
       max-width: 85%;
-      max-height: 200px;
+      max-height: 160px;
       object-fit: contain;
       border-radius: 4px;
       display: inline-block;
@@ -716,8 +783,27 @@
       }
       .exam-figure, .a4-figure {
         max-width: 80% !important;
-        max-height: 175px !important;
+        max-height: 150px !important;
         box-shadow: none !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+      }
+      .choice-with-figure-wrap {
+        gap: 10px !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+      }
+      .choice-col-figure {
+        max-height: 95px !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+      }
+      .blank-space.with-corner-fig {
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+      }
+      .blank-corner-figure {
+        max-height: 120px !important;
         page-break-inside: avoid !important;
         break-inside: avoid !important;
       }
@@ -1100,6 +1186,39 @@
       } catch(e) {}
     }
 
+    // 选项视觉字数估算与智能排版（识别LaTeX公式避免误判过长）
+    function getVisualOptionLength(opt) {
+      if (!opt) return 0;
+      const cleaned = String(opt).replace(/\\[a-zA-Z]+/g, 'M').replace(/[{}\$^_\\]/g, '').trim();
+      return cleaned.length;
+    }
+
+    function renderSmartOptionsHtml(options, hasRightFigure) {
+      if (!options || options.length === 0) return '';
+      const lengths = options.map(getVisualOptionLength);
+      const maxLen = Math.max(...lengths, 0);
+
+      // 如果右侧有配图，选项区域可用宽度变窄（约占版面 60%）
+      const shortThreshold = hasRightFigure ? 8 : 12;
+      const fullThreshold = hasRightFigure ? 16 : 24;
+
+      // 规则 A：所有选项均非常简短 -> 四列单行横排 (A B C D)
+      if (!hasRightFigure && maxLen <= shortThreshold) {
+        return `<div class="options-grid a4-options cols-4">${options.map(opt => `<div>${escapeHtml(opt)}</div>`).join('')}</div>`;
+      }
+
+      // 规则 B：所有选项均中等长度且无过长单项 -> 双列横排 (A B / C D)
+      if (maxLen <= fullThreshold && lengths.every(l => l <= fullThreshold)) {
+        return `<div class="options-grid a4-options cols-2">${options.map(opt => `<div>${escapeHtml(opt)}</div>`).join('')}</div>`;
+      }
+
+      // 规则 C：智能判断各选项字数，文字过多的选项独占整行，较短的选项共享一行
+      return `<div class="options-grid a4-options cols-mixed">${options.map((opt, idx) => {
+        const isFull = lengths[idx] > fullThreshold;
+        return `<div class="${isFull ? 'opt-full' : ''}">${escapeHtml(opt)}</div>`;
+      }).join('')}</div>`;
+    }
+
     // 渲染 A4 试卷 (WPS/Word 真实多页离散排版流式计算引擎)
     async function renderExamPaper() {
       const container = document.getElementById("examPaperContainer");
@@ -1142,41 +1261,55 @@
         (sec.questions || []).forEach(q => {
           const prefix = q.number ? `${q.number}. ` : '';
           const stemFormatted = escapeHtml(prefix + (q.stem || "")).replace(/\n/g, '<br>');
+          const hasOptions = q.options && q.options.length > 0;
+          const hasImages = q.images && Array.isArray(q.images) && q.images.length > 0;
+          const hasBlank = q.blank_lines && q.blank_lines > 0;
+
           let qHtml = `<div class="question-item a4-q-item">`;
           qHtml += `<div class="question-stem a4-q-stem">${stemFormatted}</div>`;
 
-          // 试题附图
-          if (q.images && Array.isArray(q.images) && q.images.length > 0) {
-            qHtml += `<div class="question-figures a4-q-figures">`;
-            q.images.forEach(img => {
+          if (hasOptions && hasImages) {
+            // 用户需求 1：选择题图片放在右侧，选项放在左侧，图片大小与选项整体高度一样高
+            const optionsHtml = renderSmartOptionsHtml(q.options, true);
+            const figureImgs = q.images.map(img => {
               const src = typeof img === 'string' ? img : (img.src || img.url || '');
-              if (src) {
-                qHtml += `<img src="${src}" alt="试题插图" class="exam-figure a4-figure" loading="eager" />`;
-              }
-            });
-            qHtml += `</div>`;
-          }
-
-          // 选择题选项
-          if (q.options && q.options.length > 0) {
-            let layoutClass = q.layout || 'cols-4';
-            if (!q.layout) {
-              const maxLen = Math.max(...q.options.map(o => (o || '').length));
-              if (maxLen > 35) layoutClass = 'cols-1';
-              else if (maxLen > 15) layoutClass = 'cols-2';
-              else layoutClass = 'cols-4';
+              return src ? `<img src="${src}" alt="试题附图" class="choice-col-figure" loading="eager" />` : '';
+            }).join('');
+            qHtml += `
+              <div class="choice-with-figure-wrap">
+                <div class="choice-options-left">${optionsHtml}</div>
+                <div class="choice-figure-right">${figureImgs}</div>
+              </div>
+            `;
+          } else if (hasOptions) {
+            // 用户需求 2：常规选择题，判断选项字数决定行数，文字太多的选项独占一行
+            qHtml += renderSmartOptionsHtml(q.options, false);
+          } else if (hasBlank && hasImages) {
+            // 用户需求 3：大题图片放在空置答题区左上部分
+            const blankH = Math.max(90, q.blank_lines * 22);
+            const figureImgs = q.images.map(img => {
+              const src = typeof img === 'string' ? img : (img.src || img.url || '');
+              return src ? `<img src="${src}" alt="大题配图" class="blank-corner-figure" loading="eager" />` : '';
+            }).join('');
+            qHtml += `
+              <div class="blank-space a4-blank with-corner-fig" style="min-height: ${blankH}px;">
+                <div class="blank-corner-fig-box">${figureImgs}</div>
+              </div>
+            `;
+          } else {
+            // 常规无选项题目（如填空题）
+            if (hasImages) {
+              qHtml += `<div class="question-figures a4-q-figures" style="margin: 4px 0;">`;
+              q.images.forEach(img => {
+                const src = typeof img === 'string' ? img : (img.src || img.url || '');
+                if (src) qHtml += `<img src="${src}" alt="试题插图" class="exam-figure a4-figure" loading="eager" />`;
+              });
+              qHtml += `</div>`;
             }
-            qHtml += `<div class="options-grid a4-options ${layoutClass}">`;
-            q.options.forEach(opt => {
-              qHtml += `<div>${escapeHtml(opt)}</div>`;
-            });
-            qHtml += `</div>`;
-          }
-
-          // 解答题留白
-          if (q.blank_lines && q.blank_lines > 0) {
-            const h = q.blank_lines * 22;
-            qHtml += `<div class="blank-space a4-blank" style="height: ${h}px;"></div>`;
+            if (hasBlank) {
+              const h = q.blank_lines * 22;
+              qHtml += `<div class="blank-space a4-blank" style="height: ${h}px;"></div>`;
+            }
           }
 
           qHtml += `</div>`;
@@ -1277,8 +1410,8 @@
         });
       }
 
-      // 3. WPS/Office 真实分页流计算引擎 (安全正文高度 855px，保留充足物理打印安全底距，彻底杜绝切题)
-      const PAGE_BODY_MAX_HEIGHT = 855;
+      // 3. WPS/Office 真实分页流计算引擎 (高度优化至 980px，充分利用版面，杜绝底部过度留白)
+      const PAGE_BODY_MAX_HEIGHT = 980;
       const pages = [];
       let currentPage = [];
       let currentHeight = 0;
