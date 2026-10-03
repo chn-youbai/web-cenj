@@ -1784,8 +1784,11 @@
     function getPythonBackendUrl() {
       const customUrl = localStorage.getItem("exam_python_backend_url");
       if (customUrl) return customUrl.replace(/\/+$/, "");
-      if (location.port === "8765") {
+      if (location.port === "8765" || location.hostname === "localhost" || location.hostname === "127.0.0.1") {
         return `${location.protocol}//${location.host}`;
+      }
+      if (location.hostname.endsWith(".pages.dev")) {
+        return ""; // 走 Cloudflare Pages 边缘网关同源反代
       }
       return "http://127.0.0.1:8765";
     }
