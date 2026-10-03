@@ -389,20 +389,69 @@
       position: relative;
     }
 
-    /* 试卷纸张（标准 A4 白底黑字仿真） */
-    .a4-paper {
+    /* WPS / Office 真实 A4 多页排版视图容器 */
+    .a4-pages-stack {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 28px;
       width: 100%;
-      max-width: 820px;
-      min-height: 1160px;
+      padding-bottom: 60px;
+    }
+
+    /* 离散 A4 单页卡片 (国家标准 210mm × 297mm 比例) */
+    .a4-page {
+      width: 794px;
+      height: 1123px;
+      min-height: 1123px;
+      max-height: 1123px;
       background: #ffffff;
       color: #000000;
-      padding: 45px 55px;
-      box-shadow: 0 12px 35px rgba(0, 0, 0, 0.45);
-      border-radius: 4px;
+      padding: 48px 55px 24px 55px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
+      border-radius: 3px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      box-sizing: border-box;
+      position: relative;
+      overflow: hidden;
       font-family: "SimSun", "Songti SC", "Times New Roman", serif;
       line-height: 1.6;
-      position: relative;
-      margin-bottom: 3rem;
+    }
+
+    .a4-page-body {
+      flex: 1;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .a4-page-footer {
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      color: #475569;
+      border-top: 1px dashed #cbd5e1;
+      margin-top: 8px;
+      flex-shrink: 0;
+      font-family: "SimSun", "Songti SC", serif;
+      user-select: none;
+    }
+
+    .a4-measure-sandbox {
+      position: absolute;
+      left: -9999px;
+      top: 0;
+      width: 684px;
+      visibility: hidden;
+      pointer-events: none;
+      font-family: "SimSun", "Songti SC", "Times New Roman", serif;
+      line-height: 1.6;
+      color: #000000;
+      box-sizing: border-box;
     }
 
     /* 卷头样式 */
@@ -574,32 +623,80 @@
 
     /* 打印与导出专用样式 */
     @media print {
-      body {
+      body, html {
         background: #ffffff !important;
         height: auto !important;
+        min-height: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
         overflow: visible !important;
       }
-      header, .chat-panel, .mobile-tab-bar, .modal-overlay {
+      header, .chat-panel, #chatPanel, .mobile-tab-bar, .modal-overlay, .a4-measure-sandbox {
         display: none !important;
       }
       .workspace {
         display: block !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+        height: auto !important;
       }
       .preview-panel {
         background: transparent !important;
         padding: 0 !important;
+        margin: 0 !important;
         overflow: visible !important;
+        display: block !important;
+        width: 100% !important;
+        height: auto !important;
       }
-      .a4-paper {
-        max-width: 100% !important;
-        min-height: auto !important;
-        box-shadow: none !important;
+      .a4-pages-stack {
+        display: block !important;
+        gap: 0 !important;
         padding: 0 !important;
         margin: 0 !important;
+        width: 100% !important;
+      }
+      .a4-page {
+        width: 100% !important;
+        min-height: 297mm !important;
+        height: 297mm !important;
+        max-height: 297mm !important;
+        box-shadow: none !important;
+        border-radius: 0 !important;
+        margin: 0 !important;
+        padding: 20mm 15mm 15mm 15mm !important;
+        box-sizing: border-box !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: space-between !important;
+        page-break-after: always !important;
+        break-after: page !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+      }
+      .a4-page:last-child {
+        page-break-after: auto !important;
+        break-after: auto !important;
+      }
+      .a4-page-body {
+        flex: 1 !important;
+        overflow: visible !important;
+      }
+      .a4-page-footer {
+        height: 8mm !important;
+        margin-top: 4mm !important;
+        border-top: 1px dashed #666 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        font-size: 11pt !important;
+        color: #000000 !important;
+        flex-shrink: 0 !important;
       }
       @page {
-        size: A4;
-        margin: 20mm 15mm;
+        size: A4 portrait;
+        margin: 0;
       }
     }
 
@@ -644,9 +741,11 @@
         height: 100%;
         padding: 1rem 0.6rem;
       }
-      .a4-paper {
-        padding: 24px 18px;
-        min-height: 800px;
+      .a4-page {
+        max-width: 100%;
+        height: auto;
+        min-height: 1000px;
+        padding: 30px 20px 20px 20px;
       }
       .score-table {
         font-size: 11px;
@@ -724,10 +823,10 @@
       </form>
     </div>
 
-    <!-- 右侧：A4 真实试卷所见即所得预览 -->
+    <!-- 右侧：A4 真实试卷所见即所得预览 (WPS / Office 页面视图仿真) -->
     <div class="preview-panel mobile-hidden" id="previewPanel">
-      <div class="a4-paper" id="examPaperContainer">
-        <!-- 动态渲染试卷内容 -->
+      <div class="a4-pages-stack" id="examPaperContainer">
+        <!-- 动态渲染离散 A4 页面卡片集 -->
       </div>
     </div>
   </div>
@@ -963,80 +1062,238 @@
       } catch(e) {}
     }
 
-    // 渲染 A4 试卷
+    // 渲染 A4 试卷 (WPS/Word 真实多页离散排版流式计算引擎)
     function renderExamPaper() {
       const container = document.getElementById("examPaperContainer");
       if (!container) return;
+      renderPaginatedExam(container);
+    }
+    const renderPreview = renderExamPaper;
 
+    function renderPaginatedExam(container) {
+      if (!container) return;
       const meta = currentExamData.meta || {};
-      let html = '';
 
-      // 1. 卷头
-      html += `
-        <div class="exam-header">
-          <div class="exam-main-title">${escapeHtml(meta.title || "试卷")}</div>
-        </div>
-      `;
+      // 1. 构建所有待排版物理块（Blocks）
+      const blocks = [];
 
-      // 2. 大题与小题列表
-      (currentExamData.sections || []).forEach(sec => {
-        html += `<div class="exam-section">`;
-        html += `<div class="section-title">${escapeHtml(sec.title)}</div>`;
+      // 卷头块 (仅保留试卷主标题)
+      blocks.push({
+        type: 'header',
+        html: `
+          <div class="exam-header a4-header">
+            <div class="exam-main-title a4-main-title">${escapeHtml(meta.title || "试卷")}</div>
+          </div>
+        `
+      });
 
+      // 各大题与试题块
+      (currentExamData.sections || []).forEach((sec, sIdx) => {
+        // 大题标题块
+        blocks.push({
+          type: 'section_title',
+          sectionIndex: sIdx,
+          html: `
+            <div class="exam-section-header a4-section-header">
+              <div class="section-title a4-section-title">${escapeHtml(sec.title)}</div>
+            </div>
+          `
+        });
+
+        // 试题块
         (sec.questions || []).forEach(q => {
-          html += `<div class="question-item">`;
           const prefix = q.number ? `${q.number}. ` : '';
           const stemFormatted = escapeHtml(prefix + (q.stem || "")).replace(/\n/g, '<br>');
-          html += `<div class="question-stem">${stemFormatted}</div>`;
+          let qHtml = `<div class="question-item a4-q-item">`;
+          qHtml += `<div class="question-stem a4-q-stem">${stemFormatted}</div>`;
 
           // 选择题选项
           if (q.options && q.options.length > 0) {
             let layoutClass = q.layout || 'cols-4';
             if (!q.layout) {
-              const maxLen = Math.max(...q.options.map(o => o.length));
+              const maxLen = Math.max(...q.options.map(o => (o || '').length));
               if (maxLen > 35) layoutClass = 'cols-1';
               else if (maxLen > 15) layoutClass = 'cols-2';
               else layoutClass = 'cols-4';
             }
-            html += `<div class="options-grid ${layoutClass}">`;
+            qHtml += `<div class="options-grid a4-options ${layoutClass}">`;
             q.options.forEach(opt => {
-              html += `<div>${escapeHtml(opt)}</div>`;
+              qHtml += `<div>${escapeHtml(opt)}</div>`;
             });
-            html += `</div>`;
+            qHtml += `</div>`;
           }
 
           // 解答题留白
           if (q.blank_lines && q.blank_lines > 0) {
-            const h = q.blank_lines * 24;
-            html += `<div class="blank-space" style="height: ${h}px;"></div>`;
+            const h = q.blank_lines * 22;
+            qHtml += `<div class="blank-space a4-blank" style="height: ${h}px;"></div>`;
           }
 
-          html += `</div>`;
-        });
+          qHtml += `</div>`;
 
-        html += `</div>`;
+          blocks.push({
+            type: 'question',
+            sectionIndex: sIdx,
+            number: q.number,
+            html: qHtml
+          });
+        });
       });
 
-      // 5. 参考答案（有的话在末尾）
+      // 参考答案块
       if (currentExamData.answers && currentExamData.answers.length > 0) {
-        html += `
-          <div class="answer-divider">
-            <span>参考答案与试题解析</span>
-          </div>
-        `;
+        blocks.push({
+          type: 'answer_header',
+          html: `
+            <div class="answer-divider a4-divider">
+              <span>参考答案与试题解析</span>
+            </div>
+          `
+        });
+
         currentExamData.answers.forEach(ans => {
-          html += `<div style="margin-bottom: 12px; font-size: 13.5px;">`;
-          html += `<div><strong>【第 ${ans.number} 题】 答案：</strong>${escapeHtml(ans.answer)}</div>`;
+          let ansHtml = `<div class="answer-item a4-ans-item" style="margin-bottom: 12px; font-size: 13.5px;">`;
+          ansHtml += `<div><strong>【第 ${ans.number} 题】 答案：</strong>${escapeHtml(ans.answer)}</div>`;
           if (ans.analysis) {
-            html += `<div style="font-family: 'KaiTi', serif; color: #444; margin-top: 3px; padding-left: 12px;"><strong>解析：</strong>${escapeHtml(ans.analysis).replace(/\n/g, '<br>')}</div>`;
+            ansHtml += `<div style="font-family: 'KaiTi', serif; color: #444; margin-top: 3px; padding-left: 12px;"><strong>解析：</strong>${escapeHtml(ans.analysis).replace(/\n/g, '<br>')}</div>`;
           }
-          html += `</div>`;
+          ansHtml += `</div>`;
+
+          blocks.push({
+            type: 'answer_item',
+            number: ans.number,
+            html: ansHtml
+          });
         });
       }
 
-      container.innerHTML = html;
+      // 2. 测量沙箱：获得每个物理块在 684px 净宽与 KaTeX 渲染后的真实像素高度
+      let sandbox = document.getElementById("a4MeasureSandbox");
+      if (!sandbox) {
+        sandbox = document.createElement("div");
+        sandbox.id = "a4MeasureSandbox";
+        sandbox.className = "a4-measure-sandbox";
+        document.body.appendChild(sandbox);
+      }
 
-      // 调用 KaTeX 进行数学公式自动化渲染
+      sandbox.innerHTML = blocks.map((b, idx) => `
+        <div class="a4-measure-item" data-measure-idx="${idx}" style="overflow: visible;">
+          ${b.html}
+        </div>
+      `).join('');
+
+      // 在沙箱内渲染公式以获取公式撑开后的精确物理高度
+      if (window.renderMathInElement) {
+        renderMathInElement(sandbox, {
+          delimiters: [
+            {left: '$$', right: '$$', display: true},
+            {left: '$', right: '$', display: false}
+          ],
+          throwOnError: false
+        });
+      }
+
+      const measureNodes = sandbox.children;
+      const measuredBlocks = [];
+      for (let i = 0; i < blocks.length; i++) {
+        const node = measureNodes[i];
+        let h = 30;
+        if (node) {
+          const rect = node.getBoundingClientRect();
+          const style = window.getComputedStyle(node);
+          const mt = parseFloat(style.marginTop) || 0;
+          const mb = parseFloat(style.marginBottom) || 0;
+          h = Math.max(16, Math.ceil(rect.height + mt + mb));
+        }
+        measuredBlocks.push({
+          ...blocks[i],
+          height: h
+        });
+      }
+
+      // 3. WPS/Office 真实分页流计算引擎 (A4 可打印正文高度 ~990px)
+      // 真实 A4 高度 1123px，减去上下边距 (48px+24px) 与页码注脚高度 (36px)，可容纳正文约 1015px
+      const PAGE_BODY_MAX_HEIGHT = 990;
+      const pages = [];
+      let currentPage = [];
+      let currentHeight = 0;
+
+      for (let i = 0; i < measuredBlocks.length; i++) {
+        const b = measuredBlocks[i];
+        const h = b.height;
+
+        // 智能规则 1：大题标题孤立保护 (若当前页放不下大题标题及该大题第一小题，则将大题标题移至下一页)
+        if (b.type === 'section_title' && currentPage.length > 0) {
+          let nextQHeight = 70;
+          if (i + 1 < measuredBlocks.length && measuredBlocks[i + 1].type === 'question') {
+            nextQHeight = measuredBlocks[i + 1].height;
+          }
+          if (currentHeight + h + Math.min(nextQHeight, 180) > PAGE_BODY_MAX_HEIGHT) {
+            pages.push(currentPage);
+            currentPage = [b];
+            currentHeight = h;
+            continue;
+          }
+        }
+
+        // 智能规则 2：答案分隔线孤立保护
+        if (b.type === 'answer_header' && currentPage.length > 0) {
+          let nextAnsHeight = 50;
+          if (i + 1 < measuredBlocks.length) {
+            nextAnsHeight = measuredBlocks[i + 1].height;
+          }
+          if (currentHeight + h + Math.min(nextAnsHeight, 120) > PAGE_BODY_MAX_HEIGHT) {
+            pages.push(currentPage);
+            currentPage = [b];
+            currentHeight = h;
+            continue;
+          }
+        }
+
+        // 常规放置与自动切页
+        if (currentPage.length === 0) {
+          currentPage.push(b);
+          currentHeight = h;
+        } else if (currentHeight + h <= PAGE_BODY_MAX_HEIGHT) {
+          currentPage.push(b);
+          currentHeight += h;
+        } else {
+          // 当前页已排满，自动切到下一页（如同 WPS / Word）
+          pages.push(currentPage);
+          currentPage = [b];
+          currentHeight = h;
+        }
+      }
+
+      if (currentPage.length > 0) {
+        pages.push(currentPage);
+      }
+      if (pages.length === 0) {
+        pages.push([]);
+      }
+
+      // 4. 组装多页 A4 卡片栈 (含标准页码 —— 第 X 页（共 Y 页）——)
+      const totalPages = pages.length;
+      let stackHtml = `<div class="a4-pages-stack">`;
+
+      pages.forEach((pageItems, pageIdx) => {
+        const pageNum = pageIdx + 1;
+        stackHtml += `
+          <div class="a4-page" data-page="${pageNum}">
+            <div class="a4-page-body">
+              ${pageItems.map(item => item.html).join('')}
+            </div>
+            <div class="a4-page-footer">
+              —— 第 ${pageNum} 页（共 ${totalPages} 页）——
+            </div>
+          </div>
+        `;
+      });
+
+      stackHtml += `</div>`;
+      container.innerHTML = stackHtml;
+
+      // 5. 对组装好的正式试卷 DOM 运行公式渲染
       if (window.renderMathInElement) {
         renderMathInElement(container, {
           delimiters: [
@@ -2224,6 +2481,20 @@
         badge.textContent = `🛠️ ${model} (${provider} · ${thinkingLabel})`;
       }
     }
+
+    // 监听系统打印前后事件，确保打印视口无变形与无空白页
+    window.addEventListener("beforeprint", () => {
+      const previewPanel = document.getElementById("previewPanel");
+      const chatPanel = document.getElementById("chatPanel");
+      if (previewPanel && previewPanel.classList.contains("mobile-hidden")) {
+        previewPanel.classList.remove("mobile-hidden");
+        if (chatPanel) chatPanel.classList.add("mobile-hidden");
+      }
+    });
+
+    window.addEventListener("afterprint", () => {
+      // 打印完成后正常保留状态
+    });
   </script>
 </body>
 </html>
