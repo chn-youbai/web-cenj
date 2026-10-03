@@ -949,14 +949,15 @@
     .choice-with-figure-wrap {
       display: flex;
       flex-direction: row;
-      align-items: stretch;
+      align-items: center;
       justify-content: space-between;
       gap: 16px;
-      margin-top: 5px;
+      margin: 6px 0 8px 0;
       width: 100%;
+      box-sizing: border-box;
     }
     .choice-options-left {
-      flex: 1;
+      flex: 1 1 auto;
       min-width: 0;
       display: flex;
       flex-direction: column;
@@ -964,19 +965,19 @@
     }
     .choice-options-left .a4-options,
     .choice-options-left .options-grid {
-      padding-left: 6px;
+      padding-left: 2px;
+      width: 100%;
     }
     .choice-figure-right {
-      flex-shrink: 0;
-      max-width: 36%;
+      flex: 0 0 auto;
+      max-width: 32%;
       display: flex;
       align-items: center;
-      justify-content: center;
+      justify-content: flex-end;
     }
     .choice-col-figure {
       max-width: 100%;
-      max-height: 100%;
-      min-height: 60px;
+      max-height: 85px;
       object-fit: contain;
       border-radius: 2px;
       display: block;
@@ -1370,7 +1371,7 @@
         break-inside: avoid !important;
       }
       .choice-col-figure {
-        max-height: 95px !important;
+        max-height: 80px !important;
         page-break-inside: avoid !important;
         break-inside: avoid !important;
       }
@@ -1836,6 +1837,51 @@
     let currentPreviewMode = "reader"; // 'reader' | 'real'
     let currentZoom = "fit"; // 'fit' | '100' | '130' | number
 
+    // 过滤排除非法/损坏及浏览器不支持的格式（如 WMF、EMF 等），彻底杜绝问号破图
+    function filterValidExamImages(images) {
+      if (!images || !Array.isArray(images)) return [];
+      return images.filter(img => {
+        const src = typeof img === 'string' ? img : (img.src || img.url || '');
+        if (!src || typeof src !== 'string') return false;
+        const lower = src.toLowerCase().trim();
+        if (lower.startsWith('data:image/wmf') || lower.startsWith('data:image/emf') || lower.startsWith('data:image/x-')) return false;
+        if (lower.endsWith('.wmf') || lower.endsWith('.emf')) return false;
+        if (lower.length < 50 && lower.startsWith('data:')) return false;
+        return true;
+      });
+    }
+
+    // 智能容错：若选择题选项漏在题干中，自动分离为规范 options 数组
+    function ensureQuestionOptions(q) {
+      if (q.options && Array.isArray(q.options) && q.options.length > 0) return;
+      if (!q.stem) return;
+      const m = q.stem.match(/(?:[\r\n\s]+|^)(A[\.．、\s][\s\S]+?)\s+(B[\.．、\s][\s\S]+?)\s+(C[\.．、\s][\s\S]+?)\s+(D[\.．、\s][\s\S]+)$/);
+      if (m) {
+        q.options = [m[1].trim(), m[2].trim(), m[3].trim(), m[4].trim()];
+        q.stem = q.stem.slice(0, m.index).trim();
+      }
+    }
+
+    // 全量试卷数据净化（清理无效图片、修复选择题选项）
+    function sanitizeExamData(data) {
+      if (!data || !data.sections) return;
+      (data.sections || []).forEach(sec => {
+        (sec.questions || []).forEach(q => {
+          if (q.images && Array.isArray(q.images)) {
+            q.images = filterValidExamImages(q.images);
+          }
+          ensureQuestionOptions(q);
+        });
+      });
+      if (data.answers && Array.isArray(data.answers)) {
+        data.answers.forEach(ans => {
+          if (ans.images && Array.isArray(ans.images)) {
+            ans.images = filterValidExamImages(ans.images);
+          }
+        });
+      }
+    }
+
     // 页面初始化
     document.addEventListener("DOMContentLoaded", () => {
       // 恢复持久化试卷数据
@@ -1848,6 +1894,7 @@
           }
         } catch(e) {}
       }
+      sanitizeExamData(currentExamData);
 
       loadSavedMobileConfig();
       renderAllViews();
@@ -2001,23 +2048,32 @@
       const lengths = options.map(getVisualOptionLength);
       const maxLen = Math.max(...lengths, 0);
 
-      // 如果右侧有配图，选项区域可用宽度变窄（约占版面 60%）
-      const shortThreshold = hasRightFigure ? 8 : 12;
-      const fullThreshold = hasRightFigure ? 16 : 24;
+      // 当选择题右侧有插图时（用户示意布局：选项在左侧，A、B第一行，C、D第二行；插图在右侧）：
+      if (hasRightFigure) {
+        // 严格保证双列对齐 (A B / C D)，仅当单项字数极长(>26字)时才允许独占整行
+        if (maxLen <= 26 && lengths.every(l => l <= 26)) {
+          return `<div class="options-grid a4-options cols-2">${options.map(opt => `<div>${escapeHtml(opt)}</div>`).join('')}</div>`;
+        }
+        return `<div class="options-grid a4-options cols-mixed">${options.map((opt, idx) => {
+          const isFull = lengths[idx] > 26;
+          return `<div class="${isFull ? 'opt-full' : ''}">${escapeHtml(opt)}</div>`;
+        }).join('')}</div>`;
+      }
 
-      // 规则 A：所有选项均非常简短 -> 四列单行横排 (A B C D)
-      if (!hasRightFigure && maxLen <= shortThreshold) {
+      // 常规无右侧插图的选择题：
+      // 规则 A：所有选项均非常简短 (如长度 <= 12) -> 四列单行横排 (A B C D)
+      if (maxLen <= 12 && lengths.every(l => l <= 12)) {
         return `<div class="options-grid a4-options cols-4">${options.map(opt => `<div>${escapeHtml(opt)}</div>`).join('')}</div>`;
       }
 
-      // 规则 B：所有选项均中等长度且无过长单项 -> 双列横排 (A B / C D)
-      if (maxLen <= fullThreshold && lengths.every(l => l <= fullThreshold)) {
+      // 规则 B：所有选项均中等长度 (如长度 <= 24) -> 双列横排 (A B / C D)
+      if (maxLen <= 24 && lengths.every(l => l <= 24)) {
         return `<div class="options-grid a4-options cols-2">${options.map(opt => `<div>${escapeHtml(opt)}</div>`).join('')}</div>`;
       }
 
       // 规则 C：智能判断各选项字数，文字过多的选项独占整行，较短的选项共享一行
       return `<div class="options-grid a4-options cols-mixed">${options.map((opt, idx) => {
-        const isFull = lengths[idx] > fullThreshold;
+        const isFull = lengths[idx] > 24;
         return `<div class="${isFull ? 'opt-full' : ''}">${escapeHtml(opt)}</div>`;
       }).join('')}</div>`;
     }
@@ -2056,48 +2112,57 @@
         html += `<div class="section-header-title">${escapeHtml(sec.title)}</div>`;
 
         (sec.questions || []).forEach(q => {
+          ensureQuestionOptions(q);
           html += `<div class="question-card-item">`;
           const prefix = q.number ? `<strong>【第 ${q.number} 题】</strong> ` : '';
           const stemFormatted = escapeHtml(q.stem || "").replace(/\n/g, '<br>');
           html += `<div class="question-stem-mobile">${prefix}${stemFormatted}</div>`;
 
-          // 题目附图
-          if (q.images && Array.isArray(q.images) && q.images.length > 0) {
-            html += `<div class="mobile-q-figures">`;
-            q.images.forEach(img => {
+          const validImages = filterValidExamImages(q.images);
+          const hasImages = validImages.length > 0;
+          const hasOptions = q.options && q.options.length > 0;
+
+          if (hasOptions && hasImages) {
+            // 移动端阅读图文并排：选项居左，插图居右
+            const optionsHtml = renderSmartOptionsHtml(q.options, true);
+            const figureImgs = validImages.map(img => {
               const src = typeof img === 'string' ? img : (img.src || img.url || '');
-              if (src) {
-                html += `<img src="${src}" alt="试题插图" class="mobile-figure" loading="lazy" />`;
+              return src ? `<img src="${src}" alt="试题附图" class="choice-col-figure" loading="lazy" onerror="this.remove()" />` : '';
+            }).join('');
+            html += `
+              <div class="choice-with-figure-wrap">
+                <div class="choice-options-left">${optionsHtml}</div>
+                <div class="choice-figure-right">${figureImgs}</div>
+              </div>
+            `;
+          } else {
+            // 题目附图
+            if (hasImages) {
+              html += `<div class="mobile-q-figures">`;
+              validImages.forEach(img => {
+                const src = typeof img === 'string' ? img : (img.src || img.url || '');
+                if (src) {
+                  html += `<img src="${src}" alt="试题插图" class="mobile-figure" loading="lazy" onerror="this.remove()" />`;
+                }
+              });
+              html += `</div>`;
+            }
+
+            // 选项
+            if (hasOptions) {
+              let layoutClass = q.layout || '';
+              let optionsHtml = '';
+              if (layoutClass) {
+                optionsHtml = `<div class="options-grid-mobile ${layoutClass}">${q.options.map(opt => `<div>${escapeHtml(opt)}</div>`).join('')}</div>`;
+              } else {
+                optionsHtml = renderSmartOptionsHtml(q.options, false);
               }
-            });
-            html += `</div>`;
+              html += optionsHtml;
+            }
           }
 
-          // 选项
-          if (q.options && q.options.length > 0) {
+          if (hasOptions) {
             let layoutClass = q.layout || '';
-            let optionsHtml = '';
-            if (layoutClass) {
-              optionsHtml = `<div class="options-grid-mobile ${layoutClass}">${q.options.map(opt => `<div>${escapeHtml(opt)}</div>`).join('')}</div>`;
-            } else {
-              const lengths = q.options.map(getVisualOptionLength);
-              const maxLen = Math.max(...lengths, 0);
-              if (maxLen <= 8) {
-                layoutClass = 'cols-4';
-                optionsHtml = `<div class="options-grid-mobile cols-4">${q.options.map(opt => `<div>${escapeHtml(opt)}</div>`).join('')}</div>`;
-              } else if (maxLen <= 18 && lengths.every(l => l <= 18)) {
-                layoutClass = 'cols-2';
-                optionsHtml = `<div class="options-grid-mobile cols-2">${q.options.map(opt => `<div>${escapeHtml(opt)}</div>`).join('')}</div>`;
-              } else {
-                layoutClass = 'cols-mixed';
-                optionsHtml = `<div class="options-grid-mobile cols-mixed">${q.options.map((opt, idx) => {
-                  const isFull = lengths[idx] > 18;
-                  return `<div class="${isFull ? 'opt-full' : ''}">${escapeHtml(opt)}</div>`;
-                }).join('')}</div>`;
-              }
-            }
-            html += optionsHtml;
-
             // 行内快捷微调操作条 (单列/双列/四列)
             html += `
               <div class="card-inline-tools">
@@ -2143,14 +2208,17 @@
             <div style="border-bottom: 1px solid rgba(255, 255, 255, 0.05); padding-bottom: 6px;">
               <div><strong>【第 ${ans.number} 题】 答案：</strong>${escapeHtml(ans.answer)}</div>
               ${ans.analysis ? `<div style="color: #94a3b8; font-size: 0.8rem; margin-top: 2px;">解析：${escapeHtml(ans.analysis).replace(/\n/g, '<br>')}</div>` : ''}
-              ${ans.images && Array.isArray(ans.images) && ans.images.length > 0 ? `
-                <div class="mobile-q-figures" style="margin-top: 6px;">
-                  ${ans.images.map(img => {
-                    const src = typeof img === 'string' ? img : (img.src || img.url || '');
-                    return src ? `<img src="${src}" alt="解析插图" class="mobile-figure" loading="lazy" />` : '';
-                  }).join('')}
-                </div>
-              ` : ''}
+              ${(() => {
+                const validAnsImgs = filterValidExamImages(ans.images);
+                return validAnsImgs.length > 0 ? `
+                  <div class="mobile-q-figures" style="margin-top: 6px;">
+                    ${validAnsImgs.map(img => {
+                      const src = typeof img === 'string' ? img : (img.src || img.url || '');
+                      return src ? `<img src="${src}" alt="解析插图" class="mobile-figure" loading="lazy" onerror="this.remove()" />` : '';
+                    }).join('')}
+                  </div>
+                ` : '';
+              })()}
             </div>
           `;
         });
@@ -2236,10 +2304,12 @@
 
         // 试题块
         (sec.questions || []).forEach(q => {
+          ensureQuestionOptions(q);
           const prefix = q.number ? `${q.number}. ` : '';
           const stemFormatted = escapeHtml(prefix + (q.stem || "")).replace(/\n/g, '<br>');
+          const validImages = filterValidExamImages(q.images);
           const hasOptions = q.options && q.options.length > 0;
-          const hasImages = q.images && Array.isArray(q.images) && q.images.length > 0;
+          const hasImages = validImages.length > 0;
           const hasBlank = q.blank_lines && q.blank_lines > 0;
 
           let qHtml = `<div class="question-item a4-q-item">`;
@@ -2248,9 +2318,9 @@
           if (hasOptions && hasImages) {
             // 用户需求 1：选择题图片放在右侧，选项放在左侧，图片大小与选项整体高度一样高
             const optionsHtml = renderSmartOptionsHtml(q.options, true);
-            const figureImgs = q.images.map(img => {
+            const figureImgs = validImages.map(img => {
               const src = typeof img === 'string' ? img : (img.src || img.url || '');
-              return src ? `<img src="${src}" alt="试题附图" class="choice-col-figure" loading="eager" />` : '';
+              return src ? `<img src="${src}" alt="试题附图" class="choice-col-figure" loading="eager" onerror="this.remove()" />` : '';
             }).join('');
             qHtml += `
               <div class="choice-with-figure-wrap">
@@ -2264,9 +2334,9 @@
           } else if (hasBlank && hasImages) {
             // 用户需求 3：大题图片放在空置答题区左上部分
             const blankH = Math.max(90, q.blank_lines * 22);
-            const figureImgs = q.images.map(img => {
+            const figureImgs = validImages.map(img => {
               const src = typeof img === 'string' ? img : (img.src || img.url || '');
-              return src ? `<img src="${src}" alt="大题配图" class="blank-corner-figure" loading="eager" />` : '';
+              return src ? `<img src="${src}" alt="大题配图" class="blank-corner-figure" loading="eager" onerror="this.remove()" />` : '';
             }).join('');
             qHtml += `
               <div class="blank-space a4-blank with-corner-fig" style="min-height: ${blankH}px;">
@@ -2277,9 +2347,9 @@
             // 常规无选项题目（如填空题）
             if (hasImages) {
               qHtml += `<div class="question-figures a4-q-figures" style="margin: 4px 0;">`;
-              q.images.forEach(img => {
+              validImages.forEach(img => {
                 const src = typeof img === 'string' ? img : (img.src || img.url || '');
-                if (src) qHtml += `<img src="${src}" alt="试题插图" class="exam-figure a4-figure" loading="eager" />`;
+                if (src) qHtml += `<img src="${src}" alt="试题插图" class="exam-figure a4-figure" loading="eager" onerror="this.remove()" />`;
               });
               qHtml += `</div>`;
             }
@@ -2317,12 +2387,13 @@
           if (ans.analysis) {
             ansHtml += `<div style="font-family: 'KaiTi', serif; color: #444; margin-top: 3px; padding-left: 12px;"><strong>解析：</strong>${escapeHtml(ans.analysis).replace(/\n/g, '<br>')}</div>`;
           }
-          if (ans.images && Array.isArray(ans.images) && ans.images.length > 0) {
+          const validAnsImgs = filterValidExamImages(ans.images);
+          if (validAnsImgs.length > 0) {
             ansHtml += `<div class="question-figures a4-q-figures" style="margin-top: 6px;">`;
-            ans.images.forEach(img => {
+            validAnsImgs.forEach(img => {
               const src = typeof img === 'string' ? img : (img.src || img.url || '');
               if (src) {
-                ansHtml += `<img src="${src}" alt="解析插图" class="exam-figure a4-figure" loading="eager" />`;
+                ansHtml += `<img src="${src}" alt="解析插图" class="exam-figure a4-figure" loading="eager" onerror="this.remove()" />`;
               }
             });
             ansHtml += `</div>`;
@@ -2398,8 +2469,8 @@
         });
       }
 
-      // 3. WPS/Office 真实分页流计算引擎 (高度优化至 980px，充分利用版面，杜绝底部过度留白)
-      const PAGE_BODY_MAX_HEIGHT = 980;
+      // 3. WPS/Office 真实分页流计算引擎 (优化至 1000px，极致压榨版面利用率，彻底消灭底部无用留白)
+      const PAGE_BODY_MAX_HEIGHT = 1000;
       const pages = [];
       let currentPage = [];
       let currentHeight = 0;
@@ -2679,6 +2750,7 @@
 
               if (data.tool_executed) {
                 currentExamData = data.exam_data;
+                sanitizeExamData(currentExamData);
                 saveExamState();
                 renderAllViews();
                 const toolLabel = {
@@ -3496,6 +3568,7 @@
           const parsed = JSON.parse(text);
           if (parsed && parsed.meta && parsed.sections) {
             currentExamData = parsed;
+            sanitizeExamData(currentExamData);
             saveExamState();
             renderAllViews();
             loadingBubble.querySelector(".msg-box").innerHTML = `
@@ -3563,6 +3636,7 @@
             if (result.success && newExamData) {
               isPythonBackendConnected = true;
               currentExamData = newExamData;
+              sanitizeExamData(currentExamData);
               saveExamState();
               renderAllViews();
               const qCount = (currentExamData.sections || []).reduce((acc, s) => acc + (s.questions?.length || 0), 0);

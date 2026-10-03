@@ -325,13 +325,18 @@ def extract_images_and_rels(file_source, output_dir: str = None) -> tuple:
                 if rId and target:
                     rel_map[rId] = target
 
-        # 2. Extract media files
+        # 2. Extract media files (only valid web raster/vector formats; ignore WMF/EMF & icon fragments)
+        VALID_IMAGE_EXTS = {'png', 'jpeg', 'jpg', 'webp', 'svg', 'gif'}
         for name in zf.namelist():
             if name.startswith('word/media/'):
                 bname = os.path.basename(name)
                 ext = os.path.splitext(bname)[1].lower().replace('.', '')
                 if ext == 'jpg': ext = 'jpeg'
+                if ext not in VALID_IMAGE_EXTS:
+                    continue
                 img_bytes = zf.read(name)
+                if len(img_bytes) < 800:
+                    continue
                 b64 = base64.b64encode(img_bytes).decode('utf-8')
                 data_url = f"data:image/{ext};base64,{b64}"
                 images_map[bname] = data_url

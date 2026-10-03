@@ -127,6 +127,18 @@ def validate_and_normalize_exam_data(data: dict) -> dict:
                 q["images"] = [q["images"]] if q["images"] else []
             elif "images" not in q:
                 q["images"] = []
+            q["images"] = [
+                img for img in q["images"]
+                if not (isinstance(img, str) and (img.lower().startswith("data:image/wmf") or img.lower().startswith("data:image/emf") or img.lower().endswith(".wmf") or img.lower().endswith(".emf")))
+            ]
+
+            # 容错：如果 AI 将选择题选项附在题干末尾，自动提取为标准 options 数组
+            if (not q.get("options") or len(q.get("options", [])) == 0) and q.get("stem"):
+                stem = q["stem"]
+                m_opt = re.search(r'(?:[\r\n\s]+|^)(A[\.．、\s][\s\S]+?)\s+(B[\.．、\s][\s\S]+?)\s+(C[\.．、\s][\s\S]+?)\s+(D[\.．、\s][\s\S]+)$', stem)
+                if m_opt:
+                    q["options"] = [m_opt.group(1).strip(), m_opt.group(2).strip(), m_opt.group(3).strip(), m_opt.group(4).strip()]
+                    q["stem"] = stem[:m_opt.start()].strip()
 
             if "options" in q and isinstance(q["options"], list):
                 if not q.get("layout"):
@@ -146,6 +158,10 @@ def validate_and_normalize_exam_data(data: dict) -> dict:
                 a["images"] = [a["images"]] if a["images"] else []
             elif "images" not in a:
                 a["images"] = []
+            a["images"] = [
+                img for img in a["images"]
+                if not (isinstance(img, str) and (img.lower().startswith("data:image/wmf") or img.lower().startswith("data:image/emf") or img.lower().endswith(".wmf") or img.lower().endswith(".emf")))
+            ]
 
     return data
 

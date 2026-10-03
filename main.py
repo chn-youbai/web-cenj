@@ -112,6 +112,17 @@ def handle_chat_action(req: ChatActionRequest):
         raise HTTPException(status_code=500, detail=f"执行指令失败: {str(e)}")
 
 
+def is_valid_web_image(url_or_src: str) -> bool:
+    if not url_or_src or not isinstance(url_or_src, str):
+        return False
+    lower = url_or_src.lower().strip()
+    if lower.startswith("data:image/wmf") or lower.startswith("data:image/emf") or lower.startswith("data:image/x-"):
+        return False
+    if lower.endswith(".wmf") or lower.endswith(".emf"):
+        return False
+    return True
+
+
 def bind_images_to_exam_data(exam_data: dict, images_map: dict, paragraphs: list) -> dict:
     """
     Binds extracted images (as base64 data URLs) to questions and answers in exam_data.
@@ -133,7 +144,7 @@ def bind_images_to_exam_data(exam_data: dict, images_map: dict, paragraphs: list
                 for tok in tokens:
                     if tok in images_map:
                         img_url = images_map[tok]
-                        if img_url not in q_imgs:
+                        if is_valid_web_image(img_url) and img_url not in q_imgs:
                             q_imgs.append(img_url)
                         assigned_images.add(tok)
                 clean_stem = re.sub(r'\s*\[IMAGE:[^\]]+\]\s*', '', stem).strip()
@@ -147,7 +158,7 @@ def bind_images_to_exam_data(exam_data: dict, images_map: dict, paragraphs: list
             for tok in tokens:
                 if tok in images_map:
                     img_url = images_map[tok]
-                    if img_url not in ans_imgs:
+                    if is_valid_web_image(img_url) and img_url not in ans_imgs:
                         ans_imgs.append(img_url)
                     assigned_images.add(tok)
             clean_analysis = re.sub(r'\s*\[IMAGE:[^\]]+\]\s*', '', analysis).strip()
@@ -185,9 +196,11 @@ def bind_images_to_exam_data(exam_data: dict, images_map: dict, paragraphs: list
                 if num in q_bindings:
                     q_imgs = q.setdefault("images", [])
                     for img_name in q_bindings[num]:
-                        if img_name in images_map and images_map[img_name] not in q_imgs:
-                            q_imgs.append(images_map[img_name])
-                            assigned_images.add(img_name)
+                        if img_name in images_map:
+                            img_val = images_map[img_name]
+                            if is_valid_web_image(img_val) and img_val not in q_imgs:
+                                q_imgs.append(img_val)
+                                assigned_images.add(img_name)
 
     # Attach bindings to exam_data answers
     if a_bindings:
@@ -196,9 +209,11 @@ def bind_images_to_exam_data(exam_data: dict, images_map: dict, paragraphs: list
             if num in a_bindings:
                 ans_imgs = ans.setdefault("images", [])
                 for img_name in a_bindings[num]:
-                    if img_name in images_map and images_map[img_name] not in ans_imgs:
-                        ans_imgs.append(images_map[img_name])
-                        assigned_images.add(img_name)
+                    if img_name in images_map:
+                        img_val = images_map[img_name]
+                        if is_valid_web_image(img_val) and img_val not in ans_imgs:
+                            ans_imgs.append(img_val)
+                            assigned_images.add(img_name)
 
     return exam_data
 
