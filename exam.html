@@ -717,7 +717,6 @@
         <span class="quick-pill" onclick="sendQuickPrompt('把第3题选项改成两列对齐')">📐 第3题换双列</span>
         <span class="quick-pill" onclick="sendQuickPrompt('把第1题选项换成单列排版')">📏 第1题换单列</span>
         <span class="quick-pill" onclick="sendQuickPrompt('为第7题解答题增加5行空白')">✍️ 增加大题留白</span>
-        <span class="quick-pill" onclick="sendQuickPrompt('把满分改成120分，考试时间改成100分钟')">⏱️ 调整时长与满分</span>
         <span class="quick-pill" onclick="sendQuickPrompt('清理题目中残留的水印与广告词')">🧹 一键去水印</span>
       </div>
 
@@ -978,9 +977,7 @@
       // 1. 卷头
       html += `
         <div class="exam-header">
-          <div class="exam-main-title">${escapeHtml(meta.title || "试卷测试")}</div>
-          <div class="exam-sub-title">${escapeHtml((meta.grade || "") + " " + (meta.subject || "") + " 试题")}</div>
-          <div class="exam-notice">（考试时间：${meta.duration || 120} 分钟，满分：${meta.total_score || 150} 分）</div>
+          <div class="exam-main-title">${escapeHtml(meta.title || "试卷")}</div>
         </div>
       `;
 

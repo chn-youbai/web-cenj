@@ -90,11 +90,11 @@ class ExamDocxBuilder:
 
     def render_header(self, meta: dict):
         # 卷名 (学校/大考名称)
-        title = meta.get("title", "2026学年教学质量检测")
+        title = meta.get("title", "试卷")
         p_title = self.doc.add_paragraph()
         p_title.alignment = WD_ALIGN_PARAGRAPH.CENTER
         p_title.paragraph_format.space_before = Pt(0)
-        p_title.paragraph_format.space_after = Pt(4)
+        p_title.paragraph_format.space_after = Pt(12)
         run_title = p_title.add_run(title)
         run_title.font.name = "Times New Roman"
         run_title.font.size = Pt(16)
@@ -102,38 +102,6 @@ class ExamDocxBuilder:
         rPr = run_title._r.get_or_add_rPr()
         rFonts = OxmlElement('w:rFonts')
         rFonts.set(qn('w:eastAsia'), '黑体')
-        rPr.append(rFonts)
-
-        # 副标题 (年级、学科、时间、满分)
-        grade = meta.get("grade", "")
-        subject = meta.get("subject", "")
-        duration = meta.get("duration", 120)
-        total_score = meta.get("total_score", 150)
-        sub_text = f"{grade} {subject} 试题".strip()
-        if sub_text:
-            p_sub = self.doc.add_paragraph()
-            p_sub.alignment = WD_ALIGN_PARAGRAPH.CENTER
-            p_sub.paragraph_format.space_before = Pt(0)
-            p_sub.paragraph_format.space_after = Pt(4)
-            run_sub = p_sub.add_run(sub_text)
-            run_sub.font.size = Pt(13)
-            run_sub.font.bold = True
-            rPr = run_sub._r.get_or_add_rPr()
-            rFonts = OxmlElement('w:rFonts')
-            rFonts.set(qn('w:eastAsia'), '黑体')
-            rPr.append(rFonts)
-
-        # 考试时间与满分说明
-        p_info = self.doc.add_paragraph()
-        p_info.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        p_info.paragraph_format.space_before = Pt(0)
-        p_info.paragraph_format.space_after = Pt(8)
-        run_info = p_info.add_run(f"（本试卷共 4 页，考试时间：{duration} 分钟，满分：{total_score} 分）")
-        run_info.font.name = "Times New Roman"
-        run_info.font.size = Pt(10)
-        rPr = run_info._r.get_or_add_rPr()
-        rFonts = OxmlElement('w:rFonts')
-        rFonts.set(qn('w:eastAsia'), '楷体')
         rPr.append(rFonts)
 
     def render_student_info(self, meta: dict):

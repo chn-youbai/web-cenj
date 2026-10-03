@@ -1156,7 +1156,6 @@
         <span class="chip-item" style="border-color: rgba(245, 158, 11, 0.4); background: rgba(245, 158, 11, 0.1); color: #fcd34d;" onclick="sendMobilePrompt('删除所有解答题')">✂️ 删除全部解答题</span>
         <span class="chip-item" onclick="sendMobilePrompt('清空选择题答案')">📝 清空选择题答案</span>
         <span class="chip-item" onclick="sendMobilePrompt('把第3题选项改成两列对齐')">📐 第3题换两列</span>
-        <span class="chip-item" onclick="sendMobilePrompt('把满分改成150分，考试时间改成120分钟')">⏱️ 设150分/120分</span>
       </div>
 
       <!-- 底部输入框 -->
@@ -1698,11 +1697,6 @@
       html += `
         <div class="exam-info-card">
           <div class="title">${escapeHtml(meta.title || "试卷")}</div>
-          <div class="subtitle">${escapeHtml((meta.grade || "") + " " + (meta.subject || "") + " 试题")}</div>
-          <div class="meta-strip">
-            <span>⏱️ 考试时长：${meta.duration || 120} 分钟</span>
-            <span>💯 试卷满分：${meta.total_score || 150} 分</span>
-          </div>
         </div>
       `;
 
@@ -1824,8 +1818,6 @@
       html += `
         <div class="a4-header">
           <div class="a4-main-title">${escapeHtml(meta.title || "试卷")}</div>
-          <div class="a4-sub-title">${escapeHtml((meta.grade || "") + " " + (meta.subject || "") + " 试题")}</div>
-          <div class="a4-notice">（考试时间：${meta.duration || 120} 分钟，满分：${meta.total_score || 150} 分）</div>
         </div>
       `;
 
@@ -3011,8 +3003,7 @@
 
     // 复制全卷文字
     function copyExamText() {
-      let text = `${currentExamData.meta?.title || ''}\n`;
-      text += `（考试时间：${currentExamData.meta?.duration || 120}分钟，满分：${currentExamData.meta?.total_score || 150}分）\n\n`;
+      let text = `${currentExamData.meta?.title || '试卷'}\n\n`;
       (currentExamData.sections || []).forEach(sec => {
         text += `${sec.title}\n`;
         (sec.questions || []).forEach(q => {
