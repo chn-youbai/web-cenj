@@ -1271,12 +1271,15 @@
     @media print {
       body, html {
         background: #ffffff !important;
+        width: 100% !important;
         height: auto !important;
-        min-height: 100% !important;
+        min-height: 0 !important;
+        max-height: none !important;
         margin: 0 !important;
         padding: 0 !important;
         overflow: visible !important;
         display: block !important;
+        position: static !important;
       }
       .mobile-header, .mobile-bottom-nav, .preview-control-bar, .preview-floating-bar,
       .drawer-overlay, .quick-chips-wrapper, .chat-bottom-bar, .chat-subbar, .chat-stream,
@@ -1284,53 +1287,46 @@
       #menuDrawer, #configModal, #helpModal, #exportDrawer, .a4-measure-sandbox {
         display: none !important;
       }
-      .main-container, .preview-scroll-viewport, .a4-simulation-wrapper, #previewPane, .pane-preview {
+      .main-container,
+      .view-pane,
+      #previewPane,
+      .pane-preview,
+      .preview-scroll-viewport,
+      .a4-simulation-wrapper,
+      .a4-scaled-container,
+      .a4-scaled-stage,
+      .a4-paper-real,
+      .a4-pages-stack {
         display: block !important;
-        padding: 0 !important;
+        position: static !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        height: auto !important;
+        min-height: 0 !important;
+        max-height: none !important;
         margin: 0 !important;
+        padding: 0 !important;
+        border: none !important;
+        outline: none !important;
         background: transparent !important;
-        overflow: visible !important;
-        width: 100% !important;
-        height: auto !important;
-        position: static !important;
-      }
-      .a4-scaled-container {
-        display: block !important;
-        width: 100% !important;
-        height: auto !important;
-        margin: 0 !important;
-        padding: 0 !important;
-        position: static !important;
-      }
-      .a4-scaled-stage {
-        display: block !important;
-        position: static !important;
-        transform: none !important;
-        width: 100% !important;
-        height: auto !important;
-      }
-      .a4-paper-real, .a4-pages-stack {
-        display: block !important;
-        gap: 0 !important;
         box-shadow: none !important;
-        padding: 0 !important;
-        margin: 0 !important;
-        width: 100% !important;
-        height: auto !important;
+        overflow: visible !important;
+        transform: none !important;
       }
       .a4-page {
         display: block !important;
         position: relative !important;
         width: 210mm !important;
-        height: 297mm !important;
-        max-height: 297mm !important;
         min-height: 297mm !important;
+        height: auto !important;
+        max-height: none !important;
         box-shadow: none !important;
         border-radius: 0 !important;
         margin: 0 !important;
         padding: 16mm 15mm 12mm 15mm !important;
         box-sizing: border-box !important;
-        overflow: hidden !important;
+        overflow: visible !important;
         background: #ffffff !important;
         page-break-before: auto !important;
         break-before: auto !important;
@@ -1351,8 +1347,8 @@
         display: block !important;
         width: 100% !important;
         height: auto !important;
-        max-height: 250mm !important;
-        overflow: hidden !important;
+        max-height: none !important;
+        overflow: visible !important;
         box-sizing: border-box !important;
       }
       .question-item, .a4-q-item, .exam-section-header, .a4-section-header, .answer-item, .a4-ans-item {
@@ -3908,21 +3904,6 @@
 
       setTimeout(() => {
         window.print();
-        setTimeout(() => {
-          if (stage && stage.dataset.savedTransform !== undefined) {
-            stage.style.transform = stage.dataset.savedTransform;
-            delete stage.dataset.savedTransform;
-          }
-          if (container && container.dataset.savedWidth !== undefined) {
-            container.style.width = container.dataset.savedWidth;
-            container.style.height = container.dataset.savedHeight;
-            delete container.dataset.savedWidth;
-            delete container.dataset.savedHeight;
-          }
-          if (typeof applyA4Zoom === "function") {
-            applyA4Zoom();
-          }
-        }, 500);
       }, 150);
     }
 
