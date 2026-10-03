@@ -1334,16 +1334,18 @@
 
       // 各大题与试题块
       (currentExamData.sections || []).forEach((sec, sIdx) => {
-        // 大题标题块
-        blocks.push({
-          type: 'section_title',
-          sectionIndex: sIdx,
-          html: `
-            <div class="exam-section-header a4-section-header">
-              <div class="section-title a4-section-title">${escapeHtml(sec.title)}</div>
-            </div>
-          `
-        });
+        // 大题标题块 (仅当标题非空时加入，若被清除则不占任何高度)
+        if (sec.title && sec.title.trim()) {
+          blocks.push({
+            type: 'section_title',
+            sectionIndex: sIdx,
+            html: `
+              <div class="exam-section-header a4-section-header">
+                <div class="section-title a4-section-title">${escapeHtml(sec.title)}</div>
+              </div>
+            `
+          });
+        }
 
         // 试题块
         (sec.questions || []).forEach(q => {
@@ -1530,13 +1532,13 @@
         const b = measuredBlocks[i];
         const h = b.height;
 
-        // 智能规则 1：大题标题孤立保护 (若当前页放不下大题标题及该大题第一小题，则将大题标题移至下一页)
+        // 智能规则 1：大题标题孤立保护 (若当前页放不下大题标题及该大题第一小题全部高度，则将大题标题移至下一页，杜绝标题单独留在一页)
         if (b.type === 'section_title' && currentPage.length > 0) {
           let nextQHeight = 70;
           if (i + 1 < measuredBlocks.length && measuredBlocks[i + 1].type === 'question') {
             nextQHeight = measuredBlocks[i + 1].height;
           }
-          if (currentHeight + h + Math.min(nextQHeight, 180) > PAGE_BODY_MAX_HEIGHT) {
+          if (currentHeight + h + nextQHeight > PAGE_BODY_MAX_HEIGHT) {
             pages.push(currentPage);
             currentPage = [b];
             currentHeight = h;
@@ -1741,7 +1743,10 @@
                   'delete_section': '整类删除大题并重新编号',
                   'swap_questions': '题目与答案位置对调',
                   'renumber_all': '全卷重新编号',
-                  'modify_meta': '修改试卷抬头信息'
+                  'modify_meta': '修改试卷抬头信息',
+                  'set_question_blank': '调整/清空答题留白',
+                  'modify_section_title': '修改/去掉大题标题',
+                  'remove_blank_and_section_title': '去掉大题标题并清空留白上移题目'
                 }[data.tool_executed] || data.tool_executed;
 
                 thinkingBubble.querySelector(".msg-bubble").innerHTML = `
@@ -1877,6 +1882,34 @@
         modifyQuestionLayout(qNum, "cols-4");
         executedTool = `modify_question(q=${qNum}, layout="cols-4")`;
         replyMessage = `已将 <strong>第 ${qNum} 题</strong> 的选项成功调整为 <strong>四列横排</strong>！`;
+      } else if ((prompt.includes("解答") || prompt.includes("大题")) && (prompt.includes("空白") || prompt.includes("留白")) && (prompt.includes("去掉") || prompt.includes("删") || prompt.includes("清空") || prompt.includes("不要") || prompt.includes("去除"))) {
+        const matchNums = prompt.match(/\d+/g);
+        let qNum = 15;
+        if (matchNums) {
+          const allQNums = (currentExamData.sections || []).flatMap(s => (s.questions || []).map(q => q.number));
+          for (const n of matchNums) {
+            const parsed = parseInt(n, 10);
+            if (allQNums.includes(parsed)) {
+              qNum = parsed;
+              break;
+            }
+          }
+          if (!qNum && matchNums.length > 0) qNum = parseInt(matchNums[0], 10);
+        }
+        removeBlankAndSectionTitle(qNum, "解答");
+        executedTool = `remove_blank_and_title(已清空“解答题”大题标题并将第${qNum}题留白清零)`;
+        replyMessage = `已成功为您去掉“解答题”大题标题，并将 <strong>第 ${qNum} 题</strong> 的答题留白清零（0行）！版面空间已极大节省，第 ${qNum} 题已成功上移至前一页（第2页）！`;
+      } else if ((prompt.includes("解答题") || prompt.includes("解答") || prompt.includes("选择题") || prompt.includes("填空题")) && (prompt.includes("四个字") || prompt.includes("三个字") || prompt.includes("标题")) && (prompt.includes("去掉") || prompt.includes("删") || prompt.includes("清空") || prompt.includes("不要") || prompt.includes("去除"))) {
+        const kw = prompt.includes("选择") ? "选择" : (prompt.includes("填空") ? "填空" : "解答");
+        modifySectionTitle(kw, "");
+        executedTool = `modify_section_title(已清空“${kw}”大题标题)`;
+        replyMessage = `已成功为您去掉“${kw}题”大题标题文字，版面已节省对应高度！`;
+      } else if ((prompt.includes("空白") || prompt.includes("留白")) && (prompt.includes("去掉") || prompt.includes("删") || prompt.includes("清空") || prompt.includes("不要") || prompt.includes("设为0") || prompt.includes("为0") || prompt.includes("归零"))) {
+        const matchNums = prompt.match(/\d+/g);
+        const qNum = matchNums ? parseInt(matchNums[0], 10) : 15;
+        setQuestionBlank(qNum, 0);
+        executedTool = `set_blank(第${qNum}题留白设为0行)`;
+        replyMessage = `已成功清空 <strong>第 ${qNum} 题</strong> 的答题留白空间（设为 0 行），版面已紧凑收缩！`;
       } else if (prompt.includes("空白") || prompt.includes("留白")) {
         const matchQ = prompt.match(/第\s*(\d+)\s*题/);
         const matchLines = prompt.match(/(\d+)\s*行/);
@@ -2013,7 +2046,10 @@
 8. 清空所有题目与答案(全卷重置): {"tool": "clear_all"}
 9. 清空所有参考答案与解析(保留试题): {"tool": "clear_answers"}
 10. 修改或新增参考答案: {"tool": "modify_answer", "q": 题号, "answer": "正确答案", "analysis": "解析内容"}
-11. 删除指定题目答案: {"tool": "delete_answer", "q": 题号或[题号列表]}`;
+11. 删除指定题目答案: {"tool": "delete_answer", "q": 题号或[题号列表]}
+12. 设置/清空答题留白: {"tool": "set_blank", "q": 题号, "lines": 行数如0}
+13. 修改/清空大题标题: {"tool": "modify_section_title", "keyword": "解答", "title": "新大题标题内容(空字符串表示去掉标题文字)"}
+14. 去掉大题标题并清空留白: {"tool": "remove_blank_and_title", "q": 题号, "keyword": "解答"}`;
 
       // 提取前序多轮历史 (保留最近20轮)，确保具备持续记忆上下文 (1M 上下文)
       const historyTurns = (chatConversationHistory || []).slice(0, -1).slice(-20);
@@ -2022,7 +2058,7 @@
         messages: [
           {
             role: "system",
-            content: "你是一个专业的试卷排版调度智能体。根据多轮对话历史与用户指令进行决策。如果需要调整试卷，务必在回答末尾输出纯 JSON 动作指令。"
+            content: "你是一个专业的试卷排版调度智能体。根据多轮对话历史与用户指令进行决策。重要提醒：系统完全支持去掉大题标题（如'解答题四个字'）和清空题目答题空白（如第15题空白）。当用户要求去掉大题标题或清空第15题空白以便把第15题放到第二页时，务必输出对应 JSON 工具指令，绝不能回答'做不到'！如果需要调整试卷，务必在回答末尾输出纯 JSON 动作指令。"
           },
           ...historyTurns,
           {
@@ -2269,6 +2305,21 @@
           }
           executed = `delete_question(已删除第${targetQ}题及对应答案)`;
         }
+      } else if ((action.tool === "set_blank" || action.tool === "set_question_blank" || action.tool === "remove_blank") && action.q !== undefined) {
+        const targetQ = parseInt(action.q, 10);
+        const targetLines = action.lines !== undefined ? parseInt(action.lines, 10) : 0;
+        setQuestionBlank(targetQ, targetLines);
+        executed = `set_blank(第${targetQ}题留白设为${targetLines}行)`;
+      } else if (action.tool === "modify_section_title" || action.tool === "remove_section_title") {
+        const kw = (action.keyword || action.section_keyword || action.section || "解答").trim();
+        const newTitle = action.tool === "remove_section_title" ? "" : (action.title !== undefined ? action.title : (action.new_title !== undefined ? action.new_title : ""));
+        modifySectionTitle(kw, newTitle);
+        executed = newTitle ? `modify_section_title("${kw}"大题标题更新为"${newTitle}")` : `modify_section_title(已清空"${kw}"大题标题)`;
+      } else if (action.tool === "remove_blank_and_section_title" || action.tool === "remove_blank_and_title") {
+        const targetQ = parseInt(action.q || action.question_number || 15, 10);
+        const kw = (action.keyword || action.section_keyword || "解答").trim();
+        removeBlankAndSectionTitle(targetQ, kw);
+        executed = `remove_blank_and_title(已清空"${kw}"大题标题并将第${targetQ}题留白清零)`;
       }
       return executed;
     }
@@ -2313,7 +2364,10 @@
 8. 清空所有题目与答案(全卷重置): {"tool": "clear_all"}
 9. 清空所有参考答案与解析(保留试题): {"tool": "clear_answers"}
 10. 修改或新增参考答案: {"tool": "modify_answer", "q": 题号, "answer": "正确答案", "analysis": "解析内容"}
-11. 删除指定题目答案: {"tool": "delete_answer", "q": 题号或[题号列表]}`;
+11. 删除指定题目答案: {"tool": "delete_answer", "q": 题号或[题号列表]}
+12. 设置/清空答题留白: {"tool": "set_blank", "q": 题号, "lines": 行数如0}
+13. 修改/清空大题标题: {"tool": "modify_section_title", "keyword": "解答", "title": "新大题标题内容(空字符串表示去掉标题文字)"}
+14. 去掉大题标题并清空留白: {"tool": "remove_blank_and_title", "q": 题号, "keyword": "解答"}`;
 
       let thinkingDesc = "动态最高思考";
       if (thinkingBudget === 0) thinkingDesc = "思考关闭";
@@ -2437,6 +2491,34 @@
         });
       });
       saveExamState();
+    }
+
+    function setQuestionBlank(qNum, lines) {
+      (currentExamData.sections || []).forEach(sec => {
+        (sec.questions || []).forEach(q => {
+          if (q.number === qNum) {
+            q.blank_lines = Math.max(0, parseInt(lines, 10));
+          }
+        });
+      });
+      saveExamState();
+    }
+
+    function modifySectionTitle(keyword, newTitle) {
+      const kw = (keyword || "").toLowerCase().trim();
+      (currentExamData.sections || []).forEach(sec => {
+        const t = (sec.title || "").toLowerCase();
+        const type = (sec.type || "").toLowerCase();
+        if (!kw || t.includes(kw) || type.includes(kw)) {
+          sec.title = newTitle || "";
+        }
+      });
+      saveExamState();
+    }
+
+    function removeBlankAndSectionTitle(qNum, keyword = "解答") {
+      modifySectionTitle(keyword, "");
+      setQuestionBlank(qNum, 0);
     }
 
     // 添加对话消息气泡

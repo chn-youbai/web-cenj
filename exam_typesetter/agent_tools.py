@@ -287,3 +287,57 @@ def modify_question(
             answers.sort(key=lambda a: a.get("number", 0))
             
     return data
+
+
+def set_question_blank(exam_data: Dict[str, Any], number: int, lines: int = 0) -> Dict[str, Any]:
+    """
+    Sets the blank lines (答题留白空间) for a specific question number.
+    Setting lines=0 removes all blank space for that question, compressing the layout.
+    """
+    data = copy.deepcopy(exam_data)
+    num = int(number)
+    target_lines = max(0, int(lines))
+    for sec in data.get("sections", []):
+        for q in sec.get("questions", []):
+            if q.get("number") == num:
+                q["blank_lines"] = target_lines
+                return data
+    return data
+
+
+def modify_section_title(exam_data: Dict[str, Any], section_type_or_keyword: str, new_title: str = "") -> Dict[str, Any]:
+    """
+    Modifies or clears the title of an exam section (e.g. removes '四、解答题' or changes its text).
+    If new_title is empty (""), the title is cleared, preventing any header space from being rendered.
+    """
+    data = copy.deepcopy(exam_data)
+    kw = str(section_type_or_keyword).lower().strip()
+    target_title = str(new_title or "").strip()
+    
+    for sec in data.get("sections", []):
+        sec_id = str(sec.get("section_id", ""))
+        sec_type = str(sec.get("type", "")).lower()
+        sec_title = str(sec.get("title", "")).lower()
+        
+        is_match = (
+            not kw or
+            sec_id == kw or
+            sec_type == kw or
+            kw in sec_type or
+            kw in sec_title
+        )
+        if is_match:
+            sec["title"] = target_title
+            
+    return data
+
+
+def remove_blank_and_section_title(exam_data: Dict[str, Any], question_number: int, section_keyword: str = "解答") -> Dict[str, Any]:
+    """
+    Atomically clears the section header (e.g. '四、解答题') and removes the blank lines for the given question (e.g. Q15),
+    allowing the question to compress and immediately fit onto the preceding page.
+    """
+    data = copy.deepcopy(exam_data)
+    data = modify_section_title(data, section_keyword, "")
+    data = set_question_blank(data, question_number, 0)
+    return data

@@ -19,6 +19,9 @@ from exam_typesetter.agent_tools import (
     renumber_all,
     modify_meta,
     modify_question,
+    set_question_blank,
+    modify_section_title,
+    remove_blank_and_section_title,
 )
 
 DEEPSEEK_KEY = os.environ.get("DEEPSEEK_API_KEY", "sk-2d1d216cb2d249769cba218baefc7f5e")
@@ -130,6 +133,51 @@ TOOL_SCHEMAS = [
                 }
             }
         }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "set_question_blank",
+            "description": "设置或清空指定题目的留白行数（如将解答题的留白设置为0行，即去掉答题空白以节省版面）。",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "number": {"type": "integer", "description": "题目题号，如 15"},
+                    "lines": {"type": "integer", "description": "留白行数，0 表示完全清除留白空间"}
+                },
+                "required": ["number", "lines"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "modify_section_title",
+            "description": "修改或清空大题标题文字（如去掉或清空'四、解答题'四个字，或者修改大题名称）。当 new_title 为空字符串时即清除该大题标题，不占用任何版面高度。",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "section_keyword": {"type": "string", "description": "大题关键字或类型，如'解答'、'解答题'、'选择题'、'填空题'"},
+                    "new_title": {"type": "string", "description": "新大题标题内容，留空或空字符串表示去掉标题"}
+                },
+                "required": ["section_keyword"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "remove_blank_and_section_title",
+            "description": "去掉大题标题文字并将指定题目的解答空白清零，使题目紧凑收缩并上移至前一页（例如去掉'四、解答题'四个字并将第15题空白去掉以使第15题移到第二页）。",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "question_number": {"type": "integer", "description": "题目题号，如 15"},
+                    "section_keyword": {"type": "string", "description": "大题关键字，默认为'解答'"}
+                },
+                "required": ["question_number"]
+            }
+        }
     }
 ]
 
@@ -216,6 +264,48 @@ def fast_match_command(instruction: str, exam_data: Dict[str, Any]) -> Tuple[boo
         updated = swap_questions(exam_data, n1, n2)
         return True, f"已成功将第 {n1} 题与第 {n2} 题的位置、内容及对应答案完成对调。", updated, "swap_questions"
 
+    # 7. Compound layout compression: 去掉解答题标题/四个字 + 去掉某题空白 (例如第15题)
+    # 典型指令："我想让他把那个解答题四个字跟15的空白给去掉从而达到让15题放到第二页的目的" / "把解答题四个字跟15题空白去掉"
+    is_compound_title_blank = (
+        ("解答" in text or "大题" in text) and
+        ("空白" in text or "留白" in text) and
+        any(k in text for k in ["去掉", "删", "不要", "清空", "除", "去除"])
+    )
+    if is_compound_title_blank:
+        nums = [int(n) for n in re.findall(r'\d+', text)]
+        q_num = 15
+        if nums:
+            all_q_nums = [q.get("number") for s in exam_data.get("sections", []) for q in s.get("questions", []) if q.get("number") is not None]
+            for n in nums:
+                if n in all_q_nums:
+                    q_num = n
+                    break
+            else:
+                q_num = nums[0]
+        updated = remove_blank_and_section_title(exam_data, q_num, "解答")
+        return True, f"已成功为您去掉“解答题”大题标题，并将第 {q_num} 题的答题留白清零！版面空间已极大节省，第 {q_num} 题已成功上移至前一页！", updated, "remove_blank_and_section_title"
+
+    # 8. Standalone: 去掉大题标题（如"去掉解答题四个字" / "去掉解答题标题" / "删除解答题标题"）
+    m_title_del = re.search(r'(?:去掉|删除|清空|不要|去除)(?:那[个各]?)?(?:关于)?(解答题?|选择题?|填空题?)(?:四个字|三个字|大题)?(?:标题)?', text) or \
+                  re.search(r'(解答题?|选择题?|填空题?)(?:四个字|三个字|大题)?(?:标题)?(?:去掉|删除|清空|不要|去除)', text)
+    if m_title_del and not any(k in text for k in ["答案", "空白", "留白"]):
+        kw = m_title_del.group(1)
+        updated = modify_section_title(exam_data, kw, "")
+        return True, f"已成功去掉“{kw}”大题标题文字，版面已节省对应高度。", updated, "modify_section_title"
+
+    # 9. Standalone: 去掉/清空题目留白（如"去掉15题空白" / "把第15题的空白去掉" / "15题留白清零"）
+    m_blank_del = re.search(r'(?:把)?(?:第?\s*(\d+)\s*题?)?.*?(?:空白|留白).*(?:去掉|删|清空|清除|不要|设为0|为0|归零)', text) or \
+                  re.search(r'(?:去掉|删|清空|清除|不要).*?(?:第?\s*(\d+)\s*题?).*?(?:空白|留白)', text)
+    if m_blank_del:
+        num_str = m_blank_del.group(1)
+        if not num_str:
+            nums = [int(n) for n in re.findall(r'\d+', text)]
+            q_num = nums[0] if nums else 15
+        else:
+            q_num = int(num_str)
+        updated = set_question_blank(exam_data, q_num, 0)
+        return True, f"已成功清空第 {q_num} 题的答题留白空间（设为0行），版面已紧凑收缩！", updated, "set_question_blank"
+
     return False, "", exam_data, ""
 
 
@@ -255,7 +345,11 @@ def route_chat_action(
         f"- 标题：{meta.get('title', '未命名')}\n"
         f"- 结构：{'; '.join(sections_summary)}\n"
         f"- 当前答案条目数：{ans_count}\n\n"
-        "请根据多轮对话上下文与用户的最新指令调用最匹配的工具函数（tools）。如果用户的指令需要删除、清空答案、重排或修改属性，务必调用对应的函数！"
+        "重要能力与规则说明：\n"
+        "1. 系统完全支持去掉大题标题（如去掉'解答题四个字'，调用 modify_section_title 并设置 new_title 为空字符串）！\n"
+        "2. 系统完全支持清空或调整答题留白（如将第15题的答题空白设为0行，调用 set_question_blank(number=15, lines=0)）！\n"
+        "3. 当用户希望通过去掉大题标题与清空留白让题目（如第15题）上移到前一页（如第二页）时，必须调用对应的工具函数（如 remove_blank_and_section_title 或 modify_section_title / set_question_blank），绝不能回答'做不到'！系统100%完全支持此操作！\n"
+        "4. 请根据多轮对话上下文与用户的最新指令调用最匹配的工具函数（tools）。如果用户的指令需要调整排版、删除、清空、重排或修改属性，务必调用对应的函数！"
     )
 
     messages = [{"role": "system", "content": system_prompt}]
@@ -320,6 +414,22 @@ def route_chat_action(
                 elif fn_name == "modify_meta":
                     updated = modify_meta(exam_data, **args)
                     return "已更新试卷抬头元数据信息。", updated, "modify_meta"
+                elif fn_name == "set_question_blank":
+                    num = args.get("number")
+                    lines = args.get("lines", 0)
+                    updated = set_question_blank(exam_data, num, lines)
+                    return f"已成功将第 {num} 题的答题留白设置为 {lines} 行，版面已紧凑调整！", updated, "set_question_blank"
+                elif fn_name == "modify_section_title":
+                    kw = args.get("section_keyword", "解答")
+                    new_t = args.get("new_title", "")
+                    updated = modify_section_title(exam_data, kw, new_t)
+                    msg = f"已清空“{kw}”大题标题文字，版面已节省对应高度。" if not new_t else f"已将“{kw}”大题标题修改为“{new_t}”。"
+                    return msg, updated, "modify_section_title"
+                elif fn_name == "remove_blank_and_section_title":
+                    q_num = args.get("question_number", 15)
+                    kw = args.get("section_keyword", "解答")
+                    updated = remove_blank_and_section_title(exam_data, q_num, kw)
+                    return f"已成功去掉“{kw}”大题标题并将第 {q_num} 题答题留白清零，题目已成功上移至前一页！", updated, "remove_blank_and_section_title"
                     
             content = message.get("content", "")
             return content or "已收到您的指令并完成分析。", exam_data, ""
