@@ -283,6 +283,35 @@
       align-self: flex-start;
     }
 
+    /* AI 思考与操作耗时标签（打在对话气泡上方） */
+    .msg-time-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      font-size: 0.7rem;
+      font-weight: 500;
+      color: #94a3b8;
+      padding: 0.14rem 0.5rem;
+      border-radius: 9999px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      width: fit-content;
+      margin-bottom: 0.15rem;
+      user-select: none;
+      letter-spacing: 0.02em;
+      transition: all 0.2s ease;
+    }
+    .msg-time-badge.running {
+      color: #38bdf8;
+      border-color: rgba(56, 189, 248, 0.25);
+      background: rgba(56, 189, 248, 0.08);
+    }
+    .msg-time-badge.done {
+      color: #a78bfa;
+      border-color: rgba(167, 139, 250, 0.25);
+      background: rgba(167, 139, 250, 0.08);
+    }
+
     .msg-box {
       padding: 0.75rem 0.95rem;
       border-radius: 16px;
@@ -2001,12 +2030,25 @@
 
       let html = '';
 
-      // 1. 试卷头部卡片
-      html += `
-        <div class="exam-info-card">
-          <div class="title">${escapeHtml(meta.title || "试卷")}</div>
-        </div>
-      `;
+      // 1. 试卷头部卡片 (若存在标题则渲染)
+      if (meta && meta.title && meta.title.trim()) {
+        html += `
+          <div class="exam-info-card">
+            <div class="title">${escapeHtml(meta.title)}</div>
+          </div>
+        `;
+      }
+
+      // 如果完全清空（无标题且无大题）
+      if ((!meta || !meta.title || !meta.title.trim()) && (!currentExamData.sections || currentExamData.sections.length === 0)) {
+        html += `
+          <div class="exam-info-card" style="text-align: center; padding: 2.5rem 1rem; color: #94a3b8;">
+            <div style="font-size: 2rem; margin-bottom: 0.5rem;">📄</div>
+            <div style="font-size: 0.95rem; font-weight: 600; color: #cbd5e1;">试卷内容已全部清空</div>
+            <div style="font-size: 0.8rem; margin-top: 0.3rem; color: #64748b;">包含标题已全部重置，可发送指令添加新试题</div>
+          </div>
+        `;
+      }
 
       // 2. 各大题卡片
       (currentExamData.sections || []).forEach(sec => {
@@ -2167,15 +2209,17 @@
       // 1. 构建所有待排版物理块（Blocks）
       const blocks = [];
 
-      // 卷头块 (仅保留主标题)
-      blocks.push({
-        type: 'header',
-        html: `
-          <div class="exam-header a4-header">
-            <div class="exam-main-title a4-main-title">${escapeHtml(meta.title || "试卷")}</div>
-          </div>
-        `
-      });
+      // 卷头块 (仅在存在标题且非空时加入，清空后不保留任何标题)
+      if (meta && meta.title && meta.title.trim()) {
+        blocks.push({
+          type: 'header',
+          html: `
+            <div class="exam-header a4-header">
+              <div class="exam-main-title a4-main-title">${escapeHtml(meta.title)}</div>
+            </div>
+          `
+        });
+      }
 
       // 各大题与试题块
       (currentExamData.sections || []).forEach((sec, sIdx) => {
@@ -2291,6 +2335,25 @@
             html: ansHtml
           });
         });
+      }
+
+      // 如果完全清空（无标题、无题目、无答案）
+      if (blocks.length === 0) {
+        container.innerHTML = `
+          <div class="a4-pages-stack">
+            <div class="a4-page" data-page="1">
+              <div class="a4-page-body" style="display: flex; align-items: center; justify-content: center; height: 100%; color: #94a3b8; font-size: 15px;">
+                <div style="text-align: center;">
+                  <div style="font-size: 32px; margin-bottom: 12px;">📄</div>
+                  <div style="font-size: 16px; font-weight: 600; color: #475569;">试卷内容已全部清空</div>
+                  <div style="font-size: 13px; color: #94a3b8; margin-top: 6px;">（包含试卷标题已全部重置，可向 AI 发送指令添加内容）</div>
+                </div>
+              </div>
+              <div class="a4-page-footer">—— 第 1 页（共 1 页）——</div>
+            </div>
+          </div>
+        `;
+        return;
       }
 
       // 2. 测量沙箱：获得每个物理块在 684px 净宽与 KaTeX 渲染后的真实像素高度
@@ -2521,9 +2584,33 @@
 
     // 清空整卷二次确认
     function confirmClearAll() {
-      if (confirm("⚠️ 确定要清空整份试卷吗？\n此操作将清空当前所有大题、题目与答案。")) {
-        sendMobilePrompt('清空试卷');
+      if (confirm("⚠️ 确定要清空整份试卷吗？\n此操作将清空整份试卷的全部内容（包括标题、大题、题目与答案）。")) {
+        sendMobilePrompt('清空整卷');
       }
+    }
+
+    // 为 AI 气泡绑定思考与操作计时器，秒数打在对话气泡上方
+    function attachBubbleTimer(bubbleEl, label = "AI 思考与操作") {
+      const startTime = Date.now();
+      const badge = document.createElement("div");
+      badge.className = "msg-time-badge running";
+      badge.innerHTML = `⏱️ ${label}中 (0.0s)...`;
+      bubbleEl.insertBefore(badge, bubbleEl.firstChild);
+
+      const timerId = setInterval(() => {
+        const sec = ((Date.now() - startTime) / 1000).toFixed(1);
+        badge.innerHTML = `⏱️ ${label}中 (${sec}s)...`;
+      }, 100);
+
+      let stopped = false;
+      return function stopTimer() {
+        if (stopped) return;
+        stopped = true;
+        clearInterval(timerId);
+        const totalSec = ((Date.now() - startTime) / 1000).toFixed(1);
+        badge.className = "msg-time-badge done";
+        badge.innerHTML = `⏱️ ${label}耗时 ${totalSec} 秒`;
+      };
     }
 
     // 客户端多轮对话上下文历史队列 (支持 1M 超大上下文与连续记忆)
@@ -2556,130 +2643,136 @@
         navigator.vibrate(30);
       }
 
+      // 显示正在思考气泡并启动计时器
       const thinkingBubble = appendMobileMsg("🧠 正在理解排版指令并调度工具...", "ai");
+      const stopTimer = attachBubbleTimer(thinkingBubble, "AI 思考与操作");
 
-      // 1. 若可访问云端/本地 Python 引擎，优先交由 Python 确定性工具箱执行（0% 误差、绝无漏题）
       try {
-        const backendUrl = getPythonBackendUrl();
-        const customKey = localStorage.getItem("exam_custom_key") || "";
-        const resp = await fetch(`${backendUrl}/api/chat_action`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            instruction: prompt,
-            exam_data: currentExamData,
-            api_key: customKey || undefined,
-            history: chatConversationHistory.slice(0, -1),
-            model: "deepseek-flash"
-          })
-        });
-        if (resp.ok) {
-          const data = await resp.json();
-          if (data.success && data.exam_data) {
-            isPythonBackendConnected = true;
-            if (data.message) {
-              chatConversationHistory.push({ role: "assistant", content: data.message });
-            }
-            const badge = document.getElementById("mobilePythonBackendBadge");
-            if (badge) {
-              badge.innerHTML = "🟢 云端引擎已连接 (免电脑)";
-              badge.style.color = "#4ade80";
-              badge.style.borderColor = "rgba(74, 222, 128, 0.4)";
-            }
+        // 1. 若可访问云端/本地 Python 引擎，优先交由 Python 确定性工具箱执行（0% 误差、绝无漏题）
+        try {
+          const backendUrl = getPythonBackendUrl();
+          const customKey = localStorage.getItem("exam_custom_key") || "";
+          const resp = await fetch(`${backendUrl}/api/chat_action`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              instruction: prompt,
+              exam_data: currentExamData,
+              api_key: customKey || undefined,
+              history: chatConversationHistory.slice(0, -1),
+              model: "deepseek-flash"
+            })
+          });
+          if (resp.ok) {
+            const data = await resp.json();
+            if (data.success && data.exam_data) {
+              isPythonBackendConnected = true;
+              if (data.message) {
+                chatConversationHistory.push({ role: "assistant", content: data.message });
+              }
+              const badge = document.getElementById("mobilePythonBackendBadge");
+              if (badge) {
+                badge.innerHTML = "🟢 云端引擎已连接 (免电脑)";
+                badge.style.color = "#4ade80";
+                badge.style.borderColor = "rgba(74, 222, 128, 0.4)";
+              }
 
-            if (data.tool_executed) {
-              currentExamData = data.exam_data;
-              saveExamState();
-              renderAllViews();
-              const toolLabel = {
-                'clear_all_content': '清空试卷全部内容',
-                'clear_answers': '清空参考答案与解析',
-                'delete_questions': '精确删除题目并全卷顺延重排',
-                'delete_section': '整类删除大题并重新编号',
-                'swap_questions': '题目与答案位置对调',
-                'renumber_all': '全卷重新编号',
-                'modify_meta': '修改试卷抬头信息'
-              }[data.tool_executed] || data.tool_executed;
+              if (data.tool_executed) {
+                currentExamData = data.exam_data;
+                saveExamState();
+                renderAllViews();
+                const toolLabel = {
+                  'clear_all_content': '清空试卷全部内容',
+                  'clear_answers': '清空参考答案与解析',
+                  'delete_questions': '精确删除题目并全卷顺延重排',
+                  'delete_section': '整类删除大题并重新编号',
+                  'swap_questions': '题目与答案位置对调',
+                  'renumber_all': '全卷重新编号',
+                  'modify_meta': '修改试卷抬头信息'
+                }[data.tool_executed] || data.tool_executed;
 
-              thinkingBubble.querySelector(".msg-box").innerHTML = `
-                ${escapeHtml(data.message).replace(/\n/g, '<br>')}
-                <br><span class="engine-chip" style="background: rgba(34, 197, 94, 0.15); color: #4ade80; border-color: rgba(34, 197, 94, 0.3);">⚡ 云端 Python 引擎执行 [${escapeHtml(toolLabel)}] (0%误差)</span>
-                <div class="preview-jump-chip" style="margin-top:0.6rem;" onclick="switchMobileNav('preview')">
-                  <span>📄 排版已刷新，点击切到预览</span>
-                  <span>查看印样 ➔</span>
-                </div>
-              `;
+                thinkingBubble.querySelector(".msg-box").innerHTML = `
+                  ${escapeHtml(data.message).replace(/\n/g, '<br>')}
+                  <br><span class="engine-chip" style="background: rgba(34, 197, 94, 0.15); color: #4ade80; border-color: rgba(34, 197, 94, 0.3);">⚡ 云端 Python 引擎执行 [${escapeHtml(toolLabel)}] (0%误差)</span>
+                  <div class="preview-jump-chip" style="margin-top:0.6rem;" onclick="switchMobileNav('preview')">
+                    <span>📄 排版已刷新，点击切到预览</span>
+                    <span>查看印样 ➔</span>
+                  </div>
+                `;
+              } else {
+                // 未执行破坏性工具（如AI需要澄清或用户仅打字'执行删除'但未指明目标）
+                thinkingBubble.querySelector(".msg-box").innerHTML = `
+                  ${escapeHtml(data.message).replace(/\n/g, '<br>')}
+                  <br><span class="engine-chip" style="background: rgba(59, 130, 246, 0.15); color: #60a5fa; border-color: rgba(59, 130, 246, 0.3);">🤖 AI 智能引导（请点击快捷指令）</span>
+                  <div style="display:flex; flex-wrap:wrap; gap:0.4rem; margin-top:0.65rem;">
+                    <span class="chip-item" style="border-color: rgba(239, 68, 68, 0.4); background: rgba(239, 68, 68, 0.12); color: #fca5a5;" onclick="confirmClearAll()">🗑️ 清空整份试卷</span>
+                    <span class="chip-item" style="border-color: rgba(239, 68, 68, 0.4); background: rgba(239, 68, 68, 0.12); color: #fca5a5;" onclick="sendMobilePrompt('删除第1题')">❌ 删除第1题</span>
+                    <span class="chip-item" style="border-color: rgba(245, 158, 11, 0.4); background: rgba(245, 158, 11, 0.12); color: #fcd34d;" onclick="sendMobilePrompt('删除全部解答题')">✂️ 删除全部解答题</span>
+                    <span class="chip-item" style="border-color: rgba(59, 130, 246, 0.4); background: rgba(59, 130, 246, 0.12); color: #93c5fd;" onclick="sendMobilePrompt('清空所有答案')">📝 清空所有答案</span>
+                  </div>
+                `;
+              }
+              return;
+            }
+          }
+        } catch (backendErr) {
+          console.warn("Cloud backend execution error, fallback to client AI:", backendErr);
+        }
+
+        try {
+          const mode = localStorage.getItem("exam_mode") || "default";
+
+          if (mode === "default") {
+            const model = localStorage.getItem("exam_default_model") || "deepseek-flash";
+            const thinking = localStorage.getItem("exam_default_thinking") || "max";
+
+            if (model.startsWith("deepseek")) {
+              await handleDeepSeekToolCalling(prompt, BUILTIN_DEEPSEEK_KEY, thinkingBubble, model, thinking);
             } else {
-              // 未执行破坏性工具（如AI需要澄清或用户仅打字'执行删除'但未指明目标）
-              thinkingBubble.querySelector(".msg-box").innerHTML = `
-                ${escapeHtml(data.message).replace(/\n/g, '<br>')}
-                <br><span class="engine-chip" style="background: rgba(59, 130, 246, 0.15); color: #60a5fa; border-color: rgba(59, 130, 246, 0.3);">🤖 AI 智能引导（请点击快捷指令）</span>
-                <div style="display:flex; flex-wrap:wrap; gap:0.4rem; margin-top:0.65rem;">
-                  <span class="chip-item" style="border-color: rgba(239, 68, 68, 0.4); background: rgba(239, 68, 68, 0.12); color: #fca5a5;" onclick="confirmClearAll()">🗑️ 清空整份试卷</span>
-                  <span class="chip-item" style="border-color: rgba(239, 68, 68, 0.4); background: rgba(239, 68, 68, 0.12); color: #fca5a5;" onclick="sendMobilePrompt('删除第1题')">❌ 删除第1题</span>
-                  <span class="chip-item" style="border-color: rgba(245, 158, 11, 0.4); background: rgba(245, 158, 11, 0.12); color: #fcd34d;" onclick="sendMobilePrompt('删除全部解答题')">✂️ 删除全部解答题</span>
-                  <span class="chip-item" style="border-color: rgba(59, 130, 246, 0.4); background: rgba(59, 130, 246, 0.12); color: #93c5fd;" onclick="sendMobilePrompt('清空所有答案')">📝 清空所有答案</span>
-                </div>
-              `;
+              let budget = -1;
+              if (thinking === "off" || thinking === "0") budget = 0;
+              else if (thinking === "high" || thinking === "24576") budget = 24576;
+              else if (thinking === "low" || thinking === "4096") budget = 4096;
+              await handleGeminiToolCalling(prompt, BUILTIN_GEMINI_KEY, thinkingBubble, model, budget);
             }
-            return;
-          }
-        }
-      } catch (backendErr) {
-        console.warn("Cloud backend execution error, fallback to client AI:", backendErr);
-      }
-
-      try {
-        const mode = localStorage.getItem("exam_mode") || "default";
-
-        if (mode === "default") {
-          const model = localStorage.getItem("exam_default_model") || "deepseek-flash";
-          const thinking = localStorage.getItem("exam_default_thinking") || "max";
-
-          if (model.startsWith("deepseek")) {
-            await handleDeepSeekToolCalling(prompt, BUILTIN_DEEPSEEK_KEY, thinkingBubble, model, thinking);
           } else {
-            let budget = -1;
-            if (thinking === "off" || thinking === "0") budget = 0;
-            else if (thinking === "high" || thinking === "24576") budget = 24576;
-            else if (thinking === "low" || thinking === "4096") budget = 4096;
-            await handleGeminiToolCalling(prompt, BUILTIN_GEMINI_KEY, thinkingBubble, model, budget);
-          }
-        } else {
-          const provider = localStorage.getItem("exam_custom_provider") || "deepseek";
-          const apiKey = localStorage.getItem("exam_custom_key") || "";
-          const model = localStorage.getItem("exam_custom_model") || "deepseek-flash";
-          const thinking = localStorage.getItem("exam_custom_thinking") || "max";
+            const provider = localStorage.getItem("exam_custom_provider") || "deepseek";
+            const apiKey = localStorage.getItem("exam_custom_key") || "";
+            const model = localStorage.getItem("exam_custom_model") || "deepseek-flash";
+            const thinking = localStorage.getItem("exam_custom_thinking") || "max";
 
-          if (!apiKey) {
-            throw new Error("请先在右上角【⚙️ 模型设置】中输入您的 API Key！");
-          }
+            if (!apiKey) {
+              throw new Error("请先在右上角【⚙️ 模型设置】中输入您的 API Key！");
+            }
 
-          if (provider === "deepseek") {
-            await handleDeepSeekToolCalling(prompt, apiKey, thinkingBubble, model, thinking);
-          } else {
-            let budget = -1;
-            if (thinking === "off" || thinking === "0") budget = 0;
-            else if (thinking === "high" || thinking === "16384" || thinking === "24576") budget = 16384;
-            else if (thinking === "low" || thinking === "4096") budget = 4096;
-            await handleGeminiToolCalling(prompt, apiKey, thinkingBubble, model, budget);
+            if (provider === "deepseek") {
+              await handleDeepSeekToolCalling(prompt, apiKey, thinkingBubble, model, thinking);
+            } else {
+              let budget = -1;
+              if (thinking === "off" || thinking === "0") budget = 0;
+              else if (thinking === "high" || thinking === "16384" || thinking === "24576") budget = 16384;
+              else if (thinking === "low" || thinking === "4096") budget = 4096;
+              await handleGeminiToolCalling(prompt, apiKey, thinkingBubble, model, budget);
+            }
           }
+        } catch (err) {
+          // 若云端抛出异常，优雅降级为本地智能语义规则引擎，确保手机端绝对不白屏或不可用
+          const localResult = applyLocalSemanticRule(prompt);
+          saveExamState();
+          renderAllViews();
+          chatConversationHistory.push({ role: "assistant", content: localResult.reply.replace(/<[^>]+>/g, '') });
+          thinkingBubble.querySelector(".msg-box").innerHTML = `
+            ${localResult.reply}
+            <br><span class="engine-chip" style="background: rgba(245, 158, 11, 0.15); color: #fbbf24; border-color: rgba(245, 158, 11, 0.3);">⚡ 本地排版引擎 (云端API异常: ${escapeHtml(err.message)})</span>
+            ${localResult.tool ? `<br><span class="tool-chip">🛠️ ${escapeHtml(localResult.tool)}</span>` : ''}
+            <div class="preview-jump-chip" style="margin-top:0.6rem;" onclick="switchMobileNav('preview')">
+              <span>📄 排版已刷新，点击切到预览</span>
+              <span>查看印样 ➔</span>
+            </div>
+          `;
         }
-      } catch (err) {
-        // 若云端抛出异常，优雅降级为本地智能语义规则引擎，确保手机端绝对不白屏或不可用
-        const localResult = applyLocalSemanticRule(prompt);
-        saveExamState();
-        renderAllViews();
-        chatConversationHistory.push({ role: "assistant", content: localResult.reply.replace(/<[^>]+>/g, '') });
-        thinkingBubble.querySelector(".msg-box").innerHTML = `
-          ${localResult.reply}
-          <br><span class="engine-chip" style="background: rgba(245, 158, 11, 0.15); color: #fbbf24; border-color: rgba(245, 158, 11, 0.3);">⚡ 本地排版引擎 (云端API异常: ${escapeHtml(err.message)})</span>
-          ${localResult.tool ? `<br><span class="tool-chip">🛠️ ${escapeHtml(localResult.tool)}</span>` : ''}
-          <div class="preview-jump-chip" style="margin-top:0.6rem;" onclick="switchMobileNav('preview')">
-            <span>📄 排版已刷新，点击切到预览</span>
-            <span>查看印样 ➔</span>
-          </div>
-        `;
+      } finally {
+        stopTimer();
       }
     }
 
@@ -2816,13 +2909,10 @@
         });
         executed = `modify_score(第${action.q}题分值已更新为${action.score}分)`;
       } else if (action.tool === "clear_all" || action.tool === "delete_all" || (action.tool === "delete_question" && (action.q === "all" || action.q === "*" || action.all))) {
-        let totalCount = 0;
-        (currentExamData.sections || []).forEach(sec => {
-          totalCount += (sec.questions || []).length;
-          sec.questions = [];
-        });
+        currentExamData.meta = { title: "" };
+        currentExamData.sections = [];
         currentExamData.answers = [];
-        executed = `clear_all(已清空全卷所有题目与对应答案共 ${totalCount} 道)`;
+        executed = `clear_all(已全部清空，包含试卷标题、各大题、题目与答案)`;
       } else if (action.tool === "clear_answers") {
         const count = (currentExamData.answers || []).length;
         currentExamData.answers = [];
@@ -3086,14 +3176,11 @@
           replyMessage = `已成功将 <strong>第 ${qNum} 题</strong> 的参考答案修改为 <strong>${newAns}</strong>！`;
         }
       } else if (prompt.includes("清空") || prompt.includes("删掉所有") || prompt.includes("删除所有") || prompt.includes("全部删除") || prompt.includes("删掉全部") || prompt.includes("删除全部") || prompt.includes("所有内容都删") || prompt.includes("所有题目都删") || prompt.includes("删掉所有题目") || prompt.includes("删除所有题目") || prompt.includes("清卷") || prompt.includes("重置试卷")) {
-        let totalCount = 0;
-        (currentExamData.sections || []).forEach(sec => {
-          totalCount += (sec.questions || []).length;
-          sec.questions = [];
-        });
+        currentExamData.meta = { title: "" };
+        currentExamData.sections = [];
         currentExamData.answers = [];
-        executedTool = `clear_all(已清空全卷所有题目及参考答案共 ${totalCount} 道)`;
-        replyMessage = `已成功清空试卷中的全部题目与对应参考答案！您现在可以上传新试卷或输入新题目进行编排。`;
+        executedTool = `clear_all(已全部清空，包含试卷标题、各大题、题目与答案)`;
+        replyMessage = `已成功将整份试卷全部清空（包含试卷标题、各大题、题目及参考答案）！您现在可以上传新试卷或输入新题目进行编排。`;
       } else if (prompt.includes("选项") && (prompt.includes("两列") || prompt.includes("双列"))) {
         const matchQ = prompt.match(/第\s*(\d+)\s*题/);
         const qNum = matchQ ? parseInt(matchQ[1]) : 3;
@@ -3400,6 +3487,7 @@
 
       appendMobileMsg(`📁 已选择文件: <strong>${escapeHtml(file.name)}</strong> (${(file.size / 1024).toFixed(1)} KB)`, "user");
       const loadingBubble = appendMobileMsg("⚡ 正在处理试卷文件...", "ai");
+      const stopTimer = attachBubbleTimer(loadingBubble, "试卷解析与排版");
 
       // 1. JSON 工程文件直接载入
       if (file.name.endsWith(".json")) {
@@ -3415,10 +3503,12 @@
               试卷排版已实时更新，随时可点击下方【试卷预览】查看！
             `;
             showToast("📦 试卷工程导入成功！");
+            stopTimer();
             return;
           }
         } catch(err) {
           loadingBubble.querySelector(".msg-box").innerHTML = `❌ JSON 解析失败: ${err.message}`;
+          stopTimer();
           return;
         } finally {
           if (e.target) e.target.value = "";
@@ -3465,7 +3555,7 @@
 
             if (!resp.ok) {
               const errData = await resp.json().catch(() => ({}));
-              throw new Error(errData.detail || `云端服务异常 (${resp.status})`);
+              throw new Error(errData.detail || `服务端异常 (${resp.status})`);
             }
 
             const result = await resp.json();
@@ -3494,12 +3584,14 @@
             `;
             showToast("❌ 试卷解析失败，请查看对话详情");
           } finally {
+            stopTimer();
             if (e.target) e.target.value = "";
           }
         };
         reader.readAsDataURL(file);
       } catch (err) {
         loadingBubble.querySelector(".msg-box").innerHTML = `❌ 文件读取异常: ${err.message}`;
+        stopTimer();
         if (e.target) e.target.value = "";
       }
     }
