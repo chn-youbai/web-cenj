@@ -53,6 +53,8 @@ class UploadBase64Request(BaseModel):
     filename: str
     content_base64: str
     api_key: Optional[str] = None
+    provider: Optional[str] = "deepseek"
+    model: Optional[str] = "deepseek-flash"
 
 
 @app.get("/")
@@ -126,30 +128,37 @@ def handle_upload_base64(req: UploadBase64Request):
         # 1. Parse text & equations
         if ext == ".docx":
             parsed = parse_docx(tmp_path)
-            raw_text = parsed["full_text"]
+            raw_text = parsed.get("full_text", "")
             summary = {
-                "paragraph_count": parsed["paragraph_count"],
-                "image_count": parsed["image_count"],
-                "table_count": parsed["table_count"]
+                "paragraph_count": parsed.get("paragraph_count", len(parsed.get("paragraphs", []))),
+                "image_count": parsed.get("image_count", len(parsed.get("images", []))),
+                "table_count": parsed.get("table_count", 0)
             }
         elif ext == ".pdf":
             parsed = parse_pdf(tmp_path)
-            raw_text = parsed["full_text"]
+            raw_text = parsed.get("full_text", "")
             summary = {
-                "page_count": parsed["page_count"],
-                "paragraph_count": len(parsed["paragraphs"])
+                "page_count": parsed.get("page_count", 1),
+                "paragraph_count": len(parsed.get("paragraphs", [])),
+                "image_count": parsed.get("image_count", len(parsed.get("images", [])))
             }
         else:
             raw_text = file_bytes.decode("utf-8", errors="ignore")
             summary = {"char_count": len(raw_text)}
 
-        # 2. Structure via DeepSeek
-        exam_data = structure_exam_text(raw_text, api_key=req.api_key)
+        # 2. Structure via DeepSeek / Gemini
+        exam_data = structure_exam_text(
+            raw_text,
+            provider=req.provider or "deepseek",
+            api_key=req.api_key,
+            model=req.model
+        )
         return {
             "success": True,
             "filename": filename,
             "summary": summary,
-            "exam_data": exam_data
+            "exam_data": exam_data,
+            "data": exam_data
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"处理文档失败: {str(e)}")
@@ -162,7 +171,12 @@ def handle_upload_base64(req: UploadBase64Request):
 
 
 @app.post("/api/upload")
-async def handle_upload_file(file: UploadFile = File(...), api_key: Optional[str] = Form(None)):
+async def handle_upload_file(
+    file: UploadFile = File(...),
+    api_key: Optional[str] = Form(None),
+    provider: Optional[str] = Form("deepseek"),
+    model: Optional[str] = Form("deepseek-flash")
+):
     """
     Standard multipart/form-data upload.
     """
@@ -177,25 +191,36 @@ async def handle_upload_file(file: UploadFile = File(...), api_key: Optional[str
     try:
         if ext == ".docx":
             parsed = parse_docx(tmp_path)
-            raw_text = parsed["full_text"]
+            raw_text = parsed.get("full_text", "")
             summary = {
-                "paragraph_count": parsed["paragraph_count"],
-                "image_count": parsed["image_count"]
+                "paragraph_count": parsed.get("paragraph_count", len(parsed.get("paragraphs", []))),
+                "image_count": parsed.get("image_count", len(parsed.get("images", []))),
+                "table_count": parsed.get("table_count", 0)
             }
         elif ext == ".pdf":
             parsed = parse_pdf(tmp_path)
-            raw_text = parsed["full_text"]
-            summary = {"page_count": parsed["page_count"]}
+            raw_text = parsed.get("full_text", "")
+            summary = {
+                "page_count": parsed.get("page_count", 1),
+                "paragraph_count": len(parsed.get("paragraphs", [])),
+                "image_count": parsed.get("image_count", len(parsed.get("images", [])))
+            }
         else:
             raw_text = content.decode("utf-8", errors="ignore")
             summary = {"char_count": len(raw_text)}
 
-        exam_data = structure_exam_text(raw_text, api_key=api_key)
+        exam_data = structure_exam_text(
+            raw_text,
+            provider=provider or "deepseek",
+            api_key=api_key,
+            model=model
+        )
         return {
             "success": True,
             "filename": filename,
             "summary": summary,
-            "exam_data": exam_data
+            "exam_data": exam_data,
+            "data": exam_data
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"解析试卷失败: {str(e)}")

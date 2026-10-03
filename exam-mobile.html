@@ -2813,126 +2813,117 @@
         } catch(err) {
           loadingBubble.querySelector(".msg-box").innerHTML = `❌ JSON 解析失败: ${err.message}`;
           return;
+        } finally {
+          if (e.target) e.target.value = "";
         }
       }
 
-      // 2. 若 Python 引擎在线，调用 Python 深度公式解析 + AI 结构化
+      // 2. 调用云端 Python 强算力引擎深度提取 Word/PDF 题干与公式 (OMML -> LaTeX) + AI 题库结构化
       const backendUrl = getPythonBackendUrl();
-      if (isPythonBackendConnected) {
-        loadingBubble.querySelector(".msg-box").innerHTML = `⚡ 正在由本地 Python 强算力引擎深度提取 Word/PDF 中的题干、表格与原生数学公式 (OMML -> LaTeX)...`;
-        try {
-          const reader = new FileReader();
-          reader.onload = async function() {
-            try {
-              const base64Content = reader.result.split(',')[1];
-              const mode = localStorage.getItem("exam_mode") || "default";
-              let provider = "deepseek";
-              let model = "deepseek-flash";
-              let apiKey = BUILTIN_DEEPSEEK_KEY;
+      loadingBubble.querySelector(".msg-box").innerHTML = `⚡ 正在由云端 Python + DeepSeek 深度提取 Word/PDF 中的题干、表格与原生数学公式 (OMML -> LaTeX) 并结构化排版...`;
 
-              if (mode === "default") {
-                model = localStorage.getItem("exam_default_model") || "deepseek-flash";
-                if (model.startsWith("gemini")) {
-                  provider = "gemini";
-                  apiKey = BUILTIN_GEMINI_KEY;
-                }
-              } else {
-                provider = localStorage.getItem("exam_custom_provider") || "deepseek";
-                model = localStorage.getItem("exam_custom_model") || "deepseek-flash";
-                apiKey = localStorage.getItem("exam_custom_key") || "";
+      try {
+        const reader = new FileReader();
+        reader.onload = async function() {
+          try {
+            const base64Content = reader.result.split(',')[1];
+            const mode = localStorage.getItem("exam_mode") || "default";
+            let provider = "deepseek";
+            let model = "deepseek-flash";
+            let apiKey = BUILTIN_DEEPSEEK_KEY;
+
+            if (mode === "default") {
+              model = localStorage.getItem("exam_default_model") || "deepseek-flash";
+              if (model.startsWith("gemini")) {
+                provider = "gemini";
+                apiKey = BUILTIN_GEMINI_KEY;
               }
-
-              const resp = await fetch(`${backendUrl}/api/upload_base64`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  filename: file.name,
-                  content_base64: base64Content,
-                  provider: provider,
-                  model: model,
-                  api_key: apiKey
-                })
-              });
-
-              if (!resp.ok) {
-                const errText = await resp.text();
-                throw new Error(`服务端异常 (${resp.status}): ${errText}`);
-              }
-
-              const result = await resp.json();
-              const newExamData = result.exam_data || result.data;
-              if (result.success && newExamData) {
-                currentExamData = newExamData;
-                saveExamState();
-                renderAllViews();
-                loadingBubble.querySelector(".msg-box").innerHTML = `
-                  🎉 <strong>Python 引擎深度解析成功！</strong><br>
-                  • 成功从 <code>${escapeHtml(file.name)}</code> 中提取无损数学公式并由 AI 自动结构化；<br>
-                  • 共生成 <strong>${currentExamData.sections?.length || 0}</strong> 个大题，<strong>${currentExamData.answers?.length || 0}</strong> 条参考答案；<br>
-                  • 排版已刷新，随时可点击下方【试卷预览】查看！
-                `;
-                showToast("📄 试卷深度排版完成！");
-              } else {
-                throw new Error(result.error || "未知解析错误");
-              }
-            } catch (err) {
-              loadingBubble.querySelector(".msg-box").innerHTML = `❌ Python 引擎处理出错: ${err.message}`;
+            } else {
+              provider = localStorage.getItem("exam_custom_provider") || "deepseek";
+              model = localStorage.getItem("exam_custom_model") || "deepseek-flash";
+              apiKey = localStorage.getItem("exam_custom_key") || "";
             }
-          };
-          reader.readAsDataURL(file);
-          return;
-        } catch (err) {
-          loadingBubble.querySelector(".msg-box").innerHTML = `❌ 文件读取异常: ${err.message}`;
-          return;
-        }
-      }
 
-      // 3. 浏览器轻量降级处理
-      if (file.name.endsWith(".docx")) {
-        try {
-          const arrayBuffer = await file.arrayBuffer();
-          const result = await mammoth.extractRawText({ arrayBuffer: arrayBuffer });
-          const rawText = result.value || "";
-          loadingBubble.querySelector(".msg-box").innerHTML = `
-            📄 已完成文字提取。您可随时通过下方输入指令指挥排版微调。
-          `;
-          showToast("📄 纯文本提取完成");
-        } catch (err) {
-          loadingBubble.querySelector(".msg-box").innerHTML = `❌ DOCX 解析失败: ${err.message}`;
-        }
-      } else {
-        showToast("请上传 .docx 格式的试卷文件");
+            const resp = await fetch(`${backendUrl}/api/upload_base64`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                filename: file.name,
+                content_base64: base64Content,
+                provider: provider,
+                model: model,
+                api_key: apiKey
+              })
+            });
+
+            if (!resp.ok) {
+              const errData = await resp.json().catch(() => ({}));
+              throw new Error(errData.detail || `云端服务异常 (${resp.status})`);
+            }
+
+            const result = await resp.json();
+            const newExamData = result.exam_data || result.data;
+            if (result.success && newExamData) {
+              isPythonBackendConnected = true;
+              currentExamData = newExamData;
+              saveExamState();
+              renderAllViews();
+              const qCount = (currentExamData.sections || []).reduce((acc, s) => acc + (s.questions?.length || 0), 0);
+              loadingBubble.querySelector(".msg-box").innerHTML = `
+                🎉 <strong>试卷解析排版成功！</strong><br>
+                • 成功从 <code>${escapeHtml(file.name)}</code> 中无损提取试卷内容与矢量数学公式；<br>
+                • 共识别出 <strong>${currentExamData.sections?.length || 0}</strong> 个大题模块，包含 <strong>${qCount}</strong> 道试题；<br>
+                • 排版已即时刷新，随时可点击下方【试卷预览】查看真实 A4 试卷！
+              `;
+              showToast("📄 试卷导入并排版成功！");
+            } else {
+              throw new Error(result.error || "未能识别试卷数据结构");
+            }
+          } catch (err) {
+            console.error("Upload error:", err);
+            loadingBubble.querySelector(".msg-box").innerHTML = `
+              ❌ <strong>云端解析失败:</strong> ${escapeHtml(err.message)}<br>
+              <span style="font-size: 0.8rem; color: #94a3b8;">提示：请检查文件是否为标准 .docx/.pdf/.txt 格式，或稍后重试。</span>
+            `;
+            showToast("❌ 试卷解析失败，请查看对话详情");
+          } finally {
+            if (e.target) e.target.value = "";
+          }
+        };
+        reader.readAsDataURL(file);
+      } catch (err) {
+        loadingBubble.querySelector(".msg-box").innerHTML = `❌ 文件读取异常: ${err.message}`;
+        if (e.target) e.target.value = "";
       }
     }
 
     // 动态导出 Word (.docx with 原生 OMML 公式)
     async function handleExportDocx() {
       const backendUrl = getPythonBackendUrl();
-      if (isPythonBackendConnected) {
-        showToast("⚙️ 正在由云端 Python 动态编译 Word 试卷...");
-        try {
-          const resp = await fetch(`${backendUrl}/api/export/docx`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(currentExamData)
-          });
-          if (resp.ok) {
-            const blob = await resp.blob();
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            a.href = url;
-            const docTitle = currentExamData.meta?.title || "国家考试标准数学试卷";
-            a.download = `${docTitle}.docx`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-            appendMobileMsg("📥 <strong>标准 Word (.docx) 试卷已成功动态生成并下载！</strong><br>题干与解析中的数学公式均为<strong>原生 Word OMML 矢量公式</strong>，在 WPS / Word 中双击即可修改！", "ai");
-            showToast("📥 真实 Word 导出成功！");
-            return;
-          }
-        } catch(e) {}
-      }
+      showToast("⚙️ 正在由云端 Python 动态编译 Word 试卷...");
+      try {
+        const resp = await fetch(`${backendUrl}/api/export/docx`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(currentExamData)
+        });
+        if (resp.ok) {
+          isPythonBackendConnected = true;
+          const blob = await resp.blob();
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          const docTitle = currentExamData.meta?.title || "国家考试标准数学试卷";
+          a.download = `${docTitle}.docx`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+          appendMobileMsg("📥 <strong>标准 Word (.docx) 试卷已成功动态生成并下载！</strong><br>题干与解析中的数学公式均为<strong>原生 Word OMML 矢量公式</strong>，在 WPS / Word 中双击即可修改！", "ai");
+          showToast("📥 真实 Word 导出成功！");
+          return;
+        }
+      } catch(e) {}
 
       showToast("❌ 导出 Word 失败，请检查网络连接后重试！");
     }
@@ -2940,31 +2931,30 @@
     // 动态导出矢量 PDF
     async function handleExportPdf() {
       const backendUrl = getPythonBackendUrl();
-      if (isPythonBackendConnected) {
-        showToast("⚙️ 正在由云端 Python 编译矢量 PDF 试卷...");
-        try {
-          const resp = await fetch(`${backendUrl}/api/export/pdf`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(currentExamData)
-          });
-          if (resp.ok) {
-            const blob = await resp.blob();
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            a.href = url;
-            const docTitle = currentExamData.meta?.title || "国家考试标准数学试卷";
-            a.download = `${docTitle}.pdf`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-            appendMobileMsg("📥 <strong>矢量 PDF 试卷已成功生成并下载！</strong>", "ai");
-            showToast("📥 矢量 PDF 导出成功！");
-            return;
-          }
-        } catch(e) {}
-      }
+      showToast("⚙️ 正在由云端 Python 编译矢量 PDF 试卷...");
+      try {
+        const resp = await fetch(`${backendUrl}/api/export/pdf`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(currentExamData)
+        });
+        if (resp.ok) {
+          isPythonBackendConnected = true;
+          const blob = await resp.blob();
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          const docTitle = currentExamData.meta?.title || "国家考试标准数学试卷";
+          a.download = `${docTitle}.pdf`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+          appendMobileMsg("📥 <strong>矢量 PDF 试卷已成功生成并下载！</strong>", "ai");
+          showToast("📥 矢量 PDF 导出成功！");
+          return;
+        }
+      } catch(e) {}
 
       // 若云端转换不可用，无缝调用手机浏览器自带的打印/存为PDF功能
       showToast("📄 正在调起手机系统打印（可选择另存为 PDF）...");
