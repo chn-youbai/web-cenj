@@ -4,7 +4,19 @@ Extracts text blocks, mathematical notation, and embedded diagrams using PyMuPDF
 """
 import os
 from io import BytesIO
-import pymupdf
+
+try:
+    import pymupdf
+except ImportError:
+    try:
+        import fitz as pymupdf
+    except ImportError:
+        pymupdf = None
+
+try:
+    import pypdf
+except ImportError:
+    pypdf = None
 
 def extract_images_from_pdf(doc, output_dir: str = None) -> list:
     """
@@ -44,10 +56,23 @@ def parse_pdf(file_source, output_media_dir: str = None) -> dict:
     2. Extracts images;
     3. Normalizes text lines.
     """
-    if isinstance(file_source, bytes):
-        doc = pymupdf.open(stream=file_source, filetype="pdf")
+    if pymupdf:
+        if isinstance(file_source, bytes):
+            doc = pymupdf.open(stream=file_source, filetype="pdf")
+        else:
+            doc = pymupdf.open(file_source)
+    elif pypdf:
+        reader = pypdf.PdfReader(BytesIO(file_source) if isinstance(file_source, bytes) else file_source)
+        page_texts = [p.extract_text() or "" for p in reader.pages]
+        return {
+            "full_text": "\n\n".join(page_texts),
+            "page_count": len(page_texts),
+            "paragraphs": page_texts,
+            "images": [],
+            "image_count": 0
+        }
     else:
-        doc = pymupdf.open(file_source)
+        raise ImportError("Neither pymupdf nor pypdf is installed to parse PDF files.")
 
     page_texts = []
     all_blocks = []
