@@ -90,7 +90,7 @@ def handle_chat_action(req: ChatActionRequest):
     and returns updated exam_data + message.
     """
     try:
-        reply_msg, updated_data = route_chat_action(
+        reply_msg, updated_data, tool_name = route_chat_action(
             instruction=req.instruction,
             exam_data=req.exam_data,
             api_key=req.api_key
@@ -98,7 +98,8 @@ def handle_chat_action(req: ChatActionRequest):
         return {
             "success": True,
             "message": reply_msg,
-            "exam_data": updated_data
+            "exam_data": updated_data,
+            "tool_executed": tool_name or None
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"执行指令失败: {str(e)}")

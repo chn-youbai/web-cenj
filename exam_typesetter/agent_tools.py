@@ -99,6 +99,27 @@ def clear_answers(exam_data: Dict[str, Any], scope: str = "all") -> Dict[str, An
     return data
 
 
+def clear_all_content(exam_data: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Clears all sections, questions, and reference answers from the exam.
+    Preserves meta structure (title, subject, duration, total_score).
+    """
+    data = copy.deepcopy(exam_data)
+    data["sections"] = []
+    data["answers"] = []
+    return data
+
+
+def delete_answers_by_numbers(exam_data: Dict[str, Any], numbers: List[int]) -> Dict[str, Any]:
+    """
+    Deletes reference answers for specified question numbers without deleting questions.
+    """
+    data = copy.deepcopy(exam_data)
+    target_set = set(int(n) for n in numbers)
+    data["answers"] = [a for a in data.get("answers", []) if a.get("number") not in target_set]
+    return data
+
+
 def delete_questions(exam_data: Dict[str, Any], numbers: List[int]) -> Dict[str, Any]:
     """
     Deletes specified questions by question numbers.

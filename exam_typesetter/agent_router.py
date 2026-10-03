@@ -11,6 +11,8 @@ import urllib.error
 from typing import Dict, Any, Tuple
 from exam_typesetter.agent_tools import (
     clear_answers,
+    clear_all_content,
+    delete_answers_by_numbers,
     delete_questions,
     delete_section,
     swap_questions,
@@ -22,6 +24,17 @@ from exam_typesetter.agent_tools import (
 DEEPSEEK_KEY = os.environ.get("DEEPSEEK_API_KEY", "sk-2d1d216cb2d249769cba218baefc7f5e")
 
 TOOL_SCHEMAS = [
+    {
+        "type": "function",
+        "function": {
+            "name": "clear_all_content",
+            "description": "清空试卷中的所有大题、题目和参考答案（全卷重置清空）。",
+            "parameters": {
+                "type": "object",
+                "properties": {}
+            }
+        }
+    },
     {
         "type": "function",
         "function": {
@@ -121,67 +134,101 @@ TOOL_SCHEMAS = [
 ]
 
 
-def fast_match_command(instruction: str, exam_data: Dict[str, Any]) -> Tuple[bool, str, Dict[str, Any]]:
+def fast_match_command(instruction: str, exam_data: Dict[str, Any]) -> Tuple[bool, str, Dict[str, Any], str]:
     """
     Ultra-fast rule matching for standard commands. Executes in < 1ms without hitting LLM API.
+    Returns: (hit: bool, reply_msg: str, updated_data: dict, tool_name: str)
     """
     text = instruction.strip().lower()
     
+    # 0. Clear all content (full reset)
+    if text in [
+        "清空试卷", "清空所有题目", "删除全部题目", "删除所有题目", "清空所有试题", "删除全部试题",
+        "全部删除", "清空全部", "删掉所有内容", "清空所有内容", "清空内容", "清卷", "重置试卷",
+        "清空所有", "全删", "全卷清空", "清空试题", "删除试卷"
+    ]:
+        updated = clear_all_content(exam_data)
+        return True, "已为您清空试卷中的全部题目与参考答案。试卷已重置。", updated, "clear_all_content"
+
     # 1. Clear answers
-    if text in ["清空答案", "清空所有答案", "清空全部答案", "清空参考答案", "不要答案", "删除全部答案"]:
+    if text in ["清空答案", "清空所有答案", "清空全部答案", "清空参考答案", "不要答案", "删除全部答案", "删除所有答案"]:
         updated = clear_answers(exam_data, scope="all")
-        return True, "已为您清空全卷所有题目的参考答案与解析。试题内容与编号已严格保留。", updated
+        return True, "已为您清空全卷所有题目的参考答案与解析。试题内容与编号已严格保留。", updated, "clear_answers"
         
-    if "清空选择题答案" in text:
+    if "清空选择题答案" in text or "删除选择题答案" in text:
         updated = clear_answers(exam_data, scope="choices")
-        return True, "已清空所有选择题的参考答案与解析。", updated
+        return True, "已清空所有选择题的参考答案与解析。", updated, "clear_answers"
         
-    if "清空解答题答案" in text or "清空大题答案" in text:
+    if "清空解答题答案" in text or "清空大题答案" in text or "删除解答题答案" in text:
         updated = clear_answers(exam_data, scope="solutions")
-        return True, "已清空所有解答题的参考答案与解析。", updated
+        return True, "已清空所有解答题的参考答案与解析。", updated, "clear_answers"
 
     # 2. Renumber
     if text in ["重新编号", "全卷重新编号", "自动编号", "规范题号", "连续编号"]:
         updated = renumber_all(exam_data)
-        return True, "已对全卷所有题目与答案完成顺次连续重新编号（1, 2, 3...）。", updated
+        return True, "已对全卷所有题目与答案完成顺次连续重新编号（1, 2, 3...）。", updated, "renumber_all"
 
     # 3. Delete section
-    if text in ["删除解答题", "删掉解答题", "删除所有解答题", "不要解答题", "清空解答题"]:
+    if text in ["删除解答题", "删掉解答题", "删除所有解答题", "不要解答题", "清空解答题", "删除全部解答题"]:
         updated = delete_section(exam_data, "solution")
-        return True, "已成功删除全卷所有解答题大题，剩余题目已重新连续编号。", updated
+        return True, "已成功删除全卷所有解答题大题，剩余题目已重新连续编号。", updated, "delete_section"
         
-    if text in ["删除选择题", "删掉选择题", "删除所有选择题"]:
+    if text in ["删除选择题", "删掉选择题", "删除所有选择题", "删除全部选择题"]:
         updated = delete_section(exam_data, "choice")
-        return True, "已成功删除所有选择题，剩余题目已重新连续编号。", updated
+        return True, "已成功删除所有选择题，剩余题目已重新连续编号。", updated, "delete_section"
 
-    # 4. Simple delete single question: e.g. "删除第2题" / "删掉第3题" / "删除第 4 题"
-    m_del = re.match(r'^(?:删除|删掉|去掉|不要)\s*第?\s*(\d+)\s*题?$', text)
-    if m_del:
-        q_num = int(m_del.group(1))
-        updated = delete_questions(exam_data, [q_num])
-        return True, f"已成功删除第 {q_num} 题，并已将后续所有试题与答案自动顺延重新编号。", updated
+    # 4. Multi-number or single-number delete questions: e.g. "删除第1题" / "删除第1、2题" / "删除第 1 2 题" / "删除第1题和第2题"
+    is_del_intent = any(text.startswith(prefix) for prefix in ["删除", "删掉", "去掉", "不要", "剔除"])
+    if is_del_intent and not any(kw in text for kw in ["调换", "对调", "交换", "替换"]):
+        nums = [int(n) for n in re.findall(r'\d+', text)]
+        if nums:
+            updated = delete_questions(exam_data, nums)
+            num_str = "、".join(f"第 {n} 题" for n in nums)
+            return True, f"已成功删除 {num_str}，全卷剩余题目与答案已自动顺延重新编号。", updated, "delete_questions"
 
-    # 5. Simple swap: e.g. "把第1题和第2题调换" / "调换第1题和第2题"
+    # 5. Ambiguous delete without question numbers or scope: e.g. "执行删除" / "删除" / "删掉" / "删除题目"
+    if text in ["执行删除", "删除", "删掉", "帮我删除", "删除题目", "执行删除操作", "确认删除"]:
+        all_q_nums = [q.get("number") for s in exam_data.get("sections", []) for q in s.get("questions", []) if q.get("number") is not None]
+        if not all_q_nums:
+            return True, "当前试卷已无任何题目，无需执行删除。", exam_data, ""
+        elif len(all_q_nums) == 1:
+            q_num = all_q_nums[0]
+            updated = delete_questions(exam_data, [q_num])
+            return True, f"试卷仅有第 {q_num} 题，已为您执行删除！试卷现已清空。", updated, "delete_questions"
+        else:
+            guidance = (
+                f"当前试卷共有 {len(all_q_nums)} 道题目（题号：{all_q_nums[0]} ~ {all_q_nums[-1]}）。\n"
+                "请告诉我具体要删除的目标：\n"
+                f"• **删除单题**：如「删除第{all_q_nums[0]}题」\n"
+                "• **批量删除**：如「删除第1、2题」\n"
+                "• **清空全卷**：如「清空试卷」或「删除全部题目」\n"
+                "• **删除大题**：如「删除全部解答题」或「删除选择题」\n"
+                "• **清空答案**：如「清空所有答案」"
+            )
+            return True, guidance, exam_data, ""
+
+    # 6. Simple swap: e.g. "把第1题和第2题调换" / "调换第1题和第2题"
     m_swap = re.search(r'(?:把)?第?\s*(\d+)\s*题?(?:和|与)第?\s*(\d+)\s*题?(?:调换|对调|交换)', text)
     if m_swap:
         n1 = int(m_swap.group(1))
         n2 = int(m_swap.group(2))
         updated = swap_questions(exam_data, n1, n2)
-        return True, f"已成功将第 {n1} 题与第 {n2} 题的位置、内容及对应答案完成对调。", updated
+        return True, f"已成功将第 {n1} 题与第 {n2} 题的位置、内容及对应答案完成对调。", updated, "swap_questions"
 
-    return False, "", exam_data
+    return False, "", exam_data, ""
 
 
-def route_chat_action(instruction: str, exam_data: Dict[str, Any], api_key: str = None) -> Tuple[str, Dict[str, Any]]:
+def route_chat_action(instruction: str, exam_data: Dict[str, Any], api_key: str = None) -> Tuple[str, Dict[str, Any], str]:
     """
     Main entry point for handling chat actions from mobile.
     1. Checks fast-path rule engine (<1ms).
     2. Dispatches to DeepSeek Function Calling for intelligent tool selection.
+    Returns: (message: str, exam_data: dict, tool_name: str)
     """
     # Step 1: Fast-path
-    hit, reply_msg, updated_data = fast_match_command(instruction, exam_data)
+    hit, reply_msg, updated_data, tool_name = fast_match_command(instruction, exam_data)
     if hit:
-        return reply_msg, updated_data
+        return reply_msg, updated_data, tool_name
 
     # Step 2: DeepSeek Function Calling
     key = api_key or os.environ.get("DEEPSEEK_API_KEY", DEEPSEEK_KEY)
@@ -235,32 +282,35 @@ def route_chat_action(instruction: str, exam_data: Dict[str, Any], api_key: str 
                 fn_name = call["function"]["name"]
                 args = json.loads(call["function"]["arguments"])
                 
-                if fn_name == "clear_answers":
+                if fn_name == "clear_all_content":
+                    updated = clear_all_content(exam_data)
+                    return "已为您清空试卷中的全部题目与参考答案。", updated, "clear_all_content"
+                elif fn_name == "clear_answers":
                     updated = clear_answers(exam_data, scope=args.get("scope", "all"))
-                    return f"已按照指令清空对应试题的参考答案与解析。", updated
+                    return "已按照指令清空对应试题的参考答案与解析。", updated, "clear_answers"
                 elif fn_name == "delete_questions":
                     numbers = args.get("numbers", [])
                     updated = delete_questions(exam_data, numbers)
-                    return f"已成功删除题号为 {numbers} 的题目，全卷已重新顺延编号。", updated
+                    return f"已成功删除题号为 {numbers} 的题目，全卷已重新顺延编号。", updated, "delete_questions"
                 elif fn_name == "delete_section":
                     stype = args.get("section_type", "solution")
                     updated = delete_section(exam_data, stype)
-                    return f"已删除对应类型的大题，全卷已重新连续编号。", updated
+                    return "已删除对应类型的大题，全卷已重新连续编号。", updated, "delete_section"
                 elif fn_name == "swap_questions":
                     n1 = args.get("num1")
                     n2 = args.get("num2")
                     updated = swap_questions(exam_data, n1, n2)
-                    return f"已将第 {n1} 题与第 {n2} 题调换位置。", updated
+                    return f"已将第 {n1} 题与第 {n2} 题调换位置。", updated, "swap_questions"
                 elif fn_name == "renumber_all":
                     updated = renumber_all(exam_data)
-                    return f"已对全卷进行重新连续规范编号。", updated
+                    return "已对全卷进行重新连续规范编号。", updated, "renumber_all"
                 elif fn_name == "modify_meta":
                     updated = modify_meta(exam_data, **args)
-                    return f"已更新试卷抬头元数据信息。", updated
+                    return "已更新试卷抬头元数据信息。", updated, "modify_meta"
                     
             content = message.get("content", "")
-            return content or "已收到您的指令并完成分析。", exam_data
+            return content or "已收到您的指令并完成分析。", exam_data, ""
             
     except Exception as e:
         # Graceful fallback: return user-friendly message
-        return f"处理指令时遇到网络或模型调用异常: {str(e)}", exam_data
+        return f"处理指令时遇到网络或模型调用异常: {str(e)}", exam_data, ""
