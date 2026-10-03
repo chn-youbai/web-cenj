@@ -68,11 +68,11 @@ class ExamDocxBuilder:
         # 1. 试卷卷头
         self.render_header(meta)
 
-        # 2. 考生信息与密封线提示
-        self.render_student_info(meta)
+        # 2. 考生信息与统分表 (按需求完全去除无用表头)
+        if meta.get("show_student_info", False):
+            self.render_student_info(meta)
 
-        # 3. 统分总表（可选）
-        if meta.get("show_score_table", True):
+        if meta.get("show_score_table", False):
             sections = self.data.get("sections", [])
             self.render_score_table(sections)
 

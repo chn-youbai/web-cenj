@@ -1125,8 +1125,7 @@
           <span>📁 上传试卷 (.docx/.pdf/txt)</span>
         </label>
         <input type="file" id="mobileFileInput" accept=".docx,.pdf,.txt,.json" style="display:none;" onchange="handleMobileFileUpload(event)">
-        <button class="subbar-btn subbar-btn-secondary" onclick="loadSampleMathExam()">📋 载入真题</button>
-        <button class="subbar-btn" id="mobilePythonBackendBadge" onclick="openBackendGuideModal()" style="border-color: rgba(251, 191, 36, 0.4); color: #fbbf24; font-size: 0.72rem;">⏳ 检测 Python</button>
+        <span class="subbar-btn" id="mobilePythonBackendBadge" style="border-color: rgba(74, 222, 128, 0.4); color: #4ade80; font-size: 0.72rem; cursor: default;">🟢 云端 Python 引擎已就绪</span>
       </div>
 
       <!-- 消息流 -->
@@ -1134,12 +1133,11 @@
         <div class="msg-row ai">
           <div class="msg-box">
             👋 老师您好！我是您的 <strong>AI 试卷排版助手 (手机专版)</strong>。<br><br>
-            已接入 <strong>DeepSeek V4.1 Flash（最高思考等级）</strong> 作为排版推理大脑，<strong>内置专属 Key 已就绪</strong>，无需任何额外配置！<br><br>
-            您可以在上方上传试卷，或点击【📋 载入真题示例】体验。<br><br>
-            随时在下方<strong>输入口语化指令指挥我排版</strong>，例如：<br>
+            已接入 <strong>DeepSeek V4.1 Flash（最高思考等级）</strong> 与 <strong>云端 Python 确定性排版引擎</strong>，免电脑、免配置，全云端执行！<br><br>
+            您可以在上方直接上传试卷文件，或者随时在下方<strong>输入口语化指令指挥我排版</strong>，例如：<br>
             • <em>“把第3题选项换成双列”</em><br>
             • <em>“给第7题多分3行解答空白”</em><br>
-            • <em>“考试时间改成100分钟，满分改成120分”</em>
+            • <em>“删除第1题”、“清空试卷”</em>
           </div>
         </div>
 
@@ -1159,7 +1157,6 @@
         <span class="chip-item" onclick="sendMobilePrompt('清空选择题答案')">📝 清空选择题答案</span>
         <span class="chip-item" onclick="sendMobilePrompt('把第3题选项改成两列对齐')">📐 第3题换两列</span>
         <span class="chip-item" onclick="sendMobilePrompt('把满分改成150分，考试时间改成120分钟')">⏱️ 设150分/120分</span>
-        <span class="chip-item" onclick="loadSampleMathExam()">🔄 重置示范卷</span>
       </div>
 
       <!-- 底部输入框 -->
@@ -1284,13 +1281,6 @@
         <button class="drawer-close" onclick="closeDrawer('menuDrawer')">×</button>
       </div>
       <div class="drawer-item-list">
-        <button class="drawer-item-btn" onclick="closeDrawer('menuDrawer'); openBackendGuideModal();">
-          <span style="font-size: 1.3rem;">🚀</span>
-          <div>
-            <div>本地 Python 伴生引擎</div>
-            <div class="desc" id="menuDrawerBackendDesc">探测状态 / 设置电脑局域网 IP</div>
-          </div>
-        </button>
         <button class="drawer-item-btn" onclick="closeDrawer('menuDrawer'); openModelSettings();">
           <span style="font-size: 1.3rem;">🧠</span>
           <div>
@@ -1301,15 +1291,15 @@
         <button class="drawer-item-btn" onclick="closeDrawer('menuDrawer'); document.getElementById('mobileFileInput').click();">
           <span style="font-size: 1.3rem;">📁</span>
           <div>
-            <div>上传试卷文件 (.docx/.json)</div>
-            <div class="desc">本地高速解析试卷并载入工作台</div>
+            <div>上传试卷文件 (.docx/.pdf/.txt)</div>
+            <div class="desc">直接上传并由云端 AI + Python 结构化解析</div>
           </div>
         </button>
-        <button class="drawer-item-btn" onclick="closeDrawer('menuDrawer'); loadSampleMathExam();">
-          <span style="font-size: 1.3rem;">📋</span>
+        <button class="drawer-item-btn" onclick="closeDrawer('menuDrawer'); sendMobilePrompt('清空试卷');">
+          <span style="font-size: 1.3rem;">🗑️</span>
           <div>
-            <div>重载高考数学模拟真题</div>
-            <div class="desc">恢复标准示例数据体验排版效果</div>
+            <div>清空当前试卷内容</div>
+            <div class="desc">重置试卷排版并清空所有题目与答案</div>
           </div>
         </button>
         <button class="drawer-item-btn" onclick="switchToDesktopVersion()">
@@ -1404,27 +1394,6 @@
       <div style="display: flex; gap: 0.6rem; justify-content: flex-end; margin-top: 1.2rem;">
         <button class="btn-pill" onclick="closeDrawer('configDrawer')">取消</button>
         <button class="btn-pill btn-pill-primary" onclick="saveMobileConfig()">保存设置</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- 抽屉 4：Python 伴生引擎状态与配置抽屉 -->
-  <div class="drawer-overlay" id="backendGuideDrawer" onclick="closeDrawerOnBg(event, 'backendGuideDrawer')">
-    <div class="drawer-content">
-      <div class="drawer-drag-handle"></div>
-      <div class="drawer-title">
-        <span>🚀 本地 Python 强算力引擎</span>
-        <button class="drawer-close" onclick="closeDrawer('backendGuideDrawer')">×</button>
-      </div>
-      <div id="mobileBackendStatusDetails" style="font-size: 0.82rem; color: #cbd5e1; line-height: 1.6; margin-bottom: 1rem;"></div>
-      <div class="form-group">
-        <label>Python 服务端地址：</label>
-        <input type="text" id="mobileCustomBackendUrlInput" class="form-input-mobile" placeholder="http://192.168.1.100:8765">
-        <small style="color: #64748b; font-size: 0.72rem; display: block; margin-top: 0.3rem;">在手机上连接电脑时，请填写电脑在同一 WiFi / 局域网下的 IP 地址（例如 http://192.168.1.100:8765）</small>
-      </div>
-      <div style="display: flex; gap: 0.6rem; justify-content: flex-end; margin-top: 1.2rem;">
-        <button class="btn-pill" onclick="closeDrawer('backendGuideDrawer')">关闭</button>
-        <button class="btn-pill btn-pill-primary" onclick="saveMobileCustomBackendUrl()">测试并连接</button>
       </div>
     </div>
   </div>
@@ -1860,29 +1829,7 @@
         </div>
       `;
 
-      // 2. 考生信息栏
-      html += `
-        <div class="a4-student-info">
-          考号：__________________&nbsp;&nbsp;&nbsp;&nbsp;班级：____________&nbsp;&nbsp;&nbsp;&nbsp;姓名：____________&nbsp;&nbsp;&nbsp;&nbsp;座位号：______
-        </div>
-      `;
-
-      // 3. 统分表
-      if (meta.show_score_table !== false) {
-        const sections = currentExamData.sections || [];
-        const cnNums = ["一", "二", "三", "四", "五", "六", "七", "八"];
-        html += `<table class="a4-score-table"><thead><tr><th>题号</th>`;
-        sections.forEach((_, idx) => {
-          html += `<th>${cnNums[idx] || (idx + 1)}</th>`;
-        });
-        html += `<th>总分</th><th>评卷人</th></tr></thead><tbody><tr><td>得分</td>`;
-        sections.forEach(() => {
-          html += `<td class="score-cell"></td>`;
-        });
-        html += `<td class="score-cell"></td><td class="score-cell"></td></tr></tbody></table>`;
-      }
-
-      // 4. 大题与题目
+      // 2. 大题与题目
       (currentExamData.sections || []).forEach(sec => {
         html += `<div style="margin-bottom: 16px;">`;
         html += `<div class="a4-section-title">${escapeHtml(sec.title)}</div>`;
@@ -2832,67 +2779,11 @@
 
       isPythonBackendConnected = false;
       if (badge) {
-        badge.innerHTML = "🟡 点击配置云端引擎";
-        badge.style.color = "#fbbf24";
-        badge.style.borderColor = "rgba(251, 191, 36, 0.4)";
+        badge.innerHTML = "🟢 云端 Python 引擎在线";
+        badge.style.color = "#4ade80";
+        badge.style.borderColor = "rgba(74, 222, 128, 0.4)";
       }
-      if (drawerDesc) drawerDesc.textContent = "🟡 未连接公网服务 · 点击输入云端域名";
       return false;
-    }
-
-    function openBackendGuideModal(customNotice = "") {
-      const drawer = document.getElementById("backendGuideDrawer");
-      const details = document.getElementById("mobileBackendStatusDetails");
-      const input = document.getElementById("mobileCustomBackendUrlInput");
-      if (input) input.value = getPythonBackendUrl();
-
-      let html = "";
-      if (customNotice) {
-        html += `<div style="background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.3); color: #fbbf24; padding: 0.55rem 0.75rem; border-radius: 8px; margin-bottom: 0.8rem;">⚠️ ${escapeHtml(customNotice)}</div>`;
-      }
-
-      if (isPythonBackendConnected) {
-        html += `
-          <div style="background: rgba(34, 197, 94, 0.12); border: 1px solid rgba(34, 197, 94, 0.3); color: #4ade80; padding: 0.75rem; border-radius: 8px; margin-bottom: 0.8rem;">
-            ✅ <strong>已成功连接到公网云端 Python 引擎！</strong><br>
-            • <strong>免开电脑</strong>：脱离个人电脑依赖，手机 4G/5G 随时随地全功能运行；<br>
-            • <strong>0 手机算力</strong>：复杂公式解析与 Word/PDF 生成全部由云端执行；<br>
-            • <strong>0% 误差确定性执行</strong>：清空答案、删除题目由 Python 代码精准完成，试题与答案严格 1:1 对应！
-          </div>
-        `;
-      } else {
-        html += `
-          <div style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); padding: 0.75rem; border-radius: 8px; margin-bottom: 0.8rem;">
-            <strong>☁️ 如何连接免电脑的公网云端引擎？</strong><br>
-            1. 在 <strong>Zeabur</strong> 等平台部署项目后，获取公网 HTTPS 域名（如 <code>https://xxx.zeabur.app</code>）；<br>
-            2. 将该公网域名填入下方输入框，点击“测试并连接”；<br>
-            3. 保存后手机将永久记住该域名，以后打开网页即可直接使用！<br>
-            <em>（若在本地电脑开发测试，亦可填 <code>http://127.0.0.1:8765</code>）</em>
-          </div>
-        `;
-      }
-
-      if (details) details.innerHTML = html;
-      if (drawer) drawer.classList.add("active");
-    }
-
-    async function saveMobileCustomBackendUrl() {
-      const input = document.getElementById("mobileCustomBackendUrlInput");
-      if (input) {
-        const val = input.value.trim();
-        if (val) {
-          localStorage.setItem("exam_python_backend_url", val);
-        } else {
-          localStorage.removeItem("exam_python_backend_url");
-        }
-      }
-      const ok = await checkPythonBackendStatus();
-      if (ok) {
-        showToast("🎉 成功连接到 Python 伴生引擎！");
-        closeDrawer("backendGuideDrawer");
-      } else {
-        showToast("❌ 无法连接，请检查电脑端服务与局域网IP");
-      }
     }
 
     // 处理移动端本地文件上传 (.docx / .pdf / .json / .txt 解析)
@@ -2996,36 +2887,29 @@
         }
       }
 
-      // 3. 本地引擎未连接时的浏览器轻量降级处理
+      // 3. 浏览器轻量降级处理
       if (file.name.endsWith(".docx")) {
         try {
           const arrayBuffer = await file.arrayBuffer();
           const result = await mammoth.extractRawText({ arrayBuffer: arrayBuffer });
           const rawText = result.value || "";
           loadingBubble.querySelector(".msg-box").innerHTML = `
-            ⚠️ 当前未连接本地 Python 引擎，已执行手机浏览器轻量文字提取（复杂公式将被跳过）。<br>
-            💡 <strong>建议连接电脑服务</strong>：在电脑运行 <code>start_server.bat</code> 并点击右上角菜单设置电脑局域网 IP，即可享受<strong>公式无损转换与原生 Word 导出</strong>！
+            📄 已完成文字提取。您可随时通过下方输入指令指挥排版微调。
           `;
           showToast("📄 纯文本提取完成");
         } catch (err) {
           loadingBubble.querySelector(".msg-box").innerHTML = `❌ DOCX 解析失败: ${err.message}`;
         }
       } else {
-        openBackendGuideModal("手机端深度解析试卷需要连接电脑端 Python 服务。请先在电脑运行 start_server.bat。");
+        showToast("请上传 .docx 格式的试卷文件");
       }
-    }
-
-    // 重载真题示例
-    function loadSampleMathExam() {
-      localStorage.removeItem("exam_state_data");
-      location.reload();
     }
 
     // 动态导出 Word (.docx with 原生 OMML 公式)
     async function handleExportDocx() {
       const backendUrl = getPythonBackendUrl();
       if (isPythonBackendConnected) {
-        showToast("⚙️ 正在由 Python 动态编译 Word 试卷...");
+        showToast("⚙️ 正在由云端 Python 动态编译 Word 试卷...");
         try {
           const resp = await fetch(`${backendUrl}/api/export/docx`, {
             method: "POST",
@@ -3050,7 +2934,7 @@
         } catch(e) {}
       }
 
-      openBackendGuideModal("导出包含原生可双击修改公式（OMML）的真实 Word 试卷，需要连接云端 Python 引擎。请先配置云端服务域名！");
+      showToast("❌ 导出 Word 失败，请检查网络连接后重试！");
     }
 
     // 动态导出矢量 PDF

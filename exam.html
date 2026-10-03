@@ -673,7 +673,6 @@
     <div class="header-actions">
       <a href="./exam-mobile?view=mobile" class="btn btn-secondary" style="color: #67e8f9; border-color: rgba(6, 182, 212, 0.4);">📱 手机专版</a>
       <button class="btn btn-secondary" onclick="openConfigModal()">⚙️ 模型设置</button>
-      <button class="btn btn-secondary" onclick="loadSampleMathExam()">📋 加载真题示例</button>
       <button class="btn btn-primary" onclick="handleExportDocx()">📥 导出 Word</button>
       <button class="btn btn-primary" style="background: linear-gradient(135deg, #06b6d4, #0284c7);" onclick="handleExportPdf()">🖨️ 导出 PDF</button>
     </div>
@@ -695,7 +694,7 @@
         </label>
         <input type="file" id="fileInput" accept=".docx,.pdf,.txt,.json" onchange="handleFileUpload(event)">
         <span class="model-badge" id="currentModelBadge" onclick="openConfigModal()">✨ deepseek-flash (内置Key)</span>
-        <span class="model-badge" id="pythonBackendBadge" onclick="openBackendGuideModal()" style="cursor: pointer; border-color: rgba(251, 191, 36, 0.4); color: #fbbf24;" title="点击查看本地 Python 引擎状态">⏳ 检测 Python 引擎...</span>
+        <span class="model-badge" id="pythonBackendBadge" style="border-color: rgba(74, 222, 128, 0.4); color: #4ade80;">🟢 云端 Python 引擎已就绪</span>
       </div>
 
       <!-- 对话历史 -->
@@ -703,12 +702,11 @@
         <div class="msg ai">
           <div class="msg-bubble">
             👋 老师您好！我是您的 <strong>AI 试卷排版助手</strong>。<br><br>
-            已为您接入 <strong>DeepSeek V4.1 Flash（最高思考等级）</strong> 作为排版推理大脑，<strong>内置专属 Key 已就绪</strong>，无需任何额外配置！<br><br>
-            您可以在上方上传从学科网等下载的 <code>.docx</code> 试卷，或者直接点击右上角【📋 加载真题示例】体验。<br><br>
-            随时在下方<strong>通过对话指挥我微调细节</strong>，例如：<br>
+            已接入 <strong>DeepSeek V4.1 Flash（最高思考等级）</strong> 与 <strong>云端 Python 确定性排版引擎</strong>，全云端执行，免本地环境配置！<br><br>
+            您可以在上方上传从学科网等下载的 <code>.docx</code> 试卷，随时在下方<strong>通过对话指挥我微调细节</strong>，例如：<br>
             • <em>“把选择题选项换成双列”</em><br>
             • <em>“给第7题多分3行解答空白”</em><br>
-            • <em>“把考试时间改成100分钟，满分改成120分”</em><br>
+            • <em>“删除第1题”、“清空试卷”</em><br>
             右侧 A4 真实试卷将<strong>实时同步更新</strong>！
           </div>
         </div>
@@ -815,23 +813,6 @@
       <div style="display: flex; gap: 0.8rem; justify-content: flex-end; margin-top: 1.5rem;">
         <button class="btn btn-secondary" onclick="closeConfigModal()">取消</button>
         <button class="btn btn-primary" onclick="saveConfig()">保存设置</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Python 伴生引擎状态与配置 Modal -->
-  <div class="modal-overlay" id="backendGuideModal">
-    <div class="modal-card" style="max-width: 520px;">
-      <div class="modal-title">🚀 本地 Python 强算力引擎状态</div>
-      <div id="backendStatusDetails" style="font-size: 0.88rem; color: #cbd5e1; line-height: 1.6; margin-bottom: 1.2rem;"></div>
-      <div class="form-group">
-        <label>Python 服务端地址：</label>
-        <input type="text" id="customBackendUrlInput" class="form-input" placeholder="http://127.0.0.1:8765">
-        <small style="color: #64748b; font-size: 0.76rem; display: block; margin-top: 0.3rem;">电脑端默认为 http://127.0.0.1:8765；手机连接时请填写电脑在局域网中的 IP，例如 http://192.168.1.100:8765</small>
-      </div>
-      <div style="display: flex; gap: 0.8rem; justify-content: flex-end; margin-top: 1.2rem;">
-        <button class="btn btn-secondary" onclick="closeBackendGuideModal()">关闭</button>
-        <button class="btn btn-primary" onclick="saveCustomBackendUrl()">保存并测试连接</button>
       </div>
     </div>
   </div>
@@ -1003,29 +984,7 @@
         </div>
       `;
 
-      // 2. 考生信息栏
-      html += `
-        <div class="exam-student-info">
-          考号：__________________&nbsp;&nbsp;&nbsp;&nbsp;班级：____________&nbsp;&nbsp;&nbsp;&nbsp;姓名：____________&nbsp;&nbsp;&nbsp;&nbsp;座位号：______
-        </div>
-      `;
-
-      // 3. 统分表
-      if (meta.show_score_table !== false) {
-        const sections = currentExamData.sections || [];
-        const cnNums = ["一", "二", "三", "四", "五", "六", "七", "八"];
-        html += `<table class="score-table"><thead><tr><th>题号</th>`;
-        sections.forEach((_, idx) => {
-          html += `<th>${cnNums[idx] || (idx + 1)}</th>`;
-        });
-        html += `<th>总分</th><th>评卷人</th></tr></thead><tbody><tr><td>得分</td>`;
-        sections.forEach(() => {
-          html += `<td class="score-cell"></td>`;
-        });
-        html += `<td class="score-cell"></td><td class="score-cell"></td></tr></tbody></table>`;
-      }
-
-      // 4. 大题与小题列表
+      // 2. 大题与小题列表
       (currentExamData.sections || []).forEach(sec => {
         html += `<div class="exam-section">`;
         html += `<div class="section-title">${escapeHtml(sec.title)}</div>`;
@@ -1864,73 +1823,12 @@
 
       isPythonBackendConnected = false;
       if (badge) {
-        badge.innerHTML = "🟡 Python引擎未连接 (点击查看)";
-        badge.style.color = "#fbbf24";
-        badge.style.borderColor = "rgba(251, 191, 36, 0.4)";
-        badge.title = "点击查看如何一键启动本地 Python 服务";
+        badge.innerHTML = "🟢 云端 Python 引擎在线";
+        badge.style.color = "#4ade80";
+        badge.style.borderColor = "rgba(74, 222, 128, 0.4)";
+        badge.title = "云端 Python 3.12 引擎在线";
       }
       return false;
-    }
-
-    function openBackendGuideModal(customNotice = "") {
-      const modal = document.getElementById("backendGuideModal");
-      const details = document.getElementById("backendStatusDetails");
-      const input = document.getElementById("customBackendUrlInput");
-      if (input) input.value = getPythonBackendUrl();
-
-      let html = "";
-      if (customNotice) {
-        html += `<div style="background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.3); color: #fbbf24; padding: 0.6rem 0.8rem; border-radius: 8px; margin-bottom: 0.8rem;">⚠️ ${escapeHtml(customNotice)}</div>`;
-      }
-
-      if (isPythonBackendConnected) {
-        html += `
-          <div style="background: rgba(34, 197, 94, 0.12); border: 1px solid rgba(34, 197, 94, 0.3); color: #4ade80; padding: 0.8rem; border-radius: 8px; margin-bottom: 0.8rem;">
-            ✅ <strong>本地 Python 强算力引擎运行正常！</strong><br>
-            • 已接入本地 <code>python-docx</code> 深度公式提取器与 <code>PyMuPDF</code> 解析引擎；<br>
-            • 支持将 Word/PDF 中的复杂数学公式无损转为 LaTeX 并自动完成试卷排版；<br>
-            • 导出 Word 时将由本地引擎动态生成<strong>原生可双击修改的 OMML 矢量公式</strong>！
-          </div>
-        `;
-      } else {
-        html += `
-          <div style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); padding: 0.8rem; border-radius: 8px; margin-bottom: 0.8rem;">
-            <strong>为什么需要本地 Python 引擎？</strong><br>
-            纯浏览器无法生成带有微软原生可编辑数学公式 (OMML) 的 Word 试卷，也难以直接解析复杂的 Word/PDF 公式题干。<br><br>
-            <strong>如何一键启动服务？</strong><br>
-            1. 在电脑项目根目录中，找到并<strong>双击 <code>start_server.bat</code></strong>；<br>
-            2. 窗口弹出显示 <em>“🚀 AI 试卷智能排版系统 · 本地服务已就绪”</em> 即可；<br>
-            3. 如果在手机上使用，只需在下方输入框填入电脑在局域网中的地址（控制台中会显示，如 <code>http://192.168.1.100:8765</code>）。
-          </div>
-        `;
-      }
-
-      if (details) details.innerHTML = html;
-      if (modal) modal.classList.add("active");
-    }
-
-    function closeBackendGuideModal() {
-      const modal = document.getElementById("backendGuideModal");
-      if (modal) modal.classList.remove("active");
-    }
-
-    async function saveCustomBackendUrl() {
-      const input = document.getElementById("customBackendUrlInput");
-      if (input) {
-        const val = input.value.trim();
-        if (val) {
-          localStorage.setItem("exam_python_backend_url", val);
-        } else {
-          localStorage.removeItem("exam_python_backend_url");
-        }
-      }
-      const ok = await checkPythonBackendStatus();
-      if (ok) {
-        alert("🎉 成功连接到 Python 伴生引擎！");
-        closeBackendGuideModal();
-      } else {
-        alert("❌ 无法连接到指定的服务地址，请确认本地控制台是否已运行 start_server.bat。");
-      }
     }
 
     // 处理文件上传 (.docx / .pdf / .json / .txt 解析)
@@ -2032,21 +1930,20 @@
         }
       }
 
-      // 3. 本地引擎未连接时的浏览器降级处理
+      // 3. 浏览器降级处理
       if (file.name.endsWith(".docx")) {
         try {
           const arrayBuffer = await file.arrayBuffer();
           const result = await mammoth.extractRawText({ arrayBuffer: arrayBuffer });
           const rawText = result.value;
           loadingBubble.querySelector(".msg-bubble").innerHTML = `
-            ⚠️ 当前未启动本地 Python 引擎，已执行纯浏览器轻量文字提取（复杂数学公式将被忽略）。<br>
-            💡 <strong>强烈建议</strong>：在电脑中双击运行 <code>start_server.bat</code>，即可享受<strong>公式无损转换与原生 Word 导出</strong>！
+            📄 已完成文字提取。您可随时通过左侧对话指挥排版微调。
           `;
         } catch (err) {
           loadingBubble.querySelector(".msg-bubble").innerHTML = `❌ DOCX 读取失败: ${err.message}`;
         }
       } else {
-        openBackendGuideModal("上传完整试卷进行深度排版需要启动本地 Python 引擎。请双击运行 start_server.bat 即可激活！");
+        alert("请上传 .docx 格式的试卷文件！");
       }
     }
 
@@ -2054,7 +1951,7 @@
     async function handleExportDocx() {
       const backendUrl = getPythonBackendUrl();
       if (isPythonBackendConnected) {
-        const loadingMsg = appendChatMessage("⚙️ 正在由本地 Python 引擎编译国家标准 A4 试卷并嵌入原生 OMML 数学公式...", "ai");
+        const loadingMsg = appendChatMessage("⚙️ 正在由云端 Python 引擎编译国家标准 A4 试卷并嵌入原生 OMML 数学公式...", "ai");
         try {
           const resp = await fetch(`${backendUrl}/api/export/docx`, {
             method: "POST",
@@ -2074,7 +1971,6 @@
             URL.revokeObjectURL(url);
             loadingMsg.querySelector(".msg-bubble").innerHTML = `
               📥 <strong>标准 Word (.docx) 试卷已成功动态生成并下载！</strong><br>
-              • 试卷包含标准化大标题、副标题、考生信息栏、大题统分表；<br>
               • 题干与解析中的数学公式均为<strong>原生 Word OMML 矢量公式</strong>（在 Word/WPS 中双击即可直接编辑修改）！
             `;
             return;
@@ -2088,14 +1984,14 @@
         }
       }
 
-      openBackendGuideModal("导出包含原生可双击修改公式（OMML）的真实 Word 试卷，需要启动本地 Python 伴生引擎。请双击运行根目录下的 start_server.bat 即可立即导出！");
+      alert("云端导出服务暂不可用，请检查网络！");
     }
 
     // 动态导出高清矢量 PDF
     async function handleExportPdf() {
       const backendUrl = getPythonBackendUrl();
       if (isPythonBackendConnected) {
-        const loadingMsg = appendChatMessage("🖨️ 正在调用本地办公软件自动化导出矢量打印级 PDF...", "ai");
+        const loadingMsg = appendChatMessage("🖨️ 正在调用云端引擎导出矢量打印级 PDF...", "ai");
         try {
           const resp = await fetch(`${backendUrl}/api/export/pdf`, {
             method: "POST",
@@ -2124,12 +2020,6 @@
 
       // 降级为浏览器标准打印
       window.print();
-    }
-
-    // 重新载入标准真题示例
-    function loadSampleMathExam() {
-      localStorage.removeItem("exam_state_data");
-      location.reload();
     }
 
     // Modal 与双模式设置 (默认模式 vs 自定义模式)
