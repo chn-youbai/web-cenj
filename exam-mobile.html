@@ -1150,12 +1150,7 @@
 
       <!-- 快捷微调指令滑轮 (含确定性 Python 工具) -->
       <div class="quick-chips-wrapper">
-        <span class="chip-item" style="border-color: rgba(239, 68, 68, 0.4); background: rgba(239, 68, 68, 0.1); color: #fca5a5;" onclick="sendMobilePrompt('清空试卷')">🗑️ 清空整卷</span>
-        <span class="chip-item" style="border-color: rgba(239, 68, 68, 0.4); background: rgba(239, 68, 68, 0.1); color: #fca5a5;" onclick="sendMobilePrompt('清空所有答案')">📝 清空所有答案</span>
-        <span class="chip-item" style="border-color: rgba(59, 130, 246, 0.4); background: rgba(59, 130, 246, 0.1); color: #93c5fd;" onclick="sendMobilePrompt('全卷重新编号')">🔢 全卷重新编号</span>
-        <span class="chip-item" style="border-color: rgba(245, 158, 11, 0.4); background: rgba(245, 158, 11, 0.1); color: #fcd34d;" onclick="sendMobilePrompt('删除所有解答题')">✂️ 删除全部解答题</span>
-        <span class="chip-item" onclick="sendMobilePrompt('清空选择题答案')">📝 清空选择题答案</span>
-        <span class="chip-item" onclick="sendMobilePrompt('把第3题选项改成两列对齐')">📐 第3题换两列</span>
+        <span class="chip-item" style="border-color: rgba(239, 68, 68, 0.4); background: rgba(239, 68, 68, 0.1); color: #fca5a5;" onclick="confirmClearAll()">🗑️ 清空整卷</span>
       </div>
 
       <!-- 底部输入框 -->
@@ -1294,7 +1289,7 @@
             <div class="desc">直接上传并由云端 AI + Python 结构化解析</div>
           </div>
         </button>
-        <button class="drawer-item-btn" onclick="closeDrawer('menuDrawer'); sendMobilePrompt('清空试卷');">
+        <button class="drawer-item-btn" onclick="closeDrawer('menuDrawer'); confirmClearAll();">
           <span style="font-size: 1.3rem;">🗑️</span>
           <div>
             <div>清空当前试卷内容</div>
@@ -1978,6 +1973,13 @@
         .replace(/>/g, "&gt;");
     }
 
+    // 清空整卷二次确认
+    function confirmClearAll() {
+      if (confirm("⚠️ 确定要清空整份试卷吗？\n此操作将清空当前所有大题、题目与答案。")) {
+        sendMobilePrompt('清空试卷');
+      }
+    }
+
     // 快捷微调指令发送
     function sendMobilePrompt(text) {
       document.getElementById("mobileChatInput").value = text;
@@ -2053,7 +2055,7 @@
                 ${escapeHtml(data.message).replace(/\n/g, '<br>')}
                 <br><span class="engine-chip" style="background: rgba(59, 130, 246, 0.15); color: #60a5fa; border-color: rgba(59, 130, 246, 0.3);">🤖 AI 智能引导（请点击快捷指令）</span>
                 <div style="display:flex; flex-wrap:wrap; gap:0.4rem; margin-top:0.65rem;">
-                  <span class="chip-item" style="border-color: rgba(239, 68, 68, 0.4); background: rgba(239, 68, 68, 0.12); color: #fca5a5;" onclick="sendMobilePrompt('清空试卷')">🗑️ 清空整份试卷</span>
+                  <span class="chip-item" style="border-color: rgba(239, 68, 68, 0.4); background: rgba(239, 68, 68, 0.12); color: #fca5a5;" onclick="confirmClearAll()">🗑️ 清空整份试卷</span>
                   <span class="chip-item" style="border-color: rgba(239, 68, 68, 0.4); background: rgba(239, 68, 68, 0.12); color: #fca5a5;" onclick="sendMobilePrompt('删除第1题')">❌ 删除第1题</span>
                   <span class="chip-item" style="border-color: rgba(245, 158, 11, 0.4); background: rgba(245, 158, 11, 0.12); color: #fcd34d;" onclick="sendMobilePrompt('删除全部解答题')">✂️ 删除全部解答题</span>
                   <span class="chip-item" style="border-color: rgba(59, 130, 246, 0.4); background: rgba(59, 130, 246, 0.12); color: #93c5fd;" onclick="sendMobilePrompt('清空所有答案')">📝 清空所有答案</span>

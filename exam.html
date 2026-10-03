@@ -714,10 +714,7 @@
 
       <!-- 快捷提示气泡 -->
       <div class="quick-prompts">
-        <span class="quick-pill" onclick="sendQuickPrompt('把第3题选项改成两列对齐')">📐 第3题换双列</span>
-        <span class="quick-pill" onclick="sendQuickPrompt('把第1题选项换成单列排版')">📏 第1题换单列</span>
-        <span class="quick-pill" onclick="sendQuickPrompt('为第7题解答题增加5行空白')">✍️ 增加大题留白</span>
-        <span class="quick-pill" onclick="sendQuickPrompt('清理题目中残留的水印与广告词')">🧹 一键去水印</span>
+        <span class="quick-pill" style="border-color: rgba(239, 68, 68, 0.4); background: rgba(239, 68, 68, 0.1); color: #fca5a5;" onclick="confirmClearAll()">🗑️ 清空整卷</span>
       </div>
 
       <!-- 底部输入框 -->
@@ -1077,6 +1074,13 @@
         previewPanel.classList.remove("mobile-hidden");
         tabChatBtn.classList.remove("active");
         tabPreviewBtn.classList.add("active");
+      }
+    }
+
+    // 清空整卷二次确认
+    function confirmClearAll() {
+      if (confirm("⚠️ 确定要清空整份试卷吗？\n此操作将清空当前所有大题、题目与答案。")) {
+        sendQuickPrompt('清空试卷');
       }
     }
 
