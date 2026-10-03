@@ -1267,6 +1267,11 @@
       border-color: #8b5cf6;
     }
 
+    /* 专属直通打印门户 (屏幕常驻隐藏，打印时唯一显示) */
+    #mobilePrintPortal {
+      display: none !important;
+    }
+
     /* 打印专用标准样式 */
     @media print {
       body, html {
@@ -1281,53 +1286,48 @@
         display: block !important;
         position: static !important;
       }
-      .mobile-header, .mobile-bottom-nav, .preview-control-bar, .preview-floating-bar,
-      .drawer-overlay, .quick-chips-wrapper, .chat-bottom-bar, .chat-subbar, .chat-stream,
-      .exit-fullscreen-btn, .mobile-reader-container, .mobile-toast, #chatPane,
-      #menuDrawer, #configModal, #helpModal, #exportDrawer, .a4-measure-sandbox {
+
+      /* 隐藏屏幕端所有的 UI、导航、视口与缩放舞台，杜绝手机端任何 transform、overflow 与尺寸对打印产生污染 */
+      body > *:not(#mobilePrintPortal) {
         display: none !important;
       }
-      .main-container,
-      .view-pane,
-      #previewPane,
-      .pane-preview,
-      .preview-scroll-viewport,
-      .a4-simulation-wrapper,
-      .a4-scaled-container,
-      .a4-scaled-stage,
-      .a4-paper-real,
-      .a4-pages-stack {
+
+      /* 专属打印门户容器：直接挂载在 body 下，无任何多余嵌套或样式污染 */
+      #mobilePrintPortal {
         display: block !important;
         position: static !important;
         width: 100% !important;
-        max-width: 100% !important;
-        min-width: 0 !important;
-        height: auto !important;
-        min-height: 0 !important;
-        max-height: none !important;
         margin: 0 !important;
         padding: 0 !important;
-        border: none !important;
-        outline: none !important;
+        background: #ffffff !important;
+        overflow: visible !important;
+      }
+
+      #mobilePrintPortal .a4-pages-stack {
+        display: block !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        gap: 0 !important;
         background: transparent !important;
         box-shadow: none !important;
-        overflow: visible !important;
-        transform: none !important;
       }
-      .a4-page {
+
+      #mobilePrintPortal .a4-page {
         display: block !important;
         position: relative !important;
         width: 210mm !important;
+        max-width: 100% !important;
+        height: 297mm !important;
         min-height: 297mm !important;
-        height: auto !important;
-        max-height: none !important;
+        max-height: 297mm !important;
+        box-sizing: border-box !important;
+        margin: 0 auto !important;
+        padding: 16mm 15mm 12mm 15mm !important;
+        background: #ffffff !important;
         box-shadow: none !important;
         border-radius: 0 !important;
-        margin: 0 !important;
-        padding: 16mm 15mm 12mm 15mm !important;
-        box-sizing: border-box !important;
         overflow: visible !important;
-        background: #ffffff !important;
         page-break-before: auto !important;
         break-before: auto !important;
         page-break-after: always !important;
@@ -1335,22 +1335,42 @@
         page-break-inside: avoid !important;
         break-inside: avoid !important;
       }
-      .a4-page:first-child {
+
+      #mobilePrintPortal .a4-page:first-child {
         page-break-before: avoid !important;
         break-before: avoid !important;
       }
-      .a4-page:last-child {
-        page-break-after: avoid !important;
-        break-after: avoid !important;
+
+      #mobilePrintPortal .a4-page:last-child {
+        page-break-after: auto !important;
+        break-after: auto !important;
       }
-      .a4-page-body {
+
+      #mobilePrintPortal .a4-page-body {
         display: block !important;
         width: 100% !important;
-        height: auto !important;
-        max-height: none !important;
+        box-sizing: border-box !important;
         overflow: visible !important;
+      }
+
+      #mobilePrintPortal .a4-page-footer {
+        position: absolute !important;
+        bottom: 12mm !important;
+        left: 15mm !important;
+        right: 15mm !important;
+        height: 7mm !important;
+        margin: 0 !important;
+        border-top: 1px dashed #666 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        font-size: 10.5pt !important;
+        color: #000000 !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
         box-sizing: border-box !important;
       }
+
       .question-item, .a4-q-item, .exam-section-header, .a4-section-header, .answer-item, .a4-ans-item {
         page-break-inside: avoid !important;
         break-inside: avoid !important;
@@ -1390,23 +1410,7 @@
         page-break-inside: avoid !important;
         break-inside: avoid !important;
       }
-      .a4-page-footer {
-        position: absolute !important;
-        bottom: 12mm !important;
-        left: 15mm !important;
-        right: 15mm !important;
-        height: 7mm !important;
-        margin: 0 !important;
-        border-top: 1px dashed #666 !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        font-size: 10.5pt !important;
-        color: #000000 !important;
-        page-break-inside: avoid !important;
-        break-inside: avoid !important;
-        box-sizing: border-box !important;
-      }
+
       @page {
         size: A4 portrait;
         margin: 0;
@@ -1713,6 +1717,9 @@
       </div>
     </div>
   </div>
+
+  <!-- 移动端专属直通打印门户 (脱壳离散渲染，彻底杜绝手机屏幕缩放污染) -->
+  <div id="mobilePrintPortal"></div>
 
   <script>
     // 内置 API Keys
@@ -3850,6 +3857,24 @@
       showToast("📦 已导出试卷工程文件");
     }
 
+    // 渲染同步专属直通打印门户 (脱壳离散渲染，彻底杜绝手机屏幕缩放污染)
+    async function preparePrintPortal() {
+      let paper = document.getElementById("a4PaperContent");
+      if (!paper || !paper.querySelector(".a4-page")) {
+        await renderA4Real();
+        paper = document.getElementById("a4PaperContent");
+      }
+      let portal = document.getElementById("mobilePrintPortal");
+      if (!portal) {
+        portal = document.createElement("div");
+        portal.id = "mobilePrintPortal";
+        document.body.appendChild(portal);
+      }
+      if (paper) {
+        portal.innerHTML = paper.innerHTML;
+      }
+    }
+
     // 动态导出矢量 PDF / 系统打印
     async function triggerMobilePrint() {
       const backendUrl = getPythonBackendUrl();
@@ -3878,77 +3903,25 @@
         } catch(e) {}
       }
 
-      switchPreviewMode('real');
-      switchMobileNav('preview');
+      // 同步将真实 A4 排版数据注入专属打印门户
+      await preparePrintPortal();
 
-      // 同步移除缩放 transform 与外层宽高限制，使 WebKit (iOS Safari) 能以原始物理盒模型进行打印排版与断页计算
-      const stage = document.getElementById("a4ScaledStage");
-      const container = document.getElementById("a4ScaledContainer");
-      if (stage) {
-        if (!stage.dataset.savedTransform) {
-          stage.dataset.savedTransform = stage.style.transform;
-        }
-        stage.style.transform = "none";
-      }
-      if (container) {
-        if (!container.dataset.savedWidth) {
-          container.dataset.savedWidth = container.style.width;
-          container.dataset.savedHeight = container.style.height;
-        }
-        container.style.width = "100%";
-        container.style.height = "auto";
-      }
-
-      // 强制触发一次重排以刷新渲染树
-      void document.body.offsetHeight;
-
+      // 直接调用原生打印，无需任何视图切换与缩放重排，彻底隔绝屏幕缩放污染
       setTimeout(() => {
         window.print();
-      }, 150);
+      }, 80);
     }
 
     // 监听系统打印前后事件，确保手机端（尤其 iOS Safari）打印视口无变形与无空白页
-    window.addEventListener("beforeprint", () => {
-      // 切换至真实 A4 视图
-      switchPreviewMode('real');
-      switchMobileNav('preview');
-
-      // 临时移除缩放 transform 与外层宽高限制，使 WebKit 打印排版器能自起点 (0,0) 正确计算物理页面断页
-      const stage = document.getElementById("a4ScaledStage");
-      const container = document.getElementById("a4ScaledContainer");
-      if (stage) {
-        if (!stage.dataset.savedTransform) {
-          stage.dataset.savedTransform = stage.style.transform;
-        }
-        stage.style.transform = "none";
-      }
-      if (container) {
-        if (!container.dataset.savedWidth) {
-          container.dataset.savedWidth = container.style.width;
-          container.dataset.savedHeight = container.style.height;
-        }
-        container.style.width = "100%";
-        container.style.height = "auto";
-      }
-      void document.body.offsetHeight;
+    window.addEventListener("beforeprint", async () => {
+      await preparePrintPortal();
     });
 
     window.addEventListener("afterprint", () => {
-      // 打印完成后立即恢复手机端自适应缩放与容器尺寸
-      const stage = document.getElementById("a4ScaledStage");
-      const container = document.getElementById("a4ScaledContainer");
-      if (stage && stage.dataset.savedTransform !== undefined) {
-        stage.style.transform = stage.dataset.savedTransform;
-        delete stage.dataset.savedTransform;
-      }
-      if (container && container.dataset.savedWidth !== undefined) {
-        container.style.width = container.dataset.savedWidth;
-        container.style.height = container.dataset.savedHeight;
-        delete container.dataset.savedWidth;
-        delete container.dataset.savedHeight;
-      }
-      if (typeof applyA4Zoom === "function") {
-        applyA4Zoom();
+      // 打印完成后立即清理打印门户内存
+      const portal = document.getElementById("mobilePrintPortal");
+      if (portal) {
+        portal.innerHTML = "";
       }
     });
 
