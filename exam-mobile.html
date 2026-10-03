@@ -760,12 +760,11 @@
     /* 离散 A4 单页卡片 (国家标准 210mm × 297mm 比例) */
     .a4-page {
       width: 794px;
-      height: 1123px;
       min-height: 1123px;
-      max-height: 1123px;
+      height: 1123px;
       background: #ffffff;
       color: #000000;
-      padding: 48px 55px 24px 55px;
+      padding: 45px 55px 22px 55px;
       box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
       border-radius: 3px;
       display: flex;
@@ -773,14 +772,14 @@
       justify-content: space-between;
       box-sizing: border-box;
       position: relative;
-      overflow: hidden;
+      overflow: visible;
       font-family: "SimSun", "Songti SC", "Times New Roman", serif;
       line-height: 1.6;
     }
 
     .a4-page-body {
       flex: 1;
-      overflow: hidden;
+      overflow: visible;
       display: flex;
       flex-direction: column;
     }
@@ -1181,7 +1180,7 @@
         box-shadow: none !important;
         border-radius: 0 !important;
         margin: 0 !important;
-        padding: 20mm 15mm 15mm 15mm !important;
+        padding: 16mm 15mm 12mm 15mm !important;
         box-sizing: border-box !important;
         display: flex !important;
         flex-direction: column !important;
@@ -1190,6 +1189,7 @@
         break-after: page !important;
         page-break-inside: avoid !important;
         break-inside: avoid !important;
+        overflow: visible !important;
       }
       .a4-page:last-child {
         page-break-after: auto !important;
@@ -1199,14 +1199,18 @@
         flex: 1 !important;
         overflow: visible !important;
       }
+      .question-item, .a4-q-item, .exam-section-header, .a4-section-header, .answer-item, .a4-ans-item {
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+      }
       .a4-page-footer {
-        height: 8mm !important;
-        margin-top: 4mm !important;
+        height: 7mm !important;
+        margin-top: 3mm !important;
         border-top: 1px dashed #666 !important;
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
-        font-size: 11pt !important;
+        font-size: 10.5pt !important;
         color: #000000 !important;
         flex-shrink: 0 !important;
       }
@@ -2043,7 +2047,7 @@
       }
 
       sandbox.innerHTML = blocks.map((b, idx) => `
-        <div class="a4-measure-item" data-measure-idx="${idx}" style="overflow: visible;">
+        <div class="a4-measure-item" data-measure-idx="${idx}" style="display: flow-root; width: 684px; box-sizing: border-box; margin: 0; padding: 0;">
           ${b.html}
         </div>
       `).join('');
@@ -2058,10 +2062,7 @@
         let h = 30;
         if (node) {
           const rect = node.getBoundingClientRect();
-          const style = window.getComputedStyle(node);
-          const mt = parseFloat(style.marginTop) || 0;
-          const mb = parseFloat(style.marginBottom) || 0;
-          h = Math.max(16, Math.ceil(rect.height + mt + mb));
+          h = Math.max(20, Math.ceil(rect.height));
         }
         measuredBlocks.push({
           ...blocks[i],
@@ -2069,8 +2070,8 @@
         });
       }
 
-      // 3. WPS/Office 真实分页流计算引擎 (A4 可打印正文高度 ~990px)
-      const PAGE_BODY_MAX_HEIGHT = 990;
+      // 3. WPS/Office 真实分页流计算引擎 (安全正文高度 855px，保留充足物理打印安全底距，彻底杜绝切题)
+      const PAGE_BODY_MAX_HEIGHT = 855;
       const pages = [];
       let currentPage = [];
       let currentHeight = 0;
