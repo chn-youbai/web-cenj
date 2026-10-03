@@ -1,0 +1,10 @@
+{
+  "functions": {
+    "main.py": {
+      "excludeFiles": "{p/**,s/**,*.jpg,*.JPG,*.png,*.pdf,*.docx}"
+    },
+    "api/**/*.py": {
+      "excludeFiles": "{p/**,s/**,*.jpg,*.JPG,*.png,*.pdf,*.docx}"
+    }
+  }
+}

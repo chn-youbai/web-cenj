@@ -1,0 +1,9 @@
+# Exclude heavy media assets from Vercel deployment & Python function bundles
+p/
+s/
+*.JPG
+*.jpg
+*.png
+*.pdf
+sample_math_exam.pdf
+sample_math_exam.docx
