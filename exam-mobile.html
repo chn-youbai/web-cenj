@@ -947,7 +947,7 @@
       width: 100%;
     }
 
-    /* 选择题右侧附图图文并排：图片在右侧，选项在左侧，图片高度与选项行数整体高度一致 */
+    /* 1° 选择题右侧附图图文并排：题干居上，选项在左，图片在右，图片高度与选项行数整体高度一致 */
     .choice-with-figure-wrap {
       display: flex;
       flex-direction: row;
@@ -966,7 +966,8 @@
       justify-content: center;
     }
     .choice-options-left .a4-options,
-    .choice-options-left .options-grid {
+    .choice-options-left .options-grid,
+    .choice-options-left .options-grid-mobile {
       padding-left: 2px;
       width: 100%;
     }
@@ -979,24 +980,65 @@
     }
     .choice-col-figure {
       max-width: 100%;
-      max-height: 85px;
+      object-fit: contain;
+      border-radius: 2px;
+      display: block;
+      margin-left: auto;
+    }
+    /* 选项两行时图片高度与两行齐平 */
+    .choice-with-figure-wrap.rows-2 .choice-col-figure {
+      max-height: 65px;
+    }
+    /* 选项四行时图片高度与四行齐平 */
+    .choice-with-figure-wrap.rows-4 .choice-col-figure {
+      max-height: 110px;
+    }
+
+    /* 2° 填空题图文并排：题干在左，图在右部空白区域 */
+    .fillin-with-figure-wrap {
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+      margin: 4px 0 8px 0;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .fillin-stem-left {
+      flex: 1 1 auto;
+      min-width: 0;
+      line-height: 1.6;
+      text-align: justify;
+    }
+    .fillin-figure-right {
+      flex: 0 0 auto;
+      max-width: 32%;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+    }
+    .fillin-col-figure {
+      max-width: 100%;
+      max-height: 95px;
       object-fit: contain;
       border-radius: 2px;
       display: block;
       margin-left: auto;
     }
 
-    /* 解答题留白与左上角内嵌附图 */
+    /* 3° 解答题留白与左上角内嵌附图：图在题干及设问下方空白区中左上方部分 */
     .a4-blank, .blank-space {
       border-bottom: 1px dashed rgba(0, 0, 0, 0.1);
       margin: 6px 0;
     }
-    .a4-blank.with-corner-fig, .blank-space.with-corner-fig {
+    .a4-blank.with-corner-fig, .blank-space.with-corner-fig, .blank-space-mobile.with-corner-fig {
       position: relative;
-      border-bottom: 1px dashed rgba(0, 0, 0, 0.08);
+      border-bottom: 1px dashed rgba(0, 0, 0, 0.1);
       margin: 6px 0;
       padding: 4px;
       display: flow-root;
+      box-sizing: border-box;
     }
     .blank-corner-fig-box {
       float: left;
@@ -1004,12 +1046,12 @@
       max-width: 35%;
       max-height: 140px;
       display: flex;
-      align-items: center;
-      justify-content: center;
+      align-items: flex-start;
+      justify-content: flex-start;
     }
     .blank-corner-figure {
       max-width: 100%;
-      max-height: 135px;
+      max-height: 130px;
       object-fit: contain;
       border-radius: 2px;
       display: block;
@@ -1263,8 +1305,74 @@
       font-size: 0.88rem;
       outline: none;
     }
-    .form-input-mobile:focus {
-      border-color: #8b5cf6;
+    /* 导出范围选择器弹窗样式 */
+    .export-scope-content {
+      max-height: 85vh;
+    }
+    .export-scope-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin: 10px 0 12px 0;
+    }
+    .export-scope-card {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 14px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      color: #f1f5f9;
+      text-align: left;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      position: relative;
+    }
+    .export-scope-card:hover, .export-scope-card:active {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: rgba(139, 92, 246, 0.5);
+      transform: scale(0.985);
+    }
+    .export-scope-card.active {
+      background: rgba(99, 102, 241, 0.15);
+      border-color: #6366f1;
+    }
+    .export-scope-card .scope-icon-box {
+      font-size: 1.5rem;
+      flex-shrink: 0;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 10px;
+    }
+    .export-scope-card .scope-text-box {
+      flex: 1;
+      min-width: 0;
+    }
+    .export-scope-card .scope-card-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #f8fafc;
+      margin-bottom: 2px;
+    }
+    .export-scope-card .scope-card-sub {
+      font-size: 0.74rem;
+      color: #94a3b8;
+      line-height: 1.35;
+    }
+    .export-scope-card .scope-tag {
+      flex-shrink: 0;
+      font-size: 0.68rem;
+      padding: 3px 8px;
+      border-radius: 6px;
+      background: rgba(59, 130, 246, 0.2);
+      color: #60a5fa;
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      font-weight: 600;
     }
 
     /* 专属直通打印门户 (屏幕常驻隐藏，打印时唯一显示) */
@@ -1396,17 +1504,41 @@
         page-break-inside: avoid !important;
         break-inside: avoid !important;
       }
-      .choice-col-figure {
-        max-height: 85px !important;
+      .choice-with-figure-wrap.rows-2 .choice-col-figure {
+        max-height: 65px !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+      }
+      .choice-with-figure-wrap.rows-4 .choice-col-figure {
+        max-height: 110px !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+      }
+      .fillin-with-figure-wrap {
+        display: flex !important;
+        flex-direction: row !important;
+        justify-content: space-between !important;
+        align-items: flex-start !important;
+        gap: 14px !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+      }
+      .fillin-col-figure {
+        max-height: 95px !important;
         page-break-inside: avoid !important;
         break-inside: avoid !important;
       }
       .blank-space.with-corner-fig, .a4-blank.with-corner-fig {
+        display: flow-root !important;
         page-break-inside: avoid !important;
         break-inside: avoid !important;
       }
+      .blank-corner-fig-box {
+        float: left !important;
+        margin: 0 16px 8px 0 !important;
+      }
       .blank-corner-figure {
-        max-height: 125px !important;
+        max-height: 130px !important;
         page-break-inside: avoid !important;
         break-inside: avoid !important;
       }
@@ -1494,6 +1626,7 @@
           <button class="segment-btn active" id="modeReaderBtn" onclick="switchPreviewMode('reader')">📱 手机阅读</button>
           <button class="segment-btn" id="modeRealBtn" onclick="switchPreviewMode('real')">📄 真实A4印样</button>
         </div>
+        <button class="segment-btn" id="previewScopeBadge" style="padding: 4px 9px; font-size: 0.72rem; margin-left: auto;" onclick="cyclePreviewScope()">📄 仅试卷正文 ▾</button>
 
         <div class="zoom-group" id="zoomControls" style="display: none;">
           <button class="zoom-btn" onclick="stepA4Zoom(-0.15)">－</button>
@@ -1527,8 +1660,8 @@
       <!-- 浮动操作栏 -->
       <div class="preview-floating-bar">
         <button class="btn-pill" onclick="switchMobileNav('chat')">💬 对话微调</button>
-        <button class="btn-pill" onclick="handleExportDocx()">📥 导出Word</button>
-        <button class="btn-pill btn-pill-primary" onclick="triggerMobilePrint()">🖨️ 打印/PDF</button>
+        <button class="btn-pill" onclick="promptExportScope('docx')">📥 导出Word</button>
+        <button class="btn-pill btn-pill-primary" onclick="promptExportScope('print')">🖨️ 打印/PDF</button>
       </div>
     </section>
 
@@ -1560,11 +1693,18 @@
         <button class="drawer-close" onclick="closeDrawer('exportDrawer')">×</button>
       </div>
       <div class="drawer-item-list">
-        <button class="drawer-item-btn" onclick="handleExportDocx(); closeDrawer('exportDrawer');">
+        <button class="drawer-item-btn" onclick="closeDrawer('exportDrawer'); promptExportScope('docx');">
           <span style="font-size: 1.3rem;">📄</span>
           <div>
             <div>导出标准 Word (.docx)</div>
-            <div class="desc">公式原生保留，在 WPS / Word 中直接编辑</div>
+            <div class="desc">公式原生保留，可选仅试题/仅答案/完整</div>
+          </div>
+        </button>
+        <button class="drawer-item-btn" onclick="closeDrawer('exportDrawer'); promptExportScope('print');">
+          <span style="font-size: 1.3rem;">🖨️</span>
+          <div>
+            <div>系统打印 / 导出矢量 PDF</div>
+            <div class="desc">A4 矢量印刷标准，可选仅试题/仅答案/完整</div>
           </div>
         </button>
         <button class="drawer-item-btn" onclick="exportExamJson(); closeDrawer('exportDrawer');">
@@ -1574,18 +1714,52 @@
             <div class="desc">备份完整试卷数据，支持随时恢复或在电脑导入</div>
           </div>
         </button>
-        <button class="drawer-item-btn" onclick="handleExportPdf(); closeDrawer('exportDrawer');">
-          <span style="font-size: 1.3rem;">🖨️</span>
-          <div>
-            <div>导出矢量 PDF 文件</div>
-            <div class="desc">A4 矢量印刷标准，支持手机直下与系统打印保存</div>
-          </div>
-        </button>
-        <button class="drawer-item-btn" onclick="copyExamText(); closeDrawer('exportDrawer');">
+        <button class="drawer-item-btn" onclick="closeDrawer('exportDrawer'); promptExportScope('copy');">
           <span style="font-size: 1.3rem;">📋</span>
           <div>
-            <div>复制全卷文字内容</div>
+            <div>复制试卷文字内容</div>
             <div class="desc">提取文本复制到手机剪贴板</div>
+          </div>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 弹窗：选择导出与打印范围（仅试卷 / 仅答案 / 试卷+答案） -->
+  <div class="drawer-overlay" id="exportScopeModal" onclick="closeExportScopeModalOnBg(event)">
+    <div class="drawer-content export-scope-content">
+      <div class="drawer-drag-handle"></div>
+      <div class="drawer-title">
+        <span id="exportScopeModalTitle">🖨️ 选择输出内容</span>
+        <button class="drawer-close" onclick="closeExportScopeModal()">×</button>
+      </div>
+      <div style="font-size: 0.82rem; color: #94a3b8; margin: -6px 0 12px 0;">
+        试卷与参考答案支持独立分别输出，请选择本次操作的范围：
+      </div>
+      <div class="export-scope-list">
+        <button type="button" class="export-scope-card" onclick="executeExportWithScope('exam_only')">
+          <div class="scope-icon-box">📄</div>
+          <div class="scope-text-box">
+            <div class="scope-card-title">仅试卷正文（无答案）</div>
+            <div class="scope-card-sub">包含全卷题目及标准作答留白，绝不泄露答案，适合模考与现场测试</div>
+          </div>
+          <div class="scope-tag">推荐模考</div>
+        </button>
+
+        <button type="button" class="export-scope-card" onclick="executeExportWithScope('answers_only')">
+          <div class="scope-icon-box">📝</div>
+          <div class="scope-text-box">
+            <div class="scope-card-title">仅参考答案与解析</div>
+            <div class="scope-card-sub">仅包含全卷题目参考答案与详细解题分析步骤，适合教师批改与课后讲评</div>
+          </div>
+          <div class="scope-tag">教师备课</div>
+        </button>
+
+        <button type="button" class="export-scope-card" onclick="executeExportWithScope('all')">
+          <div class="scope-icon-box">📚</div>
+          <div class="scope-text-box">
+            <div class="scope-card-title">试卷与答案完整合并</div>
+            <div class="scope-card-sub">正文试卷在前，参考答案与解析在后，适合全套归档与练习后核对</div>
           </div>
         </button>
       </div>
@@ -2062,21 +2236,31 @@
       return cleaned.length;
     }
 
+    // 1° 选择题带配图时的行数决策：根据图所占行数及选项自身字数，选择两行或四行
+    function getChoiceLayoutWithFigure(options, validImages) {
+      if (!options || options.length === 0) return 2;
+      const lengths = options.map(getVisualOptionLength);
+      const maxLen = Math.max(...lengths, 0);
+      // 当单项字数>15字，或最长>15字，或存在较长公式：在左半侧排双列会折行挤压，因此独占4行 (A/B/C/D 顺次竖排)
+      if (maxLen > 15 || lengths.some(l => l > 15)) {
+        return 4;
+      }
+      // 否则所有选项短小，选择 2 行 (A B / C D 双列横排)
+      return 2;
+    }
+
     function renderSmartOptionsHtml(options, hasRightFigure) {
       if (!options || options.length === 0) return '';
       const lengths = options.map(getVisualOptionLength);
       const maxLen = Math.max(...lengths, 0);
 
-      // 当选择题右侧有插图时（用户示意布局：选项在左侧，A、B第一行，C、D第二行；插图在右侧）：
+      // 当选择题右侧有插图时（用户示意布局：选项在左侧，根据字数选两行或四行）：
       if (hasRightFigure) {
-        // 严格保证双列对齐 (A B / C D)，仅当单项字数极长(>26字)时才允许独占整行
-        if (maxLen <= 26 && lengths.every(l => l <= 26)) {
-          return `<div class="options-grid a4-options cols-2">${options.map(opt => `<div>${escapeHtml(opt)}</div>`).join('')}</div>`;
+        const rows = getChoiceLayoutWithFigure(options);
+        if (rows === 4) {
+          return `<div class="options-grid a4-options cols-1">${options.map(opt => `<div>${escapeHtml(opt)}</div>`).join('')}</div>`;
         }
-        return `<div class="options-grid a4-options cols-mixed">${options.map((opt, idx) => {
-          const isFull = lengths[idx] > 26;
-          return `<div class="${isFull ? 'opt-full' : ''}">${escapeHtml(opt)}</div>`;
-        }).join('')}</div>`;
+        return `<div class="options-grid a4-options cols-2">${options.map(opt => `<div>${escapeHtml(opt)}</div>`).join('')}</div>`;
       }
 
       // 常规无右侧插图的选择题：
@@ -2101,7 +2285,8 @@
     function renderMobileReader() {
       const container = document.getElementById("mobileReaderContainer");
       if (!container) return;
-      const meta = currentExamData.meta || {};
+      const filteredData = getFilteredExamData(currentPreviewScope);
+      const meta = filteredData.meta || {};
 
       let html = '';
 
@@ -2114,8 +2299,10 @@
         `;
       }
 
-      // 如果完全清空（无标题且无大题）
-      if ((!meta || !meta.title || !meta.title.trim()) && (!currentExamData.sections || currentExamData.sections.length === 0)) {
+      // 如果完全清空（无标题且无大题无答案）
+      const hasSections = filteredData.sections && filteredData.sections.length > 0;
+      const hasAnswers = filteredData.answers && filteredData.answers.length > 0;
+      if (!hasSections && !hasAnswers) {
         html += `
           <div class="exam-info-card" style="text-align: center; padding: 2.5rem 1rem; color: #94a3b8;">
             <div style="font-size: 2rem; margin-bottom: 0.5rem;">📄</div>
@@ -2126,7 +2313,7 @@
       }
 
       // 2. 各大题卡片
-      (currentExamData.sections || []).forEach(sec => {
+      (filteredData.sections || []).forEach(sec => {
         html += `<div class="exam-section-card">`;
         if (sec.title && sec.title.trim()) {
           html += `<div class="section-header-title">${escapeHtml(sec.title)}</div>`;
@@ -2137,27 +2324,57 @@
           html += `<div class="question-card-item">`;
           const prefix = q.number ? `<strong>【第 ${q.number} 题】</strong> ` : '';
           const stemFormatted = escapeHtml(q.stem || "").replace(/\n/g, '<br>');
-          html += `<div class="question-stem-mobile">${prefix}${stemFormatted}</div>`;
 
           const validImages = filterValidExamImages(q.images);
           const hasImages = validImages.length > 0;
           const hasOptions = q.options && q.options.length > 0;
+          const hasBlank = q.blank_lines !== undefined && q.blank_lines > 0;
 
           if (hasOptions && hasImages) {
-            // 移动端阅读图文并排：选项居左，插图居右
-            const optionsHtml = renderSmartOptionsHtml(q.options, true);
+            // 1° 选择题带配图：题干在上方，选项在左侧（2行或4行），配图在右侧
+            const choiceRows = getChoiceLayoutWithFigure(q.options, validImages);
+            const optionsHtml = choiceRows === 4
+              ? `<div class="options-grid-mobile cols-1">${q.options.map(opt => `<div>${escapeHtml(opt)}</div>`).join('')}</div>`
+              : `<div class="options-grid-mobile cols-2">${q.options.map(opt => `<div>${escapeHtml(opt)}</div>`).join('')}</div>`;
             const figureImgs = validImages.map(img => {
               const src = typeof img === 'string' ? img : (img.src || img.url || '');
               return src ? `<img src="${src}" alt="试题附图" class="choice-col-figure" loading="lazy" onerror="this.remove()" />` : '';
             }).join('');
+            html += `<div class="question-stem-mobile">${prefix}${stemFormatted}</div>`;
             html += `
-              <div class="choice-with-figure-wrap">
+              <div class="choice-with-figure-wrap rows-${choiceRows}">
                 <div class="choice-options-left">${optionsHtml}</div>
                 <div class="choice-figure-right">${figureImgs}</div>
               </div>
             `;
+          } else if (!hasOptions && hasImages && !hasBlank) {
+            // 2° 填空题带配图：题干在左，图在右部空白区域
+            const figureImgs = validImages.map(img => {
+              const src = typeof img === 'string' ? img : (img.src || img.url || '');
+              return src ? `<img src="${src}" alt="试题附图" class="fillin-col-figure" loading="lazy" onerror="this.remove()" />` : '';
+            }).join('');
+            html += `
+              <div class="fillin-with-figure-wrap">
+                <div class="fillin-stem-left">${prefix}${stemFormatted}</div>
+                <div class="fillin-figure-right">${figureImgs}</div>
+              </div>
+            `;
+          } else if (hasBlank && hasImages) {
+            // 3° 解答题带配图：题干在上方，图在下方答题留白区左上方
+            const blankH = Math.max(90, q.blank_lines * 22);
+            const figureImgs = validImages.map(img => {
+              const src = typeof img === 'string' ? img : (img.src || img.url || '');
+              return src ? `<img src="${src}" alt="大题配图" class="blank-corner-figure" loading="lazy" onerror="this.remove()" />` : '';
+            }).join('');
+            html += `<div class="question-stem-mobile">${prefix}${stemFormatted}</div>`;
+            html += `
+              <div class="blank-space-mobile with-corner-fig" style="min-height: ${blankH}px;">
+                <div class="blank-corner-fig-box">${figureImgs}</div>
+              </div>
+            `;
           } else {
-            // 题目附图
+            // 常规题目
+            html += `<div class="question-stem-mobile">${prefix}${stemFormatted}</div>`;
             if (hasImages) {
               html += `<div class="mobile-q-figures">`;
               validImages.forEach(img => {
@@ -2168,23 +2385,18 @@
               });
               html += `</div>`;
             }
-
-            // 选项
             if (hasOptions) {
               let layoutClass = q.layout || '';
-              let optionsHtml = '';
               if (layoutClass) {
-                optionsHtml = `<div class="options-grid-mobile ${layoutClass}">${q.options.map(opt => `<div>${escapeHtml(opt)}</div>`).join('')}</div>`;
+                html += `<div class="options-grid-mobile ${layoutClass}">${q.options.map(opt => `<div>${escapeHtml(opt)}</div>`).join('')}</div>`;
               } else {
-                optionsHtml = renderSmartOptionsHtml(q.options, false);
+                html += renderSmartOptionsHtml(q.options, false);
               }
-              html += optionsHtml;
             }
           }
 
           if (hasOptions) {
             let layoutClass = q.layout || '';
-            // 行内快捷微调操作条 (单列/双列/四列)
             html += `
               <div class="card-inline-tools">
                 <span class="tool-label">选项排版:</span>
@@ -2195,7 +2407,6 @@
             `;
           }
 
-          // 解答题留白标识
           if (q.blank_lines !== undefined) {
             html += `<div class="blank-tip-mobile">✍️ 留白空间：${q.blank_lines} 行解答空白</div>`;
             html += `
@@ -2215,17 +2426,17 @@
         html += `</div>`;
       });
 
-      // 3. 参考答案折叠卡片
-      if (currentExamData.answers && currentExamData.answers.length > 0) {
+      // 3. 参考答案折叠卡片 (若有答案)
+      if (filteredData.answers && filteredData.answers.length > 0) {
         html += `
           <div class="answers-accordion">
             <div class="answers-accordion-header" onclick="toggleAnswersAccordion()">
-              <span>💡 参考答案与解析 (${currentExamData.answers.length} 题)</span>
+              <span>💡 参考答案与解析 (${filteredData.answers.length} 题)</span>
               <span id="accordionArrow">▼</span>
             </div>
             <div class="answers-accordion-content" id="accordionContent">
         `;
-        currentExamData.answers.forEach(ans => {
+        filteredData.answers.forEach(ans => {
           html += `
             <div style="border-bottom: 1px solid rgba(255, 255, 255, 0.05); padding-bottom: 6px;">
               <div><strong>【第 ${ans.number} 题】 答案：</strong>${escapeHtml(ans.answer)}</div>
@@ -2290,158 +2501,112 @@
       }
     }
 
+    // 构建单道试题 HTML 块 (支持三种配图排版规范及留白高度覆盖)
+    function buildQuestionBlockHtml(q, overrideBlankLines = null) {
+      ensureQuestionOptions(q);
+      const prefix = q.number ? `${q.number}. ` : '';
+      const stemFormatted = escapeHtml(prefix + (q.stem || "")).replace(/\n/g, '<br>');
+      const validImages = filterValidExamImages(q.images);
+      const hasOptions = q.options && q.options.length > 0;
+      const hasImages = validImages.length > 0;
+
+      const blankLines = overrideBlankLines !== null ? overrideBlankLines : (q.blank_lines !== undefined ? q.blank_lines : 0);
+      const hasBlank = blankLines > 0;
+
+      let qHtml = `<div class="question-item a4-q-item">`;
+
+      if (hasOptions && hasImages) {
+        // 1° 选择题：题干在正上方，图在右侧，选项在左侧，根据图所占行数及选项自身字数选择两行或四行
+        const choiceRows = getChoiceLayoutWithFigure(q.options, validImages);
+        const optionsHtml = choiceRows === 4
+          ? `<div class="options-grid a4-options cols-1">${q.options.map(opt => `<div>${escapeHtml(opt)}</div>`).join('')}</div>`
+          : `<div class="options-grid a4-options cols-2">${q.options.map(opt => `<div>${escapeHtml(opt)}</div>`).join('')}</div>`;
+
+        const figureImgs = validImages.map(img => {
+          const src = typeof img === 'string' ? img : (img.src || img.url || '');
+          return src ? `<img src="${src}" alt="试题附图" class="choice-col-figure" loading="eager" onerror="this.remove()" />` : '';
+        }).join('');
+
+        qHtml += `<div class="question-stem a4-q-stem">${stemFormatted}</div>`;
+        qHtml += `
+          <div class="choice-with-figure-wrap rows-${choiceRows}">
+            <div class="choice-options-left">${optionsHtml}</div>
+            <div class="choice-figure-right">${figureImgs}</div>
+          </div>
+        `;
+      } else if (hasOptions) {
+        // 常规选择题：题干在上方，选项智能多列排版
+        qHtml += `<div class="question-stem a4-q-stem">${stemFormatted}</div>`;
+        qHtml += renderSmartOptionsHtml(q.options, false);
+      } else if (!hasOptions && hasImages && !hasBlank) {
+        // 2° 填空题：题干在左，图在右部空白区域
+        const figureImgs = validImages.map(img => {
+          const src = typeof img === 'string' ? img : (img.src || img.url || '');
+          return src ? `<img src="${src}" alt="试题附图" class="fillin-col-figure" loading="eager" onerror="this.remove()" />` : '';
+        }).join('');
+        qHtml += `
+          <div class="fillin-with-figure-wrap">
+            <div class="fillin-stem-left">${stemFormatted}</div>
+            <div class="fillin-figure-right">${figureImgs}</div>
+          </div>
+        `;
+      } else if (hasBlank && hasImages) {
+        // 3° 解答题：图在题干及设问下方空白区中左上方部分
+        const blankH = Math.max(90, blankLines * 22);
+        const figureImgs = validImages.map(img => {
+          const src = typeof img === 'string' ? img : (img.src || img.url || '');
+          return src ? `<img src="${src}" alt="大题配图" class="blank-corner-figure" loading="eager" onerror="this.remove()" />` : '';
+        }).join('');
+        qHtml += `<div class="question-stem a4-q-stem">${stemFormatted}</div>`;
+        qHtml += `
+          <div class="blank-space a4-blank with-corner-fig" style="height: ${blankH}px; min-height: ${blankH}px;">
+            <div class="blank-corner-fig-box">${figureImgs}</div>
+          </div>
+        `;
+      } else if (hasBlank) {
+        // 解答题无配图：纯解答留白区
+        const blankH = blankLines * 22;
+        qHtml += `<div class="question-stem a4-q-stem">${stemFormatted}</div>`;
+        qHtml += `<div class="blank-space a4-blank" style="height: ${blankH}px; min-height: ${blankH}px;"></div>`;
+      } else {
+        // 常规填空题等无选项无留白题目
+        qHtml += `<div class="question-stem a4-q-stem">${stemFormatted}</div>`;
+        if (hasImages) {
+          qHtml += `<div class="question-figures a4-q-figures" style="margin: 4px 0;">`;
+          validImages.forEach(img => {
+            const src = typeof img === 'string' ? img : (img.src || img.url || '');
+            if (src) qHtml += `<img src="${src}" alt="试题插图" class="exam-figure a4-figure" loading="eager" onerror="this.remove()" />`;
+          });
+          qHtml += `</div>`;
+        }
+      }
+
+      qHtml += `</div>`;
+      return qHtml;
+    }
+
     // 模式 2：渲染真实 A4 试卷仿真印样 (WPS / Office 真实多页离散排版流式计算引擎)
     async function renderA4Real() {
       const container = document.getElementById("a4PaperContent");
       if (!container) return;
-      await renderPaginatedExam(container);
+      const examData = getFilteredExamData(currentPreviewScope);
+      await renderPaginatedExam(container, examData);
       if (currentPreviewMode === 'real') {
         applyA4Zoom();
       }
     }
 
-    async function renderPaginatedExam(container) {
+    async function renderPaginatedExam(container, examDataToRender) {
       if (!container) return;
-      const meta = currentExamData.meta || {};
+      const examData = examDataToRender || getFilteredExamData(currentPreviewScope);
+      const meta = examData.meta || {};
 
-      // 1. 构建所有待排版物理块（Blocks）
-      const blocks = [];
-
-      // 卷头块 (仅在存在标题且非空时加入，清空后不保留任何标题)
-      if (meta && meta.title && meta.title.trim()) {
-        blocks.push({
-          type: 'header',
-          html: `
-            <div class="exam-header a4-header">
-              <div class="exam-main-title a4-main-title">${escapeHtml(meta.title)}</div>
-            </div>
-          `
-        });
-      }
-
-      // 各大题与试题块
-      (currentExamData.sections || []).forEach((sec, sIdx) => {
-        // 大题标题块 (仅当标题非空时加入，若被清除则不占任何高度)
-        if (sec.title && sec.title.trim()) {
-          blocks.push({
-            type: 'section_title',
-            sectionIndex: sIdx,
-            html: `
-              <div class="exam-section-header a4-section-header">
-                <div class="section-title a4-section-title">${escapeHtml(sec.title)}</div>
-              </div>
-            `
-          });
-        }
-
-        // 试题块
-        (sec.questions || []).forEach(q => {
-          ensureQuestionOptions(q);
-          const prefix = q.number ? `${q.number}. ` : '';
-          const stemFormatted = escapeHtml(prefix + (q.stem || "")).replace(/\n/g, '<br>');
-          const validImages = filterValidExamImages(q.images);
-          const hasOptions = q.options && q.options.length > 0;
-          const hasImages = validImages.length > 0;
-          const hasBlank = q.blank_lines && q.blank_lines > 0;
-
-          let qHtml = `<div class="question-item a4-q-item">`;
-          qHtml += `<div class="question-stem a4-q-stem">${stemFormatted}</div>`;
-
-          if (hasOptions && hasImages) {
-            // 用户需求 1：选择题图片放在右侧，选项放在左侧，图片大小与选项整体高度一样高
-            const optionsHtml = renderSmartOptionsHtml(q.options, true);
-            const figureImgs = validImages.map(img => {
-              const src = typeof img === 'string' ? img : (img.src || img.url || '');
-              return src ? `<img src="${src}" alt="试题附图" class="choice-col-figure" loading="eager" onerror="this.remove()" />` : '';
-            }).join('');
-            qHtml += `
-              <div class="choice-with-figure-wrap">
-                <div class="choice-options-left">${optionsHtml}</div>
-                <div class="choice-figure-right">${figureImgs}</div>
-              </div>
-            `;
-          } else if (hasOptions) {
-            // 用户需求 2：常规选择题，判断选项字数决定行数，文字太多的选项独占一行
-            qHtml += renderSmartOptionsHtml(q.options, false);
-          } else if (hasBlank && hasImages) {
-            // 用户需求 3：大题图片放在空置答题区左上部分
-            const blankH = Math.max(90, q.blank_lines * 22);
-            const figureImgs = validImages.map(img => {
-              const src = typeof img === 'string' ? img : (img.src || img.url || '');
-              return src ? `<img src="${src}" alt="大题配图" class="blank-corner-figure" loading="eager" onerror="this.remove()" />` : '';
-            }).join('');
-            qHtml += `
-              <div class="blank-space a4-blank with-corner-fig" style="min-height: ${blankH}px;">
-                <div class="blank-corner-fig-box">${figureImgs}</div>
-              </div>
-            `;
-          } else {
-            // 常规无选项题目（如填空题）
-            if (hasImages) {
-              qHtml += `<div class="question-figures a4-q-figures" style="margin: 4px 0;">`;
-              validImages.forEach(img => {
-                const src = typeof img === 'string' ? img : (img.src || img.url || '');
-                if (src) qHtml += `<img src="${src}" alt="试题插图" class="exam-figure a4-figure" loading="eager" onerror="this.remove()" />`;
-              });
-              qHtml += `</div>`;
-            }
-            if (hasBlank) {
-              const h = q.blank_lines * 22;
-              qHtml += `<div class="blank-space a4-blank" style="height: ${h}px;"></div>`;
-            }
-          }
-
-          qHtml += `</div>`;
-
-          blocks.push({
-            type: 'question',
-            sectionIndex: sIdx,
-            number: q.number,
-            html: qHtml
-          });
-        });
-      });
-
-      // 参考答案块
-      if (currentExamData.answers && currentExamData.answers.length > 0) {
-        blocks.push({
-          type: 'answer_header',
-          html: `
-            <div class="answer-divider a4-divider">
-              <span>参考答案与试题解析</span>
-            </div>
-          `
-        });
-
-        currentExamData.answers.forEach(ans => {
-          let ansHtml = `<div class="answer-item a4-ans-item" style="margin-bottom: 12px; font-size: 13.5px;">`;
-          ansHtml += `<div><strong>【第 ${ans.number} 题】 答案：</strong>${escapeHtml(ans.answer)}</div>`;
-          if (ans.analysis) {
-            ansHtml += `<div style="font-family: 'KaiTi', serif; color: #444; margin-top: 3px; padding-left: 12px;"><strong>解析：</strong>${escapeHtml(ans.analysis).replace(/\n/g, '<br>')}</div>`;
-          }
-          const validAnsImgs = filterValidExamImages(ans.images);
-          if (validAnsImgs.length > 0) {
-            ansHtml += `<div class="question-figures a4-q-figures" style="margin-top: 6px;">`;
-            validAnsImgs.forEach(img => {
-              const src = typeof img === 'string' ? img : (img.src || img.url || '');
-              if (src) {
-                ansHtml += `<img src="${src}" alt="解析插图" class="exam-figure a4-figure" loading="eager" onerror="this.remove()" />`;
-              }
-            });
-            ansHtml += `</div>`;
-          }
-          ansHtml += `</div>`;
-
-          blocks.push({
-            type: 'answer_item',
-            number: ans.number,
-            html: ansHtml
-          });
-        });
-      }
+      const hasTitle = meta && meta.title && meta.title.trim();
+      const hasSections = examData.sections && examData.sections.length > 0;
+      const hasAnswers = examData.answers && examData.answers.length > 0;
 
       // 如果完全清空（无标题、无题目、无答案）
-      if (blocks.length === 0) {
+      if (!hasTitle && !hasSections && !hasAnswers) {
         container.innerHTML = `
           <div class="a4-pages-stack">
             <div class="a4-page" data-page="1">
@@ -2459,7 +2624,113 @@
         return;
       }
 
-      // 2. 测量沙箱：获得每个物理块在 682px 净宽与 KaTeX 渲染后的真实像素高度
+      // 1. 结构分析：分离前置模块（选择题+填空题）与解答题大题模块
+      let subjectiveSecIdx = -1;
+      let subjectiveSecTitle = '';
+      let subjectiveQuestions = [];
+
+      (examData.sections || []).forEach((sec, sIdx) => {
+        const isSubj = sec.type === 'solution' || sec.type === 'subjective' || 
+          (sec.title && (sec.title.includes('解答') || sec.title.includes('大题') || sec.title.includes('计算') || sec.title.includes('证明')));
+        const hasSubjQuestions = (sec.questions || []).some(q => q.number >= 15 || (q.blank_lines !== undefined && q.blank_lines > 0));
+
+        if (isSubj || hasSubjQuestions) {
+          if (subjectiveSecIdx === -1) {
+            subjectiveSecIdx = sIdx;
+            subjectiveSecTitle = sec.title || '';
+          }
+          (sec.questions || []).forEach(q => subjectiveQuestions.push(q));
+        }
+      });
+
+      // 构建前置待排版物理块（卷头、选择题、填空题）
+      const frontBlocks = [];
+      if (hasTitle) {
+        frontBlocks.push({
+          type: 'header',
+          html: `
+            <div class="exam-header a4-header">
+              <div class="exam-main-title a4-main-title">${escapeHtml(meta.title)}</div>
+            </div>
+          `
+        });
+      }
+
+      (examData.sections || []).forEach((sec, sIdx) => {
+        if (sIdx === subjectiveSecIdx) return; // 解答题后续由智能策略处理
+        if (sec.title && sec.title.trim()) {
+          frontBlocks.push({
+            type: 'section_title',
+            sectionIndex: sIdx,
+            html: `
+              <div class="exam-section-header a4-section-header">
+                <div class="section-title a4-section-title">${escapeHtml(sec.title)}</div>
+              </div>
+            `
+          });
+        }
+        (sec.questions || []).forEach(q => {
+          frontBlocks.push({
+            type: 'question',
+            sectionIndex: sIdx,
+            number: q.number,
+            html: buildQuestionBlockHtml(q)
+          });
+        });
+      });
+
+      // 解答题标题物理块
+      let sec3TitleBlock = null;
+      if (subjectiveSecTitle && subjectiveSecTitle.trim()) {
+        sec3TitleBlock = {
+          type: 'section_title',
+          sectionIndex: subjectiveSecIdx,
+          html: `
+            <div class="exam-section-header a4-section-header">
+              <div class="section-title a4-section-title">${escapeHtml(subjectiveSecTitle)}</div>
+            </div>
+          `
+        };
+      }
+
+      // 参考答案物理块
+      const answerBlocks = [];
+      if (hasAnswers) {
+        answerBlocks.push({
+          type: 'answer_header',
+          html: `
+            <div class="answer-divider a4-divider">
+              <span>参考答案与试题解析</span>
+            </div>
+          `
+        });
+        examData.answers.forEach(ans => {
+          let ansHtml = `<div class="answer-item a4-ans-item" style="margin-bottom: 12px; font-size: 13.5px;">`;
+          ansHtml += `<div><strong>【第 ${ans.number} 题】 答案：</strong>${escapeHtml(ans.answer)}</div>`;
+          if (ans.analysis) {
+            ansHtml += `<div style="font-family: 'KaiTi', serif; color: #444; margin-top: 3px; padding-left: 12px;"><strong>解析：</strong>${escapeHtml(ans.analysis).replace(/\n/g, '<br>')}</div>`;
+          }
+          const validAnsImgs = filterValidExamImages(ans.images);
+          if (validAnsImgs.length > 0) {
+            ansHtml += `<div class="question-figures a4-q-figures" style="margin-top: 6px;">`;
+            validAnsImgs.forEach(img => {
+              const src = typeof img === 'string' ? img : (img.src || img.url || '');
+              if (src) {
+                ansHtml += `<img src="${src}" alt="解析插图" class="exam-figure a4-figure" loading="eager" onerror="this.remove()" />`;
+              }
+            });
+            ansHtml += `</div>`;
+          }
+          ansHtml += `</div>`;
+          answerBlocks.push({
+            type: 'answer_item',
+            number: ans.number,
+            html: ansHtml
+          });
+        });
+      }
+
+      // 2. 测量沙箱：测量前置块、解答题大题标题、解答题基础高度及答案块
       let sandbox = document.getElementById("a4MeasureSandbox");
       if (!sandbox) {
         sandbox = document.createElement("div");
@@ -2468,13 +2739,24 @@
         document.body.appendChild(sandbox);
       }
 
-      sandbox.innerHTML = blocks.map((b, idx) => `
+      const measureItemsToRun = [];
+      frontBlocks.forEach(b => measureItemsToRun.push(b));
+      if (sec3TitleBlock) measureItemsToRun.push(sec3TitleBlock);
+      subjectiveQuestions.forEach(q => {
+        measureItemsToRun.push({
+          type: 'subj_base',
+          number: q.number,
+          html: buildQuestionBlockHtml(q, 0)
+        });
+      });
+      answerBlocks.forEach(b => measureItemsToRun.push(b));
+
+      sandbox.innerHTML = measureItemsToRun.map((b, idx) => `
         <div class="a4-measure-item" data-measure-idx="${idx}" style="display: flow-root; width: 682px; box-sizing: border-box; margin: 0; padding: 0;">
           ${b.html}
         </div>
       `).join('');
 
-      // 如果存在附图，等待图片加载以获取真实渲染高度
       const pendingImgs = Array.from(sandbox.querySelectorAll("img")).filter(img => !img.complete);
       if (pendingImgs.length > 0) {
         await Promise.all(pendingImgs.map(img => new Promise(resolve => {
@@ -2483,88 +2765,282 @@
         })));
       }
 
-      // 在沙箱内渲染公式以获取公式撑开后的精确物理高度
       triggerKaTeX(sandbox);
 
       const measureNodes = sandbox.children;
-      const measuredBlocks = [];
-      for (let i = 0; i < blocks.length; i++) {
-        const node = measureNodes[i];
-        let h = 30;
-        if (node) {
-          const rect = node.getBoundingClientRect();
-          h = Math.max(20, Math.ceil(rect.height));
-        }
-        measuredBlocks.push({
-          ...blocks[i],
-          height: h
-        });
+      let cursor = 0;
+      const measuredFrontBlocks = frontBlocks.map(b => {
+        const node = measureNodes[cursor++];
+        return { ...b, height: node ? Math.max(20, Math.ceil(node.getBoundingClientRect().height)) : 30 };
+      });
+
+      let hSec3Title = 0;
+      if (sec3TitleBlock) {
+        const node = measureNodes[cursor++];
+        hSec3Title = node ? Math.max(20, Math.ceil(node.getBoundingClientRect().height)) : 35;
+        sec3TitleBlock.height = hSec3Title;
       }
 
-      // 3. WPS/Office 真实分页流计算引擎 (严格标定至 920px，完美匹配 A4 打印硬件边界与iOS AirPrint，彻底杜绝跨页切题与多余空白页)
-      const PAGE_BODY_MAX_HEIGHT = 920;
+      const hBaseMap = {};
+      subjectiveQuestions.forEach(q => {
+        const node = measureNodes[cursor++];
+        hBaseMap[q.number] = node ? Math.max(25, Math.ceil(node.getBoundingClientRect().height)) : 60;
+      });
+
+      const measuredAnswerBlocks = answerBlocks.map(b => {
+        const node = measureNodes[cursor++];
+        return { ...b, height: node ? Math.max(20, Math.ceil(node.getBoundingClientRect().height)) : 30 };
+      });
+
+      // 3. 分页计算引擎 (上限严格标定至 915px，确保任何题目均不跨页)
+      const PAGE_BODY_MAX_HEIGHT = 915;
       const pages = [];
-      let currentPage = [];
-      let currentHeight = 0;
 
-      for (let i = 0; i < measuredBlocks.length; i++) {
-        const b = measuredBlocks[i];
-        const h = b.height;
-
-        // 智能规则 1：大题标题孤立保护 (若当前页放不下大题标题及该大题第一小题全部高度，则将大题标题移至下一页，杜绝标题单独留在一页)
-        if (b.type === 'section_title' && currentPage.length > 0) {
-          let nextQHeight = 70;
-          if (i + 1 < measuredBlocks.length && measuredBlocks[i + 1].type === 'question') {
-            nextQHeight = measuredBlocks[i + 1].height;
+      // 场景 A：纯答案模式（仅导出/预览参考答案）
+      if (!hasSections && hasAnswers) {
+        let curAnsPage = [];
+        let curAnsH = 0;
+        measuredAnswerBlocks.forEach(b => {
+          if (curAnsPage.length === 0) {
+            curAnsPage.push(b);
+            curAnsH = b.height;
+          } else if (curAnsH + b.height <= PAGE_BODY_MAX_HEIGHT) {
+            curAnsPage.push(b);
+            curAnsH += b.height;
+          } else {
+            pages.push(curAnsPage);
+            curAnsPage = [b];
+            curAnsH = b.height;
           }
-          if (currentHeight + h + nextQHeight > PAGE_BODY_MAX_HEIGHT) {
-            pages.push(currentPage);
-            currentPage = [b];
-            currentHeight = h;
-            continue;
+        });
+        if (curAnsPage.length > 0) pages.push(curAnsPage);
+      } else if (subjectiveQuestions.length === 5) {
+        // 场景 B：标准高考试卷（5道解答题：15、16、17、18、19）
+        // 严格执行要求 ④ 与 ⑤ 的三级回退策略与留白行数极差极小平衡
+        const frontPages = [];
+        let curP = [];
+        let curH = 0;
+
+        for (let i = 0; i < measuredFrontBlocks.length; i++) {
+          const b = measuredFrontBlocks[i];
+          const h = b.height;
+          if (b.type === 'section_title' && curP.length > 0) {
+            let nextH = 60;
+            if (i + 1 < measuredFrontBlocks.length) nextH = measuredFrontBlocks[i + 1].height;
+            if (curH + h + nextH > PAGE_BODY_MAX_HEIGHT) {
+              frontPages.push(curP);
+              curP = [b];
+              curH = h;
+              continue;
+            }
+          }
+          if (curP.length === 0) {
+            curP.push(b);
+            curH = h;
+          } else if (curH + h <= PAGE_BODY_MAX_HEIGHT) {
+            curP.push(b);
+            curH += h;
+          } else {
+            frontPages.push(curP);
+            curP = [b];
+            curH = h;
           }
         }
+        if (curP.length > 0) frontPages.push(curP);
 
-        // 智能规则 2：答案分隔线孤立保护
-        if (b.type === 'answer_header' && currentPage.length > 0) {
-          let nextAnsHeight = 50;
-          if (i + 1 < measuredBlocks.length) {
-            nextAnsHeight = measuredBlocks[i + 1].height;
-          }
-          if (currentHeight + h + Math.min(nextAnsHeight, 120) > PAGE_BODY_MAX_HEIGHT) {
-            pages.push(currentPage);
-            currentPage = [b];
-            currentHeight = h;
-            continue;
-          }
+        while (frontPages.length < 2) {
+          frontPages.push([]);
         }
 
-        // 常规放置与自动切页
-        if (currentPage.length === 0) {
-          currentPage.push(b);
-          currentHeight = h;
-        } else if (currentHeight + h <= PAGE_BODY_MAX_HEIGHT) {
-          currentPage.push(b);
-          currentHeight += h;
+        const p2Items = frontPages[1] || [];
+        const hPage2Used = p2Items.reduce((sum, item) => sum + item.height, 0);
+        const hRemainPage2 = Math.max(0, PAGE_BODY_MAX_HEIGHT - hPage2Used);
+
+        const q15 = subjectiveQuestions[0];
+        const q16 = subjectiveQuestions[1];
+        const q17 = subjectiveQuestions[2];
+        const q18 = subjectiveQuestions[3];
+        const q19 = subjectiveQuestions[4];
+
+        function calcSubjH(q, baseH, lines) {
+          const validImages = filterValidExamImages(q.images);
+          if (validImages.length > 0) {
+            const blankH = Math.max(90, lines * 22);
+            const extraH = Math.max(0, blankH - 120);
+            return baseH + extraH;
+          }
+          return baseH + (lines * 22);
+        }
+
+        const minLines = 6;
+        const minH_15 = calcSubjH(q15, hBaseMap[q15.number], minLines);
+
+        let chosenStrategy = 3;
+        const qBlanks = {};
+
+        // 策略 1：首先尝试将 15 题放在填空题之后，第 2 页末的空白处。若跨页则失败。
+        if (hSec3Title + minH_15 + 16 <= hRemainPage2) {
+          chosenStrategy = 1;
+          const avail15 = hRemainPage2 - hSec3Title - hBaseMap[q15.number] - 16;
+          const lines15 = Math.min(18, Math.max(minLines, Math.floor(avail15 / 22)));
+
+          // 第 3 页（16、17 题）：平分留白行数
+          const availP3 = PAGE_BODY_MAX_HEIGHT - hBaseMap[q16.number] - hBaseMap[q17.number] - 28;
+          const linesP3 = Math.min(18, Math.max(minLines, Math.floor(availP3 / (2 * 22))));
+
+          // 第 4 页（18、19 题）：平分留白行数
+          const availP4 = PAGE_BODY_MAX_HEIGHT - hBaseMap[q18.number] - hBaseMap[q19.number] - 28;
+          const linesP4 = Math.min(18, Math.max(minLines, Math.floor(availP4 / (2 * 22))));
+
+          qBlanks[q15.number] = lines15;
+          qBlanks[q16.number] = linesP3;
+          qBlanks[q17.number] = linesP3;
+          qBlanks[q18.number] = linesP4;
+          qBlanks[q19.number] = linesP4;
         } else {
-          // 当前页已排满，自动切到下一页（如同 WPS / Word）
-          pages.push(currentPage);
-          currentPage = [b];
-          currentHeight = h;
+          // 策略 1 失败（15题放第2页会跨页）：接着改用将 15、16、17 题放在第 3 页，18、19 第 4 页的方式
+          const minH_16 = calcSubjH(q16, hBaseMap[q16.number], minLines);
+          const minH_17 = calcSubjH(q17, hBaseMap[q17.number], minLines);
+          const neededP3_Strat2 = hSec3Title + minH_15 + minH_16 + minH_17 + 28;
+
+          if (neededP3_Strat2 <= PAGE_BODY_MAX_HEIGHT) {
+            // 17 题没有跨页，策略 2 成功！
+            chosenStrategy = 2;
+
+            // 第 3 页 15、16、17 题平分留白
+            const availP3 = PAGE_BODY_MAX_HEIGHT - (hSec3Title + hBaseMap[q15.number] + hBaseMap[q16.number] + hBaseMap[q17.number] + 36);
+            const linesP3 = Math.max(minLines, Math.floor(availP3 / (3 * 22)));
+
+            // 第 4 页 18、19 题：平衡留白，与第 3 页相差很小（差 2 行）
+            const availP4 = PAGE_BODY_MAX_HEIGHT - (hBaseMap[q18.number] + hBaseMap[q19.number] + 28);
+            const maxLinesP4 = Math.floor(availP4 / (2 * 22));
+            const linesP4 = Math.min(maxLinesP4, linesP3 + 2);
+
+            qBlanks[q15.number] = linesP3;
+            qBlanks[q16.number] = linesP3;
+            qBlanks[q17.number] = linesP3;
+            qBlanks[q18.number] = linesP4;
+            qBlanks[q19.number] = linesP4;
+          } else {
+            // 策略 2 失败（17 题跨页了）：再使用将 15、16 放在第 3 页，17、18、19 第 4 页的方式
+            chosenStrategy = 3;
+
+            // 第 4 页 17、18、19 题平分留白
+            const availP4 = PAGE_BODY_MAX_HEIGHT - (hBaseMap[q17.number] + hBaseMap[q18.number] + hBaseMap[q19.number] + 36);
+            const linesP4 = Math.max(minLines, Math.floor(availP4 / (3 * 22)));
+
+            // 第 3 页 15、16 题平分留白，与第 4 页相差很小（差 2 行）
+            const availP3 = PAGE_BODY_MAX_HEIGHT - (hSec3Title + hBaseMap[q15.number] + hBaseMap[q16.number] + 28);
+            const maxLinesP3 = Math.floor(availP3 / (2 * 22));
+            const linesP3 = Math.min(maxLinesP3, linesP4 + 2);
+
+            qBlanks[q15.number] = linesP3;
+            qBlanks[q16.number] = linesP3;
+            qBlanks[q17.number] = linesP4;
+            qBlanks[q18.number] = linesP4;
+            qBlanks[q19.number] = linesP4;
+          }
         }
+
+        // 构建各解答题最终渲染块
+        const b15 = { type: 'question', number: q15.number, html: buildQuestionBlockHtml(q15, qBlanks[q15.number]) };
+        const b16 = { type: 'question', number: q16.number, html: buildQuestionBlockHtml(q16, qBlanks[q16.number]) };
+        const b17 = { type: 'question', number: q17.number, html: buildQuestionBlockHtml(q17, qBlanks[q17.number]) };
+        const b18 = { type: 'question', number: q18.number, html: buildQuestionBlockHtml(q18, qBlanks[q18.number]) };
+        const b19 = { type: 'question', number: q19.number, html: buildQuestionBlockHtml(q19, qBlanks[q19.number]) };
+
+        if (chosenStrategy === 1) {
+          pages.push(frontPages[0] || []);
+          const p2 = [...(frontPages[1] || [])];
+          if (sec3TitleBlock) p2.push(sec3TitleBlock);
+          p2.push(b15);
+          pages.push(p2);
+          pages.push([b16, b17]);
+          pages.push([b18, b19]);
+        } else if (chosenStrategy === 2) {
+          pages.push(frontPages[0] || []);
+          pages.push(frontPages[1] || []);
+          const p3 = [];
+          if (sec3TitleBlock) p3.push(sec3TitleBlock);
+          p3.push(b15, b16, b17);
+          pages.push(p3);
+          pages.push([b18, b19]);
+        } else {
+          pages.push(frontPages[0] || []);
+          pages.push(frontPages[1] || []);
+          const p3 = [];
+          if (sec3TitleBlock) p3.push(sec3TitleBlock);
+          p3.push(b15, b16);
+          pages.push(p3);
+          pages.push([b17, b18, b19]);
+        }
+      } else {
+        // 场景 C：通用题目数量流式排版
+        const allBlocks = [...measuredFrontBlocks];
+        if (sec3TitleBlock) allBlocks.push(sec3TitleBlock);
+        subjectiveQuestions.forEach(q => {
+          allBlocks.push({
+            type: 'question',
+            number: q.number,
+            html: buildQuestionBlockHtml(q),
+            height: (hBaseMap[q.number] || 60) + ((q.blank_lines || 6) * 22)
+          });
+        });
+
+        let curP = [];
+        let curH = 0;
+        allBlocks.forEach((b, idx) => {
+          const h = b.height || 40;
+          if (b.type === 'section_title' && curP.length > 0) {
+            let nextH = 60;
+            if (idx + 1 < allBlocks.length) nextH = allBlocks[idx + 1].height || 60;
+            if (curH + h + nextH > PAGE_BODY_MAX_HEIGHT) {
+              pages.push(curP);
+              curP = [b];
+              curH = h;
+              return;
+            }
+          }
+          if (curP.length === 0) {
+            curP.push(b);
+            curH = h;
+          } else if (curH + h <= PAGE_BODY_MAX_HEIGHT) {
+            curP.push(b);
+            curH += h;
+          } else {
+            pages.push(curP);
+            curP = [b];
+            curH = h;
+          }
+        });
+        if (curP.length > 0) pages.push(curP);
       }
 
-      if (currentPage.length > 0) {
-        pages.push(currentPage);
-      }
-      if (pages.length === 0) {
-        pages.push([]);
+      // 4. 若导出范围包含参考答案，则将参考答案依次追加到后续页面（第 5 页及之后）
+      if (hasAnswers && measuredAnswerBlocks.length > 0 && hasSections) {
+        let curAnsPage = [];
+        let curAnsH = 0;
+        measuredAnswerBlocks.forEach(b => {
+          if (curAnsPage.length === 0) {
+            curAnsPage.push(b);
+            curAnsH = b.height;
+          } else if (curAnsH + b.height <= PAGE_BODY_MAX_HEIGHT) {
+            curAnsPage.push(b);
+            curAnsH += b.height;
+          } else {
+            pages.push(curAnsPage);
+            curAnsPage = [b];
+            curAnsH = b.height;
+          }
+        });
+        if (curAnsPage.length > 0) pages.push(curAnsPage);
       }
 
-      // 4. 组装多页 A4 卡片栈 (含标准页码 —— 第 X 页（共 Y 页）——)
+      if (pages.length === 0) pages.push([]);
+
+      // 5. 组装多页 A4 卡片栈
       const totalPages = pages.length;
       let stackHtml = `<div class="a4-pages-stack">`;
-
       pages.forEach((pageItems, pageIdx) => {
         const pageNum = pageIdx + 1;
         stackHtml += `
@@ -2578,11 +3054,10 @@
           </div>
         `;
       });
-
       stackHtml += `</div>`;
       container.innerHTML = stackHtml;
 
-      // 5. 对组装好的正式试卷 DOM 运行公式渲染
+      // 6. 对组装好的正式试卷 DOM 运行公式渲染
       triggerKaTeX(container);
     }
 
@@ -3780,15 +4255,120 @@
       }
     }
 
+    // 全局导出与预览范围状态：'exam_only' (仅试卷正文) | 'answers_only' (仅参考答案) | 'all' (试卷+答案完整合并)
+    let currentPreviewScope = 'exam_only';
+    let currentExportScope = 'exam_only';
+    let currentPendingExportAction = 'print';
+
+    // 根据输出范围生成克隆试卷数据
+    function getFilteredExamData(scope = 'exam_only') {
+      const cloned = JSON.parse(JSON.stringify(currentExamData || {}));
+      if (scope === 'exam_only') {
+        cloned.answers = [];
+      } else if (scope === 'answers_only') {
+        cloned.sections = [];
+        if (cloned.meta && cloned.meta.title) {
+          cloned.meta.title = cloned.meta.title + "（参考答案与试题解析）";
+        } else {
+          cloned.meta = { title: "参考答案与试题解析" };
+        }
+      }
+      return cloned;
+    }
+
+    // 唤起选择导出/打印范围弹窗 (Requirement ③)
+    function promptExportScope(action = 'print', customTitle = '') {
+      currentPendingExportAction = action;
+      const modal = document.getElementById("exportScopeModal");
+      const titleEl = document.getElementById("exportScopeModalTitle");
+      if (titleEl) {
+        if (customTitle) {
+          titleEl.textContent = customTitle;
+        } else if (action === 'print') {
+          titleEl.textContent = "🖨️ 选择打印 / PDF 范围";
+        } else if (action === 'docx') {
+          titleEl.textContent = "📥 选择导出 Word 范围";
+        } else if (action === 'pdf') {
+          titleEl.textContent = "🖨️ 选择导出矢量 PDF 范围";
+        } else if (action === 'copy') {
+          titleEl.textContent = "📋 选择复制文本范围";
+        } else {
+          titleEl.textContent = "📥 请选择输出内容范围";
+        }
+      }
+      if (modal) modal.classList.add("active");
+    }
+
+    function closeExportScopeModal() {
+      const modal = document.getElementById("exportScopeModal");
+      if (modal) modal.classList.remove("active");
+    }
+
+    function closeExportScopeModalOnBg(e) {
+      if (e.target && e.target.id === 'exportScopeModal') {
+        closeExportScopeModal();
+      }
+    }
+
+    // 执行所选范围的具体导出/打印操作
+    async function executeExportWithScope(scope) {
+      currentExportScope = scope;
+      closeExportScopeModal();
+
+      const filteredData = getFilteredExamData(scope);
+      const action = currentPendingExportAction || 'print';
+
+      if (action === 'print') {
+        await doMobilePrint(filteredData, scope);
+      } else if (action === 'docx') {
+        await doExportDocx(filteredData, scope);
+      } else if (action === 'pdf') {
+        await doExportPdfDirect(filteredData, scope);
+      } else if (action === 'copy') {
+        doCopyText(filteredData, scope);
+      }
+    }
+
+    // 预览栏循环切换范围 (仅试题 / 仅答案 / 全卷)
+    function cyclePreviewScope() {
+      const scopes = ['exam_only', 'answers_only', 'all'];
+      const labels = {
+        'exam_only': '📄 仅试卷正文 ▾',
+        'answers_only': '📝 仅参考答案 ▾',
+        'all': '📚 试卷与答案 ▾'
+      };
+      const curIdx = scopes.indexOf(currentPreviewScope);
+      currentPreviewScope = scopes[(curIdx + 1) % scopes.length];
+
+      const badge = document.getElementById("previewScopeBadge");
+      if (badge) badge.textContent = labels[currentPreviewScope];
+
+      showToast(`已切换预览：${labels[currentPreviewScope].replace(' ▾', '')}`);
+      renderAllViews();
+    }
+
+    // 快捷调用代理
+    function handleExportDocx() {
+      promptExportScope('docx');
+    }
+
+    function handleExportPdf() {
+      promptExportScope('print');
+    }
+
+    function triggerMobilePrint() {
+      promptExportScope('print');
+    }
+
     // 动态导出 Word (.docx with 原生 OMML 公式)
-    async function handleExportDocx() {
+    async function doExportDocx(filteredData, scope) {
       const backendUrl = getPythonBackendUrl();
       showToast("⚙️ 正在由云端 Python 动态编译 Word 试卷...");
       try {
         const resp = await fetch(`${backendUrl}/api/export/docx`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(currentExamData)
+          body: JSON.stringify(filteredData)
         });
         if (resp.ok) {
           isPythonBackendConnected = true;
@@ -3796,52 +4376,52 @@
           const url = URL.createObjectURL(blob);
           const a = document.createElement("a");
           a.href = url;
-          const docTitle = currentExamData.meta?.title || "国家考试标准数学试卷";
+          const docTitle = filteredData.meta?.title || "国家考试标准数学试卷";
           a.download = `${docTitle}.docx`;
           document.body.appendChild(a);
           a.click();
           document.body.removeChild(a);
           URL.revokeObjectURL(url);
-          appendMobileMsg("📥 <strong>标准 Word (.docx) 试卷已成功动态生成并下载！</strong><br>题干与解析中的数学公式均为<strong>原生 Word OMML 矢量公式</strong>，在 WPS / Word 中双击即可修改！", "ai");
-          showToast("📥 真实 Word 导出成功！");
-          return;
-        }
-      } catch(e) {}
-
-      showToast("❌ 导出 Word 失败，请检查网络连接后重试！");
-    }
-
-    // 动态导出矢量 PDF
-    async function handleExportPdf() {
-      const backendUrl = getPythonBackendUrl();
-      showToast("⚙️ 正在由云端 Python 编译矢量 PDF 试卷...");
-      try {
-        const resp = await fetch(`${backendUrl}/api/export/pdf`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(currentExamData)
-        });
-        if (resp.ok) {
-          isPythonBackendConnected = true;
-          const blob = await resp.blob();
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement("a");
-          a.href = url;
-          const docTitle = currentExamData.meta?.title || "国家考试标准数学试卷";
-          a.download = `${docTitle}.pdf`;
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-          URL.revokeObjectURL(url);
-          appendMobileMsg("📥 <strong>矢量 PDF 试卷已成功生成并下载！</strong>", "ai");
-          showToast("📥 矢量 PDF 导出成功！");
+          const scopeDesc = scope === 'exam_only' ? '（仅试卷正文）' : scope === 'answers_only' ? '（仅参考答案）' : '（试卷+答案完整版）';
+          appendMobileMsg(`📥 <strong>Word (.docx) 试卷已成功生成并下载！${scopeDesc}</strong><br>题干与解析中的数学公式均为<strong>原生 Word OMML 矢量公式</strong>，在 WPS / Word 中双击即可修改！`, "ai");
+          showToast("📥 Word 导出成功！");
           return;
         }
       } catch(e) {}
 
       // 若云端转换不可用，无缝调用手机浏览器自带的打印/存为PDF功能
-      showToast("📄 正在调起手机系统打印（可选择另存为 PDF）...");
-      triggerMobilePrint();
+      showToast("📄 云端服务未连接，正在调起系统打印（可存为 PDF）...");
+      await doMobilePrint(filteredData, scope);
+    }
+
+    // 动态导出矢量 PDF
+    async function doExportPdfDirect(filteredData, scope) {
+      const backendUrl = getPythonBackendUrl();
+      if (isPythonBackendConnected) {
+        showToast("🖨️ 正在由云端 Python 编译矢量 PDF 试卷...");
+        try {
+          const resp = await fetch(`${backendUrl}/api/export/pdf`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(filteredData)
+          });
+          if (resp.ok) {
+            const blob = await resp.blob();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            const docTitle = filteredData.meta?.title || "国家考试标准数学试卷";
+            a.download = `${docTitle}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast("🖨️ 矢量 PDF 导出成功！");
+            return;
+          }
+        } catch(e) {}
+      }
+      await doMobilePrint(filteredData, scope);
     }
 
     // 导出试卷 JSON 工程数据
@@ -3858,58 +4438,28 @@
     }
 
     // 渲染同步专属直通打印门户 (脱壳离散渲染，彻底杜绝手机屏幕缩放污染)
-    async function preparePrintPortal() {
-      let paper = document.getElementById("a4PaperContent");
-      if (!paper || !paper.querySelector(".a4-page")) {
-        await renderA4Real();
-        paper = document.getElementById("a4PaperContent");
-      }
+    async function preparePrintPortal(filteredData = null) {
+      const dataToPrint = filteredData || getFilteredExamData(currentExportScope);
       let portal = document.getElementById("mobilePrintPortal");
       if (!portal) {
         portal = document.createElement("div");
         portal.id = "mobilePrintPortal";
         document.body.appendChild(portal);
       }
-      if (paper) {
-        portal.innerHTML = paper.innerHTML;
-      }
+      // 将指定范围的试卷离散渲染到直通打印门户
+      await renderPaginatedExam(portal, dataToPrint);
     }
 
-    // 动态导出矢量 PDF / 系统打印
-    async function triggerMobilePrint() {
-      const backendUrl = getPythonBackendUrl();
-      if (isPythonBackendConnected) {
-        showToast("🖨️ 正在请求矢量打印 PDF...");
-        try {
-          const resp = await fetch(`${backendUrl}/api/export/pdf`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(currentExamData)
-          });
-          if (resp.ok) {
-            const blob = await resp.blob();
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            a.href = url;
-            const docTitle = currentExamData.meta?.title || "国家考试标准数学试卷";
-            a.download = `${docTitle}.pdf`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-            showToast("🖨️ 矢量 PDF 导出成功！");
-            return;
-          }
-        } catch(e) {}
-      }
+    // 动态调起手机系统打印 / 另存为 PDF
+    async function doMobilePrint(filteredData, scope) {
+      const scopeDesc = scope === 'exam_only' ? '仅试题正文' : scope === 'answers_only' ? '仅参考答案' : '试卷+答案';
+      showToast(`🖨️ 正在准备打印排版（${scopeDesc}）...`);
+      await preparePrintPortal(filteredData);
 
-      // 同步将真实 A4 排版数据注入专属打印门户
-      await preparePrintPortal();
-
-      // 直接调用原生打印，无需任何视图切换与缩放重排，彻底隔绝屏幕缩放污染
+      // 直接调用原生打印，脱壳隔离无视手机屏幕视口重排
       setTimeout(() => {
         window.print();
-      }, 80);
+      }, 90);
     }
 
     // 监听系统打印前后事件，确保手机端（尤其 iOS Safari）打印视口无变形与无空白页
@@ -3924,6 +4474,34 @@
         portal.innerHTML = "";
       }
     });
+
+    // 复制全卷文字
+    function doCopyText(filteredData, scope) {
+      let text = `${filteredData.meta?.title || '试卷'}\n\n`;
+      (filteredData.sections || []).forEach(sec => {
+        text += `${sec.title}\n`;
+        (sec.questions || []).forEach(q => {
+          text += `${q.number}. ${q.stem || ''}\n`;
+          if (q.options) {
+            text += q.options.join("  ") + "\n";
+          }
+        });
+        text += "\n";
+      });
+      if (filteredData.answers && filteredData.answers.length > 0) {
+        text += "【参考答案与试题解析】\n";
+        filteredData.answers.forEach(ans => {
+          text += `第 ${ans.number} 题：答案 ${ans.answer}\n`;
+          if (ans.analysis) text += `解析：${ans.analysis}\n`;
+        });
+      }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text);
+        showToast("📋 文本内容已复制到剪贴板！");
+      } else {
+        showToast("📋 复制成功！");
+      }
+    }
 
     // 复制全卷文字
     function copyExamText() {
