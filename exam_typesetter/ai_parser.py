@@ -273,23 +273,32 @@ def structure_exam_text_deterministic(raw_text: str) -> dict:
     text = raw_text.replace('\r\n', '\n').replace('\r', '\n')
 
     # 1. 答案与正文分割
-    ans_split = re.split(
-        r'\n\s*(?:【?\s*参考答案(?:与试题解析|与评分标准)?\s*】?|【?\s*试题解析\s*】?|【?\s*答案及解析\s*】?|【?\s*参考答案\s*】?)\s*\n?',
-        text,
-        maxsplit=1
-    )
+    ans_regex = r'\n\s*(?:【?\s*(?:(?:[高一二三初一二三中考高考期中期末模拟\w]*\s*)?参考答案(?:与试题解析|及解析|与评分标准|及评分细则|及评分标准|与评分参考)?|试题解析|答案与解析|答案及解析|参考解答|全解全析)\s*】?)\s*\n?'
+    ans_split = re.split(ans_regex, text, maxsplit=1)
     exam_body = ans_split[0].strip()
     ans_body = ans_split[1].strip() if len(ans_split) > 1 else ''
 
-    # 2. Meta 提取
+    # 2. Meta 提取 (杜绝将“一、单选题”误设为试卷标题导致双重标题重复)
     body_lines = [l.strip() for l in exam_body.split('\n') if l.strip()]
     if body_lines:
-        for l in body_lines[:3]:
-            if not any(k in l for k in ['姓名', '考号', '班级', '得分', '试题', '考试时间', '满分']):
-                data['meta']['title'] = l
+        is_sec_header = lambda s: bool(re.match(r'^(?:[一二三四五六七八九十]+[、．\s]|第[一二三四五六七八九十]+[部分题]|【?(?:选择题|填空题|解答题|单选题|多选题)】?)', s))
+        found_title = None
+        for l in body_lines[:6]:
+            if is_sec_header(l):
+                continue
+            if re.match(r'^(?:\d+[\.．、\s]|[A-D][\.．、\s])', l):
+                continue
+            if '[IMAGE:' in l:
+                continue
+            if any(k in l for k in ['姓名', '考号', '班级', '得分', '座位号', '注意事项', '考生须知']):
+                continue
+            if any(k in l for k in ['考试时间', '满分']) and len(l) < 30:
+                continue
+            if len(l) >= 4:
+                found_title = l
                 break
-        else:
-            data['meta']['title'] = body_lines[0]
+
+        data['meta']['title'] = found_title if found_title else f"高中{data['meta'].get('subject', '数学')}统一模拟试卷"
 
         for l in body_lines[:10]:
             m_dur = re.search(r'考试时间[：:\s]*(\d+)\s*分钟', l)
@@ -461,6 +470,21 @@ def structure_exam_text_deterministic(raw_text: str) -> dict:
                 'title': '三、解答题',
                 'questions': subj_qs
             })
+
+    # 后置校验：如果识别到的某大题实为“参考答案”或“试题解析”，将其转化为 answers 并移出 sections
+    real_sections = []
+    for sec in data.get('sections', []):
+        sec_title = sec.get('title', '')
+        if any(kw in sec_title for kw in ['参考答案', '试题解析', '答案与解析', '答案及解析', '参考解答', '评分细则', '全解全析']):
+            for q in sec.get('questions', []):
+                data.setdefault('answers', []).append({
+                    'number': q['number'],
+                    'answer': q.get('stem', ''),
+                    'analysis': ''
+                })
+        else:
+            real_sections.append(sec)
+    data['sections'] = real_sections
 
     return data
 

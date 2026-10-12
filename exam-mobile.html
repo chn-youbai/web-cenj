@@ -972,14 +972,17 @@
       width: 100%;
     }
     .choice-figure-right {
-      flex: 0 0 auto;
-      max-width: 32%;
+      flex: 0 0 30%;
+      max-width: 30%;
+      width: 30%;
       display: flex;
       align-items: center;
       justify-content: flex-end;
+      overflow: hidden;
+      box-sizing: border-box;
     }
     .choice-col-figure {
-      max-width: 100%;
+      max-width: 100% !important;
       object-fit: contain;
       border-radius: 2px;
       display: block;
@@ -987,11 +990,21 @@
     }
     /* 选项两行时图片高度与两行齐平 */
     .choice-with-figure-wrap.rows-2 .choice-col-figure {
-      max-height: 65px;
+      max-height: 65px !important;
     }
     /* 选项四行时图片高度与四行齐平 */
     .choice-with-figure-wrap.rows-4 .choice-col-figure {
-      max-height: 110px;
+      max-height: 110px !important;
+    }
+
+    /* 内联数学公式图片 (如来自 Word/MathType 插入的公式) */
+    .inline-formula-img {
+      display: inline-block;
+      max-height: 1.35em;
+      max-width: 95%;
+      vertical-align: -0.22em;
+      object-fit: contain;
+      margin: 0 1px;
     }
 
     /* 2° 填空题图文并排：题干在左，图在右部空白区域 */
@@ -2229,10 +2242,14 @@
       }
     }
 
-    // 选项视觉字数估算与智能排版（识别LaTeX公式避免误判过长）
+    // 选项视觉字数估算与智能排版（识别LaTeX公式及内联公式图片避免误判过长）
     function getVisualOptionLength(opt) {
       if (!opt) return 0;
-      const cleaned = String(opt).replace(/\\[a-zA-Z]+/g, 'M').replace(/[{}\$^_\\]/g, '').trim();
+      const cleaned = String(opt)
+        .replace(/\[IMAGE:[^\]]+\]/g, 'MMMMM')
+        .replace(/\\[a-zA-Z]+/g, 'M')
+        .replace(/[{}\$^_\\]/g, '')
+        .trim();
       return cleaned.length;
     }
 
@@ -2249,7 +2266,7 @@
       return 2;
     }
 
-    function renderSmartOptionsHtml(options, hasRightFigure) {
+    function renderSmartOptionsHtml(options, hasRightFigure, qImagesMap = null) {
       if (!options || options.length === 0) return '';
       const lengths = options.map(getVisualOptionLength);
       const maxLen = Math.max(...lengths, 0);
@@ -2258,26 +2275,26 @@
       if (hasRightFigure) {
         const rows = getChoiceLayoutWithFigure(options);
         if (rows === 4) {
-          return `<div class="options-grid a4-options cols-1">${options.map(opt => `<div>${escapeHtml(opt)}</div>`).join('')}</div>`;
+          return `<div class="options-grid a4-options cols-1">${options.map(opt => `<div>${renderFormattedMathText(opt, qImagesMap)}</div>`).join('')}</div>`;
         }
-        return `<div class="options-grid a4-options cols-2">${options.map(opt => `<div>${escapeHtml(opt)}</div>`).join('')}</div>`;
+        return `<div class="options-grid a4-options cols-2">${options.map(opt => `<div>${renderFormattedMathText(opt, qImagesMap)}</div>`).join('')}</div>`;
       }
 
       // 常规无右侧插图的选择题：
       // 规则 A：所有选项均非常简短 (如长度 <= 12) -> 四列单行横排 (A B C D)
       if (maxLen <= 12 && lengths.every(l => l <= 12)) {
-        return `<div class="options-grid a4-options cols-4">${options.map(opt => `<div>${escapeHtml(opt)}</div>`).join('')}</div>`;
+        return `<div class="options-grid a4-options cols-4">${options.map(opt => `<div>${renderFormattedMathText(opt, qImagesMap)}</div>`).join('')}</div>`;
       }
 
       // 规则 B：所有选项均中等长度 (如长度 <= 24) -> 双列横排 (A B / C D)
       if (maxLen <= 24 && lengths.every(l => l <= 24)) {
-        return `<div class="options-grid a4-options cols-2">${options.map(opt => `<div>${escapeHtml(opt)}</div>`).join('')}</div>`;
+        return `<div class="options-grid a4-options cols-2">${options.map(opt => `<div>${renderFormattedMathText(opt, qImagesMap)}</div>`).join('')}</div>`;
       }
 
       // 规则 C：智能判断各选项字数，文字过多的选项独占整行，较短的选项共享一行
       return `<div class="options-grid a4-options cols-mixed">${options.map((opt, idx) => {
         const isFull = lengths[idx] > 24;
-        return `<div class="${isFull ? 'opt-full' : ''}">${escapeHtml(opt)}</div>`;
+        return `<div class="${isFull ? 'opt-full' : ''}">${renderFormattedMathText(opt, qImagesMap)}</div>`;
       }).join('')}</div>`;
     }
 
@@ -2290,8 +2307,10 @@
 
       let html = '';
 
-      // 1. 试卷头部卡片 (若存在标题则渲染)
-      if (meta && meta.title && meta.title.trim()) {
+      // 1. 试卷头部卡片 (若存在标题且与第一大题标题不同时才渲染)
+      const firstSecTitle = (filteredData.sections && filteredData.sections[0] && filteredData.sections[0].title) ? filteredData.sections[0].title.trim() : '';
+      const isDuplicateTitle = meta.title && firstSecTitle && (meta.title.trim() === firstSecTitle);
+      if (meta && meta.title && meta.title.trim() && !isDuplicateTitle) {
         html += `
           <div class="exam-info-card">
             <div class="title">${escapeHtml(meta.title)}</div>
@@ -2323,7 +2342,7 @@
           ensureQuestionOptions(q);
           html += `<div class="question-card-item">`;
           const prefix = q.number ? `<strong>【第 ${q.number} 题】</strong> ` : '';
-          const stemFormatted = escapeHtml(q.stem || "").replace(/\n/g, '<br>');
+          const stemFormatted = renderFormattedMathText(q.stem || "", q.images_map).replace(/\n/g, '<br>');
 
           const validImages = filterValidExamImages(q.images);
           const hasImages = validImages.length > 0;
@@ -2334,8 +2353,8 @@
             // 1° 选择题带配图：题干在上方，选项在左侧（2行或4行），配图在右侧
             const choiceRows = getChoiceLayoutWithFigure(q.options, validImages);
             const optionsHtml = choiceRows === 4
-              ? `<div class="options-grid-mobile cols-1">${q.options.map(opt => `<div>${escapeHtml(opt)}</div>`).join('')}</div>`
-              : `<div class="options-grid-mobile cols-2">${q.options.map(opt => `<div>${escapeHtml(opt)}</div>`).join('')}</div>`;
+              ? `<div class="options-grid-mobile cols-1">${q.options.map(opt => `<div>${renderFormattedMathText(opt, q.images_map)}</div>`).join('')}</div>`
+              : `<div class="options-grid-mobile cols-2">${q.options.map(opt => `<div>${renderFormattedMathText(opt, q.images_map)}</div>`).join('')}</div>`;
             const figureImgs = validImages.map(img => {
               const src = typeof img === 'string' ? img : (img.src || img.url || '');
               return src ? `<img src="${src}" alt="试题附图" class="choice-col-figure" loading="lazy" onerror="this.remove()" />` : '';
@@ -2388,9 +2407,9 @@
             if (hasOptions) {
               let layoutClass = q.layout || '';
               if (layoutClass) {
-                html += `<div class="options-grid-mobile ${layoutClass}">${q.options.map(opt => `<div>${escapeHtml(opt)}</div>`).join('')}</div>`;
+                html += `<div class="options-grid-mobile ${layoutClass}">${q.options.map(opt => `<div>${renderFormattedMathText(opt, q.images_map)}</div>`).join('')}</div>`;
               } else {
-                html += renderSmartOptionsHtml(q.options, false);
+                html += renderSmartOptionsHtml(q.options, false, q.images_map);
               }
             }
           }
@@ -2439,8 +2458,8 @@
         filteredData.answers.forEach(ans => {
           html += `
             <div style="border-bottom: 1px solid rgba(255, 255, 255, 0.05); padding-bottom: 6px;">
-              <div><strong>【第 ${ans.number} 题】 答案：</strong>${escapeHtml(ans.answer)}</div>
-              ${ans.analysis ? `<div style="color: #94a3b8; font-size: 0.8rem; margin-top: 2px;">解析：${escapeHtml(ans.analysis).replace(/\n/g, '<br>')}</div>` : ''}
+              <div><strong>【第 ${ans.number} 题】 答案：</strong>${renderFormattedMathText(ans.answer, ans.images_map)}</div>
+              ${ans.analysis ? `<div style="color: #94a3b8; font-size: 0.8rem; margin-top: 2px;">解析：${renderFormattedMathText(ans.analysis, ans.images_map).replace(/\n/g, '<br>')}</div>` : ''}
               ${(() => {
                 const validAnsImgs = filterValidExamImages(ans.images);
                 return validAnsImgs.length > 0 ? `
@@ -2505,7 +2524,7 @@
     function buildQuestionBlockHtml(q, overrideBlankLines = null) {
       ensureQuestionOptions(q);
       const prefix = q.number ? `${q.number}. ` : '';
-      const stemFormatted = escapeHtml(prefix + (q.stem || "")).replace(/\n/g, '<br>');
+      const stemFormatted = renderFormattedMathText(prefix + (q.stem || ""), q.images_map).replace(/\n/g, '<br>');
       const validImages = filterValidExamImages(q.images);
       const hasOptions = q.options && q.options.length > 0;
       const hasImages = validImages.length > 0;
@@ -2519,8 +2538,8 @@
         // 1° 选择题：题干在正上方，图在右侧，选项在左侧，根据图所占行数及选项自身字数选择两行或四行
         const choiceRows = getChoiceLayoutWithFigure(q.options, validImages);
         const optionsHtml = choiceRows === 4
-          ? `<div class="options-grid a4-options cols-1">${q.options.map(opt => `<div>${escapeHtml(opt)}</div>`).join('')}</div>`
-          : `<div class="options-grid a4-options cols-2">${q.options.map(opt => `<div>${escapeHtml(opt)}</div>`).join('')}</div>`;
+          ? `<div class="options-grid a4-options cols-1">${q.options.map(opt => `<div>${renderFormattedMathText(opt, q.images_map)}</div>`).join('')}</div>`
+          : `<div class="options-grid a4-options cols-2">${q.options.map(opt => `<div>${renderFormattedMathText(opt, q.images_map)}</div>`).join('')}</div>`;
 
         const figureImgs = validImages.map(img => {
           const src = typeof img === 'string' ? img : (img.src || img.url || '');
@@ -2537,7 +2556,7 @@
       } else if (hasOptions) {
         // 常规选择题：题干在上方，选项智能多列排版
         qHtml += `<div class="question-stem a4-q-stem">${stemFormatted}</div>`;
-        qHtml += renderSmartOptionsHtml(q.options, false);
+        qHtml += renderSmartOptionsHtml(q.options, false, q.images_map);
       } else if (!hasOptions && hasImages && !hasBlank) {
         // 2° 填空题：题干在左，图在右部空白区域
         const figureImgs = validImages.map(img => {
@@ -2645,7 +2664,9 @@
 
       // 构建前置待排版物理块（卷头、选择题、填空题）
       const frontBlocks = [];
-      if (hasTitle) {
+      const firstSecTitle = (examData.sections && examData.sections[0] && examData.sections[0].title) ? examData.sections[0].title.trim() : '';
+      const isDuplicateTitle = hasTitle && firstSecTitle && (meta.title.trim() === firstSecTitle);
+      if (hasTitle && !isDuplicateTitle) {
         frontBlocks.push({
           type: 'header',
           html: `
@@ -2706,9 +2727,9 @@
         });
         examData.answers.forEach(ans => {
           let ansHtml = `<div class="answer-item a4-ans-item" style="margin-bottom: 12px; font-size: 13.5px;">`;
-          ansHtml += `<div><strong>【第 ${ans.number} 题】 答案：</strong>${escapeHtml(ans.answer)}</div>`;
+          ansHtml += `<div><strong>【第 ${ans.number} 题】 答案：</strong>${renderFormattedMathText(ans.answer, ans.images_map)}</div>`;
           if (ans.analysis) {
-            ansHtml += `<div style="font-family: 'KaiTi', serif; color: #444; margin-top: 3px; padding-left: 12px;"><strong>解析：</strong>${escapeHtml(ans.analysis).replace(/\n/g, '<br>')}</div>`;
+            ansHtml += `<div style="font-family: 'KaiTi', serif; color: #444; margin-top: 3px; padding-left: 12px;"><strong>解析：</strong>${renderFormattedMathText(ans.analysis, ans.images_map).replace(/\n/g, '<br>')}</div>`;
           }
           const validAnsImgs = filterValidExamImages(ans.images);
           if (validAnsImgs.length > 0) {
@@ -3158,6 +3179,23 @@
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;");
+    }
+
+    // 将带有 [IMAGE:xxx] 内联数学公式/符号图片的文本渲染为内联 HTML
+    function renderFormattedMathText(text, localImagesMap = null) {
+      if (!text) return '';
+      const globalImgMap = (currentExamData && currentExamData.images_map) || {};
+      const imgMap = Object.assign({}, globalImgMap, localImagesMap || {});
+      let escaped = escapeHtml(String(text));
+      escaped = escaped.replace(/\[IMAGE:([^\]]+)\]/g, (match, filename) => {
+        const trimmed = filename.trim();
+        const src = imgMap[trimmed] || globalImgMap[trimmed];
+        if (src) {
+          return `<img src="${src}" alt="公式" class="inline-formula-img" loading="eager" onerror="this.remove()" />`;
+        }
+        return '';
+      });
+      return escaped;
     }
 
     // 清空整卷二次确认
@@ -4159,14 +4197,18 @@
 
       const bodyLines = examBody.split('\n').map(l => l.trim()).filter(Boolean);
       if (bodyLines.length > 0) {
-        for (let i = 0; i < Math.min(3, bodyLines.length); i++) {
+        for (let i = 0; i < Math.min(6, bodyLines.length); i++) {
           const l = bodyLines[i];
-          if (!['姓名', '考号', '班级', '得分', '试题', '考试时间', '满分'].some(k => l.includes(k))) {
+          if (/^(?:[一二三四五六七八九十]+[、．\s]|第[一二三四五六七八九十]+[部分题]|【?(?:选择题|填空题|解答题|单选题|多选题)】?)/.test(l)) continue;
+          if (/^(?:\d+[\.．、\s]|[A-D][\.．、\s])/.test(l)) continue;
+          if (l.includes('[IMAGE:')) continue;
+          if (['姓名', '考号', '班级', '得分', '试题', '考试时间', '满分', '座位号', '注意事项'].some(k => l.includes(k))) continue;
+          if (l.length >= 4) {
             data.meta.title = l;
             break;
           }
         }
-        if (!data.meta.title) data.meta.title = bodyLines[0];
+        if (!data.meta.title) data.meta.title = '高中数学统一模拟试卷';
       }
 
       // 提取答案
@@ -4291,6 +4333,24 @@
           });
         }
       }
+      // 后置校验：如果识别到的某大题实为“参考答案”或“试题解析”，将其转化为 answers 并移出 sections
+      const realSections = [];
+      (data.sections || []).forEach(sec => {
+        const secTitle = sec.title || '';
+        if (['参考答案', '试题解析', '答案与解析', '答案及解析', '参考解答', '评分细则', '全解全析'].some(kw => secTitle.includes(kw))) {
+          (sec.questions || []).forEach(q => {
+            data.answers.push({
+              number: q.number,
+              answer: q.stem || '',
+              analysis: ''
+            });
+          });
+        } else {
+          realSections.push(sec);
+        }
+      });
+      data.sections = realSections;
+
       return data;
     }
 

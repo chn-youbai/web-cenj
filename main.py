@@ -126,52 +126,51 @@ def is_valid_web_image(url_or_src: str) -> bool:
 def bind_images_to_exam_data(exam_data: dict, images_map: dict, paragraphs: list) -> dict:
     """
     Binds extracted images (as base64 data URLs) to questions and answers in exam_data.
-    1. First checks for explicit [IMAGE:xxx] tokens in question stems and answer analyses.
-    2. Uses deterministic sequential document paragraph scanning as fallback.
+    Distinguishes inline formula/text images (in stem, options, analysis) from standalone question figures.
+    1. Keeps [IMAGE:xxx] tokens intact in stem, options, and analysis, but records their data URLs in q.images_map / exam_data.images_map.
+    2. Only attaches non-inline, standalone figures (e.g. geometric diagrams, charts) to q.images.
     """
     if not isinstance(exam_data, dict) or not images_map:
         return exam_data
 
-    assigned_images = set()
+    # Save full global images_map for frontend lookups
+    exam_data["images_map"] = images_map
 
-    # Step 1: Scan exam_data for explicit [IMAGE:xxx] tokens
+    inline_image_tokens = set()
+
+    # Step 1: Scan stems, options, and answers for inline [IMAGE:xxx] tokens
     for sec in exam_data.get("sections", []):
         for q in sec.get("questions", []):
+            q_map = q.setdefault("images_map", {})
+            # Stem tokens
             stem = q.get("stem", "")
-            tokens = re.findall(r'\[IMAGE:([^\]]+)\]', stem)
-            if tokens:
-                q_imgs = q.setdefault("images", [])
-                for tok in tokens:
+            for tok in re.findall(r'\[IMAGE:([^\]]+)\]', stem):
+                if tok in images_map:
+                    q_map[tok] = images_map[tok]
+                    inline_image_tokens.add(tok)
+            # Options tokens
+            for opt in q.get("options", []):
+                for tok in re.findall(r'\[IMAGE:([^\]]+)\]', str(opt)):
                     if tok in images_map:
-                        img_url = images_map[tok]
-                        if is_valid_web_image(img_url) and img_url not in q_imgs:
-                            q_imgs.append(img_url)
-                        assigned_images.add(tok)
-                clean_stem = re.sub(r'\s*\[IMAGE:[^\]]+\]\s*', '', stem).strip()
-                q["stem"] = clean_stem
+                        q_map[tok] = images_map[tok]
+                        inline_image_tokens.add(tok)
 
     for ans in exam_data.get("answers", []):
+        ans_map = ans.setdefault("images_map", {})
         analysis = ans.get("analysis", "")
-        tokens = re.findall(r'\[IMAGE:([^\]]+)\]', analysis)
-        if tokens:
-            ans_imgs = ans.setdefault("images", [])
-            for tok in tokens:
-                if tok in images_map:
-                    img_url = images_map[tok]
-                    if is_valid_web_image(img_url) and img_url not in ans_imgs:
-                        ans_imgs.append(img_url)
-                    assigned_images.add(tok)
-            clean_analysis = re.sub(r'\s*\[IMAGE:[^\]]+\]\s*', '', analysis).strip()
-            ans["analysis"] = clean_analysis
+        for tok in re.findall(r'\[IMAGE:([^\]]+)\]', analysis):
+            if tok in images_map:
+                ans_map[tok] = images_map[tok]
+                inline_image_tokens.add(tok)
 
-    # Step 2: Fallback scanning on original paragraphs
+    # Step 2: Fallback scanning on paragraphs for standalone question figures (charts, geometry diagrams)
     q_bindings = {}
     a_bindings = {}
     in_ans = False
     curr_q = None
 
     for p in paragraphs:
-        if any(kw in p for kw in ("参考答案", "答案与解析", "参考答案及评分标准", "答案及解析")):
+        if any(kw in p for kw in ("参考答案", "答案与解析", "参考答案及评分标准", "答案及解析", "参考解答")):
             in_ans = True
             curr_q = None
 
@@ -181,14 +180,15 @@ def bind_images_to_exam_data(exam_data: dict, images_map: dict, paragraphs: list
 
         imgs = re.findall(r'\[IMAGE:([^\]]+)\]', p)
         for img in imgs:
-            if img in assigned_images:
+            # If this image is already an inline formula inside stem or option, DO NOT treat it as a question figure!
+            if img in inline_image_tokens:
                 continue
             if in_ans and curr_q is not None:
                 a_bindings.setdefault(curr_q, []).append(img)
             elif curr_q is not None:
                 q_bindings.setdefault(curr_q, []).append(img)
 
-    # Attach bindings to exam_data questions
+    # Attach standalone figure bindings to exam_data questions
     if q_bindings:
         for sec in exam_data.get("sections", []):
             for q in sec.get("questions", []):
@@ -200,9 +200,8 @@ def bind_images_to_exam_data(exam_data: dict, images_map: dict, paragraphs: list
                             img_val = images_map[img_name]
                             if is_valid_web_image(img_val) and img_val not in q_imgs:
                                 q_imgs.append(img_val)
-                                assigned_images.add(img_name)
 
-    # Attach bindings to exam_data answers
+    # Attach standalone figure bindings to exam_data answers
     if a_bindings:
         for ans in exam_data.get("answers", []):
             num = ans.get("number")
@@ -213,7 +212,6 @@ def bind_images_to_exam_data(exam_data: dict, images_map: dict, paragraphs: list
                         img_val = images_map[img_name]
                         if is_valid_web_image(img_val) and img_val not in ans_imgs:
                             ans_imgs.append(img_val)
-                            assigned_images.add(img_name)
 
     return exam_data
 
