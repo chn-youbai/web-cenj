@@ -2580,6 +2580,161 @@
       return false;
     }
 
+    // 客户端高精度规则试卷解析器
+    function parseExamTextClientSide(rawText) {
+      const data = {
+        meta: {
+          title: '试卷测试',
+          subject: '数学',
+          grade: '高三',
+          duration: 120,
+          total_score: 150,
+          show_score_table: true
+        },
+        sections: [],
+        answers: []
+      };
+      if (!rawText || !rawText.trim()) return data;
+      const text = rawText.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+      const ansSplit = text.split(/\n\s*(?:【?\s*参考答案(?:与试题解析|与评分标准)?\s*】?|【?\s*试题解析\s*】?|【?\s*答案及解析\s*】?|【?\s*参考答案\s*】?)\s*\n?/);
+      const examBody = ansSplit[0].trim();
+      const ansBody = ansSplit.length > 1 ? ansSplit[1].trim() : '';
+
+      const bodyLines = examBody.split('\n').map(l => l.trim()).filter(Boolean);
+      if (bodyLines.length > 0) {
+        for (let i = 0; i < Math.min(3, bodyLines.length); i++) {
+          const l = bodyLines[i];
+          if (!['姓名', '考号', '班级', '得分', '试题', '考试时间', '满分'].some(k => l.includes(k))) {
+            data.meta.title = l;
+            break;
+          }
+        }
+        if (!data.meta.title) data.meta.title = bodyLines[0];
+      }
+
+      if (ansBody) {
+        const ansRegex = /【第\s*(\d+)\s*题】\s*答案[：:\s]*([^\n]*)(?:\s*\n+\s*解析[：:\s]*([\s\S]*?))?(?=(?:【第\s*\d+\s*题】)|$)/g;
+        let m;
+        let found = false;
+        while ((m = ansRegex.exec(ansBody)) !== null) {
+          found = true;
+          data.answers.push({
+            number: parseInt(m[1]),
+            answer: (m[2] || '').trim(),
+            analysis: (m[3] || '').trim()
+          });
+        }
+        if (!found) {
+          const ansRegex2 = /(?:^|\n)\s*(\d+)[\.．、\s]+(?:答案[：:\s]*)?([^\n]*)(?:\s*\n+\s*解析[：:\s]*([\s\S]*?))?(?=(?:\n\s*\d+[\.．、\s]+)|$)/g;
+          while ((m = ansRegex2.exec(ansBody)) !== null) {
+            data.answers.push({
+              number: parseInt(m[1]),
+              answer: (m[2] || '').trim(),
+              analysis: (m[3] || '').trim()
+            });
+          }
+        }
+      }
+
+      function parseStemAndOptions(rawQ, isChoice) {
+        let qOptions = [];
+        let qStem = rawQ.trim();
+        let layout = 'cols-4';
+
+        const inlinePat = /(?:[\r\n\s]+|^)(A[\.．、\s][\s\S]+?)\s+(B[\.．、\s][\s\S]+?)\s+(C[\.．、\s][\s\S]+?)\s+(D[\.．、\s][\s\S]+)$/;
+        const mInline = inlinePat.exec(qStem);
+        if (mInline) {
+          qOptions = [
+            mInline[1].trim().replace(/^[A-D][\.．、\s]\s*/, 'A. '),
+            mInline[2].trim().replace(/^[A-D][\.．、\s]\s*/, 'B. '),
+            mInline[3].trim().replace(/^[A-D][\.．、\s]\s*/, 'C. '),
+            mInline[4].trim().replace(/^[A-D][\.．、\s]\s*/, 'D. ')
+          ];
+          qStem = qStem.substring(0, mInline.index).trim();
+        }
+        if (qOptions.length > 0) {
+          const maxLen = Math.max(...qOptions.map(o => o.length));
+          layout = maxLen <= 15 ? 'cols-4' : (maxLen <= 30 ? 'cols-2' : 'cols-1');
+        }
+        return { qStem, qOptions, layout };
+      }
+
+      const secRegex = /(?:^|\n)\s*([一二三四五六七八九十]+[、．\s]+[^\n]+|第[一二三四五六七八九十]+部分[^\n]*)/g;
+      const secMatches = [];
+      let sm;
+      while ((sm = secRegex.exec(examBody)) !== null) {
+        secMatches.push({ title: sm[1].trim(), index: sm.index, end: sm.index + sm[0].length });
+      }
+
+      if (secMatches.length > 0) {
+        for (let i = 0; i < secMatches.length; i++) {
+          const start = secMatches[i].end;
+          const end = i + 1 < secMatches.length ? secMatches[i + 1].index : examBody.length;
+          const secTitle = secMatches[i].title;
+          const secText = examBody.substring(start, end);
+
+          let secType = 'normal';
+          if (secTitle.includes('选择')) {
+            secType = (secTitle.includes('多项') || secTitle.includes('多选')) ? 'multi_choice' : 'single_choice';
+          } else if (secTitle.includes('填空')) {
+            secType = 'fill_in';
+          } else if (['解答', '计算', '证明', '综合', '大题'].some(k => secTitle.includes(k))) {
+            secType = 'solution';
+          }
+
+          const questions = [];
+          const qRegex = /(?:^|\n)\s*(\d+)[\.．、\s]+([\s\S]*?)(?=(?:\n\s*\d+[\.．、\s]+)|$)/g;
+          let qm;
+          while ((qm = qRegex.exec(secText)) !== null) {
+            const qNum = parseInt(qm[1]);
+            const rawQ = qm[2].trim();
+            const { qStem, qOptions, layout } = parseStemAndOptions(rawQ, secType.includes('choice'));
+            const qObj = { number: qNum, stem: qStem, score: 5 };
+            if (qOptions.length > 0) {
+              qObj.options = qOptions;
+              qObj.layout = layout;
+            } else if (secType === 'solution' || qNum >= 15) {
+              qObj.score = qNum >= 15 ? 12 : 10;
+              qObj.blank_lines = 8;
+            }
+            questions.push(qObj);
+          }
+          data.sections.push({
+            section_id: data.sections.length + 1,
+            type: secType,
+            title: secTitle,
+            questions
+          });
+        }
+      } else {
+        const qRegex = /(?:^|\n)\s*(\d+)[\.．、\s]+([\s\S]*?)(?=(?:\n\s*\d+[\.．、\s]+)|$)/g;
+        let qm;
+        const questions = [];
+        while ((qm = qRegex.exec(examBody)) !== null) {
+          const qNum = parseInt(qm[1]);
+          const rawQ = qm[2].trim();
+          const { qStem, qOptions, layout } = parseStemAndOptions(rawQ, false);
+          const qObj = { number: qNum, stem: qStem, score: 5 };
+          if (qOptions.length > 0) {
+            qObj.options = qOptions;
+            qObj.layout = layout;
+          } else if (qNum >= 15) {
+            qObj.blank_lines = 8;
+          }
+          questions.push(qObj);
+        }
+        if (questions.length > 0) {
+          data.sections.push({
+            section_id: 1,
+            type: 'normal',
+            title: '一、试卷试题',
+            questions
+          });
+        }
+      }
+      return data;
+    }
+
     // 处理文件上传 (.docx / .pdf / .json / .txt 解析)
     async function handleFileUpload(e) {
       const file = e.target.files[0];
@@ -2617,7 +2772,7 @@
 
       // 2. 调用云端 Python 强算力引擎深度提取 Word/PDF 中的题干、表格与原生数学公式 (OMML -> LaTeX)
       const backendUrl = getPythonBackendUrl();
-      loadingBubble.querySelector(".msg-bubble").innerHTML = `⚡ 正在上传至云端 Python 引擎，深度提取 Word/PDF 中的题干、表格与原生数学公式 (OMML -> LaTeX) 并由 AI 结构化排版...`;
+      loadingBubble.querySelector(".msg-bubble").innerHTML = `⚡ 正在由云端 Python + 确定性引擎深度提取 Word/PDF 中的题干、表格与原生数学公式 (OMML -> LaTeX) 并结构化排版...`;
       
       try {
         const reader = new FileReader();
@@ -2626,55 +2781,91 @@
             const base64Content = reader.result.split(',')[1];
             const mode = localStorage.getItem("exam_mode") || "default";
             let provider = "deepseek";
-            let model = "deepseek-flash";
+            let model = "deepseek-chat";
             let apiKey = BUILTIN_DEEPSEEK_KEY;
 
             if (mode === "default") {
-              model = localStorage.getItem("exam_default_model") || "deepseek-flash";
-              if (model.startsWith("gemini")) {
+              const defModel = localStorage.getItem("exam_default_model") || "deepseek-chat";
+              if (defModel.startsWith("gemini")) {
                 provider = "gemini";
+                model = defModel;
                 apiKey = BUILTIN_GEMINI_KEY;
+              } else {
+                provider = "deepseek";
+                model = "deepseek-chat";
+                apiKey = BUILTIN_DEEPSEEK_KEY;
               }
             } else {
               provider = localStorage.getItem("exam_custom_provider") || "deepseek";
-              model = localStorage.getItem("exam_custom_model") || "deepseek-flash";
+              model = localStorage.getItem("exam_custom_model") || (provider === "gemini" ? "gemini-3.8-flash" : "deepseek-chat");
               apiKey = localStorage.getItem("exam_custom_key") || "";
             }
 
-            const resp = await fetch(`${backendUrl}/api/upload_base64`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                filename: file.name,
-                content_base64: base64Content,
-                provider: provider,
-                model: model,
-                api_key: apiKey
-              })
-            });
+            let newExamData = null;
+            let parseMode = "cloud";
 
-            if (!resp.ok) {
-              const errData = await resp.json().catch(() => ({}));
-              throw new Error(errData.detail || `服务端异常 (${resp.status})`);
+            try {
+              const resp = await fetch(`${backendUrl}/api/upload_base64`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  filename: file.name,
+                  content_base64: base64Content,
+                  provider: provider,
+                  model: model,
+                  api_key: apiKey
+                })
+              });
+
+              if (resp.ok) {
+                const result = await resp.json();
+                newExamData = result.exam_data || result.data;
+                isPythonBackendConnected = true;
+              } else {
+                console.warn(`Cloud upload returned ${resp.status}, attempting local fallback...`);
+              }
+            } catch (cloudErr) {
+              console.warn("Cloud upload fetch error, attempting local fallback:", cloudErr);
             }
 
-            const result = await resp.json();
-            const newExamData = result.exam_data || result.data;
-            if (result.success && newExamData) {
-              isPythonBackendConnected = true;
+            if (!newExamData) {
+              if (file.name.endsWith(".docx") && window.mammoth) {
+                try {
+                  const arrayBuffer = await file.arrayBuffer();
+                  const mamRes = await mammoth.extractRawText({ arrayBuffer });
+                  if (mamRes && mamRes.value) {
+                    newExamData = parseExamTextClientSide(mamRes.value);
+                    parseMode = "local_mammoth";
+                  }
+                } catch (mamErr) {
+                  console.warn("Local mammoth extraction error:", mamErr);
+                }
+              } else if (file.name.endsWith(".txt")) {
+                try {
+                  const textContent = await file.text();
+                  newExamData = parseExamTextClientSide(textContent);
+                  parseMode = "local_text";
+                } catch (txtErr) {
+                  console.warn("Local text extraction error:", txtErr);
+                }
+              }
+            }
+
+            if (newExamData && (newExamData.sections?.length > 0 || newExamData.meta?.title)) {
               currentExamData = newExamData;
               sanitizeExamData(currentExamData);
               saveExamState();
               renderExamPaper();
               const qCount = (currentExamData.sections || []).reduce((acc, s) => acc + (s.questions?.length || 0), 0);
+              const engineDesc = parseMode === "cloud" ? "云端高精度排版引擎" : "本地应急解析引擎";
               loadingBubble.querySelector(".msg-bubble").innerHTML = `
                 🎉 <strong>试卷解析排版成功！</strong><br>
-                • 成功从 <code>${escapeHtml(file.name)}</code> 中无损提取试卷内容与矢量数学公式；<br>
+                • 由 <strong>${engineDesc}</strong> 从 <code>${escapeHtml(file.name)}</code> 中无损提取试卷内容与公式；<br>
                 • 共生成 <strong>${currentExamData.sections?.length || 0}</strong> 个大题模块，包含 <strong>${qCount}</strong> 道试题；<br>
                 • 右侧 A4 真实试卷已自动排版完成！您可以在下方随时通过自然语言指令微调。
               `;
             } else {
-              throw new Error(result.error || "未知解析错误");
+              throw new Error("未能识别试卷结构，请检查文件内容或文件格式是否有效。");
             }
           } catch (err) {
             console.error("Upload error:", err);

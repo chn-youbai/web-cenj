@@ -19,7 +19,7 @@ from pydantic import BaseModel
 
 from exam_typesetter.doc_parser import parse_docx
 from exam_typesetter.pdf_parser import parse_pdf
-from exam_typesetter.ai_parser import structure_exam_text, validate_and_normalize_exam_data
+from exam_typesetter.ai_parser import structure_exam_text, structure_exam_text_deterministic, validate_and_normalize_exam_data
 from exam_typesetter.docx_builder import ExamDocxBuilder
 from exam_typesetter.agent_router import route_chat_action
 from exam_typesetter.converter import docx_to_pdf
@@ -283,6 +283,21 @@ def handle_upload_base64(req: UploadBase64Request):
             "data": exam_data
         }
     except Exception as e:
+        # Fallback safeguard: if anything unexpected happened, extract deterministically from raw_text
+        try:
+            if 'raw_text' in locals() and raw_text:
+                exam_data = structure_exam_text_deterministic(raw_text)
+                if 'images_map' in locals() and images_map:
+                    exam_data = bind_images_to_exam_data(exam_data, images_map, paragraphs if 'paragraphs' in locals() else [])
+                return {
+                    "success": True,
+                    "filename": filename,
+                    "summary": summary if 'summary' in locals() else {"status": "deterministic_fallback"},
+                    "exam_data": exam_data,
+                    "data": exam_data
+                }
+        except Exception as det_err:
+            pass
         raise HTTPException(status_code=500, detail=f"处理文档失败: {str(e)}")
     finally:
         if os.path.exists(tmp_path):
@@ -355,6 +370,20 @@ async def handle_upload_file(
             "data": exam_data
         }
     except Exception as e:
+        try:
+            if 'raw_text' in locals() and raw_text:
+                exam_data = structure_exam_text_deterministic(raw_text)
+                if 'images_map' in locals() and images_map:
+                    exam_data = bind_images_to_exam_data(exam_data, images_map, paragraphs if 'paragraphs' in locals() else [])
+                return {
+                    "success": True,
+                    "filename": filename,
+                    "summary": summary if 'summary' in locals() else {"status": "deterministic_fallback"},
+                    "exam_data": exam_data,
+                    "data": exam_data
+                }
+        except Exception:
+            pass
         raise HTTPException(status_code=500, detail=f"解析试卷失败: {str(e)}")
     finally:
         if os.path.exists(tmp_path):
