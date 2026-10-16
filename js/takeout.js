@@ -1133,50 +1133,204 @@ async function pasteFromClipboard() {
   }
 }
 
+// CSV 文本解析引擎（兼容引号转义与各类表头）
+function parseCSVText(csvText) {
+  if (!csvText) return null;
+  const cleanText = csvText.replace(/^\uFEFF/, '').trim();
+  const rawLines = cleanText.split(/\r?\n/).filter(line => line.trim().length > 0);
+  if (rawLines.length < 2) return null;
+
+  function parseCSVLine(line) {
+    const values = [];
+    let current = '';
+    let inQuotes = false;
+    for (let i = 0; i < line.length; i++) {
+      const char = line[i];
+      if (char === '"') {
+        if (inQuotes && line[i + 1] === '"') {
+          current += '"';
+          i++;
+        } else {
+          inQuotes = !inQuotes;
+        }
+      } else if (char === ',' && !inQuotes) {
+        values.push(current.trim());
+        current = '';
+      } else {
+        current += char;
+      }
+    }
+    values.push(current.trim());
+    return values;
+  }
+
+  const headers = parseCSVLine(rawLines[0]);
+
+  let dateIdx = headers.findIndex(h => h.includes('日期'));
+  let weekdayIdx = headers.findIndex(h => h.includes('星期'));
+  let personIdx = headers.findIndex(h => h.includes('订餐人') || h.includes('人员') || h.includes('姓名'));
+  let dishIdx = headers.findIndex(h => h.includes('菜品') || h.includes('名称'));
+  let specIdx = headers.findIndex(h => h.includes('规格') || h.includes('变体'));
+  let priceIdx = headers.findIndex(h => h.includes('实付金额') || h.includes('金额') || h.includes('价格'));
+  let remarkIdx = headers.findIndex(h => h.includes('备注') || h.includes('口味'));
+  let statusIdx = headers.findIndex(h => h.includes('状态') || h.includes('结清') || h.includes('结算'));
+  let timeIdx = headers.findIndex(h => h.includes('时间'));
+
+  if (dateIdx === -1) dateIdx = 0;
+  if (personIdx === -1) personIdx = 2;
+  if (dishIdx === -1) dishIdx = 3;
+  if (priceIdx === -1) priceIdx = 5;
+
+  const orders = [];
+  const peopleMap = new Map();
+
+  for (let r = 1; r < rawLines.length; r++) {
+    const row = parseCSVLine(rawLines[r]);
+    if (row.length < 3) continue;
+
+    const date = row[dateIdx] || '';
+    const weekday = weekdayIdx !== -1 ? row[weekdayIdx] : '';
+    const personName = (personIdx !== -1 && row[personIdx]) ? row[personIdx] : '自己';
+    const dishName = (dishIdx !== -1 && row[dishIdx]) ? row[dishIdx] : '未知菜品';
+    const specName = specIdx !== -1 ? (row[specIdx] || '') : '';
+    const priceStr = priceIdx !== -1 ? (row[priceIdx] || '0') : '0';
+    const price = parseFloat(priceStr.replace(/[^0-9.]/g, '')) || 0;
+    const remark = remarkIdx !== -1 ? (row[remarkIdx] || '') : '';
+    const isSettled = statusIdx !== -1 ? (row[statusIdx].includes('已结') || row[statusIdx].includes('是') || row[statusIdx].toLowerCase() === 'true') : false;
+    const createTime = timeIdx !== -1 ? (row[timeIdx] || '') : new Date().toISOString();
+
+    if (!peopleMap.has(personName)) {
+      peopleMap.set(personName, {
+        id: 'p-' + Date.now() + '-' + peopleMap.size,
+        name: personName
+      });
+    }
+
+    orders.push({
+      id: 'ord-csv-' + Date.now() + '-' + r + '-' + Math.floor(Math.random() * 1000),
+      date: date || new Date().toISOString().split('T')[0],
+      weekday: weekday,
+      personId: peopleMap.get(personName).id,
+      personName: personName,
+      dishId: 'dish-' + r,
+      dishName: dishName,
+      specName: specName,
+      price: price,
+      remark: remark,
+      isSettled: isSettled,
+      createTime: createTime
+    });
+  }
+
+  if (orders.length === 0) return null;
+
+  return {
+    people: Array.from(peopleMap.values()),
+    orders: orders
+  };
+}
+
+function importFromCSVFile(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const text = e.target.result;
+      const data = parseCSVText(text);
+      if (!data || data.orders.length === 0) {
+        showToast('未能识别出有效的 CSV 账单流水');
+        return;
+      }
+
+      showConfirmModal(
+        '导入 CSV 账单',
+        `从 CSV 文件中成功识别出 ${data.orders.length} 条账单记录、${data.people.length} 位订餐人。确定导入吗？`,
+        '确认导入并合并',
+        () => {
+          // 合并订餐人
+          const existNames = new Set(state.people.map(p => p.name));
+          data.people.forEach(p => {
+            if (!existNames.has(p.name)) {
+              state.people.push(p);
+              existNames.add(p.name);
+            }
+          });
+
+          // 保持 ID 映射一致
+          const nameToId = {};
+          state.people.forEach(p => nameToId[p.name] = p.id);
+          data.orders.forEach(o => {
+            if (nameToId[o.personName]) o.personId = nameToId[o.personName];
+            state.orders.push(o);
+          });
+
+          saveData();
+          init();
+          showToast(`成功从 CSV 导入 ${data.orders.length} 条账单记录！`);
+          syncToCloud(true);
+        },
+        false
+      );
+    } catch (err) {
+      showToast('读取 CSV 文件出错: ' + err.message);
+    }
+  };
+  reader.readAsText(file, 'utf-8');
+}
+
 function applyQuickPaste(mode) {
   const raw = document.getElementById('quick-paste-text').value.trim();
   if (!raw) {
     showToast('请先输入或粘贴备份代码');
     return;
   }
+
+  let data = null;
+  let isFromCSV = false;
+
   try {
-    const data = JSON.parse(raw);
-    if (!data.people || !data.orders) {
-      showToast('备份数据格式不符合规范');
-      return;
-    }
-
-    if (mode === 'overwrite') {
-      state.people = data.people;
-      state.orders = data.orders;
-      if (data.menu) state.menu = data.menu;
-    } else {
-      // 合并模式
-      const existPersonNames = new Set(state.people.map(p => p.name));
-      (data.people || []).forEach(p => {
-        if (!existPersonNames.has(p.name)) {
-          state.people.push(p);
-          existPersonNames.add(p.name);
-        }
-      });
-
-      const existOrderIds = new Set(state.orders.map(o => o.id));
-      (data.orders || []).forEach(o => {
-        if (!existOrderIds.has(o.id)) {
-          state.orders.push(o);
-          existOrderIds.add(o.id);
-        }
-      });
-    }
-
-    saveData();
-    init();
-    closeQuickPasteModal();
-    showToast(mode === 'overwrite' ? '已全量覆盖还原！' : '已成功合并导入数据！');
-    syncToCloud(true);
+    data = JSON.parse(raw);
   } catch (e) {
-    showToast('解析失败，请检查粘贴的代码是否完整');
+    // 智能容错：如果用户粘贴的是导出的 CSV 文本，自动转为 CSV 解析！
+    data = parseCSVText(raw);
+    if (data) isFromCSV = true;
   }
+
+  if (!data || !data.people || !data.orders) {
+    showToast('无法识别数据，请确认是 JSON 备份代码或 CSV 文本');
+    return;
+  }
+
+  if (mode === 'overwrite') {
+    state.people = data.people;
+    state.orders = data.orders;
+    if (data.menu) state.menu = data.menu;
+  } else {
+    // 合并模式
+    const existPersonNames = new Set(state.people.map(p => p.name));
+    (data.people || []).forEach(p => {
+      if (!existPersonNames.has(p.name)) {
+        state.people.push(p);
+        existPersonNames.add(p.name);
+      }
+    });
+
+    const existOrderIds = new Set(state.orders.map(o => o.id));
+    (data.orders || []).forEach(o => {
+      if (!existOrderIds.has(o.id)) {
+        state.orders.push(o);
+        existOrderIds.add(o.id);
+      }
+    });
+  }
+
+  saveData();
+  init();
+  closeQuickPasteModal();
+  showToast(isFromCSV ? `成功从粘贴的 CSV 导入 ${data.orders.length} 条记录！` : (mode === 'overwrite' ? '已全量覆盖还原！' : '已成功合并导入数据！'));
+  syncToCloud(true);
 }
 
 function exportBackupJSON() {

@@ -210,6 +210,16 @@
             <input type="file" id="import-json-file" accept=".json" style="display:none;" onchange="importBackupJSON(event)">
           </label>
         </div>
+        <div class="setting-item">
+          <div>
+            <div class="setting-label">导入 Excel (CSV) 表格</div>
+            <div class="setting-desc">支持直接导入恢复导出的 .csv 账单流水</div>
+          </div>
+          <label class="icon-btn" style="cursor:pointer; color:var(--primary); font-weight:700;">
+            导入 CSV
+            <input type="file" id="import-csv-file" accept=".csv,text/csv" style="display:none;" onchange="importFromCSVFile(event)">
+          </label>
+        </div>
       </div>
 
       <!-- Security & Password Card -->
