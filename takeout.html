@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>沙县外卖记账助手</title>
+  <link rel="stylesheet" href="./css/takeout.css">
+</head>
+<body>
+
+<div class="app-shell">
+  <!-- Top Header -->
+  <header class="app-header">
+    <div class="app-title-box">
+      <div class="app-logo">沙</div>
+      <div>
+        <div class="app-title">沙县外卖记账</div>
+        <div class="app-sub">每天点餐 · 精确到日与星期 · 账单随心管</div>
+      </div>
+    </div>
+    <div class="header-actions">
+      <div class="sync-badge" id="cloud-sync-badge" onclick="syncToCloud(true)" title="点击立即同步云端">
+        <span>🔄</span> 检查同步
+      </div>
+      <button class="icon-btn" onclick="copyTodaySummary()">
+        <span>📋</span> 复制汇总
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Scrollable Area -->
+  <main class="app-main">
+    
+    <!-- TAB 1: 今日点单 -->
+    <section id="tab-order" class="tab-content active">
+      
+      <!-- Date & Weekday Bar -->
+      <div class="date-bar">
+        <div class="date-info">
+          <div class="date-input-wrap">
+            <input type="date" id="order-date-picker" onchange="onDateChanged()">
+          </div>
+          <div class="weekday-badge" id="order-weekday-text">星期五</div>
+        </div>
+        <button class="quick-date-btn" onclick="setTodayDate()">回今天</button>
+      </div>
+
+      <!-- Person Selector -->
+      <div class="person-selector">
+        <div class="card-title">
+          <span>选择当前订餐人</span>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <button class="icon-btn" style="padding:4px 8px; font-size:11px;" onclick="openAddPersonModal()">+ 加人</button>
+            <button class="icon-btn" style="padding:4px 8px; font-size:11px;" onclick="switchMainTab('settings')">管理人员</button>
+          </div>
+        </div>
+        <div class="person-list" id="person-pill-container">
+          <!-- Rendered via JS -->
+        </div>
+      </div>
+
+      <!-- Dish Selection Section -->
+      <div class="card" style="padding: 12px;">
+        <div class="search-box">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="dish-search-input" class="search-input" placeholder="搜索菜品：蒸饺、炒米粉、牛腩、炖汤..." oninput="filterMenu()">
+        </div>
+
+        <!-- Category Horizontal Scroll -->
+        <div class="menu-filter-bar" id="category-filter-container">
+          <!-- Rendered via JS -->
+        </div>
+
+        <!-- Dish Grid -->
+        <div class="dish-grid" id="dish-grid-container">
+          <!-- Rendered via JS -->
+        </div>
+      </div>
+
+      <!-- Today's Current Order List for selected date -->
+      <div class="today-summary-bar">
+        <div class="today-summary-header">
+          <div class="today-total">
+            <span id="order-list-title-date">今日</span>账单：
+            <span class="amount" id="today-total-price">¥0.00</span>
+          </div>
+          <div style="font-size:12px; color:var(--text-muted);">
+            已点 <strong id="today-item-count" style="color:var(--text-main);">0</strong> 份
+          </div>
+        </div>
+
+        <div class="order-items-list" id="today-items-container">
+          <!-- Rendered via JS -->
+        </div>
+
+        <div class="action-btn-row">
+          <button class="btn btn-secondary" onclick="copyTodaySummary()">
+            <span>📋</span> 复制群发文本
+          </button>
+          <button class="btn btn-primary" onclick="clearDateConfirm()">
+            <span>🗑️</span> 清空当日
+          </button>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- TAB 2: 历史与账单 -->
+    <section id="tab-history" class="tab-content">
+      
+      <!-- Unsettled Debt Overview Card -->
+      <div class="debt-stat-card">
+        <div class="debt-stat-title">待收账款 / 累计未结</div>
+        <div class="debt-stat-val" id="stat-total-unpaid">¥0.00</div>
+        <div class="debt-stat-sub">
+          <span>历史总记账：<strong id="stat-total-all" style="color:white;">¥0.00</strong></span>
+          <span>未结记录：<strong id="stat-unpaid-count" style="color:#fca5a5;">0 笔</strong></span>
+        </div>
+      </div>
+
+      <!-- Sub Tabs: By Person vs By Date -->
+      <div class="history-tabs">
+        <button class="history-tab-btn active" id="btn-hist-person" onclick="switchHistoryMode('person')">按人员汇总欠款</button>
+        <button class="history-tab-btn" id="btn-hist-date" onclick="switchHistoryMode('date')">按日期流水(含星期)</button>
+      </div>
+
+      <!-- Filter Checkbox -->
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; font-size:12px; color:var(--text-muted);">
+        <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
+          <input type="checkbox" id="only-unpaid-check" onchange="renderHistory()">
+          <span>仅显示未结清</span>
+        </label>
+        <button class="icon-btn" onclick="exportToCSV()">
+          <span>📥</span> 导出 Excel(CSV)
+        </button>
+      </div>
+
+      <!-- History List Container -->
+      <div id="history-list-container">
+        <!-- Rendered via JS -->
+      </div>
+
+    </section>
+
+    <!-- TAB 3: 设置与管理 -->
+    <section id="tab-settings" class="tab-content">
+      
+      <!-- Quick Backup & Sync Card -->
+      <div class="card">
+        <div class="card-title">
+          <span>⚡ 快捷备份与云端同步</span>
+        </div>
+        <div style="font-size:12px; color:var(--text-muted); margin-bottom:12px; line-height:1.5;">
+          支持剪贴板一键复制代码发微信互传，也支持云端一键实时双向同步。
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px;">
+          <button class="btn btn-secondary" style="padding:10px; font-size:13px;" onclick="quickCopyBackup()">
+            📋 复制备份代码
+          </button>
+          <button class="btn btn-secondary" style="padding:10px; font-size:13px;" onclick="openQuickPasteModal()">
+            📥 粘贴恢复代码
+          </button>
+        </div>
+        <button class="btn btn-primary" style="width:100%; padding:10px; font-size:13px;" onclick="syncToCloud(true)">
+          ☁️ 一键双向同步云端
+        </button>
+      </div>
+
+      <!-- Personnel Management Card -->
+      <div class="card">
+        <div class="card-title">
+          <span>常用订餐人员管理</span>
+          <button class="icon-btn" onclick="openAddPersonModal()">+ 添加人员</button>
+        </div>
+        <div id="settings-people-list">
+          <!-- Rendered via JS -->
+        </div>
+      </div>
+
+      <!-- Custom Dish Card -->
+      <div class="card">
+        <div class="card-title">
+          <span>菜品库拓展</span>
+          <button class="icon-btn" onclick="openAddDishModal()">+ 新增菜品</button>
+        </div>
+        <div style="font-size:12px; color:var(--text-muted); line-height:1.5;">
+          已根据沙县小吃实体菜单完整收录：特色小吃、滋补炖品、营养汤馄饨、汤面/米粉、套餐饭、卤味、现炒热卖共 45+ 款经典菜品。若店家推出新菜，可随时添加。
+        </div>
+      </div>
+
+      <!-- Traditional File Backup Card -->
+      <div class="card">
+        <div class="card-title">
+          <span>传统文件导入导出</span>
+        </div>
+        <div class="setting-item">
+          <div>
+            <div class="setting-label">导出 JSON 文件</div>
+            <div class="setting-desc">保存为本地独立 .json 备份文件</div>
+          </div>
+          <button class="icon-btn" onclick="exportBackupJSON()">导出文件</button>
+        </div>
+        <div class="setting-item">
+          <div>
+            <div class="setting-label">导入 JSON 文件</div>
+            <div class="setting-desc">从本地选择 .json 文件恢复</div>
+          </div>
+          <label class="icon-btn" style="cursor:pointer;">
+            选择文件
+            <input type="file" id="import-json-file" accept=".json" style="display:none;" onchange="importBackupJSON(event)">
+          </label>
+        </div>
+      </div>
+
+      <!-- Security & Password Card -->
+      <div class="card">
+        <div class="card-title">
+          <span>🔐 访问安全与密码设置</span>
+        </div>
+        <div class="setting-item">
+          <div>
+            <div class="setting-label">修改访问密码</div>
+            <div class="setting-desc">当前支持30天免密，可随时修改独立访问密码</div>
+          </div>
+          <button class="icon-btn" onclick="openChangePasswordModal()">修改密码</button>
+        </div>
+        <div class="setting-item">
+          <div>
+            <div class="setting-label">退出解锁状态</div>
+            <div class="setting-desc">立即清除免密授权，重新进入需输密码</div>
+          </div>
+          <button class="icon-btn" style="color:var(--warning);" onclick="logoutAuth()">退出锁定</button>
+        </div>
+      </div>
+
+      <!-- Reset Card -->
+      <div class="card">
+        <div class="setting-item">
+          <div>
+            <div class="setting-label" style="color:var(--danger);">重置测试数据</div>
+            <div class="setting-desc">清空当前账单，恢复至初始默认菜单与名单</div>
+          </div>
+          <button class="icon-btn" style="color:var(--danger); border-color:#fca5a5;" onclick="resetToInitialData()">重置</button>
+        </div>
+      </div>
+
+      <div style="text-align:center; padding: 14px; font-size:11px; color:var(--text-sub);">
+        沙县小吃外卖记账助手 · 前后端模块化云端同步版
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Bottom TabBar -->
+  <nav class="tab-bar">
+    <div class="tab-item active" onclick="switchMainTab('order')">
+      <div class="tab-icon">🍜</div>
+      <div>今日点餐</div>
+    </div>
+    <div class="tab-item" onclick="switchMainTab('history')">
+      <div class="tab-icon">📜</div>
+      <div>历史账单</div>
+    </div>
+    <div class="tab-item" onclick="switchMainTab('settings')">
+      <div class="tab-icon">⚙️</div>
+      <div>管理设置</div>
+    </div>
+  </nav>
+
+</div>
+
+<!-- Modal: Choose Spec / Price / Remark Bottom Sheet -->
+<div class="modal-backdrop" id="spec-modal">
+  <div class="bottom-sheet">
+    <div class="sheet-header">
+      <div>
+        <div class="sheet-title" id="modal-dish-name">菜品名称</div>
+        <div style="font-size:12px; color:var(--text-muted);" id="modal-target-person">订餐人：自己</div>
+      </div>
+      <button class="sheet-close" onclick="closeSpecModal()">✕</button>
+    </div>
+
+    <!-- Specifications Radio Grid -->
+    <div class="spec-group-title">选择规格 / 主食 / 份量：</div>
+    <div class="spec-options-grid" id="modal-specs-container">
+      <!-- Rendered via JS -->
+    </div>
+
+    <!-- Custom Price Override -->
+    <div class="custom-price-row">
+      <label>实付金额 (元)：</label>
+      <input type="number" step="0.5" id="modal-custom-price" class="custom-price-input" placeholder="输入金额">
+      <span style="font-size:11px; color:var(--text-sub);">单选规格自动带出，可微调</span>
+    </div>
+
+    <!-- Remark -->
+    <div class="spec-group-title">口味备注 (选填)：</div>
+    <input type="text" id="modal-dish-remark" class="remark-input" placeholder="例如：加辣、少盐、不放香菜、打包等">
+
+    <button class="btn btn-primary" style="width:100%; padding:12px;" onclick="confirmAddDishToOrder()">
+      确认加入点单
+    </button>
+  </div>
+</div>
+
+<!-- Modal: Add Person -->
+<div class="modal-backdrop" id="person-modal">
+  <div class="bottom-sheet">
+    <div class="sheet-header">
+      <div class="sheet-title" id="person-modal-title">添加订餐人员</div>
+      <button class="sheet-close" onclick="closePersonModal()">✕</button>
+    </div>
+    <div style="margin-bottom:12px;">
+      <label style="font-size:13px; font-weight:600; display:block; margin-bottom:6px;">人员姓名/称呼：</label>
+      <input type="text" id="person-name-input" class="input-field" placeholder="如：同事老王、李四、自己">
+    </div>
+    <button class="btn btn-primary" style="width:100%; padding:12px;" onclick="savePerson()">
+      保存人员
+    </button>
+  </div>
+</div>
+
+<!-- Modal: Add Dish -->
+<div class="modal-backdrop" id="dish-modal">
+  <div class="bottom-sheet">
+    <div class="sheet-header">
+      <div class="sheet-title">新增自定义菜品</div>
+      <button class="sheet-close" onclick="closeDishModal()">✕</button>
+    </div>
+    <div style="margin-bottom:10px;">
+      <label style="font-size:12px; font-weight:600; display:block; margin-bottom:4px;">菜品名称：</label>
+      <input type="text" id="new-dish-name" class="input-field" placeholder="如：老鸭粉丝汤">
+    </div>
+    <div style="margin-bottom:10px;">
+      <label style="font-size:12px; font-weight:600; display:block; margin-bottom:4px;">所属分类：</label>
+      <select id="new-dish-category" class="input-field">
+        <option value="特色小吃">特色小吃</option>
+        <option value="滋补炖品">滋补炖品</option>
+        <option value="营养汤馄饨">营养汤馄饨</option>
+        <option value="营养汤面/粉">营养汤面/粉</option>
+        <option value="营养套餐饭">营养套餐饭</option>
+        <option value="卤味系列">卤味系列</option>
+        <option value="现炒热卖">现炒热卖</option>
+        <option value="其它菜品">其它菜品</option>
+      </select>
+    </div>
+    <div style="margin-bottom:14px;">
+      <label style="font-size:12px; font-weight:600; display:block; margin-bottom:4px;">规格与价格 (格式: 规格名:价格，逗号隔开)：</label>
+      <input type="text" id="new-dish-specs" class="input-field" placeholder="如：小份:8, 大份:12 (若固定价直接填: 12)">
+    </div>
+    <button class="btn btn-primary" style="width:100%; padding:12px;" onclick="saveCustomDish()">
+      保存并加入菜单
+    </button>
+  </div>
+</div>
+
+<!-- Modal: Custom In-App Confirmation (Fixes native confirm bugs!) -->
+<div class="modal-backdrop" id="confirm-modal">
+  <div class="bottom-sheet">
+    <div class="sheet-header">
+      <div class="sheet-title" id="confirm-modal-title">提示确认</div>
+      <button class="sheet-close" onclick="closeConfirmModal()">✕</button>
+    </div>
+    <p id="confirm-modal-desc" style="font-size:14px; color:var(--text-muted); line-height:1.6; margin-bottom:16px;">
+      确定执行该操作吗？
+    </p>
+    <div class="modal-action-row">
+      <button class="btn btn-secondary" onclick="closeConfirmModal()">取消</button>
+      <button class="btn btn-danger" id="confirm-modal-action-btn" onclick="executeConfirmAction()">确定</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Quick Backup Clipboard Code -->
+<div class="modal-backdrop" id="quick-backup-modal">
+  <div class="bottom-sheet">
+    <div class="sheet-header">
+      <div class="sheet-title">📋 快捷备份代码</div>
+      <button class="sheet-close" onclick="closeQuickBackupModal()">✕</button>
+    </div>
+    <p style="font-size:12px; color:var(--text-muted); margin-bottom:8px;">
+      数据已自动复制到剪贴板。若浏览器限制，可长按下方文本框全选复制：
+    </p>
+    <textarea id="quick-backup-text" class="backup-textarea" readonly></textarea>
+    <button class="btn btn-primary" style="width:100%; padding:12px;" onclick="copyAgainFromTextarea()">
+      再次复制到剪贴板
+    </button>
+  </div>
+</div>
+
+<!-- Modal: Quick Paste Restore -->
+<div class="modal-backdrop" id="quick-paste-modal">
+  <div class="bottom-sheet">
+    <div class="sheet-header">
+      <div class="sheet-title">📥 快捷粘贴恢复</div>
+      <button class="sheet-close" onclick="closeQuickPasteModal()">✕</button>
+    </div>
+    <p style="font-size:12px; color:var(--text-muted); margin-bottom:8px;">
+      在下方粘贴从另一台手机/微信复制的备份代码：
+    </p>
+    <textarea id="quick-paste-text" class="backup-textarea" placeholder="在此粘贴完整的 JSON 备份代码..."></textarea>
+    <div style="display:flex; justify-content:space-between; margin-bottom:12px;">
+      <button class="icon-btn" onclick="pasteFromClipboard()">📋 从剪贴板自动填入</button>
+    </div>
+    <div class="modal-action-row">
+      <button class="btn btn-secondary" onclick="applyQuickPaste('merge')">合并恢复 (保留现有)</button>
+      <button class="btn btn-primary" onclick="applyQuickPaste('overwrite')">全量覆盖恢复</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Change Password -->
+<div class="modal-backdrop" id="change-pwd-modal">
+  <div class="bottom-sheet">
+    <div class="sheet-header">
+      <div class="sheet-title">🔐 修改访问密码</div>
+      <button class="sheet-close" onclick="closeChangePasswordModal()">✕</button>
+    </div>
+    <div style="margin-bottom:12px;">
+      <label style="font-size:13px; font-weight:600; display:block; margin-bottom:6px;">原访问密码：</label>
+      <input type="password" id="pwd-current-input" class="input-field" placeholder="默认初始密码为 8888">
+    </div>
+    <div style="margin-bottom:14px;">
+      <label style="font-size:13px; font-weight:600; display:block; margin-bottom:6px;">新密码 (至少4位)：</label>
+      <input type="password" id="pwd-new-input" class="input-field" placeholder="输入新的访问密码">
+    </div>
+    <button class="btn btn-primary" style="width:100%; padding:12px;" onclick="saveNewPassword()">
+      确认修改密码
+    </button>
+  </div>
+</div>
+
+<!-- Toast Popup -->
+<div class="toast" id="toast-el">提示消息</div>
+
+<!-- Scripts -->
+<script src="./js/takeout.js"></script>
+</body>
+</html>

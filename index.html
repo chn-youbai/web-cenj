@@ -186,6 +186,150 @@
       box-shadow: 0 15px 30px rgba(139, 92, 246, 0.45);
       color: #ffffff;
     }
+    .takeout-portal-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.6rem;
+      padding: 0.75rem 1.6rem;
+      border-radius: 9999px;
+      color: #ffffff;
+      font-size: 0.95rem;
+      font-weight: 700;
+      text-decoration: none;
+      background: linear-gradient(135deg, #f97316, #ef4444);
+      box-shadow: 0 10px 25px rgba(249, 115, 22, 0.35);
+      border: none;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .takeout-portal-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 15px 30px rgba(239, 68, 68, 0.45);
+      color: #ffffff;
+    }
+
+    /* 密码解锁模态弹窗 */
+    .auth-modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(3, 7, 18, 0.75);
+      backdrop-filter: blur(14px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+      padding: 1.2rem;
+    }
+    .auth-modal-backdrop.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .auth-modal-card {
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 24px;
+      padding: 2rem 2.2rem;
+      max-width: 420px;
+      width: 100%;
+      box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.7), 0 0 40px rgba(249, 115, 22, 0.18);
+      text-align: center;
+      transform: scale(0.92) translateY(10px);
+      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .auth-modal-backdrop.show .auth-modal-card {
+      transform: scale(1) translateY(0);
+    }
+    .auth-title {
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+    .auth-desc {
+      font-size: 0.86rem;
+      color: #94a3b8;
+      line-height: 1.5;
+      margin-bottom: 1.4rem;
+    }
+    .auth-input-wrap {
+      position: relative;
+      margin-bottom: 0.6rem;
+    }
+    .auth-input {
+      width: 100%;
+      padding: 0.85rem 1rem;
+      background: rgba(30, 41, 59, 0.7);
+      border: 1.5px solid rgba(255, 255, 255, 0.18);
+      border-radius: 12px;
+      color: #fff;
+      font-size: 1.15rem;
+      letter-spacing: 0.25em;
+      text-align: center;
+      outline: none;
+      transition: border-color 0.25s, box-shadow 0.25s;
+    }
+    .auth-input:focus {
+      border-color: #f97316;
+      box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.25);
+    }
+    .auth-error {
+      color: #ef4444;
+      font-size: 0.82rem;
+      min-height: 1.3rem;
+      margin-bottom: 0.6rem;
+    }
+    .auth-remember-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      font-size: 0.85rem;
+      color: #cbd5e1;
+      margin-bottom: 1.3rem;
+      cursor: pointer;
+    }
+    .auth-btn-row {
+      display: flex;
+      gap: 0.8rem;
+    }
+    .auth-submit-btn {
+      flex: 1;
+      padding: 0.8rem;
+      border-radius: 9999px;
+      background: linear-gradient(135deg, #f97316, #ef4444);
+      color: white;
+      font-size: 0.95rem;
+      font-weight: 700;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 8px 20px rgba(249, 115, 22, 0.35);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .auth-submit-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 25px rgba(249, 115, 22, 0.45);
+    }
+    .auth-cancel-btn {
+      padding: 0.8rem 1.4rem;
+      border-radius: 9999px;
+      background: rgba(255, 255, 255, 0.1);
+      color: #cbd5e1;
+      font-size: 0.95rem;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .auth-cancel-btn:hover {
+      background: rgba(255, 255, 255, 0.18);
+    }
     /* 点赞互动按钮 */
     .like-btn {
       position: relative;
@@ -315,7 +459,7 @@
       .btn-group {
         gap: 0.45rem;
       }
-      .gallery-btn, .pan-btn, .like-btn {
+      .gallery-btn, .pan-btn, .like-btn, .exam-btn, .takeout-portal-btn {
         padding: 0.5rem 1rem;
         font-size: 0.82rem;
       }
@@ -352,10 +496,12 @@
         <span class="like-badge" id="likeCount">...</span>
       </button>
 
-      <a href="./exam" class="exam-btn" id="examLink">
-        <span>📝 AI 试卷智能排版</span>
-        <span style="font-size: 0.85em; opacity: 0.9;">(对话微调/导出) →</span>
-      </a>
+      <!-- 沙县外卖记账助手入口（密码鉴权保护） -->
+      <button class="takeout-portal-btn" id="takeoutBtn" onclick="openTakeoutPortal()">
+        <span>🍜 沙县外卖记账助手</span>
+        <span style="font-size: 0.82em; opacity: 0.9;">(安全登录) →</span>
+      </button>
+
       <a href="./gallery.html" class="gallery-btn">
         <span>🖼️ 查看精选图库</span>
         <span style="font-size: 0.85em; opacity: 0.9;">(121张) →</span>
@@ -364,6 +510,35 @@
         <span>📁 资源网盘下载</span>
         <span style="font-size: 0.85em; opacity: 0.9;">(100MB极速) →</span>
       </a>
+
+      <!-- 试卷功能已移至最下方 -->
+      <a href="./exam" class="exam-btn" id="examLink">
+        <span>📝 AI 试卷智能排版</span>
+        <span style="font-size: 0.85em; opacity: 0.9;">(对话微调/导出) →</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- 密码验证解锁弹窗 -->
+  <div class="auth-modal-backdrop" id="authModalBackdrop">
+    <div class="auth-modal-card">
+      <div class="auth-title">
+        <span>🔐</span>
+        <span>沙县外卖记账助手</span>
+      </div>
+      <div class="auth-desc">请输入独立访问密码以进入（初始默认密码：<strong>8888</strong>）</div>
+      <div class="auth-input-wrap">
+        <input type="password" id="takeoutAuthInput" class="auth-input" placeholder="输入密码" maxlength="20">
+      </div>
+      <div class="auth-error" id="authErrorMsg"></div>
+      <label class="auth-remember-row">
+        <input type="checkbox" id="authRememberCheck" checked>
+        <span>记住解锁状态 (30天免密访问)</span>
+      </label>
+      <div class="auth-btn-row">
+        <button class="auth-cancel-btn" onclick="closeTakeoutAuthModal()">取消</button>
+        <button class="auth-submit-btn" onclick="submitTakeoutAuth()">解锁进入 🚀</button>
+      </div>
     </div>
   </div>
 
@@ -785,6 +960,109 @@
 
       requestAnimationFrame(renderParticles);
     }
+
+    // ==================== 沙县外卖记账助手 密码鉴权系统 ====================
+    const TAKEOUT_AUTH_KEY = 'takeout_auth_token_v1';
+    const TAKEOUT_PWD_KEY = 'takeout_custom_password_v1';
+    const TAKEOUT_DEFAULT_PWD = '8888';
+
+    function isTakeoutAuthorized() {
+      const token = localStorage.getItem(TAKEOUT_AUTH_KEY) || sessionStorage.getItem(TAKEOUT_AUTH_KEY);
+      if (!token) return false;
+      try {
+        const data = JSON.parse(token);
+        if (Date.now() - data.time < 30 * 24 * 60 * 60 * 1000) {
+          return true;
+        }
+        localStorage.removeItem(TAKEOUT_AUTH_KEY);
+        sessionStorage.removeItem(TAKEOUT_AUTH_KEY);
+        return false;
+      } catch (e) {
+        return false;
+      }
+    }
+
+    function openTakeoutPortal() {
+      if (isTakeoutAuthorized()) {
+        window.location.href = './takeout.html';
+        return;
+      }
+      openTakeoutAuthModal();
+    }
+
+    function openTakeoutAuthModal() {
+      const modal = document.getElementById('authModalBackdrop');
+      const input = document.getElementById('takeoutAuthInput');
+      const err = document.getElementById('authErrorMsg');
+      if (err) {
+        err.style.color = '#ef4444';
+        err.textContent = '';
+      }
+      if (input) input.value = '';
+      if (modal) modal.classList.add('show');
+      setTimeout(() => { if (input) input.focus(); }, 150);
+    }
+
+    function closeTakeoutAuthModal() {
+      const modal = document.getElementById('authModalBackdrop');
+      if (modal) modal.classList.remove('show');
+    }
+
+    function submitTakeoutAuth() {
+      const input = document.getElementById('takeoutAuthInput');
+      const err = document.getElementById('authErrorMsg');
+      const remember = document.getElementById('authRememberCheck').checked;
+      const pwd = input ? input.value.trim() : '';
+
+      const targetPwd = localStorage.getItem(TAKEOUT_PWD_KEY) || TAKEOUT_DEFAULT_PWD;
+
+      if (!pwd) {
+        if (err) {
+          err.style.color = '#ef4444';
+          err.textContent = '请输入访问密码';
+        }
+        return;
+      }
+
+      if (pwd === targetPwd) {
+        const payload = JSON.stringify({ time: Date.now() });
+        if (remember) {
+          localStorage.setItem(TAKEOUT_AUTH_KEY, payload);
+        } else {
+          sessionStorage.setItem(TAKEOUT_AUTH_KEY, payload);
+        }
+        if (err) {
+          err.style.color = '#10b981';
+          err.textContent = '验证成功，正在进入...';
+        }
+        setTimeout(() => {
+          window.location.href = './takeout.html';
+        }, 250);
+      } else {
+        if (err) {
+          err.style.color = '#ef4444';
+          err.textContent = '密码错误，请重新输入（初始密码：8888）';
+        }
+        if (input) input.select();
+      }
+    }
+
+    // 回车直接提交验证
+    document.getElementById('takeoutAuthInput')?.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        submitTakeoutAuth();
+      }
+    });
+
+    // 检查 URL 是否带 need_auth 参数（从内部未授权被重定向回来时自动弹窗）
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('need_auth') === '1') {
+        openTakeoutAuthModal();
+        const err = document.getElementById('authErrorMsg');
+        if (err) err.textContent = '请先输入访问密码解锁进入';
+      }
+    } catch (e) {}
 
     initParticles();
     renderParticles();

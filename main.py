@@ -7,6 +7,7 @@ import os
 import io
 import re
 import sys
+import json
 import base64
 import tempfile
 import urllib.parse
@@ -82,9 +83,36 @@ def get_status():
             "deterministic_agent_tools",
             "deepseek_function_calling",
             "native_docx_export",
-            "pdf_vector_export"
+            "pdf_vector_export",
+            "takeout_cloud_sync"
         ]
     }
+
+
+@app.get("/api/takeout")
+@app.get("/api/takeout/data")
+def get_takeout_data():
+    file_path = os.path.join(os.path.dirname(__file__), "takeout_data.json")
+    if os.path.exists(file_path):
+        try:
+            with open(file_path, "r", encoding="utf-8") as f:
+                return JSONResponse(content=json.load(f))
+        except Exception as e:
+            return JSONResponse(content={"status": "error", "message": str(e)}, status_code=500)
+    return JSONResponse(content={"status": "empty", "data": None})
+
+
+@app.post("/api/takeout")
+@app.post("/api/takeout/data")
+def save_takeout_data(payload: Dict[str, Any] = Body(...)):
+    file_path = os.path.join(os.path.dirname(__file__), "takeout_data.json")
+    try:
+        with open(file_path, "w", encoding="utf-8") as f:
+            json.dump(payload, f, ensure_ascii=False, indent=2)
+        return {"status": "ok", "saved_at": payload.get("updateTime")}
+    except Exception as e:
+        return JSONResponse(content={"status": "error", "message": str(e)}, status_code=500)
+
 
 
 @app.post("/api/chat_action")
