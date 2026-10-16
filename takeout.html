@@ -110,8 +110,15 @@
       
       <!-- Unsettled Debt Overview Card -->
       <div class="debt-stat-card">
-        <div class="debt-stat-title">待收账款 / 累计未结</div>
-        <div class="debt-stat-val" id="stat-total-unpaid">¥0.00</div>
+        <div class="debt-stat-header-row">
+          <div>
+            <div class="debt-stat-title">待收账款 / 累计未结</div>
+            <div class="debt-stat-val" id="stat-total-unpaid">¥0.00</div>
+          </div>
+          <button class="debt-copy-all-btn" onclick="copyTotalUnpaidBill()" title="复制所有人未结账单发微信催款">
+            <span>📋</span> 复制总待付账单
+          </button>
+        </div>
         <div class="debt-stat-sub">
           <span>历史总记账：<strong id="stat-total-all" style="color:white;">¥0.00</strong></span>
           <span>未结记录：<strong id="stat-unpaid-count" style="color:#fca5a5;">0 笔</strong></span>

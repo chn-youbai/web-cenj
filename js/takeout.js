@@ -821,25 +821,202 @@ function copyTodaySummary() {
   summary += `--------------------
 💰 今日总金额：¥${totalAll.toFixed(2)} (共 ${todayOrders.length} 份)`;
 
+  copyTextToClipboard(summary, '已复制点餐汇总到剪贴板！');
+}
+
+function copyTextToClipboard(txt, successMsg = '已复制到剪贴板！') {
   if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(summary).then(() => {
-      showToast('已复制汇总文本到剪贴板！');
+    navigator.clipboard.writeText(txt).then(() => {
+      showToast(successMsg);
     }).catch(() => {
-      promptCopyText(summary);
+      promptCopyText(txt, successMsg);
     });
   } else {
-    promptCopyText(summary);
+    promptCopyText(txt, successMsg);
   }
 }
 
-function promptCopyText(txt) {
+function promptCopyText(txt, successMsg = '已复制！') {
   const ta = document.createElement('textarea');
   ta.value = txt;
+  ta.style.position = 'fixed';
+  ta.style.opacity = '0';
+  ta.style.left = '-9999px';
   document.body.appendChild(ta);
+  ta.focus();
   ta.select();
-  document.execCommand('copy');
+  try {
+    document.execCommand('copy');
+    showToast(successMsg);
+  } catch (err) {
+    showToast('复制成功！若未生效请长按粘贴');
+  }
   document.body.removeChild(ta);
-  showToast('已复制汇总文本！');
+}
+
+// 复制所有人总的待付账单汇总（供微信群发/统一对账）
+function copyTotalUnpaidBill() {
+  const unpaidOrders = state.orders.filter(o => !o.isSettled);
+  if (unpaidOrders.length === 0) {
+    showToast('太棒了！当前没有任何未结账单 🎉');
+    return;
+  }
+
+  // 按订餐人分组汇总
+  const personMap = {};
+  let totalAllUnpaid = 0;
+
+  unpaidOrders.forEach(o => {
+    if (!personMap[o.personName]) {
+      personMap[o.personName] = {
+        name: o.personName,
+        total: 0,
+        items: []
+      };
+    }
+    personMap[o.personName].items.push(o);
+    const p = parseFloat(o.price) || 0;
+    personMap[o.personName].total += p;
+    totalAllUnpaid += p;
+  });
+
+  const now = new Date();
+  const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  const weekday = getWeekdayString(todayStr);
+
+  let summary = `【📢 外卖待结账单总览】
+📅 统计时间：${todayStr} (${weekday})
+💰 待收总额：¥${totalAllUnpaid.toFixed(2)} (共 ${unpaidOrders.length} 笔未付)
+------------------------------
+`;
+
+  // 欠款金额由高到低排序
+  const sortedNames = Object.keys(personMap).sort((a, b) => personMap[b].total - personMap[a].total);
+
+  sortedNames.forEach(name => {
+    const p = personMap[name];
+    summary += `👤 ${p.name}：待付 ¥${p.total.toFixed(2)} (${p.items.length}笔)\n`;
+    p.items.forEach(item => {
+      const specRemark = [item.specName, item.remark].filter(Boolean).join(' | ');
+      const itemWeekday = item.weekday || getWeekdayString(item.date);
+      summary += `   · ${item.date} (${itemWeekday}) ${item.dishName}${specRemark ? ` [${specRemark}]` : ''} - ¥${parseFloat(item.price || 0).toFixed(2)}\n`;
+    });
+    summary += `\n`;
+  });
+
+  summary += `------------------------------
+请各位对照明细微信转账给我，收到后我会标记结清，多谢配合！🙏❤️`;
+
+  copyTextToClipboard(summary, `已复制总待付账单 (共 ¥${totalAllUnpaid.toFixed(2)})！`);
+}
+
+// 复制单个人的未结催收账单（供单独私发微信）
+function copyPersonUnpaidBill(personName) {
+  const unpaidItems = state.orders.filter(o => o.personName === personName && !o.isSettled);
+  if (unpaidItems.length === 0) {
+    showToast(`【${personName}】当前无未结账单，已全部结清！🎉`);
+    return;
+  }
+
+  let totalUnpaid = 0;
+  unpaidItems.forEach(o => {
+    totalUnpaid += (parseFloat(o.price) || 0);
+  });
+
+  const now = new Date();
+  const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  const weekday = getWeekdayString(todayStr);
+
+  let text = `【🔔 外卖账单催收提醒】
+👤 订餐人：${personName}
+💰 待付金额：¥${totalUnpaid.toFixed(2)} (共 ${unpaidItems.length} 笔未结)
+📅 截止日期：${todayStr} (${weekday})
+------------------------------
+📋 待付明细：
+`;
+
+  unpaidItems.forEach(item => {
+    const specRemark = [item.specName, item.remark].filter(Boolean).join(' | ');
+    const itemWeekday = item.weekday || getWeekdayString(item.date);
+    text += `  · ${item.date} (${itemWeekday}) ${item.dishName}${specRemark ? ` [${specRemark}]` : ''} - ¥${parseFloat(item.price || 0).toFixed(2)}\n`;
+  });
+
+  text += `------------------------------
+看到麻烦微信转账给我一下哦，感谢配合！🙏❤️`;
+
+  copyTextToClipboard(text, `已复制【${personName}】的催收账单 (¥${totalUnpaid.toFixed(2)})！`);
+}
+
+// 复制单个人全部历史记录（结清时备用）
+function copyPersonHistory(personName) {
+  const allItems = state.orders.filter(o => o.personName === personName);
+  if (allItems.length === 0) {
+    showToast(`【${personName}】暂无历史记录`);
+    return;
+  }
+
+  let total = 0;
+  allItems.forEach(o => {
+    total += (parseFloat(o.price) || 0);
+  });
+
+  let text = `【📋 外卖历史消费明细】
+👤 订餐人：${personName}
+💰 累计消费：¥${total.toFixed(2)} (共 ${allItems.length} 笔，已全结清)
+------------------------------
+📋 历史明细：
+`;
+
+  allItems.forEach(item => {
+    const specRemark = [item.specName, item.remark].filter(Boolean).join(' | ');
+    const itemWeekday = item.weekday || getWeekdayString(item.date);
+    text += `  · ${item.date} (${itemWeekday}) ${item.dishName}${specRemark ? ` [${specRemark}]` : ''} - ¥${parseFloat(item.price || 0).toFixed(2)} (已结)\n`;
+  });
+
+  text += `------------------------------
+账单均已结清，感谢支持！🎉`;
+
+  copyTextToClipboard(text, `已复制【${personName}】的历史记录！`);
+}
+
+// 复制某日全部流水
+function copyDateSummary(dateStr) {
+  const dayOrders = state.orders.filter(o => o.date === dateStr);
+  if (dayOrders.length === 0) {
+    showToast(`${dateStr} 无记录可汇总`);
+    return;
+  }
+
+  const weekday = getWeekdayString(dateStr);
+  let summary = `【沙县外卖点餐流水】
+📅 日期：${dateStr} (${weekday})
+--------------------
+`;
+
+  const personMap = {};
+  let totalAll = 0;
+  dayOrders.forEach(o => {
+    if (!personMap[o.personName]) personMap[o.personName] = [];
+    personMap[o.personName].push(o);
+    totalAll += (parseFloat(o.price) || 0);
+  });
+
+  for (const name in personMap) {
+    summary += `👤 ${name}：\n`;
+    let subTotal = 0;
+    personMap[name].forEach(item => {
+      const specRemark = [item.specName, item.remark].filter(Boolean).join(' | ');
+      const statusStr = item.isSettled ? '已结' : '未结';
+      summary += `  · ${item.dishName} ${specRemark ? `[${specRemark}]` : ''} - ¥${item.price} (${statusStr})\n`;
+      subTotal += (parseFloat(item.price) || 0);
+    });
+    summary += `  小计：¥${subTotal.toFixed(2)}\n\n`;
+  }
+
+  summary += `--------------------
+💰 当日总额：¥${totalAll.toFixed(2)} (共 ${dayOrders.length} 份)`;
+
+  copyTextToClipboard(summary, `已复制 ${dateStr} 账单明细！`);
 }
 
 // ==================== 10. 历史与未结账单视图 (精确对齐原始卡片UI) ====================
@@ -938,14 +1115,21 @@ function renderHistory() {
             `).join('')}
           </div>
 
-          ${hasUnpaid ? `
-            <div class="person-debt-actions">
-              <span style="font-size:11px; color:var(--text-sub);">点击状态可单笔切换</span>
-              <button class="debt-action-btn btn-settle-all" onclick="settleAllForPerson('${escapeHtml(p.name)}')">
-                ✓ 结清TA的全部未付 (¥${p.unpaidTotal.toFixed(2)})
+          <div class="person-debt-actions">
+            ${hasUnpaid ? `
+              <button class="debt-action-btn btn-copy-person-debt" onclick="copyPersonUnpaidBill(decodeURIComponent('${encodeURIComponent(p.name)}'))">
+                <span>📋</span> 复制催收账单
               </button>
-            </div>
-          ` : ''}
+              <button class="debt-action-btn btn-settle-all" onclick="settleAllForPerson(decodeURIComponent('${encodeURIComponent(p.name)}'))">
+                ✓ 结清全部 (¥${p.unpaidTotal.toFixed(2)})
+              </button>
+            ` : `
+              <span style="font-size:11px; color:var(--text-sub);">全部账单已结清</span>
+              <button class="debt-action-btn btn-copy-person-history" onclick="copyPersonHistory(decodeURIComponent('${encodeURIComponent(p.name)}'))">
+                <span>📋</span> 复制已结记录
+              </button>
+            `}
+          </div>
         </div>
       `;
     }
@@ -980,8 +1164,13 @@ function renderHistory() {
               <span>📅 ${d.date}</span>
               <span class="date-group-weekday">${d.weekday}</span>
             </div>
-            <div style="font-weight:800; color:var(--primary); font-size:14px;">
-              当日总计: ¥${d.total.toFixed(2)}
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span style="font-weight:800; color:var(--primary); font-size:14px;">
+                当日总计: ¥${d.total.toFixed(2)}
+              </span>
+              <button class="debt-action-btn btn-copy-person-history" style="padding:4px 8px; font-size:11px;" onclick="copyDateSummary('${d.date}')" title="复制当日账单明细">
+                <span>📋</span> 复制当日
+              </button>
             </div>
           </div>
           <div>

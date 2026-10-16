@@ -1,4 +1,4 @@
-﻿    :root {
+    :root {
       --primary: #e64a19;
       --primary-light: #ff7d47;
       --primary-subtle: #fff3e0;
@@ -755,6 +755,41 @@
       box-shadow: 0 6px 16px rgba(15, 23, 42, 0.2);
     }
 
+    .debt-stat-header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .debt-copy-all-btn {
+      background: rgba(255, 255, 255, 0.16);
+      color: #ffffff;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 8px;
+      padding: 7px 12px;
+      font-size: 13px;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.15s ease;
+      backdrop-filter: blur(4px);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+
+    .debt-copy-all-btn:hover {
+      background: rgba(255, 255, 255, 0.25);
+      border-color: rgba(255, 255, 255, 0.45);
+    }
+
+    .debt-copy-all-btn:active {
+      transform: scale(0.96);
+      background: rgba(255, 255, 255, 0.35);
+    }
+
     .debt-stat-title {
       font-size: 12px;
       color: #94a3b8;
@@ -770,7 +805,7 @@
     .debt-stat-sub {
       font-size: 12px;
       color: #cbd5e1;
-      margin-top: 6px;
+      margin-top: 8px;
       display: flex;
       justify-content: space-between;
     }
@@ -815,28 +850,58 @@
     .person-debt-actions {
       display: flex;
       align-items: center;
-      justify-content: space-between;
+      justify-content: flex-end;
+      flex-wrap: wrap;
+      gap: 8px;
       border-top: 1px dashed var(--border);
-      padding-top: 8px;
-      margin-top: 6px;
+      padding-top: 10px;
+      margin-top: 8px;
     }
 
     .debt-action-btn {
       font-size: 12px;
-      padding: 4px 10px;
+      padding: 6px 11px;
       border-radius: 6px;
-      border: none;
+      border: 1px solid transparent;
       cursor: pointer;
       font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.15s ease;
+    }
+
+    .btn-copy-person-debt {
+      background: #eff6ff;
+      color: #2563eb;
+      border-color: #bfdbfe;
+    }
+
+    .btn-copy-person-debt:active {
+      background: #dbeafe;
+      transform: scale(0.97);
     }
 
     .btn-settle-all {
       background: var(--success-subtle);
       color: var(--success);
+      border-color: #a7f3d0;
     }
 
     .btn-settle-all:active {
       background: #a7f3d0;
+      transform: scale(0.97);
+    }
+
+    .btn-copy-person-history {
+      background: var(--bg-page);
+      color: var(--text-muted);
+      border-color: var(--border);
+    }
+
+    .btn-copy-person-history:active {
+      background: var(--border);
+      transform: scale(0.97);
     }
 
     .date-group-card {
