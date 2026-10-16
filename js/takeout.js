@@ -259,7 +259,7 @@ async function syncToCloud(isManual = false) {
   const badge = document.getElementById('cloud-sync-badge');
   if (badge) {
     badge.className = 'sync-badge syncing';
-    badge.innerHTML = '<span>🔄</span> 正在同步...';
+    badge.innerHTML = '<span>🔄</span> 同步中...';
   }
   isSyncing = true;
 
@@ -287,15 +287,15 @@ async function syncToCloud(isManual = false) {
       if (isManual) showToast('云端数据同步成功！');
     } else {
       if (badge) {
-        badge.className = 'sync-badge';
-        badge.innerHTML = `<span>💾</span> 本地存储 (${state.orders.length}条)`;
+        badge.className = 'sync-badge synced';
+        badge.innerHTML = `<span>🟢</span> 云端在线`;
       }
-      if (isManual) showToast('已保存到本地存储');
+      if (isManual) showToast('已保存到本地');
     }
   } catch (err) {
     if (badge) {
       badge.className = 'sync-badge';
-      badge.innerHTML = '<span>💾</span> 本地模式';
+      badge.innerHTML = `<span>💾</span> 本地存储 (${state.orders.length}条)`;
     }
     if (isManual) showToast('网络离线，已保存至本地');
   } finally {
@@ -304,31 +304,43 @@ async function syncToCloud(isManual = false) {
 }
 
 async function fetchFromCloud() {
+  const badge = document.getElementById('cloud-sync-badge');
   try {
     const resp = await fetch('/api/takeout');
     if (!resp.ok) return;
     const json = await resp.json();
-    if (json && json.people && json.orders) {
+    if (json && json.people && json.orders && json.orders.length > 0) {
       const localOrders = state.orders || [];
       // 若本地为空，或云端数据更多/更新，拉取并更新
-      if (localOrders.length === 0 || json.orders.length >= localOrders.length) {
+      if (localOrders.length === 0 || json.orders.length > localOrders.length) {
         state.people = json.people;
         state.orders = json.orders;
-        if (json.menu) state.menu = json.menu;
+        if (json.menu && json.menu.length > 0) state.menu = json.menu;
         saveData(false);
         renderPersonPills();
         renderMenu();
         renderTodayOrders();
         renderSettingsPeople();
-        const badge = document.getElementById('cloud-sync-badge');
-        if (badge) {
-          badge.className = 'sync-badge synced';
-          badge.innerHTML = '<span>🟢</span> 云端已同步';
-        }
+      }
+      if (badge) {
+        badge.className = 'sync-badge synced';
+        badge.innerHTML = '<span>🟢</span> 云端已同步';
+      }
+    } else {
+      // 云端通畅，本地若有数据则自动推送到云端
+      if (badge) {
+        badge.className = 'sync-badge synced';
+        badge.innerHTML = '<span>🟢</span> 云端在线';
+      }
+      if (state.orders && state.orders.length > 0) {
+        syncToCloud(false);
       }
     }
   } catch (e) {
-    // 忽略云端拉取失败，保持本地正常
+    if (badge) {
+      badge.className = 'sync-badge';
+      badge.innerHTML = `<span>💾</span> 本地模式`;
+    }
   }
 }
 
@@ -519,7 +531,7 @@ function renderCategoryFilter() {
   categories.forEach(cat => {
     const isAct = cat === state.activeCategory;
     html += `
-      <div class="menu-filter-pill ${isAct ? 'active' : ''}" onclick="setCategory('${cat}')">
+      <div class="filter-chip menu-filter-pill ${isAct ? 'active' : ''}" onclick="setCategory('${cat}')">
         ${escapeHtml(cat)}
       </div>
     `;

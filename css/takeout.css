@@ -151,8 +151,8 @@
       border-radius: var(--radius-md);
       padding: 14px;
       margin-bottom: 14px;
-      border: 1px solid var(--border);
-      box-shadow: var(--shadow-sm);
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
     }
 
     .card-title {
@@ -229,8 +229,9 @@
       display: flex;
       gap: 8px;
       overflow-x: auto;
-      padding-bottom: 4px;
+      padding: 4px 4px 8px 4px;
       scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
     }
 
     .person-list::-webkit-scrollbar {
@@ -278,30 +279,44 @@
     /* Menu Section */
     .menu-filter-bar {
       display: flex;
-      gap: 6px;
+      gap: 8px;
       overflow-x: auto;
-      margin-bottom: 12px;
-      padding-bottom: 2px;
+      margin-bottom: 14px;
+      padding: 4px 4px 8px 4px;
       scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
     }
     .menu-filter-bar::-webkit-scrollbar { display: none; }
 
-    .filter-chip {
-      flex-shrink: 0;
-      padding: 6px 12px;
-      border-radius: 14px;
-      font-size: 12px;
+    .filter-chip, .menu-filter-pill {
+      flex-shrink: 0 !important;
+      padding: 7px 15px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 600;
       background: #f1f5f9;
-      color: var(--text-muted);
+      color: #475569;
       cursor: pointer;
-      border: 1px solid transparent;
-      transition: all 0.15s;
+      border: 1px solid #cbd5e1;
+      white-space: nowrap !important;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
     }
 
-    .filter-chip.active {
-      background: #334155;
-      color: white;
-      font-weight: 600;
+    .filter-chip:active, .menu-filter-pill:active {
+      transform: scale(0.95);
+    }
+
+    .filter-chip.active, .menu-filter-pill.active {
+      background: linear-gradient(135deg, var(--primary), var(--primary-light)) !important;
+      color: #ffffff !important;
+      border-color: var(--primary) !important;
+      box-shadow: 0 3px 8px rgba(230, 74, 25, 0.35) !important;
     }
 
     .search-box {
