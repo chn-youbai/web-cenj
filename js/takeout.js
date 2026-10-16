@@ -692,50 +692,42 @@ function confirmAddDishToOrder() {
 // ==================== 9. 今日点单展示与汇总 ====================
 function renderTodayOrders() {
   const container = document.getElementById('today-items-container');
-  if (!container) return;
+  const todayOrders = state.orders.filter(o => o.date === state.selectedDate);
 
-  const todays = state.orders.filter(o => o.date === state.selectedDate);
-
-  let totalMoney = 0;
-  todays.forEach(o => totalMoney += (o.price || 0));
+  let totalPrice = 0;
+  todayOrders.forEach(o => { totalPrice += (parseFloat(o.price) || 0); });
 
   const totalEl = document.getElementById('today-total-price');
   const countEl = document.getElementById('today-item-count');
-  if (totalEl) totalEl.textContent = `¥${totalMoney.toFixed(2)}`;
-  if (countEl) countEl.textContent = todays.length;
+  if (totalEl) totalEl.textContent = `¥${totalPrice.toFixed(2)}`;
+  if (countEl) countEl.textContent = todayOrders.length;
 
-  if (todays.length === 0) {
+  if (todayOrders.length === 0) {
     container.innerHTML = `
-      <div class="empty-state">
-        <div class="empty-icon">🍜</div>
-        <div>${state.selectedDate} 还没有点餐记录</div>
-        <div style="font-size:11px; margin-top:4px;">请在上方选人后点击菜品添加</div>
+      <div class="empty-state" style="padding: 20px;">
+        <div style="font-size:24px; margin-bottom:4px;">🥢</div>
+        <div>${state.selectedDate} (${getWeekdayString(state.selectedDate)}) 暂无点餐记录</div>
+        <div style="font-size:11px; margin-top:4px;">请在上方选人后点击菜品加入</div>
       </div>
     `;
     return;
   }
 
   let html = '';
-  todays.forEach((o) => {
+  todayOrders.forEach(o => {
     const specRemarkText = [o.specName, o.remark].filter(Boolean).join(' · ');
-
     html += `
       <div class="order-item-row">
-        <div class="order-item-info">
-          <span class="order-person-tag">👤 ${escapeHtml(o.personName)}</span>
+        <div class="order-item-main">
+          <span class="order-person-tag">${escapeHtml(o.personName)}</span>
           <div>
             <div class="order-dish-title">${escapeHtml(o.dishName)}</div>
             ${specRemarkText ? `<div class="order-dish-remark">${escapeHtml(specRemarkText)}</div>` : ''}
           </div>
         </div>
         <div class="order-item-right">
-          <div class="order-item-price">¥${parseFloat(o.price || 0).toFixed(2)}</div>
-          <div class="order-item-actions">
-            <button class="order-action-link" onclick="toggleOrderSettle('${o.id}')">
-              ${o.isSettled ? '<span style="color:var(--success)">已结</span>' : '<span style="color:var(--danger)">未结</span>'}
-            </button>
-            <button class="order-action-link" style="color:var(--text-sub);" onclick="deleteOrderItem('${o.id}')">删除</button>
-          </div>
+          <span class="order-item-price">¥${parseFloat(o.price || 0).toFixed(2)}</span>
+          <button class="delete-item-btn" title="删除此项" onclick="deleteOrderItem('${o.id}')">✕</button>
         </div>
       </div>
     `;
@@ -748,83 +740,95 @@ function deleteOrderItem(orderId) {
   state.orders = state.orders.filter(o => o.id !== orderId);
   saveData();
   renderTodayOrders();
-  showToast('已移除该条点餐');
+  renderPersonPills();
+  showToast('已移除该记录');
 }
 
+function toggleOrderStatus(orderId) {
+  const ord = state.orders.find(o => o.id === orderId);
+  if (ord) {
+    ord.isSettled = !ord.isSettled;
+    saveData();
+    renderHistory();
+    renderTodayOrders();
+    showToast(ord.isSettled ? '已标记为结清' : '已重置为未结');
+  }
+}
+
+// 兼容别名
 function toggleOrderSettle(orderId) {
-  const o = state.orders.find(item => item.id === orderId);
-  if (!o) return;
-  o.isSettled = !o.isSettled;
-  saveData();
-  renderTodayOrders();
-  renderHistory();
-  showToast(o.isSettled ? '已标记为结清' : '已标记为未结');
+  toggleOrderStatus(orderId);
 }
 
 function clearDateConfirm() {
   const count = state.orders.filter(o => o.date === state.selectedDate).length;
   if (count === 0) {
-    showToast('该日期暂无点单记录');
+    showToast('当前日期无记录');
     return;
   }
-
   showConfirmModal(
     '清空当日账单',
-    `确定清空【${state.selectedDate}】的全部 ${count} 条点餐记录吗？`,
+    `确定要清空【${state.selectedDate}】的所有点餐记录（共 ${count} 份）吗？`,
     '确认清空',
     () => {
       state.orders = state.orders.filter(o => o.date !== state.selectedDate);
       saveData();
       renderTodayOrders();
-      renderHistory();
-      showToast('已清空当日账单记录');
+      renderPersonPills();
+      showToast('已清空当日记录');
+      syncToCloud(true);
     },
     true
   );
 }
 
 function copyTodaySummary() {
-  const todays = state.orders.filter(o => o.date === state.selectedDate);
-  if (todays.length === 0) {
-    showToast('当前日期没有点单记录');
+  const todayOrders = state.orders.filter(o => o.date === state.selectedDate);
+  if (todayOrders.length === 0) {
+    showToast('当前日期无记录可汇总');
     return;
   }
 
   const weekday = getWeekdayString(state.selectedDate);
-  let text = `【沙县外卖点餐清单】\n📅 日期：${state.selectedDate} (${weekday})\n--------------------\n`;
+  let summary = `【沙县外卖点餐汇总】
+📅 日期：${state.selectedDate} (${weekday})
+--------------------
+`;
 
   const personMap = {};
-  let totalSum = 0;
-
-  todays.forEach(o => {
-    if (!personMap[o.personName]) {
-      personMap[o.personName] = [];
-    }
+  let totalAll = 0;
+  todayOrders.forEach(o => {
+    if (!personMap[o.personName]) personMap[o.personName] = [];
     personMap[o.personName].push(o);
-    totalSum += (o.price || 0);
+    totalAll += (parseFloat(o.price) || 0);
   });
 
-  for (const pName in personMap) {
-    text += `👤 ${pName}：\n`;
-    let pSum = 0;
-    personMap[pName].forEach(item => {
+  for (const name in personMap) {
+    summary += `👤 ${name}：
+`;
+    let subTotal = 0;
+    personMap[name].forEach(item => {
       const specRemark = [item.specName, item.remark].filter(Boolean).join(' | ');
-      text += `  · ${item.dishName} ${specRemark ? `(${specRemark})` : ''} - ¥${item.price}\n`;
-      pSum += item.price;
+      summary += `  · ${item.dishName} ${specRemark ? `[${specRemark}]` : ''} - ¥${item.price}
+`;
+      subTotal += (parseFloat(item.price) || 0);
     });
-    text += `  小计：¥${pSum}\n\n`;
+    summary += `  小计：¥${subTotal.toFixed(2)}
+
+`;
   }
 
-  text += `--------------------\n💰 今日总计：¥${totalSum.toFixed(2)} (共 ${todays.length} 份)`;
+  summary += `--------------------
+💰 今日总金额：¥${totalAll.toFixed(2)} (共 ${todayOrders.length} 份)`;
 
   if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(text).then(() => {
+    navigator.clipboard.writeText(summary).then(() => {
       showToast('已复制汇总文本到剪贴板！');
     }).catch(() => {
-      promptCopyText(text);
+      promptCopyText(summary);
     });
   } else {
-    promptCopyText(text);
+    promptCopyText(summary);
   }
 }
 
@@ -838,7 +842,7 @@ function promptCopyText(txt) {
   showToast('已复制汇总文本！');
 }
 
-// ==================== 10. 历史与未结账单视图 ====================
+// ==================== 10. 历史与未结账单视图 (精确对齐原始卡片UI) ====================
 function switchHistoryMode(mode) {
   state.historyMode = mode;
   document.getElementById('btn-hist-person').classList.toggle('active', mode === 'person');
@@ -852,116 +856,164 @@ function renderHistory() {
 
   const onlyUnpaid = document.getElementById('only-unpaid-check') ? document.getElementById('only-unpaid-check').checked : false;
 
-  let allMoney = 0;
-  let unpaidMoney = 0;
-  let unpaidCount = 0;
-
-  state.orders.forEach(o => {
-    allMoney += (o.price || 0);
-    if (!o.isSettled) {
-      unpaidMoney += (o.price || 0);
-      unpaidCount += 1;
-    }
-  });
+  let allOrders = state.orders;
+  let unpaidOrders = allOrders.filter(o => !o.isSettled);
+  let totalUnpaid = unpaidOrders.reduce((acc, cur) => acc + (parseFloat(cur.price) || 0), 0);
+  let totalAll = allOrders.reduce((acc, cur) => acc + (parseFloat(cur.price) || 0), 0);
 
   const unpaidValEl = document.getElementById('stat-total-unpaid');
   const allValEl = document.getElementById('stat-total-all');
   const unpaidCountEl = document.getElementById('stat-unpaid-count');
 
-  if (unpaidValEl) unpaidValEl.textContent = `¥${unpaidMoney.toFixed(2)}`;
-  if (allValEl) allValEl.textContent = `¥${allMoney.toFixed(2)}`;
-  if (unpaidCountEl) unpaidCountEl.textContent = `${unpaidCount} 笔`;
+  if (unpaidValEl) unpaidValEl.textContent = `¥${totalUnpaid.toFixed(2)}`;
+  if (allValEl) allValEl.textContent = `¥${totalAll.toFixed(2)}`;
+  if (unpaidCountEl) unpaidCountEl.textContent = `${unpaidOrders.length} 笔`;
 
-  let list = state.orders;
-  if (onlyUnpaid) {
-    list = list.filter(o => !o.isSettled);
-  }
+  let displayOrders = onlyUnpaid ? unpaidOrders : allOrders;
 
-  if (list.length === 0) {
-    container.innerHTML = `<div class="empty-state">暂无符合条件的账单流水</div>`;
+  if (displayOrders.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">🎉</div>
+        <div>没有找到符合条件的记录</div>
+      </div>
+    `;
     return;
   }
 
   if (state.historyMode === 'person') {
-    renderHistoryByPerson(container, list);
-  } else {
-    renderHistoryByDate(container, list);
-  }
-}
+    // 按人员汇总卡片
+    const personMap = {};
+    displayOrders.forEach(o => {
+      if (!personMap[o.personName]) {
+        personMap[o.personName] = {
+          name: o.personName,
+          personId: o.personId,
+          total: 0,
+          unpaidTotal: 0,
+          items: []
+        };
+      }
+      personMap[o.personName].items.push(o);
+      personMap[o.personName].total += (parseFloat(o.price) || 0);
+      if (!o.isSettled) {
+        personMap[o.personName].unpaidTotal += (parseFloat(o.price) || 0);
+      }
+    });
 
-function renderHistoryByPerson(container, list) {
-  const map = {};
-  state.people.forEach(p => {
-    map[p.name] = { person: p, items: [], unpaidTotal: 0, total: 0 };
-  });
-
-  list.forEach(o => {
-    if (!map[o.personName]) {
-      map[o.personName] = { person: { id: o.personId, name: o.personName }, items: [], unpaidTotal: 0, total: 0 };
-    }
-    map[o.personName].items.push(o);
-    map[o.personName].total += (o.price || 0);
-    if (!o.isSettled) {
-      map[o.personName].unpaidTotal += (o.price || 0);
-    }
-  });
-
-  let html = '';
-  for (const name in map) {
-    const data = map[name];
-    if (data.items.length === 0) continue;
-
-    html += `
-      <div class="debt-person-card">
-        <div class="debt-person-header">
-          <div class="debt-person-name">
-            <span>👤</span> ${escapeHtml(data.person.name)}
-          </div>
-          <div class="debt-person-amount">
-            待结：¥${data.unpaidTotal.toFixed(2)}
-          </div>
-        </div>
-
-        <div style="font-size:11px; color:var(--text-muted); margin-bottom:8px;">
-          累计消费：¥${data.total.toFixed(2)} · 共 ${data.items.length} 笔记录
-        </div>
-
-        <div class="debt-person-details">
-          ${data.items.map(item => `
-            <div style="display:flex; justify-content:space-between; align-items:center; padding:5px 0; border-bottom:1px dashed var(--border); font-size:12px;">
-              <div>
-                <span style="color:var(--text-muted); margin-right:6px;">${item.date} (${item.weekday || ''})</span>
-                <span style="font-weight:600;">${escapeHtml(item.dishName)} ${item.specName ? `[${escapeHtml(item.specName)}]` : ''}</span>
-              </div>
-              <div style="display:flex; align-items:center; gap:8px;">
-                <span style="font-weight:700;">¥${parseFloat(item.price || 0).toFixed(2)}</span>
-                <button class="order-action-link" onclick="toggleOrderSettle('${item.id}')">
-                  ${item.isSettled ? '<span style="color:var(--success)">已结</span>' : '<span style="color:var(--danger)">结清</span>'}
-                </button>
-              </div>
+    let html = '';
+    for (const name in personMap) {
+      const p = personMap[name];
+      const hasUnpaid = p.unpaidTotal > 0;
+      html += `
+        <div class="person-debt-card">
+          <div class="person-debt-header">
+            <div class="person-debt-name">
+              <span>👤</span> ${escapeHtml(p.name)}
             </div>
-          `).join('')}
-        </div>
-
-        ${data.unpaidTotal > 0 ? `
-          <div class="debt-actions">
-            <button class="debt-action-btn btn-settle-all" onclick="settleAllForPerson('${escapeHtml(data.person.name)}')">
-              一键全结清 (¥${data.unpaidTotal.toFixed(2)})
-            </button>
+            <div class="person-debt-amount ${hasUnpaid ? 'unpaid' : 'paid'}">
+              ${hasUnpaid ? `待结: ¥${p.unpaidTotal.toFixed(2)}` : `已全部结清`}
+            </div>
           </div>
-        ` : ''}
-      </div>
-    `;
-  }
 
-  container.innerHTML = html;
+          <div style="font-size:12px; color:var(--text-muted); margin-bottom:8px;">
+            共 ${p.items.length} 笔订单 · 累计消费 ¥${p.total.toFixed(2)}
+          </div>
+
+          <!-- Items preview -->
+          <div style="max-height: 240px; overflow-y:auto; font-size:12px;">
+            ${p.items.map(item => `
+              <div class="record-row">
+                <div>
+                  <span style="color:var(--text-muted); font-size:11px;">${item.date} (${item.weekday || getWeekdayString(item.date)})</span>
+                  <div style="font-weight:600;">${escapeHtml(item.dishName)} ${item.specName ? `[${escapeHtml(item.specName)}]` : ''}</div>
+                </div>
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <span style="font-weight:700;">¥${parseFloat(item.price || 0).toFixed(2)}</span>
+                  <span class="status-badge ${item.isSettled ? 'paid' : 'unpaid'}" onclick="toggleOrderStatus('${item.id}')">
+                    ${item.isSettled ? '已结' : '未结'}
+                  </span>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+
+          ${hasUnpaid ? `
+            <div class="person-debt-actions">
+              <span style="font-size:11px; color:var(--text-sub);">点击状态可单笔切换</span>
+              <button class="debt-action-btn btn-settle-all" onclick="settleAllForPerson('${escapeHtml(p.name)}')">
+                ✓ 结清TA的全部未付 (¥${p.unpaidTotal.toFixed(2)})
+              </button>
+            </div>
+          ` : ''}
+        </div>
+      `;
+    }
+    container.innerHTML = html;
+
+  } else {
+    // 按日期汇总流水卡片
+    const dateMap = {};
+    displayOrders.forEach(o => {
+      const weekday = o.weekday || getWeekdayString(o.date);
+      const key = `${o.date}__${weekday}`;
+      if (!dateMap[key]) {
+        dateMap[key] = {
+          date: o.date,
+          weekday: weekday,
+          total: 0,
+          items: []
+        };
+      }
+      dateMap[key].items.push(o);
+      dateMap[key].total += (parseFloat(o.price) || 0);
+    });
+
+    let html = '';
+    const sortedKeys = Object.keys(dateMap).sort().reverse();
+    for (const key of sortedKeys) {
+      const d = dateMap[key];
+      html += `
+        <div class="date-group-card">
+          <div class="date-group-header">
+            <div class="date-group-title">
+              <span>📅 ${d.date}</span>
+              <span class="date-group-weekday">${d.weekday}</span>
+            </div>
+            <div style="font-weight:800; color:var(--primary); font-size:14px;">
+              当日总计: ¥${d.total.toFixed(2)}
+            </div>
+          </div>
+          <div>
+            ${d.items.map(item => `
+              <div class="record-row">
+                <div style="display:flex; align-items:center; flex:1; overflow:hidden;">
+                  <span class="record-person-badge">${escapeHtml(item.personName)}</span>
+                  <span style="font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                    ${escapeHtml(item.dishName)} ${item.specName ? `(${escapeHtml(item.specName)})` : ''}
+                  </span>
+                </div>
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <span style="font-weight:700;">¥${parseFloat(item.price || 0).toFixed(2)}</span>
+                  <span class="status-badge ${item.isSettled ? 'paid' : 'unpaid'}" onclick="toggleOrderStatus('${item.id}')">
+                    ${item.isSettled ? '已结' : '未结'}
+                  </span>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
+    container.innerHTML = html;
+  }
 }
 
 function settleAllForPerson(personName) {
   showConfirmModal(
-    '一键结清账单',
-    `确定将订餐人【${personName}】的所有未结账单标记为【已结清】吗？`,
-    '确认结清',
+    '结清账单',
+    `确定要将【${personName}】名下的所有未付外卖全部结清吗？`,
+    '确认全部结清',
     () => {
       state.orders.forEach(o => {
         if (o.personName === personName) {
@@ -971,68 +1023,13 @@ function settleAllForPerson(personName) {
       saveData();
       renderTodayOrders();
       renderHistory();
-      showToast(`已结清【${personName}】的全部账单！`);
+      showToast(`已结清 ${personName} 的全部账单！`);
+      syncToCloud(true);
     },
     false
   );
 }
 
-function renderHistoryByDate(container, list) {
-  const dateMap = {};
-  list.forEach(o => {
-    if (!dateMap[o.date]) {
-      dateMap[o.date] = { date: o.date, weekday: o.weekday, items: [], total: 0 };
-    }
-    dateMap[o.date].items.push(o);
-    dateMap[o.date].total += (o.price || 0);
-  });
-
-  const sortedDates = Object.keys(dateMap).sort().reverse();
-
-  let html = '';
-  sortedDates.forEach(date => {
-    const group = dateMap[date];
-    html += `
-      <div class="record-group">
-        <div class="record-group-header">
-          <div class="record-group-title">
-            <span>📅 ${group.date}</span>
-            <span style="color:var(--primary); font-weight:700; margin-left:6px;">${group.weekday || getWeekdayString(group.date)}</span>
-          </div>
-          <div style="font-size:12px; font-weight:700;">
-            小计：¥${group.total.toFixed(2)}
-          </div>
-        </div>
-
-        <div>
-          ${group.items.map(item => `
-            <div class="record-row">
-              <div class="record-desc">
-                <div>
-                  <span class="record-person-badge">👤 ${escapeHtml(item.personName)}</span>
-                  <span style="font-weight:600; font-size:13px;">
-                    ${escapeHtml(item.dishName)} ${item.specName ? `(${escapeHtml(item.specName)})` : ''}
-                  </span>
-                  ${item.remark ? `<span style="font-size:11px; color:var(--text-muted);">[${escapeHtml(item.remark)}]</span>` : ''}
-                </div>
-              </div>
-              <div style="display:flex; align-items:center; gap:8px;">
-                <span class="record-price">¥${parseFloat(item.price || 0).toFixed(2)}</span>
-                <button class="order-action-link" onclick="toggleOrderSettle('${item.id}')">
-                  ${item.isSettled ? '<span style="color:var(--success)">已结</span>' : '<span style="color:var(--danger)">未结</span>'}
-                </button>
-              </div>
-            </div>
-          `).join('')}
-        </div>
-      </div>
-    `;
-  });
-
-  container.innerHTML = html;
-}
-
-// ==================== 11. 自定义菜品添加 ====================
 function openAddDishModal() {
   document.getElementById('new-dish-name').value = '';
   document.getElementById('new-dish-specs').value = '';
