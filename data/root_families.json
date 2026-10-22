@@ -1,0 +1,3299 @@
+[
+  {
+    "rootName": "look / vis / spect (看 · 观察 · 视野)",
+    "triggers": [
+      "look",
+      "outlook",
+      "onlooker",
+      "overlook",
+      "lookout",
+      "view",
+      "sight",
+      "vision",
+      "visible",
+      "visual",
+      "observe",
+      "inspect",
+      "inspection",
+      "expect",
+      "expectation",
+      "prospect",
+      "perspective",
+      "aspect",
+      "respect",
+      "suspect"
+    ],
+    "members": [
+      {
+        "w": "look",
+        "p": "vi. & n.",
+        "m": "看；注视；看起来；神色；外貌"
+      },
+      {
+        "w": "outlook",
+        "p": "n.",
+        "m": "前景；展望；人生观；观点"
+      },
+      {
+        "w": "overlook",
+        "p": "vt.",
+        "m": "俯瞰；远眺；忽略；宽容"
+      },
+      {
+        "w": "onlooker",
+        "p": "n.",
+        "m": "旁观者；围观者"
+      },
+      {
+        "w": "lookout",
+        "p": "n.",
+        "m": "瞭望台；警戒；留神"
+      },
+      {
+        "w": "good-looking",
+        "p": "adj.",
+        "m": "好看的；相貌迷人的"
+      },
+      {
+        "w": "view",
+        "p": "n. & vt.",
+        "m": "视野；风景；看法；观看；看待"
+      },
+      {
+        "w": "viewer",
+        "p": "n.",
+        "m": "电视观众；观看者"
+      },
+      {
+        "w": "review",
+        "p": "n. & vt.",
+        "m": "复习；回顾；评论"
+      },
+      {
+        "w": "interview",
+        "p": "n. & vt.",
+        "m": "面试；采访"
+      },
+      {
+        "w": "sight",
+        "p": "n.",
+        "m": "视力；视野；景象；名胜"
+      },
+      {
+        "w": "insight",
+        "p": "n.",
+        "m": "洞察力；深刻见解"
+      },
+      {
+        "w": "vision",
+        "p": "n.",
+        "m": "视力；视野；远见；想象"
+      },
+      {
+        "w": "visible",
+        "p": "adj.",
+        "m": "看得见的；明显的"
+      },
+      {
+        "w": "invisible",
+        "p": "adj.",
+        "m": "看不见的；隐形的"
+      },
+      {
+        "w": "visual",
+        "p": "adj.",
+        "m": "视觉的；视力的"
+      },
+      {
+        "w": "envision",
+        "p": "vt.",
+        "m": "展望；想象"
+      },
+      {
+        "w": "supervise",
+        "p": "vt.",
+        "m": "监督；管理；指导"
+      },
+      {
+        "w": "inspect",
+        "p": "vt.",
+        "m": "检查；视察；检阅"
+      },
+      {
+        "w": "inspection",
+        "p": "n.",
+        "m": "检查；查看；视察"
+      },
+      {
+        "w": "inspector",
+        "p": "n.",
+        "m": "检查员；巡视员"
+      },
+      {
+        "w": "expect",
+        "p": "vt.",
+        "m": "预料；期待；期望"
+      },
+      {
+        "w": "expectation",
+        "p": "n.",
+        "m": "期望；预期"
+      },
+      {
+        "w": "unexpected",
+        "p": "adj.",
+        "m": "出乎意料的；始料不及的"
+      },
+      {
+        "w": "prospect",
+        "p": "n.",
+        "m": "前景；可能性；前途"
+      },
+      {
+        "w": "perspective",
+        "p": "n.",
+        "m": "视角；观点；透视法"
+      },
+      {
+        "w": "aspect",
+        "p": "n.",
+        "m": "方面；层面；外观"
+      },
+      {
+        "w": "respect",
+        "p": "n. & vt.",
+        "m": "尊敬；尊重；方面"
+      },
+      {
+        "w": "respectable",
+        "p": "adj.",
+        "m": "值得尊敬的；体面的"
+      },
+      {
+        "w": "respectful",
+        "p": "adj.",
+        "m": "恭敬的；表示尊重的"
+      },
+      {
+        "w": "respective",
+        "p": "adj.",
+        "m": "分别的；各自的"
+      },
+      {
+        "w": "suspect",
+        "p": "vt. & n.",
+        "m": "怀疑；嫌疑犯"
+      },
+      {
+        "w": "suspicious",
+        "p": "adj.",
+        "m": "可疑的；多疑的"
+      }
+    ]
+  },
+  {
+    "rootName": "sign (记号 · 信号 · 签署)",
+    "triggers": [
+      "sign",
+      "signal",
+      "signature",
+      "signify",
+      "significant",
+      "significance",
+      "design",
+      "designer",
+      "resign",
+      "assign",
+      "assignment",
+      "signpost"
+    ],
+    "members": [
+      {
+        "w": "sign",
+        "p": "n. & v.",
+        "m": "迹象；招牌；手势；签名；示意"
+      },
+      {
+        "w": "signal",
+        "p": "n. & v.",
+        "m": "信号；暗号；发信号；标志着"
+      },
+      {
+        "w": "signature",
+        "p": "n.",
+        "m": "签名；署名；签字"
+      },
+      {
+        "w": "signify",
+        "p": "vt.",
+        "m": "表示；意味着；预示"
+      },
+      {
+        "w": "significant",
+        "p": "adj.",
+        "m": "有重大意义的；显著的"
+      },
+      {
+        "w": "significance",
+        "p": "n.",
+        "m": "重要性；意义"
+      },
+      {
+        "w": "significantly",
+        "p": "adv.",
+        "m": "显著地；重大地"
+      },
+      {
+        "w": "insignificant",
+        "p": "adj.",
+        "m": "微不足道的；无关紧要的"
+      },
+      {
+        "w": "design",
+        "p": "n. & vt.",
+        "m": "设计；图案；构思"
+      },
+      {
+        "w": "designer",
+        "p": "n.",
+        "m": "设计师；设计者"
+      },
+      {
+        "w": "assign",
+        "p": "vt.",
+        "m": "分派；布置（作业）；分配"
+      },
+      {
+        "w": "assignment",
+        "p": "n.",
+        "m": "（分派的）任务；作业"
+      },
+      {
+        "w": "resign",
+        "p": "vi. & vt.",
+        "m": "辞职；辞去；顺从"
+      },
+      {
+        "w": "resignation",
+        "p": "n.",
+        "m": "辞职；辞呈；顺从"
+      },
+      {
+        "w": "signpost",
+        "p": "n.",
+        "m": "路标；指示牌"
+      }
+    ]
+  },
+  {
+    "rootName": "adapt / apt (适应 · 适合 · 改编)",
+    "triggers": [
+      "adapt",
+      "adaptation",
+      "adaptable",
+      "adapter",
+      "apt",
+      "aptitude"
+    ],
+    "members": [
+      {
+        "w": "adapt",
+        "p": "vi. & vt.",
+        "m": "（使）适应；改编；改写"
+      },
+      {
+        "w": "adaptation",
+        "p": "n.",
+        "m": "适应；改编本；改写本"
+      },
+      {
+        "w": "adaptable",
+        "p": "adj.",
+        "m": "适应性强的；能适应新环境的"
+      },
+      {
+        "w": "adaptability",
+        "p": "n.",
+        "m": "适应能力；适应性"
+      },
+      {
+        "w": "adaptive",
+        "p": "adj.",
+        "m": "适应的；有适应能力的"
+      },
+      {
+        "w": "adapter",
+        "p": "n.",
+        "m": "适配器；转接器；改编者"
+      },
+      {
+        "w": "apt",
+        "p": "adj.",
+        "m": "恰当的；易于……的；聪明的"
+      },
+      {
+        "w": "aptitude",
+        "p": "n.",
+        "m": "天资；天赋；自然倾向"
+      }
+    ]
+  },
+  {
+    "rootName": "apply / pli /Ar (折叠 · 应用 · 申请)",
+    "triggers": [
+      "apply",
+      "application",
+      "applicant",
+      "appliance",
+      "applied",
+      "applicable",
+      "imply",
+      "multiply",
+      "reply",
+      "supply",
+      "complex",
+      "complicate",
+      "complicated"
+    ],
+    "members": [
+      {
+        "w": "apply",
+        "p": "v.",
+        "m": "申请；请求；应用；涂敷；专心于"
+      },
+      {
+        "w": "application",
+        "p": "n.",
+        "m": "申请（表）；应用（程序）；涂抹"
+      },
+      {
+        "w": "applicant",
+        "p": "n.",
+        "m": "申请人；求职者"
+      },
+      {
+        "w": "applied",
+        "p": "adj.",
+        "m": "应用的；实用的（如 applied science）"
+      },
+      {
+        "w": "applicable",
+        "p": "adj.",
+        "m": "适用的；合适的"
+      },
+      {
+        "w": "appliance",
+        "p": "n.",
+        "m": "家用电器；器械；装置"
+      },
+      {
+        "w": "imply",
+        "p": "vt.",
+        "m": "暗示；意味着；隐含"
+      },
+      {
+        "w": "implication",
+        "p": "n.",
+        "m": "言外之意；暗示；可能的影响"
+      },
+      {
+        "w": "reply",
+        "p": "v. & n.",
+        "m": "回答；答复"
+      },
+      {
+        "w": "supply",
+        "p": "n. & vt.",
+        "m": "供应；补给；提供"
+      },
+      {
+        "w": "supplier",
+        "p": "n.",
+        "m": "供应商；提供者"
+      },
+      {
+        "w": "complex",
+        "p": "adj. & n.",
+        "m": "复杂的；合成的；综合体"
+      },
+      {
+        "w": "complicated",
+        "p": "adj.",
+        "m": "复杂的；难懂的"
+      },
+      {
+        "w": "complicate",
+        "p": "vt.",
+        "m": "使复杂化"
+      }
+    ]
+  },
+  {
+    "rootName": "employ (雇用 · 使用)",
+    "triggers": [
+      "employ",
+      "employer",
+      "employee",
+      "employment",
+      "unemployed",
+      "unemployment"
+    ],
+    "members": [
+      {
+        "w": "employ",
+        "p": "vt. & n.",
+        "m": "雇用；使用；采用"
+      },
+      {
+        "w": "employer",
+        "p": "n.",
+        "m": "雇主；老板"
+      },
+      {
+        "w": "employee",
+        "p": "n.",
+        "m": "雇员；受雇者；员工"
+      },
+      {
+        "w": "employment",
+        "p": "n.",
+        "m": "雇用；就业；工作；使用"
+      },
+      {
+        "w": "unemployed",
+        "p": "adj.",
+        "m": "失业的；待业的"
+      },
+      {
+        "w": "unemployment",
+        "p": "n.",
+        "m": "失业；失业率；失业人数"
+      },
+      {
+        "w": "employable",
+        "p": "adj.",
+        "m": "适宜雇用的；有就业能力的"
+      }
+    ]
+  },
+  {
+    "rootName": "press (按 · 压 · 印)",
+    "triggers": [
+      "press",
+      "pressure",
+      "impress",
+      "impression",
+      "impressive",
+      "Impressionism",
+      "express",
+      "expression",
+      "depress",
+      "depressed",
+      "depression",
+      "compress",
+      "oppress"
+    ],
+    "members": [
+      {
+        "w": "press",
+        "p": "v. & n.",
+        "m": "按；压；敦促；新闻界；出版社"
+      },
+      {
+        "w": "pressure",
+        "p": "n. & vt.",
+        "m": "压力；压强；对……施加压力"
+      },
+      {
+        "w": "impress",
+        "p": "vt. & vi.",
+        "m": "使钦佩；给……留下深刻印象"
+      },
+      {
+        "w": "impression",
+        "p": "n.",
+        "m": "印象；感想；印记"
+      },
+      {
+        "w": "impressive",
+        "p": "adj.",
+        "m": "令人印象深刻的；令人赞叹的"
+      },
+      {
+        "w": "impressively",
+        "p": "adv.",
+        "m": "令人印象深刻地"
+      },
+      {
+        "w": "unimpressed",
+        "p": "adj.",
+        "m": "不以为然的；未受打动的"
+      },
+      {
+        "w": "Impressionism",
+        "p": "n.",
+        "m": "印象派；印象主义"
+      },
+      {
+        "w": "express",
+        "p": "vt. & n.",
+        "m": "表达；表示；快车；快递"
+      },
+      {
+        "w": "expression",
+        "p": "n.",
+        "m": "表达；表情；措辞"
+      },
+      {
+        "w": "expressive",
+        "p": "adj.",
+        "m": "富于表情的；有表现力的"
+      },
+      {
+        "w": "depress",
+        "p": "vt.",
+        "m": "使沮丧；使萧条；按下"
+      },
+      {
+        "w": "depressed",
+        "p": "adj.",
+        "m": "沮丧的；消沉的"
+      },
+      {
+        "w": "depressing",
+        "p": "adj.",
+        "m": "令人沮丧的；压抑的"
+      },
+      {
+        "w": "depression",
+        "p": "n.",
+        "m": "抑郁（症）；沮丧；经济萧条"
+      },
+      {
+        "w": "compress",
+        "p": "vt.",
+        "m": "压缩；压紧"
+      }
+    ]
+  },
+  {
+    "rootName": "admire / mir (惊奇 · 钦佩 · 镜子)",
+    "triggers": [
+      "admire",
+      "admirer",
+      "admiration",
+      "admirable",
+      "mirror",
+      "miracle"
+    ],
+    "members": [
+      {
+        "w": "admire",
+        "p": "vt.",
+        "m": "钦佩；赞赏；仰慕"
+      },
+      {
+        "w": "admiration",
+        "p": "n.",
+        "m": "钦佩；赞赏；羡慕"
+      },
+      {
+        "w": "admirer",
+        "p": "n.",
+        "m": "赞赏者；爱慕者；崇拜者"
+      },
+      {
+        "w": "admirable",
+        "p": "adj.",
+        "m": "令人钦佩的；极好的；值得赞扬的"
+      },
+      {
+        "w": "admirably",
+        "p": "adv.",
+        "m": "令人钦佩地；极好地"
+      },
+      {
+        "w": "mirror",
+        "p": "n. & vt.",
+        "m": "镜子；反映；映照"
+      },
+      {
+        "w": "miracle",
+        "p": "n.",
+        "m": "奇迹；惊人的事例"
+      }
+    ]
+  },
+  {
+    "rootName": "attract / tract (拉 · 抽 · 吸引)",
+    "triggers": [
+      "attract",
+      "attraction",
+      "attractive",
+      "contract",
+      "distract",
+      "extract",
+      "abstract",
+      "tractor",
+      "subtract"
+    ],
+    "members": [
+      {
+        "w": "attract",
+        "p": "vt.",
+        "m": "吸引；引起……的注意"
+      },
+      {
+        "w": "attraction",
+        "p": "n.",
+        "m": "吸引；吸引力；向往的地方（景点）"
+      },
+      {
+        "w": "attractive",
+        "p": "adj.",
+        "m": "有吸引力的；迷人的"
+      },
+      {
+        "w": "unattractive",
+        "p": "adj.",
+        "m": "无吸引力的；不迷人的"
+      },
+      {
+        "w": "contract",
+        "p": "n. & v.",
+        "m": "合同；契约；感染（疾病）；收缩"
+      },
+      {
+        "w": "contractor",
+        "p": "n.",
+        "m": "承包商；立契约人"
+      },
+      {
+        "w": "distract",
+        "p": "vt.",
+        "m": "分散（注意力）；使分心"
+      },
+      {
+        "w": "distraction",
+        "p": "n.",
+        "m": "使人分心的事；娱乐；消遣"
+      },
+      {
+        "w": "extract",
+        "p": "vt. & n.",
+        "m": "提取；拔出；摘录；提取物"
+      },
+      {
+        "w": "abstract",
+        "p": "adj. & n.",
+        "m": "抽象的；摘要"
+      },
+      {
+        "w": "subtract",
+        "p": "vt.",
+        "m": "减去；扣除"
+      },
+      {
+        "w": "tractor",
+        "p": "n.",
+        "m": "拖拉机；牵引车"
+      }
+    ]
+  },
+  {
+    "rootName": "act / ag (行动 · 做 · 驱动)",
+    "triggers": [
+      "act",
+      "action",
+      "active",
+      "activity",
+      "actually",
+      "actual",
+      "react",
+      "reaction",
+      "interact",
+      "interaction",
+      "inaction",
+      "exact",
+      "exactly",
+      "agent",
+      "agency",
+      "agenda",
+      "actor",
+      "actress"
+    ],
+    "members": [
+      {
+        "w": "act",
+        "p": "v. & n.",
+        "m": "行动；表现；扮演；行为；法令"
+      },
+      {
+        "w": "action",
+        "p": "n.",
+        "m": "行动；行为；作用；情节"
+      },
+      {
+        "w": "active",
+        "p": "adj.",
+        "m": "活跃的；积极的；主动的"
+      },
+      {
+        "w": "inactive",
+        "p": "adj.",
+        "m": "不活跃的；不活动的"
+      },
+      {
+        "w": "actively",
+        "p": "adv.",
+        "m": "积极地；活跃地"
+      },
+      {
+        "w": "activity",
+        "p": "n.",
+        "m": "活动；活跃"
+      },
+      {
+        "w": "actor",
+        "p": "n.",
+        "m": "（男）演员"
+      },
+      {
+        "w": "actress",
+        "p": "n.",
+        "m": "女演员"
+      },
+      {
+        "w": "actual",
+        "p": "adj.",
+        "m": "真实的；实际的"
+      },
+      {
+        "w": "actually",
+        "p": "adv.",
+        "m": "事实上；的确；居然"
+      },
+      {
+        "w": "react",
+        "p": "vi.",
+        "m": "起反应；回应"
+      },
+      {
+        "w": "reaction",
+        "p": "n.",
+        "m": "反应；回应"
+      },
+      {
+        "w": "interact",
+        "p": "vi.",
+        "m": "交流；互动；相互作用"
+      },
+      {
+        "w": "interaction",
+        "p": "n.",
+        "m": "互动；交流；相互作用"
+      },
+      {
+        "w": "interactive",
+        "p": "adj.",
+        "m": "交互式的；互动的"
+      },
+      {
+        "w": "inaction",
+        "p": "n.",
+        "m": "无行动；不作为"
+      },
+      {
+        "w": "agent",
+        "p": "n.",
+        "m": "代理人；经纪人；特工"
+      },
+      {
+        "w": "agency",
+        "p": "n.",
+        "m": "服务机构；代理处；专门机构"
+      },
+      {
+        "w": "agenda",
+        "p": "n.",
+        "m": "议程表；议事日程"
+      }
+    ]
+  },
+  {
+    "rootName": "addict / dict (说 · 宣称 · 沉迷)",
+    "triggers": [
+      "addict",
+      "addicted",
+      "addiction",
+      "addictive",
+      "predict",
+      "prediction",
+      "contradict",
+      "contradictory",
+      "dictate",
+      "dictionary"
+    ],
+    "members": [
+      {
+        "w": "addict",
+        "p": "n. & vt.",
+        "m": "对……入迷的人；瘾君子；使上瘾"
+      },
+      {
+        "w": "addicted",
+        "p": "adj.",
+        "m": "上瘾的；入迷的（be addicted to）"
+      },
+      {
+        "w": "addiction",
+        "p": "n.",
+        "m": "瘾；入迷；嗜好"
+      },
+      {
+        "w": "addictive",
+        "p": "adj.",
+        "m": "使人上瘾的；使人入迷的"
+      },
+      {
+        "w": "predict",
+        "p": "vt.",
+        "m": "预测；预言；预料"
+      },
+      {
+        "w": "prediction",
+        "p": "n.",
+        "m": "预测；预言"
+      },
+      {
+        "w": "predictable",
+        "p": "adj.",
+        "m": "可预测的；意料之中的"
+      },
+      {
+        "w": "unpredictable",
+        "p": "adj.",
+        "m": "不可预测的；变化莫测的"
+      },
+      {
+        "w": "contradict",
+        "p": "vt.",
+        "m": "反驳；与……矛盾"
+      },
+      {
+        "w": "contradictory",
+        "p": "adj.",
+        "m": "相互矛盾的；对立的"
+      },
+      {
+        "w": "contradiction",
+        "p": "n.",
+        "m": "矛盾；反驳"
+      },
+      {
+        "w": "dictionary",
+        "p": "n.",
+        "m": "词典；字典"
+      }
+    ]
+  },
+  {
+    "rootName": "confuse / fus (倾倒 · 混合 · 迷惑)",
+    "triggers": [
+      "confuse",
+      "confused",
+      "confusing",
+      "confusion",
+      "refuse",
+      "refusal"
+    ],
+    "members": [
+      {
+        "w": "confuse",
+        "p": "vt.",
+        "m": "使糊涂；使迷惑；混淆"
+      },
+      {
+        "w": "confused",
+        "p": "adj.",
+        "m": "感到糊涂的；迷惑的"
+      },
+      {
+        "w": "confusing",
+        "p": "adj.",
+        "m": "令人费解的；难以理解的；不清楚的"
+      },
+      {
+        "w": "confusion",
+        "p": "n.",
+        "m": "困惑；糊涂；混淆；混乱"
+      },
+      {
+        "w": "refuse",
+        "p": "v.",
+        "m": "拒绝；回绝"
+      },
+      {
+        "w": "refusal",
+        "p": "n.",
+        "m": "拒绝；回绝"
+      }
+    ]
+  },
+  {
+    "rootName": "compete / pet (追求 · 竞争)",
+    "triggers": [
+      "compete",
+      "competition",
+      "competitor",
+      "competitive",
+      "competence",
+      "competent",
+      "appetite",
+      "repeat",
+      "repetition"
+    ],
+    "members": [
+      {
+        "w": "compete",
+        "p": "vi.",
+        "m": "竞争；对抗；参加比赛"
+      },
+      {
+        "w": "competition",
+        "p": "n.",
+        "m": "竞争；比赛；竞赛"
+      },
+      {
+        "w": "competitor",
+        "p": "n.",
+        "m": "竞争者；对手；参赛者"
+      },
+      {
+        "w": "competitive",
+        "p": "adj.",
+        "m": "竞争的；有竞争力的；好胜的"
+      },
+      {
+        "w": "competence",
+        "p": "n.",
+        "m": "能力；胜任；本领"
+      },
+      {
+        "w": "competent",
+        "p": "adj.",
+        "m": "有能力的；能胜任的；称职的"
+      },
+      {
+        "w": "incompetent",
+        "p": "adj.",
+        "m": "不称职的；无能力的"
+      },
+      {
+        "w": "appetite",
+        "p": "n.",
+        "m": "食欲；胃口；强烈欲望"
+      },
+      {
+        "w": "repeat",
+        "p": "v. & n.",
+        "m": "重复；重说；重做"
+      },
+      {
+        "w": "repeatedly",
+        "p": "adv.",
+        "m": "重复地；再三地"
+      },
+      {
+        "w": "repetition",
+        "p": "n.",
+        "m": "重复；重做"
+      }
+    ]
+  },
+  {
+    "rootName": "confident / fid (信任 · 信念)",
+    "triggers": [
+      "confidence",
+      "confident",
+      "confidently",
+      "confidential",
+      "faith",
+      "faithful"
+    ],
+    "members": [
+      {
+        "w": "confidence",
+        "p": "n.",
+        "m": "信心；信任；把握"
+      },
+      {
+        "w": "confident",
+        "p": "adj.",
+        "m": "自信的；有把握的；确信的"
+      },
+      {
+        "w": "confidently",
+        "p": "adv.",
+        "m": "自信地；满怀信心地"
+      },
+      {
+        "w": "unconfident",
+        "p": "adj.",
+        "m": "缺乏自信的"
+      },
+      {
+        "w": "self-confidence",
+        "p": "n.",
+        "m": "自信心"
+      },
+      {
+        "w": "confidential",
+        "p": "adj.",
+        "m": "机密的；保密的"
+      },
+      {
+        "w": "faith",
+        "p": "n.",
+        "m": "信任；信念；宗教信仰"
+      },
+      {
+        "w": "faithful",
+        "p": "adj.",
+        "m": "忠实的；忠诚的"
+      },
+      {
+        "w": "faithfully",
+        "p": "adv.",
+        "m": "忠实地；诚心诚意地"
+      }
+    ]
+  },
+  {
+    "rootName": "anxious / ang (焦虑 · 愤怒)",
+    "triggers": [
+      "anxious",
+      "anxiously",
+      "anxiety",
+      "anger",
+      "angry",
+      "angrily"
+    ],
+    "members": [
+      {
+        "w": "anxious",
+        "p": "adj.",
+        "m": "焦虑的；不安的；渴望的"
+      },
+      {
+        "w": "anxiously",
+        "p": "adv.",
+        "m": "焦急地；忧虑地"
+      },
+      {
+        "w": "anxiety",
+        "p": "n.",
+        "m": "焦虑；忧虑；担心；渴望"
+      },
+      {
+        "w": "anger",
+        "p": "n. & vt.",
+        "m": "愤怒；怒气；使发怒"
+      },
+      {
+        "w": "angry",
+        "p": "adj.",
+        "m": "生气的；愤怒的"
+      },
+      {
+        "w": "angrily",
+        "p": "adv.",
+        "m": "生气地；愤怒地"
+      }
+    ]
+  },
+  {
+    "rootName": "annoy (恼怒 · 打扰)",
+    "triggers": [
+      "annoy",
+      "annoyed",
+      "annoying",
+      "annoyance"
+    ],
+    "members": [
+      {
+        "w": "annoy",
+        "p": "vt.",
+        "m": "使恼怒；使生气；打扰"
+      },
+      {
+        "w": "annoyed",
+        "p": "adj.",
+        "m": "恼怒的；生气的；烦恼的"
+      },
+      {
+        "w": "annoying",
+        "p": "adj.",
+        "m": "讨厌的；令人恼火的"
+      },
+      {
+        "w": "annoyance",
+        "p": "n.",
+        "m": "恼怒；烦恼；令人烦恼的事"
+      }
+    ]
+  },
+  {
+    "rootName": "amaze (惊奇 · 惊叹)",
+    "triggers": [
+      "amaze",
+      "amazed",
+      "amazing",
+      "amazement",
+      "amazingly"
+    ],
+    "members": [
+      {
+        "w": "amaze",
+        "p": "vt.",
+        "m": "使吃惊；使惊奇"
+      },
+      {
+        "w": "amazed",
+        "p": "adj.",
+        "m": "感到惊奇的；吃惊的"
+      },
+      {
+        "w": "amazing",
+        "p": "adj.",
+        "m": "令人大为惊奇的；令人惊喜的"
+      },
+      {
+        "w": "amazingly",
+        "p": "adv.",
+        "m": "惊人地；了不起地"
+      },
+      {
+        "w": "amazement",
+        "p": "n.",
+        "m": "惊奇；惊愕（to one's amazement）"
+      }
+    ]
+  },
+  {
+    "rootName": "fright / fear / scare / terror (恐惧 · 惊吓)",
+    "triggers": [
+      "fright",
+      "frighten",
+      "frightened",
+      "frightening",
+      "scare",
+      "scared",
+      "scary",
+      "horrible",
+      "horror"
+    ],
+    "members": [
+      {
+        "w": "fright",
+        "p": "n.",
+        "m": "惊吓；恐怖"
+      },
+      {
+        "w": "frighten",
+        "p": "vt.",
+        "m": "使惊吓；使害怕"
+      },
+      {
+        "w": "frightened",
+        "p": "adj.",
+        "m": "受惊的；害怕的"
+      },
+      {
+        "w": "frightening",
+        "p": "adj.",
+        "m": "令人恐惧的；可怕的"
+      },
+      {
+        "w": "scare",
+        "p": "vt. & n.",
+        "m": "惊吓；使害怕；恐慌"
+      },
+      {
+        "w": "scared",
+        "p": "adj.",
+        "m": "害怕的；恐惧的"
+      },
+      {
+        "w": "scary",
+        "p": "adj.",
+        "m": "可怕的；吓人的"
+      },
+      {
+        "w": "horrible",
+        "p": "adj.",
+        "m": "可怕的；极坏的；令人震惊的"
+      },
+      {
+        "w": "horror",
+        "p": "n.",
+        "m": "恐惧；震惊；恐怖故事"
+      },
+      {
+        "w": "horrify",
+        "p": "vt.",
+        "m": "使恐惧；使震惊"
+      }
+    ]
+  },
+  {
+    "rootName": "nation / nat (出生 · 民族 · 自然)",
+    "triggers": [
+      "nation",
+      "national",
+      "nationality",
+      "international",
+      "native",
+      "nature",
+      "natural",
+      "naturally"
+    ],
+    "members": [
+      {
+        "w": "nation",
+        "p": "n.",
+        "m": "国家；民族；国民"
+      },
+      {
+        "w": "national",
+        "p": "adj. & n.",
+        "m": "国家的；民族的；全国性的；公民"
+      },
+      {
+        "w": "nationality",
+        "p": "n.",
+        "m": "国籍；民族"
+      },
+      {
+        "w": "international",
+        "p": "adj.",
+        "m": "国际的"
+      },
+      {
+        "w": "nationwide",
+        "p": "adj. & adv.",
+        "m": "全国性的；在全国范围内"
+      },
+      {
+        "w": "native",
+        "p": "adj. & n.",
+        "m": "出生地的；本地的；当地人"
+      },
+      {
+        "w": "nature",
+        "p": "n.",
+        "m": "自然界；大自然；本性；性质"
+      },
+      {
+        "w": "natural",
+        "p": "adj.",
+        "m": "自然的；天然的；天生的"
+      },
+      {
+        "w": "naturally",
+        "p": "adv.",
+        "m": "自然地；天然地；顺理成章地"
+      },
+      {
+        "w": "unnatural",
+        "p": "adj.",
+        "m": "不自然的；反常的"
+      }
+    ]
+  },
+  {
+    "rootName": "organ (器官 · 组织 · 有机)",
+    "triggers": [
+      "organ",
+      "organic",
+      "organise",
+      "organize",
+      "organisation",
+      "organization",
+      "organiser",
+      "organizer",
+      "organism"
+    ],
+    "members": [
+      {
+        "w": "organ",
+        "p": "n.",
+        "m": "器官；机构；风琴"
+      },
+      {
+        "w": "organic",
+        "p": "adj.",
+        "m": "器官的；有机的；不使用化肥的"
+      },
+      {
+        "w": "organism",
+        "p": "n.",
+        "m": "生物；有机体；微生物"
+      },
+      {
+        "w": "organise",
+        "p": "vt. & vi.",
+        "m": "（美 organize）组织；筹备；安排"
+      },
+      {
+        "w": "organisation",
+        "p": "n.",
+        "m": "（美 organization）组织；团体；机构"
+      },
+      {
+        "w": "organiser",
+        "p": "n.",
+        "m": "（美 organizer）组织者；筹办者"
+      },
+      {
+        "w": "organized",
+        "p": "adj.",
+        "m": "有组织的；井井有条的"
+      },
+      {
+        "w": "disorganized",
+        "p": "adj.",
+        "m": "缺乏组织的；杂乱无章的"
+      }
+    ]
+  },
+  {
+    "rootName": "cur / cour (跑 · 发生 · 好奇 · 照料)",
+    "triggers": [
+      "curious",
+      "curiosity",
+      "current",
+      "currency",
+      "occur",
+      "occurrence",
+      "course",
+      "extra-curricular",
+      "cure",
+      "secure",
+      "security",
+      "accurate",
+      "accuracy",
+      "rescue"
+    ],
+    "members": [
+      {
+        "w": "curious",
+        "p": "adj.",
+        "m": "好奇的；求知欲强的；奇特的"
+      },
+      {
+        "w": "curiously",
+        "p": "adv.",
+        "m": "好奇地"
+      },
+      {
+        "w": "curiosity",
+        "p": "n.",
+        "m": "好奇心；求知欲；珍品"
+      },
+      {
+        "w": "cure",
+        "p": "vt. & n.",
+        "m": "治愈；治好；药物；疗法"
+      },
+      {
+        "w": "curable",
+        "p": "adj.",
+        "m": "可治愈的"
+      },
+      {
+        "w": "incurable",
+        "p": "adj.",
+        "m": "不可治愈的；无可救药的"
+      },
+      {
+        "w": "secure",
+        "p": "adj. & vt.",
+        "m": "安全的；可靠的；获得；保护"
+      },
+      {
+        "w": "security",
+        "p": "n.",
+        "m": "安全；安保措施；保障"
+      },
+      {
+        "w": "insecure",
+        "p": "adj.",
+        "m": "不安全的；缺乏安全感的"
+      },
+      {
+        "w": "accurate",
+        "p": "adj.",
+        "m": "精确的；准确的"
+      },
+      {
+        "w": "accurately",
+        "p": "adv.",
+        "m": "精确地；准确地"
+      },
+      {
+        "w": "accuracy",
+        "p": "n.",
+        "m": "精确度；准确性"
+      },
+      {
+        "w": "inaccurate",
+        "p": "adj.",
+        "m": "不准确的；有错误的"
+      },
+      {
+        "w": "current",
+        "p": "adj. & n.",
+        "m": "当前的；现在的；水流；电流；思潮"
+      },
+      {
+        "w": "currently",
+        "p": "adv.",
+        "m": "目前；当前"
+      },
+      {
+        "w": "currency",
+        "p": "n.",
+        "m": "货币；通用"
+      },
+      {
+        "w": "occur",
+        "p": "vi.",
+        "m": "发生；出现；存在于"
+      },
+      {
+        "w": "occurrence",
+        "p": "n.",
+        "m": "发生的事；事件；出现"
+      }
+    ]
+  },
+  {
+    "rootName": "injure / jur / just (伤害 · 法律 · 公正)",
+    "triggers": [
+      "injure",
+      "injured",
+      "injury",
+      "judge",
+      "judgement",
+      "judgment",
+      "justice",
+      "justify",
+      "prejudice"
+    ],
+    "members": [
+      {
+        "w": "injure",
+        "p": "vt.",
+        "m": "使受伤；损害；伤害"
+      },
+      {
+        "w": "injured",
+        "p": "adj.",
+        "m": "受伤的；委屈的（the injured 伤员）"
+      },
+      {
+        "w": "injury",
+        "p": "n.",
+        "m": "伤害；损伤；伤口"
+      },
+      {
+        "w": "uninjured",
+        "p": "adj.",
+        "m": "未受伤的；安然无恙的"
+      },
+      {
+        "w": "just",
+        "p": "adj. & adv.",
+        "m": "公正的；正义的；正好；刚才"
+      },
+      {
+        "w": "justice",
+        "p": "n.",
+        "m": "公平；公正；司法"
+      },
+      {
+        "w": "injustice",
+        "p": "n.",
+        "m": "不公平；非正义"
+      },
+      {
+        "w": "justify",
+        "p": "vt.",
+        "m": "证明……正当；为……辩护"
+      },
+      {
+        "w": "judge",
+        "p": "v. & n.",
+        "m": "判断；评判；法官；裁判员"
+      },
+      {
+        "w": "judgement",
+        "p": "n.",
+        "m": "（亦作 judgment）判断力；看法；判决"
+      },
+      {
+        "w": "prejudice",
+        "p": "n. & vt.",
+        "m": "偏见；成见；使抱偏见"
+      }
+    ]
+  },
+  {
+    "rootName": "strong / stren / strict (强壮 · 力量 · 紧)",
+    "triggers": [
+      "strong",
+      "strength",
+      "strengthen",
+      "stress",
+      "stressed",
+      "stressful",
+      "strict",
+      "restrict",
+      "restriction",
+      "strain",
+      "district"
+    ],
+    "members": [
+      {
+        "w": "strong",
+        "p": "adj.",
+        "m": "强壮的；强大的；坚定的"
+      },
+      {
+        "w": "strongly",
+        "p": "adv.",
+        "m": "强烈地；坚固地"
+      },
+      {
+        "w": "strength",
+        "p": "n.",
+        "m": "力量；力气；优势；长处"
+      },
+      {
+        "w": "strengthen",
+        "p": "vt. & vi.",
+        "m": "加强；增强；巩固"
+      },
+      {
+        "w": "stress",
+        "p": "n. & vt.",
+        "m": "压力；紧张；强调；重音"
+      },
+      {
+        "w": "stressed",
+        "p": "adj.",
+        "m": "焦虑不安的；感到有压力的"
+      },
+      {
+        "w": "stressful",
+        "p": "adj.",
+        "m": "充满压力的；紧张的"
+      },
+      {
+        "w": "strict",
+        "p": "adj.",
+        "m": "严格的；严厉的"
+      },
+      {
+        "w": "strictly",
+        "p": "adv.",
+        "m": "严格地"
+      },
+      {
+        "w": "restrict",
+        "p": "vt.",
+        "m": "限制；约束；限定"
+      },
+      {
+        "w": "restriction",
+        "p": "n.",
+        "m": "限制规定；约束"
+      },
+      {
+        "w": "restrictive",
+        "p": "adj.",
+        "m": "限制性的；约束的"
+      },
+      {
+        "w": "strain",
+        "p": "n. & v.",
+        "m": "拉紧；压力；扭伤；品种"
+      }
+    ]
+  },
+  {
+    "rootName": "viv / vit / bio (生命 · 生存 · 活力)",
+    "triggers": [
+      "survive",
+      "survival",
+      "survivor",
+      "revive",
+      "revival",
+      "vivid",
+      "vital",
+      "vitamin",
+      "biology",
+      "biologist"
+    ],
+    "members": [
+      {
+        "w": "survive",
+        "p": "vi. & vt.",
+        "m": "生存；幸存；比……活得长"
+      },
+      {
+        "w": "survival",
+        "p": "n.",
+        "m": "生存；幸存；残存物"
+      },
+      {
+        "w": "survivor",
+        "p": "n.",
+        "m": "幸存者；生还者"
+      },
+      {
+        "w": "revive",
+        "p": "vt. & vi.",
+        "m": "使复苏；恢复生机；苏醒"
+      },
+      {
+        "w": "revival",
+        "p": "n.",
+        "m": "复兴；复苏；苏醒"
+      },
+      {
+        "w": "vivid",
+        "p": "adj.",
+        "m": "生动的；鲜明的；逼真的"
+      },
+      {
+        "w": "vividly",
+        "p": "adv.",
+        "m": "生动地；鲜明地"
+      },
+      {
+        "w": "vital",
+        "p": "adj.",
+        "m": "至关重要的；充满生机的；维持生命必需的"
+      },
+      {
+        "w": "vitally",
+        "p": "adv.",
+        "m": "极其；紧要地"
+      },
+      {
+        "w": "vitality",
+        "p": "n.",
+        "m": "生命力；活力；生机"
+      },
+      {
+        "w": "vitamin",
+        "p": "n.",
+        "m": "维生素；维他命"
+      },
+      {
+        "w": "biology",
+        "p": "n.",
+        "m": "生物学；生理"
+      },
+      {
+        "w": "biological",
+        "p": "adj.",
+        "m": "生物的；生物学的"
+      },
+      {
+        "w": "biologist",
+        "p": "n.",
+        "m": "生物学家"
+      }
+    ]
+  },
+  {
+    "rootName": "port (拿 · 运 · 港口)",
+    "triggers": [
+      "port",
+      "import",
+      "export",
+      "transport",
+      "transportation",
+      "support",
+      "opportunity",
+      "passport",
+      "portable",
+      "report"
+    ],
+    "members": [
+      {
+        "w": "port",
+        "p": "n.",
+        "m": "港口；口岸"
+      },
+      {
+        "w": "import",
+        "p": "v. & n.",
+        "m": "进口；输入；进口商品"
+      },
+      {
+        "w": "exporter",
+        "p": "n.",
+        "m": "出口商；出口国"
+      },
+      {
+        "w": "export",
+        "p": "v. & n.",
+        "m": "出口；输出；出口商品"
+      },
+      {
+        "w": "transport",
+        "p": "vt. & n.",
+        "m": "运输；运送；交通运输系统"
+      },
+      {
+        "w": "transportation",
+        "p": "n.",
+        "m": "运输；交通工具；客运"
+      },
+      {
+        "w": "portable",
+        "p": "adj.",
+        "m": "便携式的；手提式的；轻便的"
+      },
+      {
+        "w": "support",
+        "p": "vt. & n.",
+        "m": "支持；拥护；供养；支撑"
+      },
+      {
+        "w": "supporter",
+        "p": "n.",
+        "m": "支持者；拥护者"
+      },
+      {
+        "w": "supportive",
+        "p": "adj.",
+        "m": "支持的；给予帮助的"
+      },
+      {
+        "w": "opportunity",
+        "p": "n.",
+        "m": "机会；时机"
+      },
+      {
+        "w": "passport",
+        "p": "n.",
+        "m": "护照"
+      }
+    ]
+  },
+  {
+    "rootName": "struct (建造 · 结构)",
+    "triggers": [
+      "structure",
+      "construct",
+      "construction",
+      "destroy",
+      "destruction",
+      "instruct",
+      "instruction",
+      "obstruction"
+    ],
+    "members": [
+      {
+        "w": "structure",
+        "p": "n. & vt.",
+        "m": "结构；建筑物；精心组织"
+      },
+      {
+        "w": "structural",
+        "p": "adj.",
+        "m": "结构上的；建筑的"
+      },
+      {
+        "w": "construct",
+        "p": "vt.",
+        "m": "建造；修建；创立"
+      },
+      {
+        "w": "construction",
+        "p": "n.",
+        "m": "建筑；建造；建筑物"
+      },
+      {
+        "w": "constructive",
+        "p": "adj.",
+        "m": "建设性的；有助益的"
+      },
+      {
+        "w": "destroy",
+        "p": "vt.",
+        "m": "摧毁；毁灭；破坏"
+      },
+      {
+        "w": "destruction",
+        "p": "n.",
+        "m": "破坏；毁灭；摧毁"
+      },
+      {
+        "w": "destructive",
+        "p": "adj.",
+        "m": "破坏性的；毁灭性的"
+      },
+      {
+        "w": "instruct",
+        "p": "vt.",
+        "m": "指导；教导；命令；通知"
+      },
+      {
+        "w": "instruction",
+        "p": "n.",
+        "m": "指令；用法说明；教学"
+      },
+      {
+        "w": "instructor",
+        "p": "n.",
+        "m": "教练；导师；大学讲师"
+      },
+      {
+        "w": "obstruction",
+        "p": "n.",
+        "m": "阻碍；堵塞；障碍物"
+      }
+    ]
+  },
+  {
+    "rootName": "sist / sta / stitut (站立 · 建立 · 稳定)",
+    "triggers": [
+      "assist",
+      "assistant",
+      "assistance",
+      "consist",
+      "consistent",
+      "exist",
+      "existence",
+      "insist",
+      "resist",
+      "resistance",
+      "institute",
+      "institution",
+      "statue",
+      "status",
+      "stable",
+      "stability",
+      "constant",
+      "distant",
+      "distance",
+      "instant",
+      "instance",
+      "circumstance",
+      "substance",
+      "substantial",
+      "obstacle",
+      "establish"
+    ],
+    "members": [
+      {
+        "w": "assist",
+        "p": "vt. & vi.",
+        "m": "帮助；协助；援助"
+      },
+      {
+        "w": "assistance",
+        "p": "n.",
+        "m": "帮助；援助；支持"
+      },
+      {
+        "w": "assistant",
+        "p": "n. & adj.",
+        "m": "助手；助理；店员；辅助的"
+      },
+      {
+        "w": "consist",
+        "p": "vi.",
+        "m": "由……组成（consist of）；在于（consist in）"
+      },
+      {
+        "w": "consistent",
+        "p": "adj.",
+        "m": "一致的；始终如一的；连续的"
+      },
+      {
+        "w": "exist",
+        "p": "vi.",
+        "m": "存在；生存"
+      },
+      {
+        "w": "existence",
+        "p": "n.",
+        "m": "存在；生存；生活方式"
+      },
+      {
+        "w": "existing",
+        "p": "adj.",
+        "m": "现存的；目前的"
+      },
+      {
+        "w": "insist",
+        "p": "vi. & vt.",
+        "m": "坚持；坚决要求"
+      },
+      {
+        "w": "resist",
+        "p": "vt. & vi.",
+        "m": "抵制；反抗；抗拒；忍住"
+      },
+      {
+        "w": "resistance",
+        "p": "n.",
+        "m": "抵制；反抗；阻力；抵抗力"
+      },
+      {
+        "w": "resistant",
+        "p": "adj.",
+        "m": "抵抗的；有抵抗力的"
+      },
+      {
+        "w": "establish",
+        "p": "vt.",
+        "m": "建立；创立；确立"
+      },
+      {
+        "w": "establishment",
+        "p": "n.",
+        "m": "建立；机构；企业"
+      },
+      {
+        "w": "stable",
+        "p": "adj. & n.",
+        "m": "稳定的；稳重的；马厩"
+      },
+      {
+        "w": "stability",
+        "p": "n.",
+        "m": "稳定（性）；稳固"
+      },
+      {
+        "w": "unstable",
+        "p": "adj.",
+        "m": "不稳定的；动荡的"
+      },
+      {
+        "w": "constant",
+        "p": "adj.",
+        "m": "不断的；恒定的；经常的"
+      },
+      {
+        "w": "distant",
+        "p": "adj.",
+        "m": "遥远的；远处的；疏远的"
+      },
+      {
+        "w": "distance",
+        "p": "n.",
+        "m": "距离；远方；疏远"
+      },
+      {
+        "w": "instant",
+        "p": "n. & adj.",
+        "m": "瞬间；片刻；立即的；速溶的"
+      },
+      {
+        "w": "instantly",
+        "p": "adv.",
+        "m": "立即；马上"
+      },
+      {
+        "w": "instance",
+        "p": "n.",
+        "m": "例子；事例（for instance）"
+      },
+      {
+        "w": "circumstance",
+        "p": "n.",
+        "m": "环境；条件；状况"
+      },
+      {
+        "w": "substance",
+        "p": "n.",
+        "m": "物质；实质；主旨"
+      },
+      {
+        "w": "substantial",
+        "p": "adj.",
+        "m": "大量的；重大的；实质性的"
+      },
+      {
+        "w": "institute",
+        "p": "n. & vt.",
+        "m": "研究所；学院；建立"
+      },
+      {
+        "w": "institution",
+        "p": "n.",
+        "m": "公共机构；制度；习俗"
+      },
+      {
+        "w": "statue",
+        "p": "n.",
+        "m": "雕像；塑像"
+      }
+    ]
+  },
+  {
+    "rootName": "ject (投 · 掷 · 射)",
+    "triggers": [
+      "project",
+      "reject",
+      "rejection",
+      "object",
+      "objective",
+      "subject",
+      "subjective",
+      "inject"
+    ],
+    "members": [
+      {
+        "w": "project",
+        "p": "n. & v.",
+        "m": "项目；工程；课题；投射；预计"
+      },
+      {
+        "w": "reject",
+        "p": "vt. & n.",
+        "m": "拒绝接受；驳回；不录用；次品"
+      },
+      {
+        "w": "rejection",
+        "p": "n.",
+        "m": "拒绝；否决；抛弃"
+      },
+      {
+        "w": "object",
+        "p": "n. & vi.",
+        "m": "物体；目标；宾语；反对（object to）"
+      },
+      {
+        "w": "objection",
+        "p": "n.",
+        "m": "反对；异议"
+      },
+      {
+        "w": "objective",
+        "p": "n. & adj.",
+        "m": "目标；目的；客观的"
+      },
+      {
+        "w": "subject",
+        "p": "n., adj. & vt.",
+        "m": "主题；科目；实验对象；受……影响的；使臣服"
+      },
+      {
+        "w": "subjective",
+        "p": "adj.",
+        "m": "主观的；个人的"
+      },
+      {
+        "w": "inject",
+        "p": "vt.",
+        "m": "注射；注入"
+      },
+      {
+        "w": "injection",
+        "p": "n.",
+        "m": "注射；注入"
+      }
+    ]
+  },
+  {
+    "rootName": "pos / pon (放置 · 摆位)",
+    "triggers": [
+      "pose",
+      "position",
+      "positive",
+      "postpone",
+      "compose",
+      "composer",
+      "composition",
+      "expose",
+      "exposure",
+      "oppose",
+      "opponent",
+      "propose",
+      "proposal",
+      "purpose",
+      "dispose",
+      "disposal",
+      "component"
+    ],
+    "members": [
+      {
+        "w": "pose",
+        "p": "v. & n.",
+        "m": "造成（威胁/问题）；摆姿势；提问"
+      },
+      {
+        "w": "position",
+        "p": "n. & vt.",
+        "m": "位置；职位；处境；立场；安置"
+      },
+      {
+        "w": "positive",
+        "p": "adj.",
+        "m": "积极的；正面的；肯定的；阳性的"
+      },
+      {
+        "w": "positively",
+        "p": "adv.",
+        "m": "积极地；肯定地"
+      },
+      {
+        "w": "postpone",
+        "p": "vt.",
+        "m": "推迟；延期"
+      },
+      {
+        "w": "compose",
+        "p": "vt. & vi.",
+        "m": "组成；构成；作曲；创作；使平静"
+      },
+      {
+        "w": "composer",
+        "p": "n.",
+        "m": "作曲家"
+      },
+      {
+        "w": "composition",
+        "p": "n.",
+        "m": "作品；作文；作曲；成分"
+      },
+      {
+        "w": "expose",
+        "p": "vt.",
+        "m": "暴露；揭露；使接触（expose...to...）"
+      },
+      {
+        "w": "exposure",
+        "p": "n.",
+        "m": "暴露；接触；揭露；曝光"
+      },
+      {
+        "w": "oppose",
+        "p": "vt.",
+        "m": "反对；反抗；与……对抗"
+      },
+      {
+        "w": "opposed",
+        "p": "adj.",
+        "m": "反对的；对立的（be opposed to）"
+      },
+      {
+        "w": "opposite",
+        "p": "adj., prep. & n.",
+        "m": "相反的；对面的；对立面"
+      },
+      {
+        "w": "opponent",
+        "p": "n.",
+        "m": "对手；反对者"
+      },
+      {
+        "w": "propose",
+        "p": "vt. & vi.",
+        "m": "提议；建议；打算；求婚"
+      },
+      {
+        "w": "proposal",
+        "p": "n.",
+        "m": "提议；建议；求婚"
+      },
+      {
+        "w": "purpose",
+        "p": "n.",
+        "m": "目的；意图；用途"
+      },
+      {
+        "w": "dispose",
+        "p": "vi. & vt.",
+        "m": "处理；除掉（dispose of）；布置"
+      },
+      {
+        "w": "disposal",
+        "p": "n.",
+        "m": "处理；清除；支配"
+      },
+      {
+        "w": "disposable",
+        "p": "adj.",
+        "m": "一次性的；用完即丢弃的；可自由支配的"
+      }
+    ]
+  },
+  {
+    "rootName": "form (形状 · 形成 · 规范)",
+    "triggers": [
+      "form",
+      "formal",
+      "informal",
+      "format",
+      "perform",
+      "performance",
+      "performer",
+      "reform",
+      "transform",
+      "transformation",
+      "inform",
+      "information",
+      "uniform",
+      "formula"
+    ],
+    "members": [
+      {
+        "w": "form",
+        "p": "n. & v.",
+        "m": "形式；表格；形状；形成；构成"
+      },
+      {
+        "w": "formal",
+        "p": "adj.",
+        "m": "正式的；正规的"
+      },
+      {
+        "w": "informal",
+        "p": "adj.",
+        "m": "非正式的；口语体的"
+      },
+      {
+        "w": "format",
+        "p": "n. & vt.",
+        "m": "格式；版式；总体安排；格式化"
+      },
+      {
+        "w": "perform",
+        "p": "v.",
+        "m": "表演；履行；执行；表现"
+      },
+      {
+        "w": "performance",
+        "p": "n.",
+        "m": "表演；演出；表现；性能"
+      },
+      {
+        "w": "performer",
+        "p": "n.",
+        "m": "表演者；演员"
+      },
+      {
+        "w": "reform",
+        "p": "v. & n.",
+        "m": "改革；改良；改造"
+      },
+      {
+        "w": "transform",
+        "p": "vt. & vi.",
+        "m": "使改观；转变；改造"
+      },
+      {
+        "w": "transformation",
+        "p": "n.",
+        "m": "转变；改观；转化"
+      },
+      {
+        "w": "inform",
+        "p": "vt.",
+        "m": "通知；告知"
+      },
+      {
+        "w": "information",
+        "p": "n.",
+        "m": "信息；消息；资料"
+      },
+      {
+        "w": "informative",
+        "p": "adj.",
+        "m": "提供有用信息的；增长见闻的"
+      },
+      {
+        "w": "uniform",
+        "p": "n. & adj.",
+        "m": "制服；校服；统一的；一致的"
+      },
+      {
+        "w": "formula",
+        "p": "n.",
+        "m": "公式；方程式；配方；准则"
+      }
+    ]
+  },
+  {
+    "rootName": "part (部分 · 分开 · 参与)",
+    "triggers": [
+      "part",
+      "partly",
+      "apart",
+      "apartment",
+      "depart",
+      "departure",
+      "department",
+      "particular",
+      "particularly",
+      "participate",
+      "participation",
+      "participant",
+      "partner"
+    ],
+    "members": [
+      {
+        "w": "part",
+        "p": "n., v. & adv.",
+        "m": "部分；角色；零件；分开；部分地"
+      },
+      {
+        "w": "partly",
+        "p": "adv.",
+        "m": "部分地；在一定程度上"
+      },
+      {
+        "w": "partial",
+        "p": "adj.",
+        "m": "部分的；不完全的；偏袒的"
+      },
+      {
+        "w": "apart",
+        "p": "adv. & adj.",
+        "m": "分离；分开；相距"
+      },
+      {
+        "w": "apartment",
+        "p": "n.",
+        "m": "公寓套房"
+      },
+      {
+        "w": "depart",
+        "p": "vi.",
+        "m": "离开；出发；启程"
+      },
+      {
+        "w": "departure",
+        "p": "n.",
+        "m": "离开；出发；启程"
+      },
+      {
+        "w": "department",
+        "p": "n.",
+        "m": "部门；系；科；局"
+      },
+      {
+        "w": "particular",
+        "p": "adj. & n.",
+        "m": "特定的；特别的；挑剔的（in particular 尤其）"
+      },
+      {
+        "w": "particularly",
+        "p": "adv.",
+        "m": "特别；尤其"
+      },
+      {
+        "w": "participate",
+        "p": "vi.",
+        "m": "参加；参与（participate in）"
+      },
+      {
+        "w": "participation",
+        "p": "n.",
+        "m": "参加；参与"
+      },
+      {
+        "w": "participant",
+        "p": "n.",
+        "m": "参与者；参赛者"
+      },
+      {
+        "w": "partner",
+        "p": "n.",
+        "m": "搭档；同伴；合伙人；配偶"
+      },
+      {
+        "w": "partnership",
+        "p": "n.",
+        "m": "伙伴关系；合作关系"
+      }
+    ]
+  },
+  {
+    "rootName": "serv (服务 · 保持 · 保护)",
+    "triggers": [
+      "serve",
+      "service",
+      "servant",
+      "deserve",
+      "preserve",
+      "preservation",
+      "reserve",
+      "reservation",
+      "conservation",
+      "conserve",
+      "observe",
+      "observation"
+    ],
+    "members": [
+      {
+        "w": "serve",
+        "p": "v.",
+        "m": "服务；端上（饭菜）；服役；用作"
+      },
+      {
+        "w": "service",
+        "p": "n.",
+        "m": "服务；公共事业；服役"
+      },
+      {
+        "w": "servant",
+        "p": "n.",
+        "m": "仆人；公务员（civil servant）"
+      },
+      {
+        "w": "deserve",
+        "p": "vt.",
+        "m": "值得；应得；应受"
+      },
+      {
+        "w": "preserve",
+        "p": "vt. & n.",
+        "m": "保护；保存；维持；保护区"
+      },
+      {
+        "w": "preservation",
+        "p": "n.",
+        "m": "保护；保存；维护"
+      },
+      {
+        "w": "reserve",
+        "p": "vt. & n.",
+        "m": "预订；保留；自然保护区；储备"
+      },
+      {
+        "w": "reservation",
+        "p": "n.",
+        "m": "预订；保留意见"
+      },
+      {
+        "w": "conserve",
+        "p": "vt.",
+        "m": "保护；节约；保存"
+      },
+      {
+        "w": "conservation",
+        "p": "n.",
+        "m": "（对自然环境、文物等的）保护；节约"
+      },
+      {
+        "w": "observe",
+        "p": "vt.",
+        "m": "观察；遵守；庆祝"
+      },
+      {
+        "w": "observation",
+        "p": "n.",
+        "m": "观察；观测；评论"
+      },
+      {
+        "w": "observer",
+        "p": "n.",
+        "m": "观察者；评论员"
+      }
+    ]
+  },
+  {
+    "rootName": "tend / tens (伸展 · 趋向 · 专注)",
+    "triggers": [
+      "tend",
+      "tendency",
+      "intend",
+      "intention",
+      "extend",
+      "extension",
+      "extent",
+      "attend",
+      "attention",
+      "attentive",
+      "tension",
+      "intense",
+      "pretend",
+      "tent"
+    ],
+    "members": [
+      {
+        "w": "tend",
+        "p": "vi. & vt.",
+        "m": "往往会；趋向（tend to）；照料；护理"
+      },
+      {
+        "w": "tendency",
+        "p": "n.",
+        "m": "趋势；倾向"
+      },
+      {
+        "w": "intend",
+        "p": "vt.",
+        "m": "打算；计划；想要"
+      },
+      {
+        "w": "intention",
+        "p": "n.",
+        "m": "打算；意图；目的"
+      },
+      {
+        "w": "intentional",
+        "p": "adj.",
+        "m": "故意的；有意的"
+      },
+      {
+        "w": "extend",
+        "p": "vt. & vi.",
+        "m": "延伸；延长；扩大；提供"
+      },
+      {
+        "w": "extension",
+        "p": "n.",
+        "m": "延伸；扩大；延期；电话分机"
+      },
+      {
+        "w": "extensive",
+        "p": "adj.",
+        "m": "广泛的；大量的；广阔的"
+      },
+      {
+        "w": "extent",
+        "p": "n.",
+        "m": "程度；限度；范围"
+      },
+      {
+        "w": "attend",
+        "p": "v.",
+        "m": "出席；参加；照料；专心于（attend to）"
+      },
+      {
+        "w": "attention",
+        "p": "n.",
+        "m": "注意；注意力；照料"
+      },
+      {
+        "w": "attentive",
+        "p": "adj.",
+        "m": "专心的；体贴的"
+      },
+      {
+        "w": "tension",
+        "p": "n.",
+        "m": "紧张局势；焦虑；拉力"
+      },
+      {
+        "w": "tense",
+        "p": "adj. & n.",
+        "m": "紧张的；绷紧的；（动词）时态"
+      },
+      {
+        "w": "intense",
+        "p": "adj.",
+        "m": "强烈的；剧烈的；热切的"
+      },
+      {
+        "w": "intensity",
+        "p": "n.",
+        "m": "强烈；剧烈；强度"
+      },
+      {
+        "w": "pretend",
+        "p": "v.",
+        "m": "假装；装扮"
+      }
+    ]
+  },
+  {
+    "rootName": "vari (变化 · 多样 · 差异)",
+    "triggers": [
+      "vary",
+      "variety",
+      "various",
+      "variation",
+      "variable",
+      "varied"
+    ],
+    "members": [
+      {
+        "w": "vary",
+        "p": "vi. & vt.",
+        "m": "相异；变化；改变（vary from...to...）"
+      },
+      {
+        "w": "variety",
+        "p": "n.",
+        "m": "多样化；变化；种类；品种（a variety of）"
+      },
+      {
+        "w": "various",
+        "p": "adj.",
+        "m": "各种各样的；各种不同的"
+      },
+      {
+        "w": "variously",
+        "p": "adv.",
+        "m": "不同地；多方面地"
+      },
+      {
+        "w": "variation",
+        "p": "n.",
+        "m": "变化；变动；变体；变奏曲"
+      },
+      {
+        "w": "variable",
+        "p": "adj. & n.",
+        "m": "易变的；多变的；变量"
+      },
+      {
+        "w": "varied",
+        "p": "adj.",
+        "m": "各式各样的；多变的"
+      }
+    ]
+  },
+  {
+    "rootName": "equ (相等 · 平等 · 赤道)",
+    "triggers": [
+      "equal",
+      "equally",
+      "equality",
+      "inequality",
+      "equator",
+      "equivalent",
+      "adequate"
+    ],
+    "members": [
+      {
+        "w": "equal",
+        "p": "adj., n. & vt.",
+        "m": "相等的；平等的；能胜任的；同等的人；等于"
+      },
+      {
+        "w": "equally",
+        "p": "adv.",
+        "m": "相等地；同样地；平等地"
+      },
+      {
+        "w": "equality",
+        "p": "n.",
+        "m": "平等；均等"
+      },
+      {
+        "w": "inequality",
+        "p": "n.",
+        "m": "不平等；不均衡"
+      },
+      {
+        "w": "unequal",
+        "p": "adj.",
+        "m": "不平等的；不均衡的"
+      },
+      {
+        "w": "equator",
+        "p": "n.",
+        "m": "赤道"
+      },
+      {
+        "w": "equivalent",
+        "p": "adj. & n.",
+        "m": "相等的；等价的；等同物"
+      },
+      {
+        "w": "adequate",
+        "p": "adj.",
+        "m": "充足的；足够的；胜任的"
+      }
+    ]
+  },
+  {
+    "rootName": "recog / cogn / gno (知道 · 认识 · 忽视)",
+    "triggers": [
+      "recognise",
+      "recognize",
+      "recognition",
+      "ignore",
+      "ignorant",
+      "ignorance",
+      "noble",
+      "acknowledge"
+    ],
+    "members": [
+      {
+        "w": "recognise",
+        "p": "vt.",
+        "m": "（美 recognize）认出；承认；表彰；意识到"
+      },
+      {
+        "w": "recognition",
+        "p": "n.",
+        "m": "认出；承认；赞誉；认可"
+      },
+      {
+        "w": "recognizable",
+        "p": "adj.",
+        "m": "容易认出的；可辨认的"
+      },
+      {
+        "w": "unrecognizable",
+        "p": "adj.",
+        "m": "认不出来的；面目全非的"
+      },
+      {
+        "w": "acknowledge",
+        "p": "vt.",
+        "m": "承认；感谢；告知收到"
+      },
+      {
+        "w": "acknowledgement",
+        "p": "n.",
+        "m": "承认；感谢；致谢"
+      },
+      {
+        "w": "ignore",
+        "p": "vt.",
+        "m": "忽视；对……不予理会"
+      },
+      {
+        "w": "ignorance",
+        "p": "n.",
+        "m": "无知；愚昧"
+      },
+      {
+        "w": "ignorant",
+        "p": "adj.",
+        "m": "无知的；不了解的"
+      }
+    ]
+  },
+  {
+    "rootName": "fer (拿 · 带 · 产生 · 忍受)",
+    "triggers": [
+      "refer",
+      "reference",
+      "prefer",
+      "preference",
+      "differ",
+      "different",
+      "difference",
+      "suffer",
+      "suffering",
+      "offer",
+      "infer",
+      "inference",
+      "conference",
+      "transfer",
+      "fertile",
+      "fertiliser"
+    ],
+    "members": [
+      {
+        "w": "refer",
+        "p": "vi. & vt.",
+        "m": "提到；查阅；参考；提交（refer to）"
+      },
+      {
+        "w": "reference",
+        "p": "n.",
+        "m": "参考；查阅；提及；推荐信"
+      },
+      {
+        "w": "prefer",
+        "p": "vt.",
+        "m": "更喜欢；宁愿"
+      },
+      {
+        "w": "preference",
+        "p": "n.",
+        "m": "偏爱；优先权；爱好"
+      },
+      {
+        "w": "preferable",
+        "p": "adj.",
+        "m": "更可取的；更好的"
+      },
+      {
+        "w": "differ",
+        "p": "vi.",
+        "m": "相异；有区别；意见分歧"
+      },
+      {
+        "w": "different",
+        "p": "adj.",
+        "m": "不同的；有差异的"
+      },
+      {
+        "w": "difference",
+        "p": "n.",
+        "m": "差别；差异；分歧"
+      },
+      {
+        "w": "indifferent",
+        "p": "adj.",
+        "m": "漠不关心的；冷淡的"
+      },
+      {
+        "w": "suffer",
+        "p": "vt. & vi.",
+        "m": "遭受；蒙受；受苦（suffer from）"
+      },
+      {
+        "w": "suffering",
+        "p": "n.",
+        "m": "痛苦；苦难；折磨"
+      },
+      {
+        "w": "sufferer",
+        "p": "n.",
+        "m": "患病者；受苦者"
+      },
+      {
+        "w": "infer",
+        "p": "vt.",
+        "m": "推断；推论；暗示"
+      },
+      {
+        "w": "inference",
+        "p": "n.",
+        "m": "推论；推断的结果"
+      },
+      {
+        "w": "confer",
+        "p": "vi. & vt.",
+        "m": "商讨；授予（学位/荣誉）"
+      },
+      {
+        "w": "conference",
+        "p": "n.",
+        "m": "会议；研讨会"
+      },
+      {
+        "w": "transfer",
+        "p": "v. & n.",
+        "m": "转移；调动；转学；换乘"
+      },
+      {
+        "w": "fertiliser",
+        "p": "n.",
+        "m": "（美 fertilizer）肥料；化肥"
+      },
+      {
+        "w": "fertile",
+        "p": "adj.",
+        "m": "肥沃的；富饶的；能生育的"
+      }
+    ]
+  },
+  {
+    "rootName": "respo / spond (承诺 · 答复 · 责任)",
+    "triggers": [
+      "respond",
+      "response",
+      "responsible",
+      "responsibility",
+      "irresponsible",
+      "correspond",
+      "correspondence"
+    ],
+    "members": [
+      {
+        "w": "respond",
+        "p": "vi. & vt.",
+        "m": "回答；回应；作出反应（respond to）"
+      },
+      {
+        "w": "response",
+        "p": "n.",
+        "m": "回答；答复；反应（in response to）"
+      },
+      {
+        "w": "respondent",
+        "p": "n.",
+        "m": "调查对象；回答者"
+      },
+      {
+        "w": "responsible",
+        "p": "adj.",
+        "m": "负责的；有责任心的（be responsible for）"
+      },
+      {
+        "w": "responsibility",
+        "p": "n.",
+        "m": "责任；职责；义务"
+      },
+      {
+        "w": "responsibly",
+        "p": "adv.",
+        "m": "负责任地；可靠地"
+      },
+      {
+        "w": "irresponsible",
+        "p": "adj.",
+        "m": "不负责任的"
+      },
+      {
+        "w": "correspond",
+        "p": "vi.",
+        "m": "相一致；符合；通信；相当于"
+      },
+      {
+        "w": "correspondence",
+        "p": "n.",
+        "m": "来往信件；通信；一致"
+      }
+    ]
+  },
+  {
+    "rootName": "econ / dom (家 · 经济 · 支配)",
+    "triggers": [
+      "economic",
+      "economy",
+      "economical",
+      "economics",
+      "economist",
+      "domestic",
+      "dominate",
+      "dominant",
+      "domain"
+    ],
+    "members": [
+      {
+        "w": "economy",
+        "p": "n.",
+        "m": "经济；经济制度；节约"
+      },
+      {
+        "w": "economic",
+        "p": "adj.",
+        "m": "经济上的；经济学的"
+      },
+      {
+        "w": "economical",
+        "p": "adj.",
+        "m": "经济的；实惠的；节俭的"
+      },
+      {
+        "w": "economics",
+        "p": "n.",
+        "m": "经济学"
+      },
+      {
+        "w": "economist",
+        "p": "n.",
+        "m": "经济学家"
+      },
+      {
+        "w": "domestic",
+        "p": "adj.",
+        "m": "国内的；家庭的；驯养的"
+      },
+      {
+        "w": "dominate",
+        "p": "vt. & vi.",
+        "m": "支配；控制；占优势；高耸于"
+      },
+      {
+        "w": "dominant",
+        "p": "adj.",
+        "m": "占支配地位的；首要的；显性的"
+      },
+      {
+        "w": "domination",
+        "p": "n.",
+        "m": "支配；控制"
+      },
+      {
+        "w": "domain",
+        "p": "n.",
+        "m": "领域；领土；范围；域名"
+      }
+    ]
+  },
+  {
+    "rootName": "educ /reat / duce / duct (引导 · 创造 · 教育 · 生产)",
+    "triggers": [
+      "educate",
+      "educator",
+      "education",
+      "educational",
+      "conduct",
+      "conductor",
+      "reduce",
+      "reduction",
+      "produce",
+      "product",
+      "production",
+      "introduce",
+      "introduction"
+    ],
+    "members": [
+      {
+        "w": "educate",
+        "p": "vt.",
+        "m": "教育；教导；培养"
+      },
+      {
+        "w": "educated",
+        "p": "adj.",
+        "m": "受过良好教育的；有教养的"
+      },
+      {
+        "w": "educator",
+        "p": "n.",
+        "m": "教育家；教育工作者；教师"
+      },
+      {
+        "w": "education",
+        "p": "n.",
+        "m": "教育；培养；训练"
+      },
+      {
+        "w": "educational",
+        "p": "adj.",
+        "m": "教育的；有教育意义的"
+      },
+      {
+        "w": "conduct",
+        "p": "vt. & n.",
+        "m": "组织；实施；指挥；传导；行为；举止"
+      },
+      {
+        "w": "conductor",
+        "p": "n.",
+        "m": "（乐队）指挥；列车员；导体"
+      },
+      {
+        "w": "reduce",
+        "p": "vt. & vi.",
+        "m": "减少；降低；缩小"
+      },
+      {
+        "w": "reduction",
+        "p": "n.",
+        "m": "减少；降低；折扣"
+      },
+      {
+        "w": "produce",
+        "p": "vt. & n.",
+        "m": "生产；制造；引起；农产品"
+      },
+      {
+        "w": "product",
+        "p": "n.",
+        "m": "产品；产物；乘积"
+      },
+      {
+        "w": "production",
+        "p": "n.",
+        "m": "生产；制作；产量"
+      },
+      {
+        "w": "productive",
+        "p": "adj.",
+        "m": "多产的；富有成效的"
+      },
+      {
+        "w": "introduce",
+        "p": "vt.",
+        "m": "介绍；引进；采用"
+      },
+      {
+        "w": "introduction",
+        "p": "n.",
+        "m": "介绍；引进；导言"
+      }
+    ]
+  },
+  {
+    "rootName": "create / cresc (生长 · 创造 · 增加)",
+    "triggers": [
+      "create",
+      "creative",
+      "creatively",
+      "creativity",
+      "creation",
+      "creator",
+      "creature",
+      "recreation",
+      "increase",
+      "decrease",
+      "concrete"
+    ],
+    "members": [
+      {
+        "w": "create",
+        "p": "vt.",
+        "m": "创造；创作；造成；产生"
+      },
+      {
+        "w": "creative",
+        "p": "adj. & n.",
+        "m": "有创造力的；创造性的；创意人员"
+      },
+      {
+        "w": "creatively",
+        "p": "adv.",
+        "m": "创造性地；有创意地"
+      },
+      {
+        "w": "creativity",
+        "p": "n.",
+        "m": "创造力；独创性"
+      },
+      {
+        "w": "creation",
+        "p": "n.",
+        "m": "创造；创建；作品"
+      },
+      {
+        "w": "creator",
+        "p": "n.",
+        "m": "创造者；创作者"
+      },
+      {
+        "w": "creature",
+        "p": "n.",
+        "m": "生物；动物；人"
+      },
+      {
+        "w": "recreation",
+        "p": "n.",
+        "m": "娱乐；消遣；休养"
+      },
+      {
+        "w": "increase",
+        "p": "v. & n.",
+        "m": "增加；增长；提高"
+      },
+      {
+        "w": "increasingly",
+        "p": "adv.",
+        "m": "越来越多地；日益"
+      },
+      {
+        "w": "decrease",
+        "p": "v. & n.",
+        "m": "减少；减小；降低"
+      },
+      {
+        "w": "concrete",
+        "p": "adj. & n.",
+        "m": "具体的；确实的；混凝土"
+      }
+    ]
+  },
+  {
+    "rootName": "termin / fin / limit (界限 · 决定 · 终结)",
+    "triggers": [
+      "determine",
+      "determined",
+      "determination",
+      "limit",
+      "limited",
+      "unlimited",
+      "limitation",
+      "define",
+      "definite",
+      "definitely",
+      "definition",
+      "fine",
+      "final",
+      "finally",
+      "finance",
+      "financial",
+      "confine"
+    ],
+    "members": [
+      {
+        "w": "determine",
+        "p": "vt. & vi.",
+        "m": "决定；确定；查明；下定决心"
+      },
+      {
+        "w": "determined",
+        "p": "adj.",
+        "m": "有决心的；意志坚定的"
+      },
+      {
+        "w": "determination",
+        "p": "n.",
+        "m": "决心；果断；测定"
+      },
+      {
+        "w": "limit",
+        "p": "n. & vt.",
+        "m": "限制；限度；极限；限定"
+      },
+      {
+        "w": "limited",
+        "p": "adj.",
+        "m": "有限的；受限制的"
+      },
+      {
+        "w": "unlimited",
+        "p": "adj.",
+        "m": "无限的；不受限制的"
+      },
+      {
+        "w": "limitation",
+        "p": "n.",
+        "m": "限制；局限性；缺点"
+      },
+      {
+        "w": "define",
+        "p": "vt.",
+        "m": "给……下定义；界定；明确"
+      },
+      {
+        "w": "definition",
+        "p": "n.",
+        "m": "定义；释义；清晰度"
+      },
+      {
+        "w": "definite",
+        "p": "adj.",
+        "m": "明确的；肯定的；清楚的"
+      },
+      {
+        "w": "definitely",
+        "p": "adv.",
+        "m": "肯定地；当然；明确地"
+      },
+      {
+        "w": "indefinite",
+        "p": "adj.",
+        "m": "不确定的；无限期的"
+      },
+      {
+        "w": "finance",
+        "p": "n. & vt.",
+        "m": "财政；金融；资金；为……提供资金"
+      },
+      {
+        "w": "financial",
+        "p": "adj.",
+        "m": "财政的；金融的；财务的"
+      },
+      {
+        "w": "financially",
+        "p": "adv.",
+        "m": "财政上；金融上"
+      }
+    ]
+  }
+]

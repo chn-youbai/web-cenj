@@ -2,10 +2,15 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "web-cenj",
   "compatibility_date": "2026-09-30",
+  "pages_build_output_dir": ".",
   "observability": {
     "enabled": true
   },
-  "assets": {
-    "directory": "."
-  }
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "web-vocab-db",
+      "database_id": "5e691588-a2df-428a-b786-d5f9703c9554"
+    }
+  ]
 }

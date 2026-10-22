@@ -803,6 +803,10 @@
               <span class="text-xs font-medium text-gray-800">覆盖替换原词库</span>
             </label>
           </div>
+          <label class="flex items-center gap-2 bg-blue-50/80 p-2 rounded-lg border border-blue-200 cursor-pointer mt-1">
+            <input type="checkbox" id="syncToD1Checkbox" class="rounded text-blue-600 focus:ring-blue-500" />
+            <span class="text-xs font-semibold text-blue-900">☁️ 同时同步至 Cloudflare D1 云端数据库 (管理员密码 8888)</span>
+          </label>
         </div>
 
         <!-- File Input Trigger -->
@@ -958,10 +962,11 @@
     // =========================================================================
     // Decoupled Static Baseline Vocabulary (Loaded from ./data/vocab.json + Local Cached)
     let BUILTIN_VOCAB = [];
+    const D1_VOCAB_API = '/api/vocab';
     const DATA_VOCAB_URL = './data/vocab.json';
     const STORAGE_KEY_BASELINE_CACHE = 'pep_vocab_baseline_cache_v1';
     const STORAGE_KEY_BASELINE_VERSION = 'pep_vocab_baseline_ver_v1';
-// =========================================================================
+    // =========================================================================
     // 2. APPLICATION STATE & STORAGE KEYS
     // =========================================================================
     const STORAGE_KEY_CUSTOM_VOCAB = 'pep_iphone_vocab_custom_v1';
@@ -969,7 +974,23 @@
 
     async function fetchBaselineVocab(isForeground) {
       try {
-        const res = await fetch(DATA_VOCAB_URL);
+        let res = null;
+        let fromD1 = false;
+        
+        // 1. 优先尝试从 Cloudflare D1 边缘接口拉取最新词库快照
+        try {
+          res = await fetch(D1_VOCAB_API);
+          if (res && res.ok) fromD1 = true;
+        } catch (e) {
+          res = null;
+        }
+
+        // 2. 本地文件系统 (file://) 或离线时回退到静态 ./data/vocab.json
+        if (!res || !res.ok) {
+          res = await fetch(DATA_VOCAB_URL);
+          fromD1 = false;
+        }
+
         if (!res.ok) throw new Error(`HTTP error ${res.status}`);
         const data = await res.json();
         if (data && Array.isArray(data.words) && data.words.length > 0) {
@@ -985,12 +1006,12 @@
             indexAllEntries(vocabList);
             renderBookFilterBarAndSelects();
             if (isForeground) {
-              showToast(`课本词库加载完成 (${vocabList.length} 词)`);
+              showToast(`课本词库加载完成 (${vocabList.length} 词${fromD1 ? ' · D1云端同步' : ''})`);
             }
           }
         }
       } catch (err) {
-        console.warn('Failed to fetch baseline vocab.json:', err);
+        console.warn('Failed to fetch baseline vocab:', err);
         if (isForeground && vocabList.length === 0) {
           document.getElementById('headerStats').textContent = '词库加载失败，请检查网络后刷新';
           showToast('词库网络加载失败');
@@ -3462,6 +3483,49 @@
       return root;
     }
 
+    // D1 Cloud Edge Derivatives Cache & State
+    const CLOUD_DERIVATIVES_CACHE = new Map();
+    let currentDetailEntry = null;
+
+    async function fetchCloudDerivativesIfNeeded(targetCore) {
+      if (!targetCore) return;
+      const cleanW = targetCore.toLowerCase().trim();
+      if (CLOUD_DERIVATIVES_CACHE.has(cleanW)) return;
+
+      try {
+        const res = await fetch(`/api/derivatives?q=${encodeURIComponent(cleanW)}`);
+        if (!res.ok) {
+          CLOUD_DERIVATIVES_CACHE.set(cleanW, null);
+          return;
+        }
+        const data = await res.json();
+        if (data && data.status === 'ok' && Array.isArray(data.derivatives) && data.derivatives.length > 0) {
+          CLOUD_DERIVATIVES_CACHE.set(cleanW, {
+            rootGroup: data.rootGroup || '',
+            derivatives: data.derivatives
+          });
+
+          // 如果用户当前仍打开着该词的详情页或弹窗，动态无缝刷新
+          if (currentDetailEntry) {
+            const curCore = extractCoreBaseWord(currentDetailEntry);
+            if (curCore === cleanW || normalizeWordStr(currentDetailEntry.w) === cleanW) {
+              const updatedData = generateWordDetailData(currentDetailEntry);
+              if (updatedData) {
+                const bodyEl = document.getElementById('modalBodyContent');
+                const dtBody = document.getElementById('desktopBodyContent');
+                if (bodyEl) bodyEl.innerHTML = updatedData.bodyHtml;
+                if (dtBody) dtBody.innerHTML = updatedData.bodyHtml;
+              }
+            }
+          }
+        } else {
+          CLOUD_DERIVATIVES_CACHE.set(cleanW, null);
+        }
+      } catch (err) {
+        CLOUD_DERIVATIVES_CACHE.set(cleanW, null);
+      }
+    }
+
     // Find ALL Cognates/Derivatives (both in CSV and out-of-CSV!) and Related Phrases
     function findCognatesAndPhrases(entry, coreWord) {
       const targetCore = coreWord || extractCoreBaseWord(entry);
@@ -3477,11 +3541,14 @@
         }
       }
 
+      // 1.1 Check Cloud D1 Edge Cache
+      const cloudCached = CLOUD_DERIVATIVES_CACHE.get(targetCore);
+
       const cognates = [];
       const phrases = [];
       const seenWords = new Set([entryWLower, targetCore]);
 
-      const addCognateItem = (wordStr, posStr, meanStr) => {
+      const addCognateItem = (wordStr, posStr, meanStr, isCloudD1) => {
         const normW = normalizeWordStr(wordStr);
         if (!normW || seenWords.has(normW)) return;
         seenWords.add(normW);
@@ -3503,10 +3570,11 @@
             w: wordStr,
             p: posStr,
             m: meanStr,
-            b: '拓展同根词库',
+            b: isCloudD1 ? 'D1云端词族库' : '拓展同根词库',
             u: '非CSV',
             f: '拓展',
-            inCsv: false
+            inCsv: false,
+            fromCloud: Boolean(isCloudD1)
           });
         }
       };
@@ -3514,7 +3582,14 @@
       // Step A: Add all members from matched Curated Family (includes both CSV & non-CSV cognates!)
       if (matchedFamily) {
         matchedFamily.members.forEach(mem => {
-          addCognateItem(mem.w, mem.p, mem.m);
+          addCognateItem(mem.w, mem.p, mem.m, false);
+        });
+      }
+
+      // Step A.2: Add any additional members from Cloud D1
+      if (cloudCached && Array.isArray(cloudCached.derivatives)) {
+        cloudCached.derivatives.forEach(mem => {
+          addCognateItem(mem.word || mem.w, mem.pos || mem.p, mem.meaning || mem.m, true);
         });
       }
 
@@ -3541,17 +3616,18 @@
             (targetRoot.length >= 4 && (itemCore.startsWith(targetRoot) || itemCore.endsWith(targetCore)))
           );
           if (sharesMorphRoot) {
-            addCognateItem(item.w, item.p, item.m);
+            addCognateItem(item.w, item.p, item.m, false);
           }
         }
       });
 
       // Step C (Algorithmic derivatives) removed to ensure only genuine English words appear
       // Sort cognates: CSV words first, or keep natural family order
+      const finalTitle = matchedFamily ? matchedFamily.rootName : ((cloudCached && cloudCached.rootGroup) ? cloudCached.rootGroup : (targetRoot.length >= 3 ? `词根/词族: ${targetRoot}-` : `核心词: ${targetCore}`));
       return {
         coreWord: targetCore,
-        rootGroupTitle: matchedFamily ? matchedFamily.rootName : (targetRoot.length >= 3 ? `词根/词族: ${targetRoot}-` : `核心词: ${targetCore}`),
-        cognates: cognates.slice(0, 24),
+        rootGroupTitle: finalTitle,
+        cognates: cognates.slice(0, 30),
         phrases: phrases.slice(0, 12)
       };
     }
@@ -3801,6 +3877,10 @@
 
     function openWordDetailCard(entry) {
       if (!entry) return;
+      currentDetailEntry = entry;
+      const coreWord = extractCoreBaseWord(entry);
+      fetchCloudDerivativesIfNeeded(coreWord);
+
       const data = generateWordDetailData(entry);
       if (!data) return;
 
@@ -4467,6 +4547,35 @@ function readCsvFileSmart(file) {
       renderBookFilterBarAndSelects();
       renderBrowseList();
       showToast(`成功导入 ${fileList.length} 个文件（共加载 ${vocabList.length} 词条）`);
+
+      // 可选：同步到 Cloudflare D1 云端数据库
+      const syncCheckbox = document.getElementById('syncToD1Checkbox');
+      if (syncCheckbox && syncCheckbox.checked) {
+        const pwd = prompt('请输入管理员密码以同步至 Cloudflare D1 云端数据库 (默认 8888):', '');
+        if (pwd) {
+          try {
+            showToast('正在向 Cloudflare D1 云端数据库同步...');
+            const res = await fetch('/api/vocab', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                password: pwd,
+                clearBeforeImport: mode === 'replace',
+                words: importedEntries
+              })
+            });
+            const resData = await res.json();
+            if (res.ok && resData.status === 'ok') {
+              showToast(`☁️ D1 云端同步完成！成功写入 ${resData.inserted} 词条`);
+            } else {
+              showToast(`⚠️ 云端同步未成功: ${resData.error || resData.message || '密码或网络错误'}`);
+            }
+          } catch (netErr) {
+            showToast(`⚠️ 云端网络请求失败: ${netErr.message}`);
+          }
+        }
+      }
+
       switchTab('lookup');
     }
 
@@ -4503,6 +4612,9 @@ function readCsvFileSmart(file) {
       } else {
         document.getElementById('headerStats').textContent = '正在加载词库数据...';
       }
+
+      // 后台静默拉取 D1 最新数据进行同步刷新（若首次访问无缓存则前台提示）
+      fetchBaselineVocab(!cachedBaseline && !loadedCustom);
 
       // Load search history
       try {
