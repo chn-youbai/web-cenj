@@ -3435,102 +3435,8 @@
 
     // Algorithmic morphological derivative generator so ANY word gets complete cognates even when not in CSV
     function generateAlgorithmicCognates(coreWord, entry) {
-      const w = normalizeWordStr(coreWord);
-      if (!w || w.length < 2 || w.includes(' ')) return [];
-      const posStr = String(entry.p || '').toLowerCase();
-      const baseMean = String(entry.m || '').split(/[；;，,]/)[0].replace(/^\s*(使|把|向|对|在)/, '').trim() || w;
-
-      const generated = [];
-      const addGen = (word, pos, mean) => {
-        if (!word || word === w || word.length < 3) return;
-        generated.push({ w: word, p: pos, m: mean });
-      };
-
-      // If w is a verb or general root, generate standard English derivatives
-      const isVerb = posStr.includes('v') || !posStr;
-      const isAdj = posStr.includes('adj');
-      const isNoun = posStr.includes('n.');
-
-      // 1. If w ends with common suffixes, generate the base word & sibling suffixes
-      if (w.endsWith('ation') && w.length > 6) {
-        const stem = w.slice(0, -5);
-        addGen(stem, 'v.', `${baseMean}（动词原形）`);
-        addGen(stem + 'e', 'v.', `${baseMean}（动词原形）`);
-        addGen(stem + 'ative', 'adj.', `${baseMean}的；相关的`);
-        addGen(stem + 'able', 'adj.', `可${baseMean}的`);
-      } else if (w.endsWith('ition') && w.length > 6) {
-        const stem = w.slice(0, -5);
-        addGen(stem + 'e', 'v.', `${baseMean}（动词原形）`);
-        addGen(stem, 'v.', `${baseMean}（动词原形）`);
-      } else if (w.endsWith('ment') && w.length > 5) {
-        const stem = w.slice(0, -4);
-        addGen(stem, 'v.', `${baseMean}（动词原形）`);
-        addGen(stem + 'al', 'adj.', `${baseMean}的`);
-      } else if (w.endsWith('ness') && w.length > 5) {
-        const stem = w.endsWith('iness') ? w.slice(0, -5) + 'y' : w.slice(0, -4);
-        addGen(stem, 'adj.', `${baseMean}的（形容词原形）`);
-        addGen(stem + 'ly', 'adv.', `${baseMean}地`);
-      } else if (w.endsWith('ly') && w.length > 4) {
-        const stem = w.endsWith('ily') ? w.slice(0, -3) + 'y' : (w.endsWith('ally') ? w.slice(0, -4) : w.slice(0, -2));
-        addGen(stem, 'adj.', `${baseMean.replace(/地$/, '')}的（形容词）`);
-        addGen(stem + 'ness', 'n.', `${baseMean.replace(/地$/, '')}（名词状态）`);
-      }
-
-      // 2. Forward derivations from Verb
-      if (isVerb) {
-        let stemNoE = w.endsWith('e') && !w.endsWith('ee') ? w.slice(0, -1) : w;
-        // Agent noun (-er / -or)
-        addGen(w.endsWith('e') ? w + 'r' : w + 'er', 'n.', `${baseMean}者；……器`);
-        // -able adjective
-        addGen(stemNoE + 'able', 'adj.', `可${baseMean}的；能${baseMean}的`);
-        // -ing / -ed participial adjectives & verbal noun
-        addGen(stemNoE + 'ing', 'n. / adj.', `${baseMean}（过程）；令人……的`);
-        addGen(w.endsWith('e') ? w + 'd' : w + 'ed', 'adj.', `被${baseMean}的；已……的`);
-        // -ment / -tion noun
-        if (w.endsWith('ate')) {
-          addGen(w.slice(0, -1) + 'ion', 'n.', `${baseMean}（名词）`);
-          addGen(w.slice(0, -1) + 'ive', 'adj.', `有${baseMean}作用的`);
-        } else if (w.endsWith('ise') || w.endsWith('ize')) {
-          addGen(w.slice(0, -1) + 'ation', 'n.', `${baseMean}化；${baseMean}（名词）`);
-        } else if (w.endsWith('ify')) {
-          addGen(w.slice(0, -1) + 'ication', 'n.', `${baseMean}（名词）`);
-        } else {
-          addGen(w + 'ment', 'n.', `${baseMean}（行为/结果）`);
-        }
-        // re- prefix
-        addGen('re' + w, 'v.', `重新${baseMean}；再${baseMean}`);
-      }
-
-      // 3. Forward derivations from Adjective
-      if (isAdj) {
-        let adv = w + 'ly';
-        if (w.endsWith('y')) adv = w.slice(0, -1) + 'ily';
-        else if (w.endsWith('le')) adv = w.slice(0, -1) + 'y';
-        else if (w.endsWith('ic')) adv = w + 'ally';
-        addGen(adv, 'adv.', `${baseMean.replace(/的$/, '')}地（副词）`);
-
-        let nounNess = w.endsWith('y') ? w.slice(0, -1) + 'iness' : w + 'ness';
-        if (w.endsWith('ent')) addGen(w.slice(0, -3) + 'ence', 'n.', `${baseMean.replace(/的$/, '')}（名词）`);
-        else if (w.endsWith('ant')) addGen(w.slice(0, -3) + 'ance', 'n.', `${baseMean.replace(/的$/, '')}（名词）`);
-        else if (w.endsWith('able')) addGen(w.slice(0, -4) + 'ability', 'n.', `${baseMean.replace(/的$/, '')}性（名词）`);
-        else if (w.endsWith('ible')) addGen(w.slice(0, -4) + 'ibility', 'n.', `${baseMean.replace(/的$/, '')}性（名词）`);
-        else addGen(nounNess, 'n.', `${baseMean.replace(/的$/, '')}（状态/性质）`);
-
-        if (!w.startsWith('un') && !w.startsWith('in') && !w.startsWith('im') && !w.startsWith('il') && !w.startsWith('ir') && !w.startsWith('dis')) {
-          const negPrefix = w.startsWith('p') || w.startsWith('m') ? 'im' : (w.startsWith('l') ? 'il' : (w.startsWith('r') ? 'ir' : 'un'));
-          addGen(negPrefix + w, 'adj.', `不${baseMean.replace(/的$/, '')}的（反义派生）`);
-        }
-      }
-
-      // 4. Forward derivations from Noun
-      if (isNoun && !isVerb && !isAdj) {
-        addGen(w + 'ful', 'adj.', `充满${baseMean}的；有${baseMean}的`);
-        addGen(w + 'less', 'adj.', `无${baseMean}的；缺乏${baseMean}的`);
-        addGen(w.endsWith('e') ? w.slice(0, -1) + 'al' : w + 'al', 'adj.', `${baseMean}的；与${baseMean}相关的`);
-        addGen(w.endsWith('y') ? w.slice(0, -1) + 'ical' : w + 'ic', 'adj.', `${baseMean}的`);
-      }
-
-      return generated;
+      // Disabled to strictly prevent fake/hallucinated words
+      return [];
     }
 
     function getMorphologicalRoot(word) {
@@ -3640,12 +3546,7 @@
         }
       });
 
-      // Step C: Always supplement with Algorithmic Morphological Derivatives so every word has complete non-CSV cognates!
-      const algoCognates = generateAlgorithmicCognates(targetCore, entry);
-      algoCognates.forEach(ac => {
-        addCognateItem(ac.w, ac.p, ac.m);
-      });
-
+      // Step C (Algorithmic derivatives) removed to ensure only genuine English words appear
       // Sort cognates: CSV words first, or keep natural family order
       return {
         coreWord: targetCore,
@@ -3757,20 +3658,20 @@
         `;
       }
 
-      // SECTION C: 所有同根词与派生词 (完整词族，包含 CSV 内外全部同根词!)
-      bodyHtml += `
-        <div class="ios-card p-3.5 space-y-2.5">
-          <div class="flex items-center justify-between flex-wrap gap-1">
-            <span class="text-xs font-bold text-gray-800 flex items-center gap-1.5">
-              <span class="w-2 h-2 rounded-full bg-[#34C759]"></span>
-              🌱 所有同根词与派生词（共 ${familyData.cognates.length} 个）
-            </span>
-            ${familyData.rootGroupTitle ? `<span class="text-[10px] font-semibold bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-md">${escapeHtml(familyData.rootGroupTitle)}</span>` : ''}
-          </div>
-          <div class="text-[11px] text-gray-500">
-            已列出全部同根词（其中课本 CSV 收录 <strong>${inCsvCognateCount}</strong> 个，课外拓展同根词 <strong>${extCognateCount}</strong> 个）。点击任意词条可切换查看其卡片：
-          </div>
-          ${familyData.cognates.length > 0 ? `
+      // SECTION C: 所有同根词与派生词 (真实课本同根词 + 权威高考词族)
+      if (familyData.cognates.length > 0) {
+        bodyHtml += `
+          <div class="ios-card p-3.5 space-y-2.5">
+            <div class="flex items-center justify-between flex-wrap gap-1">
+              <span class="text-xs font-bold text-gray-800 flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-[#34C759]"></span>
+                🌱 所有同根词与派生词（共 ${familyData.cognates.length} 个）
+              </span>
+              ${familyData.rootGroupTitle ? `<span class="text-[10px] font-semibold bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-md">${escapeHtml(familyData.rootGroupTitle)}</span>` : ''}
+            </div>
+            <div class="text-[11px] text-gray-500">
+              已列出全部真实同根词（其中课本收录 <strong>${inCsvCognateCount}</strong> 个${extCognateCount > 0 ? `，权威词族拓展 <strong>${extCognateCount}</strong> 个` : ''}）。点击任意词条可切换查看其卡片：
+            </div>
             <div class="space-y-1.5">
               ${familyData.cognates.map(cog => `
                 <button
@@ -3796,15 +3697,30 @@
                     </span>
                   ` : `
                     <span class="text-[10px] font-semibold text-emerald-700 bg-white border border-emerald-200 px-2 py-1 rounded-lg shrink-0">
-                      ✨ 拓展同根词 ›
+                      ✨ 词族拓展 ›
                     </span>
                   `}
                 </button>
               `).join('')}
             </div>
-          ` : ''}
-        </div>
-      `;
+          </div>
+        `;
+      } else {
+        bodyHtml += `
+          <div class="ios-card p-3.5 space-y-1.5">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-gray-800 flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-gray-400"></span>
+                🌱 同根词与派生词
+              </span>
+              <span class="text-[11px] text-gray-400">暂无拓展词族</span>
+            </div>
+            <div class="text-[11px] text-gray-500 leading-relaxed">
+              本词在高中 7 册课本及高考核心词族库中暂无其他派生词，重点掌握上方释义、变形与课本搭配即可。
+            </div>
+          </div>
+        `;
+      }
 
       // SECTION D: 一词多义 & 熟词生义解析
       bodyHtml += `

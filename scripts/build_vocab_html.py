@@ -296,20 +296,20 @@ new_detail_logic = """function generateWordDetailData(entry) {
         `;
       }
 
-      // SECTION C: 所有同根词与派生词 (完整词族，包含 CSV 内外全部同根词!)
-      bodyHtml += `
-        <div class="ios-card p-3.5 space-y-2.5">
-          <div class="flex items-center justify-between flex-wrap gap-1">
-            <span class="text-xs font-bold text-gray-800 flex items-center gap-1.5">
-              <span class="w-2 h-2 rounded-full bg-[#34C759]"></span>
-              🌱 所有同根词与派生词（共 ${familyData.cognates.length} 个）
-            </span>
-            ${familyData.rootGroupTitle ? `<span class="text-[10px] font-semibold bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-md">${escapeHtml(familyData.rootGroupTitle)}</span>` : ''}
-          </div>
-          <div class="text-[11px] text-gray-500">
-            已列出全部同根词（其中课本 CSV 收录 <strong>${inCsvCognateCount}</strong> 个，课外拓展同根词 <strong>${extCognateCount}</strong> 个）。点击任意词条可切换查看其卡片：
-          </div>
-          ${familyData.cognates.length > 0 ? `
+      // SECTION C: 所有同根词与派生词 (真实课本同根词 + 权威高考词族)
+      if (familyData.cognates.length > 0) {
+        bodyHtml += `
+          <div class="ios-card p-3.5 space-y-2.5">
+            <div class="flex items-center justify-between flex-wrap gap-1">
+              <span class="text-xs font-bold text-gray-800 flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-[#34C759]"></span>
+                🌱 所有同根词与派生词（共 ${familyData.cognates.length} 个）
+              </span>
+              ${familyData.rootGroupTitle ? `<span class="text-[10px] font-semibold bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-md">${escapeHtml(familyData.rootGroupTitle)}</span>` : ''}
+            </div>
+            <div class="text-[11px] text-gray-500">
+              已列出全部真实同根词（其中课本收录 <strong>${inCsvCognateCount}</strong> 个${extCognateCount > 0 ? `，权威词族拓展 <strong>${extCognateCount}</strong> 个` : ''}）。点击任意词条可切换查看其卡片：
+            </div>
             <div class="space-y-1.5">
               ${familyData.cognates.map(cog => `
                 <button
@@ -335,15 +335,30 @@ new_detail_logic = """function generateWordDetailData(entry) {
                     </span>
                   ` : `
                     <span class="text-[10px] font-semibold text-emerald-700 bg-white border border-emerald-200 px-2 py-1 rounded-lg shrink-0">
-                      ✨ 拓展同根词 ›
+                      ✨ 词族拓展 ›
                     </span>
                   `}
                 </button>
               `).join('')}
             </div>
-          ` : ''}
-        </div>
-      `;
+          </div>
+        `;
+      } else {
+        bodyHtml += `
+          <div class="ios-card p-3.5 space-y-1.5">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-gray-800 flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-gray-400"></span>
+                🌱 同根词与派生词
+              </span>
+              <span class="text-[11px] text-gray-400">暂无拓展词族</span>
+            </div>
+            <div class="text-[11px] text-gray-500 leading-relaxed">
+              本词在高中 7 册课本及高考核心词族库中暂无其他派生词，重点掌握上方释义、变形与课本搭配即可。
+            </div>
+          </div>
+        `;
+      }
 
       // SECTION D: 一词多义 & 熟词生义解析
       bodyHtml += `
@@ -486,6 +501,21 @@ new_detail_logic = """function generateWordDetailData(entry) {
     }
 """
 html = re.sub(old_open_detail_re, new_detail_logic, html, flags=re.DOTALL)
+
+# 8b. Neutralize generateAlgorithmicCognates to completely prevent fake/hallucinated words
+old_algo_re = r'function generateAlgorithmicCognates\(coreWord, entry\) \{.*?(?=function getMorphologicalRoot)'
+new_algo = """function generateAlgorithmicCognates(coreWord, entry) {
+      // Disabled to strictly prevent fake/hallucinated words
+      return [];
+    }
+
+    """
+html = re.sub(old_algo_re, new_algo, html, flags=re.DOTALL)
+
+# 8c. Remove Step C from findCognatesAndPhrases
+old_step_c_re = r'// Step C: Always supplement with Algorithmic Morphological Derivatives.*?(?=// Sort cognates:)'
+new_step_c = """// Step C (Algorithmic derivatives) removed to ensure only genuine English words appear\\n      """
+html = re.sub(old_step_c_re, new_step_c, html, flags=re.DOTALL)
 
 # 9. Update switchTab to sync desktop-nav-tab and add goBackHome
 old_switch_tab_re = r'function switchTab\(tabName\) \{.*?(?=function readCsvFileSmart)'
