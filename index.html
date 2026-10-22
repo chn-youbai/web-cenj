@@ -146,7 +146,7 @@
       width: 100%;
       margin-top: 0.9rem;
     }
-    .gallery-btn, .pan-btn, .exam-btn {
+    .gallery-btn, .pan-btn {
       display: inline-flex;
       align-items: center;
       justify-content: center;
@@ -175,15 +175,6 @@
     .pan-btn:hover {
       transform: translateY(-2px);
       box-shadow: 0 15px 30px rgba(234, 88, 12, 0.45);
-      color: #ffffff;
-    }
-    .exam-btn {
-      background: linear-gradient(135deg, #8b5cf6, #3b82f6);
-      box-shadow: 0 10px 25px rgba(139, 92, 246, 0.35);
-    }
-    .exam-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 15px 30px rgba(139, 92, 246, 0.45);
       color: #ffffff;
     }
     .takeout-portal-btn {
@@ -459,7 +450,7 @@
       .btn-group {
         gap: 0.45rem;
       }
-      .gallery-btn, .pan-btn, .like-btn, .exam-btn, .takeout-portal-btn {
+      .gallery-btn, .pan-btn, .like-btn, .takeout-portal-btn {
         padding: 0.5rem 1rem;
         font-size: 0.82rem;
       }
@@ -510,12 +501,6 @@
         <span>📁 资源网盘下载</span>
         <span style="font-size: 0.85em; opacity: 0.9;">(100MB极速) →</span>
       </a>
-
-      <!-- 试卷功能已移至最下方 -->
-      <a href="./exam" class="exam-btn" id="examLink">
-        <span>📝 AI 试卷智能排版</span>
-        <span style="font-size: 0.85em; opacity: 0.9;">(对话微调/导出) →</span>
-      </a>
     </div>
   </div>
 
@@ -554,14 +539,6 @@
 
     let currentVal = 0;
     const icons = ['💖', '🎉', '✨', '🔥', '👏', '🌟', '🚀', '💯'];
-
-    // 智能识别移动端，优化排版入口直达
-    try {
-      if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile/i.test(navigator.userAgent)) {
-        const linkEl = document.getElementById('examLink');
-        if (linkEl) linkEl.href = './exam-mobile';
-      }
-    } catch (e) {}
 
     // 格式化数字
     function formatCount(num) {
