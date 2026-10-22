@@ -2,12 +2,13 @@
 # -*- coding: utf-8 -*-
 """
 scripts/sync_d1.py
-一键同步课本词库和词根拓展数据库到 Cloudflare D1 (web-vocab-db)
+一键同步课本词库、四六级词典和词根拓展数据库到 Cloudflare D1 (web-vocab-db)
 用法:
-  python scripts/sync_d1.py           # 同步所有数据（课本 + 词族）到远程 D1
-  python scripts/sync_d1.py --textbook  # 仅同步课本词库
-  python scripts/sync_d1.py --derivatives # 仅同步词根词族
-  python scripts/sync_d1.py --local   # 同步到本地 Wrangler 开发数据库
+  python scripts/sync_d1.py              # 同步所有数据（高中课本 + 四六级 + 词根词族）
+  python scripts/sync_d1.py --textbook   # 仅同步高中课本词库
+  python scripts/sync_d1.py --cet        # 仅同步大学英语四六级词典
+  python scripts/sync_d1.py --derivatives# 仅同步词根词族
+  python scripts/sync_d1.py --local      # 同步到本地 Wrangler 开发数据库
 """
 
 import sys
@@ -56,12 +57,12 @@ def generate_textbook_sql():
         data = json.load(f)
     
     words = data.get("words", [])
-    print(f"📖 发现课本词条: {len(words)} 条")
+    print(f"📖 发现高中课本词条: {len(words)} 条")
 
     out_path = os.path.join(base_dir, "data", "seed_textbook.sql")
     with open(out_path, "w", encoding="utf-8") as f:
         f.write("-- Seed textbook words\n")
-        f.write("DELETE FROM textbook_words;\n")
+        f.write("DELETE FROM textbook_words WHERE book NOT LIKE '大学英语%';\n")
 
         batch_size = 200
         for i in range(0, len(words), batch_size):
@@ -81,6 +82,36 @@ def generate_textbook_sql():
             
             f.write(f"INSERT INTO textbook_words (book, unit, word, pos, meaning, font, note, head_lower) VALUES\n  " + ",\n  ".join(values) + ";\n")
 
+    return out_path
+
+def generate_split_cet_sql(words, book_name, file_name):
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    out_path = os.path.join(base_dir, 'data', file_name)
+
+    with open(out_path, 'w', encoding='utf-8') as f:
+        f.write(f"-- Delete previous {book_name} records\n")
+        f.write(f"DELETE FROM textbook_words WHERE book = '{book_name}';\n")
+
+        batch_size = 150
+        for i in range(0, len(words), batch_size):
+            chunk = words[i:i + batch_size]
+            values = []
+            for w in chunk:
+                book = escape_sql(w.get('b', ''))
+                unit = escape_sql(w.get('u', ''))
+                word = escape_sql(w.get('w', ''))
+                pos = escape_sql(w.get('p', ''))
+                meaning = escape_sql(w.get('m', ''))
+                font = escape_sql(w.get('f', '核心'))
+                note = escape_sql(w.get('n', ''))
+                raw_word = str(w.get('w', '')).strip().lower()
+                head_lower = escape_sql(re.sub(r'[^a-z\-]', '', raw_word))
+                values.append(f"({book}, {unit}, {word}, {pos}, {meaning}, {font}, {note}, {head_lower})")
+            
+            f.write(f"INSERT INTO textbook_words (book, unit, word, pos, meaning, font, note, head_lower) VALUES\n  " + ",\n  ".join(values) + ";\n")
+
+    size_kb = os.path.getsize(out_path) / 1024
+    print(f"📝 生成 {file_name}: {len(words)} 词 ({size_kb:.1f} KB)")
     return out_path
 
 def generate_derivatives_sql():
@@ -135,21 +166,21 @@ def generate_derivatives_sql():
     return out_path
 
 def main():
-    parser = argparse.ArgumentParser(description="同步高中英语词库到 Cloudflare D1")
-    parser.add_argument("--textbook", action="store_true", help="仅同步课本词库")
+    parser = argparse.ArgumentParser(description="同步英语词库到 Cloudflare D1")
+    parser.add_argument("--textbook", action="store_true", help="仅同步高中课本词库")
+    parser.add_argument("--cet", action="store_true", help="仅同步大学英语四六级词库")
     parser.add_argument("--derivatives", action="store_true", help="仅同步词族与派生词")
     parser.add_argument("--local", action="store_true", help="同步到本地开发数据库（默认同步到远程）")
     args = parser.parse_args()
 
     mode_flag = [] if args.local else ["--remote"]
-    sync_all = not (args.textbook or args.derivatives)
+    sync_all = not (args.textbook or args.cet or args.derivatives)
 
     print("=" * 60)
     print(f"🚀 开始 Cloudflare D1 数据库同步 [{'本地模式' if args.local else '远程云端生产环境'}]")
     print(f"🎯 目标数据库: {DB_NAME}")
     print("=" * 60)
 
-    # 1. 确保表结构存在
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     schema_path = os.path.join(base_dir, "data", "schema.sql")
     print(f"📋 检查并执行表结构: {schema_path}")
@@ -157,13 +188,44 @@ def main():
         print("❌ 表结构初始化失败，终止同步。")
         sys.exit(1)
 
-    # 2. 同步课本词库
+    # 1. 同步高中课本词库
     if sync_all or args.textbook:
-        print("\n📚 生成课本词库 SQL 批处理文件...")
+        print("\n📚 生成高中课本词库 SQL 批处理文件...")
         tb_sql = generate_textbook_sql()
         if tb_sql:
             print("🚀 执行课本词库同步到 D1...")
             run_wrangler(["execute", DB_NAME] + mode_flag + [f"--file={tb_sql}"])
+            try:
+                os.remove(tb_sql)
+            except Exception:
+                pass
+
+    # 2. 同步四六级词典
+    if sync_all or args.cet:
+        print("\n🎓 准备大学英语四六级词典...")
+        cet4_path = os.path.join(base_dir, 'data', 'cet4.json')
+        cet6_path = os.path.join(base_dir, 'data', 'cet6.json')
+        if os.path.exists(cet4_path) and os.path.exists(cet6_path):
+            with open(cet4_path, 'r', encoding='utf-8') as f:
+                cet4_words = json.load(f).get('words', [])
+            with open(cet6_path, 'r', encoding='utf-8') as f:
+                cet6_words = json.load(f).get('words', [])
+
+            c4_sql = generate_split_cet_sql(cet4_words, '大学英语四级 (CET-4)', 'seed_cet4.sql')
+            run_wrangler(["execute", DB_NAME] + mode_flag + [f"--file={c4_sql}"])
+            try:
+                os.remove(c4_sql)
+            except Exception:
+                pass
+
+            c6_sql = generate_split_cet_sql(cet6_words, '大学英语六级 (CET-6)', 'seed_cet6.sql')
+            run_wrangler(["execute", DB_NAME] + mode_flag + [f"--file={c6_sql}"])
+            try:
+                os.remove(c6_sql)
+            except Exception:
+                pass
+        else:
+            print("⚠️ 未找到 data/cet4.json 或 data/cet6.json，跳过四六级同步。")
 
     # 3. 同步词根词族
     if sync_all or args.derivatives:
@@ -172,11 +234,15 @@ def main():
         if deriv_sql:
             print("🚀 执行词族与派生词同步到 D1...")
             run_wrangler(["execute", DB_NAME] + mode_flag + [f"--file={deriv_sql}"])
+            try:
+                os.remove(deriv_sql)
+            except Exception:
+                pass
 
     # 4. 统计结果
     print("\n🔍 正在验证 D1 数据库统计数据...")
-    verify_cmd = "SELECT COUNT(*) as textbook_count FROM textbook_words; SELECT COUNT(*) as deriv_count FROM word_derivatives;"
-    run_wrangler(["execute", DB_NAME] + mode_flag + [f"--command={verify_cmd}"])
+    stat_cmd = "SELECT book, COUNT(*) as count FROM textbook_words GROUP BY book ORDER BY count DESC;"
+    run_wrangler(["execute", DB_NAME] + mode_flag + [f"--command={stat_cmd}"])
 
     print("\n🎉 D1 数据库同步完成！")
 

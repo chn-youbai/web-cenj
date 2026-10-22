@@ -12,3 +12,4 @@ __pycache__/
 .vercel
 .env*
 data/seed_*.sql
+data/cet*.json

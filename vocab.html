@@ -1029,6 +1029,8 @@
     // Book short label helper
     function getShortBookName(fullBook) {
       if (!fullBook) return '未命名课本';
+      if (fullBook.includes('四级') || fullBook.includes('CET-4')) return '四级 (CET-4)';
+      if (fullBook.includes('六级') || fullBook.includes('CET-6')) return '六级 (CET-6)';
       return fullBook
         .replace('人教版高中英语', '')
         .replace('普通高中教科书-英语', '')
@@ -1037,12 +1039,15 @@
 
     function formatUnitLabel(unitStr) {
       const u = String(unitStr || '').trim();
-      if (!u) return '未标注单元';
+      if (!u) return '通用';
       if (u.toLowerCase() === 'w' || u.toLowerCase() === 'welcome') {
         return 'Welcome Unit (预备单元)';
       }
       if (/^\d+$/.test(u)) {
         return 'Unit ' + u + ' (第' + u + '单元)';
+      }
+      if (/^[a-zA-Z]$/.test(u)) {
+        return '字母 ' + u.toUpperCase() + ' 组';
       }
       return u;
     }
@@ -1052,6 +1057,7 @@
       if (!u) return '通用';
       if (u.toLowerCase() === 'w' || u.toLowerCase() === 'welcome') return 'Welcome Unit';
       if (/^\d+$/.test(u)) return 'Unit ' + u;
+      if (/^[a-zA-Z]$/.test(u)) return '字母 ' + u.toUpperCase();
       return u;
     }
 
@@ -3647,12 +3653,18 @@
     function generateWordDetailData(entry) {
       if (!entry) return null;
       const coreWord = extractCoreBaseWord(entry);
+      const isCet4 = entry.b && (entry.b.includes('四级') || entry.b.includes('CET-4'));
+      const isCet6 = entry.b && (entry.b.includes('六级') || entry.b.includes('CET-6'));
       const isBold = entry.f === '黑体';
       const isExtended = entry.inCsv === false || entry.b === '拓展同根词库';
       const isProper = Boolean(entry.n && entry.n.includes('专有名词'));
 
       let badgesHtml = '';
-      if (isExtended) {
+      if (isCet4) {
+        badgesHtml += `<span class="inline-flex items-center text-[11px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200 px-2 py-0.5 rounded-md">🎓 大学英语四级 (CET-4)</span>`;
+      } else if (isCet6) {
+        badgesHtml += `<span class="inline-flex items-center text-[11px] font-semibold bg-violet-50 text-violet-700 border border-violet-200 px-2 py-0.5 rounded-md">🎓 大学英语六级 (CET-6)</span>`;
+      } else if (isExtended) {
         badgesHtml += `<span class="inline-flex items-center text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-md">✨ 课外同根拓展词</span>`;
       } else {
         badgesHtml += isBold
@@ -3679,26 +3691,33 @@
 
       let bodyHtml = '';
 
-      // SECTION A: 课本定位与收录情况
+      // SECTION A: 课本与大纲收录情况
       bodyHtml += `
         <div class="ios-card p-3.5 space-y-2">
           <div class="flex items-center justify-between">
             <span class="text-xs font-bold text-gray-800 flex items-center gap-1.5">
               <span class="w-2 h-2 rounded-full bg-[#007AFF]"></span>
-              📍 课本 CSV 收录情况（${allOccurrences.length > 0 ? `共 ${allOccurrences.length} 处` : '未单独收录于 CSV，以下为完整拓展卡片'}）
+              📍 课本与大纲收录情况（${allOccurrences.length > 0 ? `共 ${allOccurrences.length} 处` : '未单独收录于词库，以下为完整拓展卡片'}）
             </span>
           </div>
           ${allOccurrences.length > 0 ? `
             <div class="space-y-1.5">
-              ${allOccurrences.map(occ => `
-                <div class="bg-blue-50/60 border border-blue-100 rounded-xl p-2.5 flex items-center justify-between gap-2">
+              ${allOccurrences.map(occ => {
+                const isOccCet4 = occ.b && (occ.b.includes('四级') || occ.b.includes('CET-4'));
+                const isOccCet6 = occ.b && (occ.b.includes('六级') || occ.b.includes('CET-6'));
+                const cardBg = isOccCet4 ? 'bg-indigo-50/60 border-indigo-100' : (isOccCet6 ? 'bg-purple-50/60 border-purple-100' : 'bg-blue-50/60 border-blue-100');
+                const titleColor = isOccCet4 ? 'text-indigo-950' : (isOccCet6 ? 'text-purple-950' : 'text-blue-950');
+                const icon = (isOccCet4 || isOccCet6) ? '🎓' : '📘';
+                return `
+                <div class="${cardBg} border rounded-xl p-2.5 flex items-center justify-between gap-2">
                   <div>
-                    <div class="text-xs font-bold text-blue-950">${escapeHtml(getShortBookName(occ.b))} · ${escapeHtml(formatUnitLabel(occ.u))}</div>
+                    <div class="text-xs font-bold ${titleColor}">${icon} ${escapeHtml(getShortBookName(occ.b))} · ${escapeHtml(formatUnitLabel(occ.u))}</div>
                     <div class="text-[11px] text-gray-600 mt-0.5">${escapeHtml(occ.p ? '[' + occ.p + '] ' : '')}${escapeHtml(occ.m)}</div>
                   </div>
-                  <span class="text-[10px] font-semibold px-2 py-0.5 rounded ${occ.f === '黑体' ? 'bg-gray-900 text-white' : 'bg-white text-gray-600 border border-gray-200'} shrink-0">${escapeHtml(occ.f || '白体')}</span>
+                  <span class="text-[10px] font-semibold px-2 py-0.5 rounded ${occ.f === '黑体' ? 'bg-gray-900 text-white' : 'bg-white text-gray-600 border border-gray-200'} shrink-0">${escapeHtml(occ.f || '核心')}</span>
                 </div>
-              `).join('')}
+              `;
+              }).join('')}
             </div>
           ` : `
             <div class="bg-emerald-50/60 border border-emerald-100 rounded-xl p-2.5 text-xs text-emerald-900">
@@ -4040,6 +4059,8 @@ function closeWordDetailCard() {
     }
 
     function createWordCardHtml(entry, idx, queryHighlight = '') {
+      const isCet4 = entry.b && (entry.b.includes('四级') || entry.b.includes('CET-4'));
+      const isCet6 = entry.b && (entry.b.includes('六级') || entry.b.includes('CET-6'));
       const isBold = entry.f === '黑体';
       const isProper = Boolean(entry.n && entry.n.includes('专有名词'));
       const shortBook = getShortBookName(entry.b);
@@ -4056,8 +4077,21 @@ function closeWordDetailCard() {
           } px-1.5 py-0.5 rounded">${escapeHtml(entry._matchType)}</span>`
         : '';
 
+      let bookTypeBadge = '';
+      if (isCet4) {
+        bookTypeBadge = `<span class="inline-flex items-center text-[11px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200/80 px-2 py-0.5 rounded-md">🎓 四级核心</span>`;
+      } else if (isCet6) {
+        bookTypeBadge = `<span class="inline-flex items-center text-[11px] font-semibold bg-violet-50 text-violet-700 border border-violet-200/80 px-2 py-0.5 rounded-md">🎓 六级核心</span>`;
+      } else if (isBold) {
+        bookTypeBadge = `<span class="inline-flex items-center text-[11px] font-semibold bg-gray-900 text-white px-2 py-0.5 rounded-md">黑体 · 课标重点词</span>`;
+      } else {
+        bookTypeBadge = `<span class="inline-flex items-center text-[11px] font-medium bg-gray-100 text-gray-600 px-2 py-0.5 rounded-md">白体 · 认读词</span>`;
+      }
+
+      const borderLeftColor = isCet4 ? 'border-l-indigo-500' : (isCet6 ? 'border-l-purple-500' : (isBold ? 'border-l-[#007AFF]' : 'border-l-gray-300'));
+
       return `
-        <article data-card-idx="${idx}" class="word-card-clickable ios-card p-4 animate-fade-in space-y-3 border-l-4 ${isBold ? 'border-l-[#007AFF]' : 'border-l-gray-300'}">
+        <article data-card-idx="${idx}" class="word-card-clickable ios-card p-4 animate-fade-in space-y-3 border-l-4 ${borderLeftColor}">
           <!-- Word Header & Audio/Copy Actions -->
           <div class="flex items-start justify-between gap-2">
             <div class="space-y-1">
@@ -4066,10 +4100,7 @@ function closeWordDetailCard() {
                 ${entry.p ? `<span class="text-xs font-semibold italic text-blue-700 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-100">${escapeHtml(entry.p)}</span>` : ''}
               </div>
               <div class="flex items-center flex-wrap gap-1.5 pt-0.5">
-                ${isBold
-                  ? `<span class="inline-flex items-center text-[11px] font-semibold bg-gray-900 text-white px-2 py-0.5 rounded-md">黑体 · 课标重点词</span>`
-                  : `<span class="inline-flex items-center text-[11px] font-medium bg-gray-100 text-gray-600 px-2 py-0.5 rounded-md">白体 · 认读词</span>`
-                }
+                ${bookTypeBadge}
                 ${isProper ? `<span class="inline-flex items-center text-[11px] font-medium bg-amber-50 text-amber-700 border border-amber-200/80 px-2 py-0.5 rounded-md">△ 专有名词</span>` : ''}
                 ${matchBadge}
               </div>
@@ -4092,7 +4123,7 @@ function closeWordDetailCard() {
                 data-copy-idx="${idx}"
                 aria-label="复制词条"
                 class="copy-btn ios-btn-active w-9 h-9 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center"
-                title="复制课本信息"
+                title="复制词条信息"
               >
                 <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 01-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 011.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 00-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 01-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 00-3.375-3.375h-1.5a1.125 1.125 0 01-1.125-1.125v-1.5a3.375 3.375 0 00-3.375-3.375H9.75" />
@@ -4107,17 +4138,17 @@ function closeWordDetailCard() {
             <div class="text-[16px] font-semibold text-gray-900 leading-relaxed">${escapeHtml(entry.m || '（无释义）')}</div>
           </div>
 
-          <!-- Textbook Location Info Grid -->
+          <!-- Location Info Grid -->
           <div class="grid grid-cols-2 gap-2 pt-0.5">
-            <div class="bg-blue-50/60 border border-blue-100/80 rounded-xl p-2.5">
-              <div class="text-[11px] text-blue-600/80 font-medium">所在课本（册别）</div>
-              <div class="text-xs font-bold text-blue-950 mt-0.5">${escapeHtml(shortBook)}</div>
+            <div class="${(isCet4 || isCet6) ? 'bg-purple-50/60 border-purple-100/80' : 'bg-blue-50/60 border-blue-100/80'} border rounded-xl p-2.5">
+              <div class="text-[11px] ${(isCet4 || isCet6) ? 'text-purple-600/80' : 'text-blue-600/80'} font-medium">词库来源</div>
+              <div class="text-xs font-bold ${(isCet4 || isCet6) ? 'text-purple-950' : 'text-blue-950'} mt-0.5">${(isCet4 || isCet6) ? '🎓 ' : '📘 '}${escapeHtml(shortBook)}</div>
               <div class="text-[10px] text-gray-500 truncate">${escapeHtml(entry.b)}</div>
             </div>
             <div class="bg-indigo-50/60 border border-indigo-100/80 rounded-xl p-2.5">
-              <div class="text-[11px] text-indigo-600/80 font-medium">课本单元位置</div>
+              <div class="text-[11px] text-indigo-600/80 font-medium">${(isCet4 || isCet6) ? '字母索引' : '课本单元位置'}</div>
               <div class="text-xs font-bold text-indigo-950 mt-0.5">${escapeHtml(unitFull)}</div>
-              <div class="text-[10px] text-gray-500">单元代码: ${escapeHtml(entry.u)}</div>
+              <div class="text-[10px] text-gray-500">${(isCet4 || isCet6) ? '字母分组' : '单元代码'}: ${escapeHtml(entry.u)}</div>
             </div>
           </div>
 
@@ -4269,13 +4300,61 @@ function closeWordDetailCard() {
     // =========================================================================
     // 8. BOOK FILTER PILLS, HISTORY & BROWSE VIEW
     // =========================================================================
+    function getBookSortWeight(bName) {
+      if (bName.includes('必修第一册')) return 1;
+      if (bName.includes('必修第二册')) return 2;
+      if (bName.includes('必修第三册')) return 3;
+      if (bName.includes('选择性必修第一册')) return 4;
+      if (bName.includes('选择性必修第二册')) return 5;
+      if (bName.includes('选择性必修第三册')) return 6;
+      if (bName.includes('选择性必修第四册')) return 7;
+      if (bName.includes('四级') || bName.includes('CET-4')) return 10;
+      if (bName.includes('六级') || bName.includes('CET-6')) return 11;
+      return 20;
+    }
+
     function getUniqueBooks() {
       const map = new Map();
       vocabList.forEach(e => {
         const b = e.b || '未命名课本';
         map.set(b, (map.get(b) || 0) + 1);
       });
-      return Array.from(map.entries()); // [[bookName, count], ...]
+      const entries = Array.from(map.entries());
+      entries.sort((a, b) => getBookSortWeight(a[0]) - getBookSortWeight(b[0]));
+      return entries;
+    }
+
+    function updateBrowseUnitSelectOptions() {
+      const browseBookSelect = document.getElementById('browseBookSelect');
+      const browseUnitSelect = document.getElementById('browseUnitSelect');
+      if (!browseBookSelect || !browseUnitSelect) return;
+      const bVal = browseBookSelect.value;
+      const prevU = browseUnitSelect.value || 'ALL';
+
+      const unitsSet = new Set();
+      vocabList.forEach(e => {
+        if (bVal === 'ALL' || e.b === bVal) {
+          if (e.u) unitsSet.add(String(e.u).trim());
+        }
+      });
+
+      const unitsArr = Array.from(unitsSet);
+      unitsArr.sort((a, b) => {
+        if (/^\d+$/.test(a) && /^\d+$/.test(b)) return parseInt(a, 10) - parseInt(b, 10);
+        return a.localeCompare(b);
+      });
+
+      const isCet = bVal.includes('四级') || bVal.includes('六级') || bVal.includes('CET');
+      let opts = `<option value="ALL">全部${isCet ? '字母组' : '单元'}</option>`;
+      unitsArr.forEach(u => {
+        opts += `<option value="${escapeHtml(u)}">${escapeHtml(formatUnitLabel(u))}</option>`;
+      });
+      browseUnitSelect.innerHTML = opts;
+      if (Array.from(browseUnitSelect.options).some(o => o.value === prevU)) {
+        browseUnitSelect.value = prevU;
+      } else {
+        browseUnitSelect.value = 'ALL';
+      }
     }
 
     function renderBookFilterBarAndSelects() {
@@ -4284,7 +4363,7 @@ function closeWordDetailCard() {
 
       // Update header stats
       document.getElementById('headerStats').textContent =
-        `已加载 ${books.length} 册课本 · ${totalCount.toLocaleString()} 词条`;
+        `已加载 ${books.length} 册词库 · ${totalCount.toLocaleString()} 词条`;
       document.getElementById('loadedSummaryText').textContent =
         `共 ${books.length} 册 · ${totalCount.toLocaleString()} 个词条`;
 
@@ -4294,16 +4373,18 @@ function closeWordDetailCard() {
         <button type="button" data-book-scope="ALL" class="book-scope-pill shrink-0 px-3 py-1 rounded-full text-xs font-semibold transition ${
           selectedBookScope === 'ALL' ? 'bg-[#007AFF] text-white shadow-sm' : 'bg-gray-100 text-gray-600'
         }">
-          全部册别 (${totalCount})
+          全部词库 (${totalCount.toLocaleString()})
         </button>
       `;
       books.forEach(([bName, count]) => {
         const active = selectedBookScope === bName;
+        const isCet = bName.includes('四级') || bName.includes('六级') || bName.includes('CET');
+        const icon = isCet ? '🎓 ' : '';
         pillsHtml += `
           <button type="button" data-book-scope="${escapeHtml(bName)}" class="book-scope-pill shrink-0 px-3 py-1 rounded-full text-xs font-semibold transition ${
             active ? 'bg-[#007AFF] text-white shadow-sm' : 'bg-gray-100 text-gray-600'
           }">
-            ${escapeHtml(getShortBookName(bName))} (${count})
+            ${icon}${escapeHtml(getShortBookName(bName))} (${count.toLocaleString()})
           </button>
         `;
       });
@@ -4312,14 +4393,16 @@ function closeWordDetailCard() {
       // 2. Browse Book Select
       const browseBookSelect = document.getElementById('browseBookSelect');
       const prevVal = browseBookSelect.value || 'ALL';
-      let optsHtml = `<option value="ALL">全部课本 (${totalCount})</option>`;
+      let optsHtml = `<option value="ALL">全部词库 (${totalCount.toLocaleString()})</option>`;
       books.forEach(([bName, count]) => {
-        optsHtml += `<option value="${escapeHtml(bName)}">${escapeHtml(getShortBookName(bName))} (${count})</option>`;
+        optsHtml += `<option value="${escapeHtml(bName)}">${escapeHtml(getShortBookName(bName))} (${count.toLocaleString()} 词)</option>`;
       });
       browseBookSelect.innerHTML = optsHtml;
       if ( Array.from(browseBookSelect.options).some(o => o.value === prevVal) ) {
         browseBookSelect.value = prevVal;
       }
+
+      updateBrowseUnitSelectOptions();
 
       // 3. Loaded Books List in Import Tab
       const loadedListEl = document.getElementById('loadedBooksList');
@@ -4398,21 +4481,28 @@ function closeWordDetailCard() {
 
       const slice = filtered.slice(0, browseRenderLimit);
       container.innerHTML = slice.map(e => {
+        const isCet4 = e.b && (e.b.includes('四级') || e.b.includes('CET-4'));
+        const isCet6 = e.b && (e.b.includes('六级') || e.b.includes('CET-6'));
         const isBold = e.f === '黑体';
+        const badgeBg = isCet4 ? 'bg-indigo-50 text-indigo-700' : (isCet6 ? 'bg-purple-50 text-purple-700' : 'bg-blue-50 text-blue-700');
+        const borderColor = isCet4 ? 'border-l-indigo-400' : (isCet6 ? 'border-l-purple-400' : (isBold ? 'border-l-[#007AFF]' : 'border-l-gray-200'));
+
         return `
-          <div data-browse-word="${escapeHtml(e.w)}" data-browse-book="${escapeHtml(e.b)}" class="browse-card-item word-card-clickable ios-card p-3 flex items-center justify-between gap-2">
+          <div data-browse-word="${escapeHtml(e.w)}" data-browse-book="${escapeHtml(e.b)}" class="browse-card-item word-card-clickable ios-card p-3 flex items-center justify-between gap-2 border-l-4 ${borderColor}">
             <div class="min-w-0 flex-1">
               <div class="flex items-center gap-1.5 flex-wrap">
                 <span class="font-bold text-sm text-gray-900">${escapeHtml(e.w)}</span>
                 ${e.p ? `<span class="text-[11px] italic text-blue-600">${escapeHtml(e.p)}</span>` : ''}
+                ${isCet4 ? `<span class="text-[10px] bg-indigo-100 text-indigo-800 px-1.5 py-0.2 rounded font-medium">四级</span>` : ''}
+                ${isCet6 ? `<span class="text-[10px] bg-purple-100 text-purple-800 px-1.5 py-0.2 rounded font-medium">六级</span>` : ''}
                 ${isBold ? `<span class="text-[10px] bg-gray-900 text-white px-1.5 py-0.2 rounded">黑体</span>` : ''}
                 ${e.n && e.n.includes('专有名词') ? `<span class="text-[10px] bg-amber-50 text-amber-700 border border-amber-200 px-1.5 py-0.2 rounded">△</span>` : ''}
               </div>
               <div class="text-xs text-gray-600 mt-0.5 truncate">${escapeHtml(e.m)}</div>
             </div>
             <div class="flex items-center gap-1.5 shrink-0">
-              <span class="text-[11px] font-semibold text-blue-700 bg-blue-50 px-2 py-1 rounded-lg">
-                ${escapeHtml(getShortBookName(e.b))} · ${escapeHtml(formatShortUnitBadge(e.u))}
+              <span class="text-[11px] font-semibold ${badgeBg} px-2 py-1 rounded-lg">
+                ${(isCet4 || isCet6) ? '🎓 ' : '📘 '}${escapeHtml(getShortBookName(e.b))} · ${escapeHtml(formatShortUnitBadge(e.u))}
               </span>
               <button
                 type="button"
@@ -4875,7 +4965,12 @@ function readCsvFileSmart(file) {
       });
 
       // Browse filters
-      ['browseBookSelect', 'browseUnitSelect', 'browseFontSelect'].forEach(id => {
+      document.getElementById('browseBookSelect').addEventListener('change', () => {
+        updateBrowseUnitSelectOptions();
+        browseRenderLimit = 60;
+        renderBrowseList();
+      });
+      ['browseUnitSelect', 'browseFontSelect'].forEach(id => {
         document.getElementById(id).addEventListener('change', () => {
           browseRenderLimit = 60;
           renderBrowseList();
