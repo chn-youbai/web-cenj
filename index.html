@@ -199,6 +199,26 @@
       box-shadow: 0 15px 30px rgba(239, 68, 68, 0.45);
       color: #ffffff;
     }
+    .vocab-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.6rem;
+      padding: 0.75rem 1.6rem;
+      border-radius: 9999px;
+      color: #ffffff;
+      font-size: 0.95rem;
+      font-weight: 700;
+      text-decoration: none;
+      background: linear-gradient(135deg, #007AFF, #4F46E5);
+      box-shadow: 0 10px 25px rgba(0, 122, 255, 0.35);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .vocab-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 15px 30px rgba(79, 70, 229, 0.45);
+      color: #ffffff;
+    }
 
     /* 密码解锁模态弹窗 */
     .auth-modal-backdrop {
@@ -431,7 +451,7 @@
         gap: 0.6rem;
         margin-top: 0.7rem;
       }
-      .gallery-btn, .pan-btn, .like-btn {
+      .gallery-btn, .pan-btn, .like-btn, .vocab-btn {
         padding: 0.65rem 1.2rem;
         font-size: 0.9rem;
       }
@@ -450,7 +470,7 @@
       .btn-group {
         gap: 0.45rem;
       }
-      .gallery-btn, .pan-btn, .like-btn, .takeout-portal-btn {
+      .gallery-btn, .pan-btn, .like-btn, .takeout-portal-btn, .vocab-btn {
         padding: 0.5rem 1rem;
         font-size: 0.82rem;
       }
@@ -492,6 +512,12 @@
         <span> 账单</span>
         <span style="font-size: 0.82em; opacity: 0.9;">(安全登录) →</span>
       </button>
+
+      <!-- 高中英语课本查词系统入口 -->
+      <a href="./vocab.html" class="vocab-btn" id="vocabLink">
+        <span>📖 高中英语课本查词</span>
+        <span style="font-size: 0.85em; opacity: 0.9;">(人教版7册/批量检测) →</span>
+      </a>
 
       <a href="./gallery.html" class="gallery-btn">
         <span>🖼️ 查看精选图库</span>
