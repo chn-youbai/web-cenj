@@ -66,9 +66,15 @@ old_header_re = r'<header class="sticky top-0 z-30 ios-blur border-b border-blac
 new_header = """<header class="sticky top-0 z-30 ios-blur border-b border-black/5 px-4 pt-3 pb-2.5">
     <div class="header-wrap max-w-md mx-auto flex items-center justify-between gap-3">
       <div class="flex items-center gap-2.5">
-        <a href="./index.html" class="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200/60 px-2.5 py-1.5 rounded-full transition-colors shrink-0" title="返回网站首页">
-          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
-          <span>首页</span>
+        <a
+          href="./index.html"
+          id="backToHomeBtn"
+          class="ios-btn-active inline-flex items-center gap-1 text-xs font-bold text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 active:bg-blue-200 border border-blue-200/80 px-3 py-1.5 rounded-full transition-all shrink-0 cursor-pointer shadow-xs select-none"
+          onclick="goBackHome(event)"
+          title="返回网站首页"
+        >
+          <svg class="w-3.5 h-3.5 pointer-events-none" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+          <span class="pointer-events-none">返回首页</span>
         </a>
         <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white shadow-sm shrink-0">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24" width="20" height="20">
@@ -481,9 +487,25 @@ new_detail_logic = """function generateWordDetailData(entry) {
 """
 html = re.sub(old_open_detail_re, new_detail_logic, html, flags=re.DOTALL)
 
-# 9. Update switchTab to sync desktop-nav-tab
+# 9. Update switchTab to sync desktop-nav-tab and add goBackHome
 old_switch_tab_re = r'function switchTab\(tabName\) \{.*?(?=function readCsvFileSmart)'
-new_switch_tab = """function switchTab(tabName) {
+new_switch_tab = """function goBackHome(event) {
+      if (event) {
+        if (typeof event.preventDefault === 'function') event.preventDefault();
+        if (typeof event.stopPropagation === 'function') event.stopPropagation();
+      }
+      try {
+        if (window.location.protocol === 'file:') {
+          window.location.href = './index.html';
+        } else {
+          window.location.href = '/';
+        }
+      } catch (e) {
+        window.location.href = './index.html';
+      }
+    }
+
+    function switchTab(tabName) {
       const views = {
         lookup: document.getElementById('viewLookup'),
         browse: document.getElementById('viewBrowse'),
@@ -590,7 +612,13 @@ old_word_card_click = """        // Click on a Word Card in Lookup Results -> Op
           return;
         }"""
 
-new_word_card_click = """        // Click on a Word Card in Lookup Results -> Open Word Detail Card
+new_word_card_click = """        // Back to home button
+        if (e.target.closest('#backToHomeBtn')) {
+          goBackHome(e);
+          return;
+        }
+
+        // Click on a Word Card in Lookup Results -> Open Word Detail Card
         const wordCard = e.target.closest('article[data-card-idx]');
         if (wordCard) {
           const idx = Number(wordCard.getAttribute('data-card-idx'));
