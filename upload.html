@@ -619,63 +619,14 @@
       progressBox.style.display = 'block';
 
       try {
-        progressStatus.textContent = '1/3 获取或创建 Release 容器...';
-        const tag = 'v_media';
-        
-        // 查找或创建 release
-        let releaseResp = await fetch(`https://api.github.com/repos/${GH_REPO}/releases/tags/${tag}`, {
-          headers: { 
-            'Authorization': `token ${token}`,
-            'Accept': 'application/vnd.github.v3+json' 
-          }
-        });
+        progressStatus.textContent = '1/2 正在高速上传视频流 (0%)...';
 
-        let uploadUrl = '';
-        if (releaseResp.status === 404) {
-          // 创建 release
-          const createResp = await fetch(`https://api.github.com/repos/${GH_REPO}/releases`, {
-            method: 'POST',
-            headers: { 
-              'Authorization': `token ${token}`, 
-              'Content-Type': 'application/json',
-              'Accept': 'application/vnd.github.v3+json'
-            },
-            body: JSON.stringify({ 
-              tag_name: tag, 
-              name: 'Cenj Video Assets', 
-              body: 'Personal video assets container',
-              draft: false, 
-              prerelease: false 
-            })
-          });
-          const createData = await createResp.json();
-          if (!createResp.ok || !createData.upload_url) {
-            throw new Error(`创建 Release 失败 (${createResp.status}): ${createData.message || '请确认 Token 具有 repo 权限'}`);
-          }
-          uploadUrl = createData.upload_url;
-        } else if (releaseResp.ok) {
-          const relData = await releaseResp.json();
-          uploadUrl = relData.upload_url;
-        } else {
-          const errData = await releaseResp.json().catch(() => ({}));
-          throw new Error(`访问 GitHub API 失败 (${releaseResp.status}): ${errData.message || '请检查 Token 权限'}`);
-        }
-
-        if (!uploadUrl) {
-          throw new Error('未获取到有效的 GitHub 上传地址');
-        }
-
-        // 避免重名覆盖
-        const cleanName = Date.now().toString(36) + '_' + selectedFile.name.replace(/[^a-zA-Z0-9._-]/g, '_');
-        const targetUploadUrl = uploadUrl.replace('{?name,label}', `?name=${encodeURIComponent(cleanName)}`);
-
-        progressStatus.textContent = '2/3 正在直传视频 (0%)...';
-
-        // 借助 XHR 监控上传速率与进度
-        await new Promise((resolve, reject) => {
+        // 借助 XHR 监控上传速率与进度，发往 Cloudflare /api/upload-asset 边缘代理，绕过墙与跨域阻断
+        const assetDownloadUrl = await new Promise((resolve, reject) => {
           const xhr = new XMLHttpRequest();
-          xhr.open('POST', targetUploadUrl, true);
-          xhr.setRequestHeader('Authorization', `token ${token}`);
+          xhr.open('POST', '/api/upload-asset', true);
+          xhr.setRequestHeader('X-GitHub-Token', token);
+          xhr.setRequestHeader('X-File-Name', encodeURIComponent(selectedFile.name));
           xhr.setRequestHeader('Content-Type', selectedFile.type || 'application/octet-stream');
 
           let lastTime = Date.now();
@@ -700,18 +651,23 @@
           };
 
           xhr.onload = () => {
-            if (xhr.status >= 200 && xhr.status < 300) {
+            try {
               const resp = JSON.parse(xhr.responseText);
-              resolve(resp.browser_download_url);
-            } else {
-              reject(new Error(`上传失败 (状态码: ${xhr.status})`));
+              if (xhr.status >= 200 && xhr.status < 300 && resp.browser_download_url) {
+                resolve(resp.browser_download_url);
+              } else {
+                reject(new Error(resp.error || `上传失败 (状态码: ${xhr.status})`));
+              }
+            } catch (err) {
+              reject(new Error(`响应异常: ${xhr.responseText.slice(0, 80)}`));
             }
           };
 
-          xhr.onerror = () => reject(new Error('网络连接中断'));
+          xhr.onerror = () => reject(new Error('网络连接异常，请检查手机网络'));
           xhr.send(selectedFile);
-        }).then(async (assetDownloadUrl) => {
-          progressStatus.textContent = '3/3 写入 D1 数据库...';
+        });
+
+        progressStatus.textContent = '2/2 写入 D1 数据库...';
 
           // 写入 D1 数据库
           const saveResp = await fetch('/api/videos', {
@@ -731,7 +687,6 @@
 
           alert('🎉 视频直传发布成功！画廊专区已即刻上线。');
           location.href = './gallery.html';
-        });
 
       } catch (err) {
         alert('上传出错: ' + err.message);
