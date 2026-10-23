@@ -196,21 +196,42 @@
       display: inline-flex;
       align-items: center;
       gap: 0.5rem;
-      padding: 0.85rem 1.8rem;
+      padding: 0.85rem 1.6rem;
       background: linear-gradient(135deg, #0284c7, #06b6d4);
       color: #ffffff;
       text-decoration: none;
       font-weight: 700;
-      font-size: 0.95rem;
+      font-size: 0.92rem;
       border-radius: 9999px;
       box-shadow: 0 10px 25px rgba(2, 132, 199, 0.35);
-      transition: all 0.3s ease;
+      transition: all 0.25s ease;
       flex-shrink: 0;
     }
     .download-action:hover {
-      transform: scale(1.04);
-      box-shadow: 0 15px 30px rgba(6, 182, 212, 0.45);
+      transform: translateY(-2px);
+      box-shadow: 0 14px 28px rgba(6, 182, 212, 0.45);
       color: #ffffff;
+    }
+    .download-group {
+      display: flex;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .download-action.sub-line {
+      background: rgba(255, 255, 255, 0.07);
+      color: #94a3b8;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      box-shadow: none;
+      font-size: 0.82rem;
+      padding: 0.75rem 1.2rem;
+      font-weight: 600;
+    }
+    .download-action.sub-line:hover {
+      background: rgba(255, 255, 255, 0.15);
+      color: #f1f5f9;
+      border-color: rgba(255, 255, 255, 0.3);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
     }
     /* 订阅卡片专属样式 */
     .sub-card {
@@ -337,51 +358,61 @@
     <!-- 密码提示 -->
     <div class="password-banner">
       <div class="password-info">
-        <span class="password-icon">🔑</span>
+        <span class="password-icon">💡</span>
         <div class="password-text">
-          <h3>提取与解压密码：pass</h3>
-          <p>所有网盘下载密码、解压密码均统一为 pass，点击右侧按钮可一键复制</p>
+          <h3>下载提示：优先推荐「官网高速直下」通道</h3>
+          <p>主通道直连中继秒下，免跳转、免输入密码；如遇网络波动，可使用备用蓝奏云（密码：pass）</p>
         </div>
       </div>
-      <button class="copy-btn" onclick="copyText('pass', '密码 pass')">
-        📋 复制密码 (pass)
+      <button class="copy-btn" onclick="copyText('pass', '备用网盘密码 pass')">
+        📋 复制备用密码 (pass)
       </button>
     </div>
 
-    <!-- 资源 1: cfma -->
+    <!-- 资源 1: cfma (安卓手机) -->
     <div class="file-card">
       <div class="file-meta">
         <div class="file-icon">📱</div>
         <div class="file-details">
-          <h2>cfma</h2>
+          <h2>CFMA (安卓客户端)</h2>
           <div class="file-tags">
-            <span class="tag speed">⚡ 不限速直连</span>
-            <span class="tag">蓝奏云托管</span>
+            <span class="tag speed">⚡ 官网直连·免密</span>
+            <span class="tag">46.5 MB</span>
+            <span class="tag">Android .apk</span>
           </div>
         </div>
       </div>
-      <a href="http://wwbbh.zizi2.com/ioL544ao3a7e" target="_blank" rel="noopener noreferrer" class="download-action">
-        <span>📥 立即下载</span>
-        <span>→</span>
-      </a>
+      <div class="download-group">
+        <a href="/api/download?file=cfma" class="download-action" download>
+          <span>🚀 官网高速直下</span>
+        </a>
+        <a href="http://wwbbh.zizi2.com/ioL544ao3a7e" target="_blank" rel="noopener noreferrer" class="download-action sub-line">
+          <span>备用蓝奏线 (提取码 pass)</span>
+        </a>
+      </div>
     </div>
 
-    <!-- 资源 2: clashverge -->
+    <!-- 资源 2: clashverge (Windows 电脑) -->
     <div class="file-card">
       <div class="file-meta">
         <div class="file-icon">💻</div>
         <div class="file-details">
-          <h2>clashverge</h2>
+          <h2>Clash Verge (Windows 电脑版)</h2>
           <div class="file-tags">
-            <span class="tag speed">⚡ 不限速直连</span>
-            <span class="tag">蓝奏云托管</span>
+            <span class="tag speed">⚡ 官网直连·免密</span>
+            <span class="tag">44.9 MB</span>
+            <span class="tag">x64 安装包 .exe</span>
           </div>
         </div>
       </div>
-      <a href="http://wwbbh.zizi2.com/i8bwP4anaxwd" target="_blank" rel="noopener noreferrer" class="download-action">
-        <span>📥 立即下载</span>
-        <span>→</span>
-      </a>
+      <div class="download-group">
+        <a href="/api/download?file=clashverge" class="download-action" download>
+          <span>🚀 官网高速直下</span>
+        </a>
+        <a href="http://wwbbh.zizi2.com/i8bwP4anaxwd" target="_blank" rel="noopener noreferrer" class="download-action sub-line">
+          <span>备用蓝奏线 (提取码 pass)</span>
+        </a>
+      </div>
     </div>
 
     <!-- 备用订阅地址 -->
