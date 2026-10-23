@@ -475,7 +475,7 @@
   <script>
     const AUTH_KEY = 'cenj_video_auth_pwd';
     const GH_TOKEN_KEY = 'cenj_video_gh_token';
-    const GH_REPO = 'chn-youbai/web-cenj-videos'; // 专属大文件视频资产仓
+    const GH_REPO = 'chn-youbai/web-cenj'; // 现有主仓库 Releases 资产库
 
     let adminPassword = localStorage.getItem(AUTH_KEY) || '';
     let selectedFile = null;
@@ -624,7 +624,10 @@
         
         // 查找或创建 release
         let releaseResp = await fetch(`https://api.github.com/repos/${GH_REPO}/releases/tags/${tag}`, {
-          headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/vnd.github.v3+json' }
+          headers: { 
+            'Authorization': `token ${token}`,
+            'Accept': 'application/vnd.github.v3+json' 
+          }
         });
 
         let uploadUrl = '';
@@ -632,20 +635,39 @@
           // 创建 release
           const createResp = await fetch(`https://api.github.com/repos/${GH_REPO}/releases`, {
             method: 'POST',
-            headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ tag_name: tag, name: 'Cenj Video Assets', draft: false, prerelease: false })
+            headers: { 
+              'Authorization': `token ${token}`, 
+              'Content-Type': 'application/json',
+              'Accept': 'application/vnd.github.v3+json'
+            },
+            body: JSON.stringify({ 
+              tag_name: tag, 
+              name: 'Cenj Video Assets', 
+              body: 'Personal video assets container',
+              draft: false, 
+              prerelease: false 
+            })
           });
           const createData = await createResp.json();
+          if (!createResp.ok || !createData.upload_url) {
+            throw new Error(`创建 Release 失败 (${createResp.status}): ${createData.message || '请确认 Token 具有 repo 权限'}`);
+          }
           uploadUrl = createData.upload_url;
         } else if (releaseResp.ok) {
           const relData = await releaseResp.json();
           uploadUrl = relData.upload_url;
         } else {
-          throw new Error('访问 GitHub API 失败，请检查 Token 权限');
+          const errData = await releaseResp.json().catch(() => ({}));
+          throw new Error(`访问 GitHub API 失败 (${releaseResp.status}): ${errData.message || '请检查 Token 权限'}`);
         }
 
-        // 提取真正的 upload endpoint
-        const targetUploadUrl = uploadUrl.replace('{?name,label}', `?name=${encodeURIComponent(selectedFile.name)}`);
+        if (!uploadUrl) {
+          throw new Error('未获取到有效的 GitHub 上传地址');
+        }
+
+        // 避免重名覆盖
+        const cleanName = Date.now().toString(36) + '_' + selectedFile.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+        const targetUploadUrl = uploadUrl.replace('{?name,label}', `?name=${encodeURIComponent(cleanName)}`);
 
         progressStatus.textContent = '2/3 正在直传视频 (0%)...';
 
@@ -653,7 +675,7 @@
         await new Promise((resolve, reject) => {
           const xhr = new XMLHttpRequest();
           xhr.open('POST', targetUploadUrl, true);
-          xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+          xhr.setRequestHeader('Authorization', `token ${token}`);
           xhr.setRequestHeader('Content-Type', selectedFile.type || 'application/octet-stream');
 
           let lastTime = Date.now();
