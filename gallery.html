@@ -234,22 +234,309 @@
       .nav-arrow.next { right: 0.6rem; }
       .close-btn { top: 1rem; right: 1rem; width: 40px; height: 40px; font-size: 1.5rem; }
     }
+
+    /* 类别选项卡 */
+    .category-tabs {
+      max-width: 1300px;
+      margin: 0 auto 1.8rem auto;
+      display: flex;
+      gap: 0.8rem;
+    }
+    .cat-tab {
+      padding: 0.65rem 1.4rem;
+      border-radius: 9999px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #94a3b8;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .cat-tab:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+    }
+    .cat-tab.active {
+      background: linear-gradient(135deg, #007cf0, #00dfd8);
+      color: #fff;
+      border-color: transparent;
+      box-shadow: 0 4px 15px rgba(0, 124, 240, 0.35);
+    }
+    .upload-link-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.65rem 1.2rem;
+      border-radius: 9999px;
+      background: rgba(16, 185, 129, 0.15);
+      color: #34d399;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.92rem;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      transition: all 0.25s ease;
+    }
+    .upload-link-btn:hover {
+      background: rgba(16, 185, 129, 0.25);
+      color: #6ee7b7;
+      transform: translateY(-2px);
+    }
+
+    /* 视频瀑布流网格 */
+    .video-grid {
+      max-width: 1300px;
+      margin: 0 auto;
+      display: none;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 1.8rem;
+    }
+    .video-item-card {
+      position: relative;
+      border-radius: 20px;
+      overflow: hidden;
+      background: rgba(22, 30, 49, 0.75);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35);
+      cursor: pointer;
+      transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+      display: flex;
+      flex-direction: column;
+    }
+    .video-item-card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 20px 40px rgba(0, 124, 240, 0.25);
+      border-color: rgba(56, 189, 248, 0.5);
+    }
+    .video-thumb-wrap {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      background: #020617;
+      overflow: hidden;
+    }
+    .video-thumb-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.4s ease;
+    }
+    .video-item-card:hover .video-thumb-wrap img {
+      transform: scale(1.05);
+    }
+    .video-play-badge {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 54px;
+      height: 54px;
+      background: rgba(0, 0, 0, 0.65);
+      backdrop-filter: blur(8px);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.7rem;
+      color: #fff;
+      border: 1.5px solid rgba(255, 255, 255, 0.4);
+      transition: all 0.25s ease;
+    }
+    .video-item-card:hover .video-play-badge {
+      background: rgba(0, 124, 240, 0.9);
+      transform: translate(-50%, -50%) scale(1.12);
+      border-color: #38bdf8;
+    }
+    .video-duration-pill {
+      position: absolute;
+      bottom: 0.6rem;
+      right: 0.6rem;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(4px);
+      color: #fff;
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 0.2rem 0.5rem;
+      border-radius: 0.35rem;
+    }
+    .video-info-box {
+      padding: 1rem 1.2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+    .video-title {
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: #f8fafc;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .video-meta-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.8rem;
+      color: #94a3b8;
+    }
+
+    /* 视频大屏弹窗 */
+    .video-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.95);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 1100;
+      padding: 1rem;
+    }
+    .video-modal.active {
+      display: flex;
+    }
+    .video-modal-card {
+      width: 100%;
+      max-width: 1000px;
+      background: #0f172a;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 1.25rem;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 25px 60px rgba(0,0,0,0.8);
+      position: relative;
+    }
+    .video-modal-header {
+      padding: 0.9rem 1.4rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(15, 23, 42, 0.9);
+    }
+    .video-modal-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #fff;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .video-modal-close {
+      background: rgba(255,255,255,0.1);
+      border: none;
+      color: #fff;
+      font-size: 1.5rem;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s;
+    }
+    .video-modal-close:hover {
+      background: rgba(239, 68, 68, 0.8);
+    }
+    .video-modal-player-wrap {
+      position: relative;
+      width: 100%;
+      background: #000;
+      aspect-ratio: 16 / 9;
+    }
+    .video-modal-player-wrap video {
+      width: 100%;
+      height: 100%;
+      display: block;
+      outline: none;
+    }
+    .video-modal-footer {
+      padding: 1rem 1.4rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.8rem;
+      background: rgba(15, 23, 42, 0.9);
+    }
+    .download-video-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.65rem 1.25rem;
+      background: linear-gradient(135deg, #0284c7, #2563eb);
+      color: #fff;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.92rem;
+      border-radius: 0.6rem;
+      box-shadow: 0 4px 15px rgba(2, 132, 199, 0.35);
+      transition: transform 0.15s, opacity 0.2s;
+    }
+    .download-video-btn:hover {
+      opacity: 0.92;
+      transform: translateY(-1px);
+    }
+
   </style>
 </head>
 <body>
   <div class="header">
     <div class="title-group">
-      <h1>📷 精彩摄影图库</h1>
-      <p>精选照片展示 · 共 <span id="count">0</span> 张作品</p>
+      <h1>📷 视界画廊与视频专区</h1>
+      <p id="pageSubTitle">精选照片与超清视频 · 在线流式秒播与原画下载</p>
     </div>
-    <div style="display: flex; gap: 0.8rem; flex-wrap: wrap;">
+    <div style="display: flex; gap: 0.6rem; flex-wrap: wrap; align-items: center;">
+      <a href="./upload.html" class="upload-link-btn">
+        <span>+</span> 投递视频
+      </a>
       <a href="./index.html" class="back-btn">
         <span>←</span> 返回主页
       </a>
     </div>
   </div>
 
+  <!-- 分类选项卡 -->
+  <div class="category-tabs">
+    <button class="cat-tab active" id="tabPhotoBtn" onclick="switchCategory('photo')">
+      <span>📷</span> 精选摄影 (<span id="photoCount">0</span>)
+    </button>
+    <button class="cat-tab" id="tabVideoBtn" onclick="switchCategory('video')">
+      <span>🎬</span> 视频专区 (<span id="videoCount">0</span>)
+    </button>
+  </div>
+
+  <!-- 图片瀑布流 -->
   <div class="gallery-grid" id="galleryGrid"></div>
+
+  <!-- 视频卡片流 -->
+  <div class="video-grid" id="videoGrid"></div>
+
+  <!-- 视频全屏大屏播放弹窗 -->
+  <div class="video-modal" id="videoModal" onclick="closeVideoModal(event)">
+    <div class="video-modal-card" onclick="event.stopPropagation()">
+      <div class="video-modal-header">
+        <div class="video-modal-title" id="videoModalTitle">视频播放</div>
+        <button class="video-modal-close" onclick="closeVideoModal()">&times;</button>
+      </div>
+      <div class="video-modal-player-wrap">
+        <video id="activePlayer" controls playsinline preload="metadata"></video>
+      </div>
+      <div class="video-modal-footer">
+        <div style="font-size: 0.85rem; color: #94a3b8;" id="videoModalMeta">时长: -- · 体积: --</div>
+        <a id="videoDownloadBtn" href="#" class="download-video-btn" download target="_blank">
+          <span>📥</span> 下载原始视频 (原画)
+        </a>
+      </div>
+    </div>
+  </div>
 
   <div class="lightbox" id="lightbox" onclick="closeLightbox(event)">
     <button class="close-btn" onclick="closeLightbox()">&times;</button>
@@ -421,7 +708,150 @@
       });
     }
 
+    document.getElementById('photoCount').textContent = images.length;
     renderGallery();
+
+    // ==========================================
+    // 视频专区业务逻辑 (Cloudflare D1 + HTTP Range)
+    // ==========================================
+    let currentCategory = 'photo';
+    let loadedVideos = [];
+
+    function formatDuration(sec) {
+      sec = Math.round(sec || 0);
+      const m = Math.floor(sec / 60);
+      const s = sec % 60;
+      return `${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
+    }
+
+    function formatBytes(bytes) {
+      if (!bytes || bytes === 0) return '未知大小';
+      const mb = bytes / (1024 * 1024);
+      if (mb >= 1000) return (mb / 1024).toFixed(2) + ' GB';
+      return mb.toFixed(1) + ' MB';
+    }
+
+    function switchCategory(cat) {
+      currentCategory = cat;
+      const photoBtn = document.getElementById('tabPhotoBtn');
+      const videoBtn = document.getElementById('tabVideoBtn');
+      const photoGrid = document.getElementById('galleryGrid');
+      const videoGrid = document.getElementById('videoGrid');
+
+      if (cat === 'photo') {
+        photoBtn.classList.add('active');
+        videoBtn.classList.remove('active');
+        photoGrid.style.display = 'grid';
+        videoGrid.style.display = 'none';
+      } else {
+        videoBtn.classList.add('active');
+        photoBtn.classList.remove('active');
+        photoGrid.style.display = 'none';
+        videoGrid.style.display = 'grid';
+        if (loadedVideos.length === 0) {
+          fetchVideos();
+        }
+      }
+    }
+
+    async function fetchVideos() {
+      const vGrid = document.getElementById('videoGrid');
+      vGrid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: #94a3b8; padding: 3rem;">加载视频专区中...</div>';
+
+      try {
+        const res = await fetch('/api/videos?t=' + Date.now());
+        const data = await res.json();
+        loadedVideos = data.videos || [];
+        document.getElementById('videoCount').textContent = loadedVideos.length;
+
+        renderVideos();
+      } catch (err) {
+        vGrid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: #f87171; padding: 3rem;">视频加载失败，请稍后刷新重试</div>';
+      }
+    }
+
+    function renderVideos() {
+      const vGrid = document.getElementById('videoGrid');
+      if (loadedVideos.length === 0) {
+        vGrid.innerHTML = `
+          <div style="grid-column: 1/-1; text-align: center; color: #94a3b8; padding: 4rem 1rem;">
+            <div style="font-size: 3rem; margin-bottom: 0.8rem;">🎬</div>
+            <p style="font-size: 1.1rem; color: #fff; margin-bottom: 0.5rem;">暂无已上架的视频</p>
+            <p style="font-size: 0.88rem; color: #64748b; margin-bottom: 1.5rem;">点击右上角「+ 投递视频」直接从手机相册上传 500MB~2GB 航拍大作</p>
+            <a href="./upload.html" class="upload-link-btn" style="padding: 0.75rem 1.6rem; font-size: 1rem;">去手机相册上传视频 &rarr;</a>
+          </div>
+        `;
+        return;
+      }
+
+      vGrid.innerHTML = '';
+      loadedVideos.forEach((v) => {
+        const card = document.createElement('div');
+        card.className = 'video-item-card';
+        card.onclick = () => openVideoModal(v);
+
+        const durationStr = formatDuration(v.duration);
+        const sizeStr = formatBytes(v.file_size);
+        const posterSrc = v.poster_url || './favicon.ico';
+
+        card.innerHTML = `
+          <div class="video-thumb-wrap">
+            <img src="${posterSrc}" alt="${v.title}" loading="lazy">
+            <div class="video-play-badge">▶</div>
+            <div class="video-duration-pill">${durationStr}</div>
+          </div>
+          <div class="video-info-box">
+            <div class="video-title">${v.title}</div>
+            <div class="video-meta-row">
+              <span>文件: ${sizeStr}</span>
+              <span>原画秒播 / 下载</span>
+            </div>
+          </div>
+        `;
+        vGrid.appendChild(card);
+      });
+    }
+
+    const videoModal = document.getElementById('videoModal');
+    const activePlayer = document.getElementById('activePlayer');
+    const videoModalTitle = document.getElementById('videoModalTitle');
+    const videoModalMeta = document.getElementById('videoModalMeta');
+    const videoDownloadBtn = document.getElementById('videoDownloadBtn');
+
+    function openVideoModal(v) {
+      videoModalTitle.textContent = v.title;
+      videoModalMeta.textContent = `时长: ${formatDuration(v.duration)} · 体积: ${formatBytes(v.file_size)}`;
+
+      // 使用我们的 HTTP Range 206 流式代理
+      const streamUrl = `/api/video?id=${v.id}`;
+      const downloadUrl = `/api/video?id=${v.id}&download=1`;
+
+      activePlayer.src = streamUrl;
+      videoDownloadBtn.href = downloadUrl;
+
+      videoModal.classList.add('active');
+      document.body.style.overflow = 'hidden';
+      activePlayer.play().catch(() => {});
+    }
+
+    function closeVideoModal(e) {
+      if (!e || e.target === videoModal || e.target.classList.contains('video-modal-close')) {
+        videoModal.classList.remove('active');
+        activePlayer.pause();
+        activePlayer.src = '';
+        document.body.style.overflow = '';
+      }
+    }
+
+    // 同步照片数量
+    fetch('/api/videos')
+      .then(r => r.json())
+      .then(d => {
+        if (d && Array.isArray(d.videos)) {
+          document.getElementById('videoCount').textContent = d.videos.length;
+        }
+      }).catch(() => {});
+
 
     // 动态同步云端最新相册目录
     fetch(`${IMAGE_CDN_BASE}/images.json`)
@@ -430,7 +860,150 @@
         if (Array.isArray(cloudImages) && cloudImages.length > 0) {
           if (cloudImages.length !== images.length || cloudImages[0] !== images[0]) {
             images = cloudImages;
-            renderGallery();
+            document.getElementById('photoCount').textContent = images.length;
+    renderGallery();
+
+    // ==========================================
+    // 视频专区业务逻辑 (Cloudflare D1 + HTTP Range)
+    // ==========================================
+    let currentCategory = 'photo';
+    let loadedVideos = [];
+
+    function formatDuration(sec) {
+      sec = Math.round(sec || 0);
+      const m = Math.floor(sec / 60);
+      const s = sec % 60;
+      return `${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
+    }
+
+    function formatBytes(bytes) {
+      if (!bytes || bytes === 0) return '未知大小';
+      const mb = bytes / (1024 * 1024);
+      if (mb >= 1000) return (mb / 1024).toFixed(2) + ' GB';
+      return mb.toFixed(1) + ' MB';
+    }
+
+    function switchCategory(cat) {
+      currentCategory = cat;
+      const photoBtn = document.getElementById('tabPhotoBtn');
+      const videoBtn = document.getElementById('tabVideoBtn');
+      const photoGrid = document.getElementById('galleryGrid');
+      const videoGrid = document.getElementById('videoGrid');
+
+      if (cat === 'photo') {
+        photoBtn.classList.add('active');
+        videoBtn.classList.remove('active');
+        photoGrid.style.display = 'grid';
+        videoGrid.style.display = 'none';
+      } else {
+        videoBtn.classList.add('active');
+        photoBtn.classList.remove('active');
+        photoGrid.style.display = 'none';
+        videoGrid.style.display = 'grid';
+        if (loadedVideos.length === 0) {
+          fetchVideos();
+        }
+      }
+    }
+
+    async function fetchVideos() {
+      const vGrid = document.getElementById('videoGrid');
+      vGrid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: #94a3b8; padding: 3rem;">加载视频专区中...</div>';
+
+      try {
+        const res = await fetch('/api/videos?t=' + Date.now());
+        const data = await res.json();
+        loadedVideos = data.videos || [];
+        document.getElementById('videoCount').textContent = loadedVideos.length;
+
+        renderVideos();
+      } catch (err) {
+        vGrid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: #f87171; padding: 3rem;">视频加载失败，请稍后刷新重试</div>';
+      }
+    }
+
+    function renderVideos() {
+      const vGrid = document.getElementById('videoGrid');
+      if (loadedVideos.length === 0) {
+        vGrid.innerHTML = `
+          <div style="grid-column: 1/-1; text-align: center; color: #94a3b8; padding: 4rem 1rem;">
+            <div style="font-size: 3rem; margin-bottom: 0.8rem;">🎬</div>
+            <p style="font-size: 1.1rem; color: #fff; margin-bottom: 0.5rem;">暂无已上架的视频</p>
+            <p style="font-size: 0.88rem; color: #64748b; margin-bottom: 1.5rem;">点击右上角「+ 投递视频」直接从手机相册上传 500MB~2GB 航拍大作</p>
+            <a href="./upload.html" class="upload-link-btn" style="padding: 0.75rem 1.6rem; font-size: 1rem;">去手机相册上传视频 &rarr;</a>
+          </div>
+        `;
+        return;
+      }
+
+      vGrid.innerHTML = '';
+      loadedVideos.forEach((v) => {
+        const card = document.createElement('div');
+        card.className = 'video-item-card';
+        card.onclick = () => openVideoModal(v);
+
+        const durationStr = formatDuration(v.duration);
+        const sizeStr = formatBytes(v.file_size);
+        const posterSrc = v.poster_url || './favicon.ico';
+
+        card.innerHTML = `
+          <div class="video-thumb-wrap">
+            <img src="${posterSrc}" alt="${v.title}" loading="lazy">
+            <div class="video-play-badge">▶</div>
+            <div class="video-duration-pill">${durationStr}</div>
+          </div>
+          <div class="video-info-box">
+            <div class="video-title">${v.title}</div>
+            <div class="video-meta-row">
+              <span>文件: ${sizeStr}</span>
+              <span>原画秒播 / 下载</span>
+            </div>
+          </div>
+        `;
+        vGrid.appendChild(card);
+      });
+    }
+
+    const videoModal = document.getElementById('videoModal');
+    const activePlayer = document.getElementById('activePlayer');
+    const videoModalTitle = document.getElementById('videoModalTitle');
+    const videoModalMeta = document.getElementById('videoModalMeta');
+    const videoDownloadBtn = document.getElementById('videoDownloadBtn');
+
+    function openVideoModal(v) {
+      videoModalTitle.textContent = v.title;
+      videoModalMeta.textContent = `时长: ${formatDuration(v.duration)} · 体积: ${formatBytes(v.file_size)}`;
+
+      // 使用我们的 HTTP Range 206 流式代理
+      const streamUrl = `/api/video?id=${v.id}`;
+      const downloadUrl = `/api/video?id=${v.id}&download=1`;
+
+      activePlayer.src = streamUrl;
+      videoDownloadBtn.href = downloadUrl;
+
+      videoModal.classList.add('active');
+      document.body.style.overflow = 'hidden';
+      activePlayer.play().catch(() => {});
+    }
+
+    function closeVideoModal(e) {
+      if (!e || e.target === videoModal || e.target.classList.contains('video-modal-close')) {
+        videoModal.classList.remove('active');
+        activePlayer.pause();
+        activePlayer.src = '';
+        document.body.style.overflow = '';
+      }
+    }
+
+    // 同步照片数量
+    fetch('/api/videos')
+      .then(r => r.json())
+      .then(d => {
+        if (d && Array.isArray(d.videos)) {
+          document.getElementById('videoCount').textContent = d.videos.length;
+        }
+      }).catch(() => {});
+
           }
         }
       })
