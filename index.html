@@ -1319,7 +1319,11 @@
       <div style="margin-bottom:0.8rem;">
         <div style="display:flex; gap:0.5rem; align-items:center; margin-bottom:0.4rem;">
           <input type="password" id="clashPwdInput" placeholder="密码(8888)" style="flex:1; background:#1e293b; border:1px solid #334155; border-radius:6px; padding:0.4rem 0.6rem; color:#fff; font-size:0.85rem; outline:none;">
-          <button onclick="refreshClashStatus()" style="background:#0284c7; border:none; color:#fff; border-radius:6px; padding:0.4rem 0.8rem; font-size:0.82rem; font-weight:600; cursor:pointer;">刷新同步</button>
+          <button onclick="refreshClashStatus()" style="background:#0284c7; border:none; color:#fff; border-radius:6px; padding:0.4rem 0.75rem; font-size:0.82rem; font-weight:600; cursor:pointer;">刷新同步</button>
+          <button onclick="sendClashCommand('check_delay')" style="background:linear-gradient(135deg, #10b981, #059669); border:none; color:#fff; border-radius:6px; padding:0.4rem 0.75rem; font-size:0.82rem; font-weight:700; cursor:pointer; box-shadow:0 2px 8px rgba(16,185,129,0.35); display:inline-flex; align-items:center; gap:0.25rem;">
+            <span>⚡</span>
+            <span>测速刷新</span>
+          </button>
         </div>
         <div id="clashStatusText" style="font-size:0.78rem; color:#94a3b8;">正在检测云端连接...</div>
         <div id="clashPCHb" style="font-size:0.8rem; background:#1e293b; padding:0.4rem 0.6rem; border-radius:6px; color:#cbd5e1; margin-top:0.3rem;">💻 电脑状态：获取中...</div>
