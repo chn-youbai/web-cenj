@@ -13,3 +13,7 @@ __pycache__/
 .env*
 data/seed_*.sql
 data/cet*.json
+
+# Photo assets migrated to web-cenj-photos CDN
+p/
+s/
