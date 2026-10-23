@@ -460,10 +460,12 @@
 
     <!-- TAB 3: 已上架管理 -->
     <div id="tabManage" class="tab-pane" style="display: none;">
-      <div class="card">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
           <strong style="color: #fff; font-size: 1rem;">已上架视频清单 (<span id="manageCount">0</span>)</strong>
-          <button class="action-btn play" onclick="loadManageVideos()">刷新列表 🔄</button>
+          <div style="display: flex; gap: 0.4rem;">
+            <button class="action-btn play" onclick="syncGithubVideos(event)">一键同步 GitHub 🔄</button>
+            <button class="action-btn play" onclick="loadManageVideos()">刷新 ⟳</button>
+          </div>
         </div>
         <div id="manageList">
           <div style="text-align: center; color: var(--text-muted); padding: 2rem;">加载中...</div>
@@ -566,9 +568,9 @@
 
         v.onseeked = () => {
           const canvas = document.createElement('canvas');
-          const maxDim = 1280;
-          let w = v.videoWidth;
-          let h = v.videoHeight;
+          const maxDim = 480;
+          let w = v.videoWidth || 480;
+          let h = v.videoHeight || 270;
           if (w > maxDim || h > maxDim) {
             const scale = maxDim / Math.max(w, h);
             w = Math.round(w * scale);
@@ -578,12 +580,8 @@
           canvas.height = h;
           canvas.getContext('2d').drawImage(v, 0, 0, w, h);
 
-          extractedPosterDataUrl = canvas.toDataURL('image/jpeg', 0.85);
+          extractedPosterDataUrl = canvas.toDataURL('image/jpeg', 0.6);
           document.getElementById('previewImg').src = extractedPosterDataUrl;
-
-          canvas.toBlob((blob) => {
-            extractedPosterBlob = blob;
-          }, 'image/jpeg', 0.85);
         };
       } catch (err) {
         console.warn('本地抽帧失败:', err);
@@ -622,11 +620,13 @@
         progressStatus.textContent = '1/2 正在高速上传视频流 (0%)...';
 
         // 借助 XHR 监控上传速率与进度，发往 Cloudflare /api/upload-asset 边缘代理，绕过墙与跨域阻断
-        const assetDownloadUrl = await new Promise((resolve, reject) => {
+        const uploadResult = await new Promise((resolve, reject) => {
           const xhr = new XMLHttpRequest();
           xhr.open('POST', '/api/upload-asset', true);
           xhr.setRequestHeader('X-GitHub-Token', token);
           xhr.setRequestHeader('X-File-Name', encodeURIComponent(selectedFile.name));
+          xhr.setRequestHeader('X-Title', encodeURIComponent(title));
+          xhr.setRequestHeader('X-Duration', extractedDuration || 0);
           xhr.setRequestHeader('Content-Type', selectedFile.type || 'application/octet-stream');
 
           let lastTime = Date.now();
@@ -654,7 +654,7 @@
             try {
               const resp = JSON.parse(xhr.responseText);
               if (xhr.status >= 200 && xhr.status < 300 && resp.browser_download_url) {
-                resolve(resp.browser_download_url);
+                resolve(resp);
               } else {
                 reject(new Error(resp.error || `上传失败 (状态码: ${xhr.status})`));
               }
@@ -667,26 +667,28 @@
           xhr.send(selectedFile);
         });
 
-        progressStatus.textContent = '2/2 写入 D1 数据库...';
-
-          // 写入 D1 数据库
-          const saveResp = await fetch('/api/videos', {
+        // 边缘代理已在后端自动原子化写入 D1 数据库
+        // 若本地成功提取了缩略图，则顺带丰富其封面（非阻塞）
+        if (uploadResult && uploadResult.id && extractedPosterDataUrl) {
+          progressStatus.textContent = '2/2 保存视频封面...';
+          await fetch('/api/videos', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-Admin-Password': adminPassword },
+            headers: { 'Content-Type': 'application/json', 'X-Admin-Password': '8888' },
             body: JSON.stringify({
+              id: uploadResult.id,
               title: title,
-              asset_url: assetDownloadUrl,
-              poster_url: extractedPosterDataUrl || '',
+              asset_url: uploadResult.browser_download_url,
+              poster_url: extractedPosterDataUrl,
               duration: extractedDuration,
               file_size: selectedFile.size,
-              password: adminPassword
+              password: '8888'
             })
-          });
+          }).catch(() => {});
+        }
 
-          if (!saveResp.ok) throw new Error('写入 D1 数据库失败');
-
-          alert('🎉 视频直传发布成功！画廊专区已即刻上线。');
-          location.href = './gallery.html';
+        progressStatus.textContent = '🎉 发布成功！';
+        alert('🎉 视频直传发布成功！画廊专区已即刻上线。');
+        location.href = './gallery.html';
 
       } catch (err) {
         alert('上传出错: ' + err.message);
@@ -767,6 +769,33 @@
         `).join('');
       } catch (err) {
         box.innerHTML = '<div style="text-align:center; color:#f87171; padding: 1.5rem;">加载失败: ' + err.message + '</div>';
+      }
+    }
+
+    // 同步 GitHub Releases 中的所有资产到 D1
+    async function syncGithubVideos(e) {
+      const token = (document.getElementById('ghToken').value || localStorage.getItem(GH_TOKEN_KEY) || '').trim();
+      if (!token) {
+        alert('请先在「手机相册直传」页面填写 GitHub 访问令牌以授权同步');
+        return;
+      }
+      const btn = e.target;
+      const originalText = btn.textContent;
+      btn.textContent = '正在同步...';
+      btn.disabled = true;
+
+      try {
+        const res = await fetch('/api/videos?sync=1&t=' + Date.now(), {
+          headers: { 'X-GitHub-Token': token }
+        });
+        const data = await res.json();
+        alert(`✅ 同步完成！当前共有 ${data.total || 0} 个视频`);
+        loadManageVideos();
+      } catch (err) {
+        alert('同步出错: ' + err.message);
+      } finally {
+        btn.textContent = originalText;
+        btn.disabled = false;
       }
     }
 

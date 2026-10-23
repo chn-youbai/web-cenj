@@ -7,8 +7,8 @@ function corsHeaders() {
   return {
     "Content-Type": "application/json; charset=utf-8",
     "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Admin-Password",
+    "Access-Control-Allow-Methods": "GET, POST, PATCH, DELETE, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Admin-Password, X-GitHub-Token",
     "Access-Control-Max-Age": "86400"
   };
 }
@@ -17,7 +17,7 @@ export async function onRequestOptions() {
   return new Response(null, { status: 204, headers: corsHeaders() });
 }
 
-// GET: 获取视频列表
+// GET: 获取视频列表（支持 ?sync=1 从 GitHub Releases 自动补充未登记资产）
 export async function onRequestGet(context) {
   const db = context.env.DB;
   if (!db) {
@@ -25,6 +25,41 @@ export async function onRequestGet(context) {
       status: 200,
       headers: corsHeaders()
     });
+  }
+
+  const url = new URL(context.request.url);
+
+  // 1. 如果请求 ?sync=1 且携带 Token，自动同步 GitHub Release 中的所有视频资产
+  if (url.searchParams.get("sync") === "1") {
+    const ghToken = context.request.headers.get("X-GitHub-Token") || url.searchParams.get("token");
+    if (ghToken) {
+      try {
+        const ghRes = await fetch("https://api.github.com/repos/chn-youbai/web-cenj/releases/tags/v_media", {
+          headers: {
+            "Authorization": `token ${ghToken}`,
+            "Accept": "application/vnd.github.v3+json",
+            "User-Agent": "Cenj-Pages-Proxy"
+          }
+        });
+        if (ghRes.ok) {
+          const relData = await ghRes.json();
+          const assets = relData.assets || [];
+          for (const a of assets) {
+            const existing = await db.prepare("SELECT id FROM videos WHERE asset_url = ?").bind(a.browser_download_url).first();
+            if (!existing) {
+              const vidId = "vid_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 6);
+              const title = a.name.replace(/^[a-z0-9]+_/, "").replace(/\.[^/.]+$/, "");
+              await db.prepare(`
+                INSERT INTO videos (id, title, description, duration, file_size, poster_url, asset_url)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+              `).bind(vidId, title, "从 GitHub Releases 自动同步", 0, a.size || 0, "", a.browser_download_url).run();
+            }
+          }
+        }
+      } catch (syncErr) {
+        console.error("Auto-sync error:", syncErr);
+      }
+    }
   }
 
   try {

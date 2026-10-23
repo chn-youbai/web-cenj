@@ -1146,12 +1146,180 @@
     async function sendClashCommand(command, payload = '') {
       const pwd = document.getElementById('clashPwdInput').value.trim();
       const statusEl = document.getElementById('clashStatusText');
+    // --- Clash Verge 远程控制 5次点击暗号与多Tab交互 ---
+    let clashClickCount = 0;
+    let clashClickTimer = null;
+    let currentClashTab = 'hub';
+    const triggerImg = document.getElementById('secretClashTrigger');
+
+    if (triggerImg) {
+      triggerImg.addEventListener('click', (e) => {
+        clashClickCount++;
+        clearTimeout(clashClickTimer);
+        
+        triggerImg.style.transform = `scale(${1 + clashClickCount * 0.05})`;
+        setTimeout(() => { triggerImg.style.transform = ''; }, 150);
+
+        if (clashClickCount >= 5) {
+          clashClickCount = 0;
+          openClashModal();
+        } else {
+          clashClickTimer = setTimeout(() => {
+            clashClickCount = 0;
+          }, 1500);
+        }
+      });
+    }
+
+    function openClashModal() {
+      const modal = document.getElementById('clashControlModal');
+      if (modal) {
+        modal.style.display = 'flex';
+        const savedPwd = localStorage.getItem('clash_remote_pwd') || '8888';
+        document.getElementById('clashPwdInput').value = savedPwd;
+        switchClashTab('hub');
+        refreshClashStatus();
+      }
+    }
+
+    function closeClashModal() {
+      const modal = document.getElementById('clashControlModal');
+      if (modal) modal.style.display = 'none';
+    }
+
+    function switchClashTab(tabName) {
+      currentClashTab = tabName;
+      document.querySelectorAll('.clash-tab-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.getAttribute('data-tab') === tabName);
+      });
+      document.getElementById('clashTabHub').style.display = (tabName === 'hub') ? 'block' : 'none';
+      document.getElementById('clashTabSubs').style.display = (tabName === 'subs') ? 'block' : 'none';
+      document.getElementById('clashTabNodes').style.display = (tabName === 'nodes') ? 'block' : 'none';
+    }
+
+    async function refreshClashStatus() {
+      const pwd = document.getElementById('clashPwdInput').value.trim();
+      const statusEl = document.getElementById('clashStatusText');
+      const pcHbEl = document.getElementById('clashPCHb');
+      const latestResultEl = document.getElementById('clashLatestResult');
+
+      if (!pwd) return;
+      statusEl.textContent = '🔄 同步中...';
+
+      try {
+        const res = await fetch(`/api/clash?pwd=${encodeURIComponent(pwd)}`);
+        const data = await res.json();
+        if (data.status === 'ok') {
+          localStorage.setItem('clash_remote_pwd', pwd);
+          statusEl.innerHTML = '<span style="color:#10b981;">● 已连接云端中继 (已激活动态高频同步)</span>';
+          
+          if (data.heartbeat) {
+            pcHbEl.innerHTML = `💻 电脑状态：<span style="color:#38bdf8;">${data.heartbeat.result || '在线'}</span> <span style="font-size:0.75rem; color:#94a3b8;">(${data.heartbeat.updated_at || ''})</span>`;
+          } else {
+            pcHbEl.innerHTML = `💻 电脑状态：<span style="color:#94a3b8;">等待心跳同步...</span>`;
+          }
+
+          if (data.latest_command) {
+            const cmd = data.latest_command;
+            const badge = cmd.status === 'done' ? '✅ 完成' : (cmd.status === 'pending' ? '⏳ 电脑高速执行中' : '❌ 失败');
+            latestResultEl.innerHTML = `最近指令：[${cmd.command}] 状态: ${badge}<br><span style="color:#93c5fd;">${cmd.result || ''}</span>`;
+          }
+
+          renderProfilesList(data.profiles_data);
+          renderNodesList(data.nodes_data);
+        } else {
+          statusEl.innerHTML = `<span style="color:#ef4444;">❌ ${data.message || '密码错误'}</span>`;
+        }
+      } catch (e) {
+        statusEl.innerHTML = `<span style="color:#ef4444;">❌ 网络异常</span>`;
+      }
+    }
+
+    function renderProfilesList(profilesData) {
+      const container = document.getElementById('clashProfilesContainer');
+      if (!profilesData || !profilesData.items || profilesData.items.length === 0) {
+        container.innerHTML = '<div style="color:#94a3b8; font-size:0.85rem; text-align:center; padding:1.5rem 0;">电脑端正在初次同步订阅列表，稍等片刻后刷新...</div>';
+        return;
+      }
+
+      let html = '';
+      profilesData.items.forEach(p => {
+        const activeBadge = p.is_active ? 
+          '<span style="background:#0284c7; color:#fff; font-size:0.72rem; padding:0.2rem 0.5rem; border-radius:4px; font-weight:700;">当前生效中</span>' : 
+          `<button onclick="sendClashCommand('switch_profile', '${p.uid}')" style="background:#334155; border:none; color:#f8fafc; font-size:0.75rem; padding:0.25rem 0.6rem; border-radius:6px; cursor:pointer; font-weight:600;">切换到此订阅</button>`;
+
+        html += `
+          <div style="background:#1e293b; border:${p.is_active ? '1px solid #0284c7' : '1px solid #334155'}; border-radius:10px; padding:0.75rem; margin-bottom:0.6rem;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.4rem;">
+              <span style="font-weight:700; color:#f8fafc; font-size:0.92rem;">${p.name || p.uid}</span>
+              ${activeBadge}
+            </div>
+            <div style="font-size:0.8rem; color:#94a3b8; line-height:1.5;">
+              <div>流量：<span style="color:#38bdf8;">${p.used_gb} GB</span> / ${p.total_gb > 0 ? p.total_gb + ' GB' : '不限'} | 到期：<span style="color:#e2e8f0;">${p.expire}</span></div>
+              <div style="word-break:break-all; font-size:0.75rem; color:#64748b; margin-top:0.25rem;">${p.url || ''}</div>
+            </div>
+          </div>
+        `;
+      });
+      container.innerHTML = html;
+    }
+
+    function renderNodesList(nodesData) {
+      const container = document.getElementById('clashNodesContainer');
+      if (!nodesData || !nodesData.regions) {
+        container.innerHTML = '<div style="color:#94a3b8; font-size:0.85rem; text-align:center; padding:1.5rem 0;">电脑端正在测速并汇总节点，请稍后刷新...</div>';
+        return;
+      }
+
+      let html = '';
+      const nowNode = nodesData.now || '';
+
+      for (const [region, nodes] of Object.entries(nodesData.regions)) {
+        if (!nodes || nodes.length === 0) continue;
+        const count = nodes.length;
+        const containsActive = nodes.some(n => n.name === nowNode);
+        
+        html += `
+          <details ${containsActive ? 'open' : ''} style="background:#1e293b; border-radius:8px; margin-bottom:0.6rem; border:1px solid #334155; overflow:hidden;">
+            <summary style="padding:0.6rem 0.8rem; font-size:0.88rem; font-weight:700; color:#cbd5e1; cursor:pointer; background:#182234; display:flex; justify-content:space-between; align-items:center; list-style:none;">
+              <span>${region} (${count})</span>
+              ${containsActive ? '<span style="color:#38bdf8; font-size:0.75rem; font-weight:normal;">● 正在使用此区域</span>' : '<span style="color:#64748b; font-size:0.75rem;">展开 ▼</span>'}
+            </summary>
+            <div style="padding:0.5rem; max-height:220px; overflow-y:auto;">
+        `;
+
+        nodes.forEach(n => {
+          const isCurrent = (n.name === nowNode);
+          const safeName = n.name.replace(/'/g, "\\'");
+          html += `
+            <div onclick="sendClashCommand('switch_node', '${safeName}')" style="display:flex; justify-content:space-between; align-items:center; padding:0.45rem 0.6rem; margin-bottom:0.35rem; border-radius:6px; cursor:pointer; background:${isCurrent ? 'rgba(2, 132, 199, 0.25)' : '#0f172a'}; border:${isCurrent ? '1px solid #0284c7' : '1px solid rgba(255,255,255,0.05)'};">
+              <span style="font-size:0.82rem; color:${isCurrent ? '#38bdf8' : '#e2e8f0'}; font-weight:${isCurrent ? '700' : '400'}; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:70%;">
+                ${isCurrent ? '✔ ' : ''}${n.name}
+              </span>
+              <span style="font-size:0.75rem; color:${n.delay_num < 100 ? '#10b981' : (n.delay_num < 250 ? '#38bdf8' : '#94a3b8')}; font-weight:600;">
+                ${n.delay}
+              </span>
+            </div>
+          `;
+        });
+
+        html += `
+            </div>
+          </details>
+        `;
+      }
+      container.innerHTML = html;
+    }
+
+    async function sendClashCommand(command, payload = '') {
+      const pwd = document.getElementById('clashPwdInput').value.trim();
+      const statusEl = document.getElementById('clashStatusText');
       if (!pwd) {
         alert('请输入控制密码');
         return;
       }
 
-      statusEl.innerHTML = '⏳ 正在向云端下发指令...';
+      statusEl.innerHTML = '⚡ 正在下发指令并触发电脑高频执行...';
 
       try {
         const res = await fetch('/api/clash', {
@@ -1161,8 +1329,10 @@
         });
         const data = await res.json();
         if (data.status === 'ok') {
-          statusEl.innerHTML = '<span style="color:#10b981;">🚀 指令已成功发送，电脑将在30秒内执行！</span>';
-          setTimeout(refreshClashStatus, 2000);
+          statusEl.innerHTML = '<span style="color:#10b981;">🚀 指令已直达云端！电脑已提频至秒级响应</span>';
+          // 连续轮询 3 次以更快刷新结果
+          setTimeout(refreshClashStatus, 1500);
+          setTimeout(refreshClashStatus, 4000);
         } else {
           statusEl.innerHTML = `<span style="color:#ef4444;">❌ 失败: ${data.message}</span>`;
         }
@@ -1185,53 +1355,113 @@
     renderParticles();
   </script>
 
-  <!-- Clash Verge 隐藏控制终端弹窗 -->
-  <div id="clashControlModal" style="display:none; position:fixed; inset:0; z-index:99999; background:rgba(10, 15, 29, 0.85); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px); align-items:center; justify-content:center; padding:1rem;">
-    <div style="background:#0f172a; border:1px solid rgba(56, 189, 248, 0.35); border-radius:18px; max-width:460px; width:100%; box-shadow:0 20px 50px rgba(0,0,0,0.6); padding:1.5rem; color:#f8fafc; font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif; position:relative;">
+  <!-- Clash Verge 隐藏控制终端弹窗 (Tab化专业管理面板) -->
+  <style>
+    .clash-tab-btn {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: #94a3b8;
+      font-weight: 600;
+      font-size: 0.85rem;
+      padding: 0.5rem;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .clash-tab-btn.active {
+      background: #0284c7;
+      color: #ffffff;
+      box-shadow: 0 2px 8px rgba(2, 132, 199, 0.4);
+    }
+  </style>
+
+  <div id="clashControlModal" style="display:none; position:fixed; inset:0; z-index:99999; background:rgba(10, 15, 29, 0.85); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px); align-items:center; justify-content:center; padding:0.8rem;">
+    <div style="background:#0f172a; border:1px solid rgba(56, 189, 248, 0.35); border-radius:18px; max-width:480px; width:100%; box-shadow:0 20px 50px rgba(0,0,0,0.6); padding:1.2rem; color:#f8fafc; font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif; position:relative; max-height:92vh; display:flex; flex-direction:column;">
       
       <!-- 弹窗标题栏 -->
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:0.75rem;">
-        <div style="display:flex; align-items:center; gap:0.5rem; font-weight:700; font-size:1.1rem; color:#38bdf8;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:0.6rem;">
+        <div style="display:flex; align-items:center; gap:0.5rem; font-weight:700; font-size:1.05rem; color:#38bdf8;">
           <span>⚡</span>
-          <span>Clash Verge 远程控制中枢</span>
+          <span>Clash Verge 智能云控终端</span>
         </div>
         <button onclick="closeClashModal()" style="background:transparent; border:none; color:#94a3b8; font-size:1.5rem; cursor:pointer; line-height:1;">&times;</button>
       </div>
 
-      <!-- 鉴权密码 & 状态 -->
-      <div style="display:flex; gap:0.5rem; align-items:center; margin-bottom:0.8rem;">
-        <input type="password" id="clashPwdInput" placeholder="控制密码 (默认8888)" style="flex:1; background:#1e293b; border:1px solid #334155; border-radius:8px; padding:0.5rem 0.75rem; color:#fff; font-size:0.9rem; outline:none;">
-        <button onclick="refreshClashStatus()" style="background:#0284c7; border:none; color:#fff; border-radius:8px; padding:0.5rem 0.9rem; font-size:0.85rem; font-weight:600; cursor:pointer;">刷新状态</button>
-      </div>
-      <div id="clashStatusText" style="font-size:0.82rem; margin-bottom:0.6rem; color:#94a3b8;">正在检测云端连接...</div>
-      <div id="clashPCHb" style="font-size:0.82rem; margin-bottom:0.6rem; background:#1e293b; padding:0.4rem 0.6rem; border-radius:6px; color:#cbd5e1;">💻 电脑状态：获取中...</div>
-
-      <!-- 快速换订阅功能 -->
-      <div style="background:rgba(30, 41, 59, 0.7); border:1px solid rgba(56, 189, 248, 0.2); border-radius:12px; padding:0.9rem; margin-bottom:1rem;">
-        <div style="font-size:0.9rem; font-weight:600; color:#e2e8f0; margin-bottom:0.5rem;">🔗 远程更换订阅链接</div>
-        <input type="text" id="newSubUrlInput" placeholder="粘贴新订阅链接 (https://...)" style="width:100%; box-sizing:border-box; background:#0f172a; border:1px solid #334155; border-radius:8px; padding:0.55rem 0.75rem; color:#fff; font-size:0.85rem; margin-bottom:0.6rem; outline:none;">
-        <button onclick="submitNewSub()" style="width:100%; background:linear-gradient(135deg, #0284c7, #06b6d4); border:none; color:#fff; border-radius:8px; padding:0.6rem; font-weight:700; font-size:0.9rem; cursor:pointer; box-shadow:0 4px 12px rgba(2, 132, 199, 0.3);">🚀 一键更新电脑订阅</button>
+      <!-- 选项卡导航栏 (3个Tab) -->
+      <div style="display:flex; background:#1e293b; padding:0.25rem; border-radius:10px; margin-bottom:0.8rem; gap:0.25rem;">
+        <button class="clash-tab-btn active" data-tab="hub" onclick="switchClashTab('hub')">⚡ 控制中枢</button>
+        <button class="clash-tab-btn" data-tab="subs" onclick="switchClashTab('subs')">📋 订阅管理</button>
+        <button class="clash-tab-btn" data-tab="nodes" onclick="switchClashTab('nodes')">🌍 节点列表</button>
       </div>
 
-      <!-- 快捷换节点 -->
-      <div style="margin-bottom:1rem;">
-        <div style="font-size:0.88rem; font-weight:600; color:#cbd5e1; margin-bottom:0.5rem;">🌍 一键切换常用节点</div>
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem;">
-          <button onclick="sendClashCommand('switch_node', 'Singapore')" style="background:#1e293b; border:1px solid #334155; color:#f1f5f9; padding:0.55rem; border-radius:8px; font-size:0.85rem; font-weight:600; cursor:pointer;">🇸🇬 新加坡节点</button>
-          <button onclick="sendClashCommand('switch_node', 'Hong Kong')" style="background:#1e293b; border:1px solid #334155; color:#f1f5f9; padding:0.55rem; border-radius:8px; font-size:0.85rem; font-weight:600; cursor:pointer;">🇭🇰 香港节点</button>
-          <button onclick="sendClashCommand('switch_node', 'Japan')" style="background:#1e293b; border:1px solid #334155; color:#f1f5f9; padding:0.55rem; border-radius:8px; font-size:0.85rem; font-weight:600; cursor:pointer;">🇯🇵 日本节点</button>
-          <button onclick="sendClashCommand('switch_node', 'auto_lowest')" style="background:#1e293b; border:1px solid #0284c7; color:#38bdf8; padding:0.55rem; border-radius:8px; font-size:0.85rem; font-weight:600; cursor:pointer;">⚡ 自动选最低延迟</button>
+      <!-- 状态指示条 -->
+      <div style="margin-bottom:0.8rem;">
+        <div style="display:flex; gap:0.5rem; align-items:center; margin-bottom:0.4rem;">
+          <input type="password" id="clashPwdInput" placeholder="密码(8888)" style="flex:1; background:#1e293b; border:1px solid #334155; border-radius:6px; padding:0.4rem 0.6rem; color:#fff; font-size:0.85rem; outline:none;">
+          <button onclick="refreshClashStatus()" style="background:#0284c7; border:none; color:#fff; border-radius:6px; padding:0.4rem 0.8rem; font-size:0.82rem; font-weight:600; cursor:pointer;">刷新同步</button>
         </div>
+        <div id="clashStatusText" style="font-size:0.78rem; color:#94a3b8;">正在检测云端连接...</div>
+        <div id="clashPCHb" style="font-size:0.8rem; background:#1e293b; padding:0.4rem 0.6rem; border-radius:6px; color:#cbd5e1; margin-top:0.3rem;">💻 电脑状态：获取中...</div>
       </div>
 
-      <!-- 快捷工具按钮 -->
-      <div style="display:flex; gap:0.5rem; margin-bottom:0.8rem;">
-        <button onclick="sendClashCommand('check_delay')" style="flex:1; background:#334155; border:none; color:#f8fafc; padding:0.5rem; border-radius:6px; font-size:0.82rem; cursor:pointer;">📡 测速自检</button>
-        <button onclick="sendClashCommand('restart')" style="flex:1; background:#475569; border:none; color:#f8fafc; padding:0.5rem; border-radius:6px; font-size:0.82rem; cursor:pointer;">🔄 重启内核</button>
+      <!-- 可滚动内容区 -->
+      <div style="flex:1; overflow-y:auto; padding-right:0.2rem;">
+
+        <!-- TAB 1: 控制中枢 -->
+        <div id="clashTabHub">
+          <!-- 快速换新订阅 -->
+          <div style="background:rgba(30, 41, 59, 0.7); border:1px solid rgba(56, 189, 248, 0.2); border-radius:10px; padding:0.8rem; margin-bottom:0.8rem;">
+            <div style="font-size:0.85rem; font-weight:600; color:#e2e8f0; margin-bottom:0.4rem;">🔗 远程添加/更新订阅链接</div>
+            <input type="text" id="newSubUrlInput" placeholder="粘贴新订阅链接 (https://...)" style="width:100%; box-sizing:border-box; background:#0f172a; border:1px solid #334155; border-radius:6px; padding:0.5rem 0.6rem; color:#fff; font-size:0.82rem; margin-bottom:0.5rem; outline:none;">
+            <button onclick="submitNewSub()" style="width:100%; background:linear-gradient(135deg, #0284c7, #06b6d4); border:none; color:#fff; border-radius:6px; padding:0.55rem; font-weight:700; font-size:0.85rem; cursor:pointer;">🚀 极速下发电脑生效</button>
+          </div>
+
+          <!-- 常用地区快捷切节点 -->
+          <div style="margin-bottom:0.8rem;">
+            <div style="font-size:0.85rem; font-weight:600; color:#cbd5e1; margin-bottom:0.4rem;">🌍 快捷切换常用区域</div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.4rem;">
+              <button onclick="sendClashCommand('switch_node', 'Singapore')" style="background:#1e293b; border:1px solid #334155; color:#f1f5f9; padding:0.5rem; border-radius:6px; font-size:0.82rem; font-weight:600; cursor:pointer;">🇸🇬 新加坡节点</button>
+              <button onclick="sendClashCommand('switch_node', 'Hong Kong')" style="background:#1e293b; border:1px solid #334155; color:#f1f5f9; padding:0.5rem; border-radius:6px; font-size:0.82rem; font-weight:600; cursor:pointer;">🇭🇰 香港节点</button>
+              <button onclick="sendClashCommand('switch_node', 'Japan')" style="background:#1e293b; border:1px solid #334155; color:#f1f5f9; padding:0.5rem; border-radius:6px; font-size:0.82rem; font-weight:600; cursor:pointer;">🇯🇵 日本节点</button>
+              <button onclick="sendClashCommand('switch_node', 'auto_lowest')" style="background:#1e293b; border:1px solid #0284c7; color:#38bdf8; padding:0.5rem; border-radius:6px; font-size:0.82rem; font-weight:600; cursor:pointer;">⚡ 自动选最低延迟</button>
+            </div>
+          </div>
+
+          <!-- 快捷操作按钮 -->
+          <div style="display:flex; gap:0.4rem; margin-bottom:0.8rem;">
+            <button onclick="sendClashCommand('check_delay')" style="flex:1; background:#334155; border:none; color:#f8fafc; padding:0.5rem; border-radius:6px; font-size:0.8rem; cursor:pointer;">📡 全量测速</button>
+            <button onclick="sendClashCommand('sync_all')" style="flex:1; background:#0369a1; border:none; color:#f8fafc; padding:0.5rem; border-radius:6px; font-size:0.8rem; cursor:pointer;">🔄 同步订阅列表</button>
+            <button onclick="sendClashCommand('restart')" style="flex:1; background:#475569; border:none; color:#f8fafc; padding:0.5rem; border-radius:6px; font-size:0.8rem; cursor:pointer;">⚙️ 重启内核</button>
+          </div>
+        </div>
+
+        <!-- TAB 2: 订阅管理 -->
+        <div id="clashTabSubs" style="display:none;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.6rem;">
+            <span style="font-size:0.85rem; font-weight:600; color:#cbd5e1;">电脑已配置的所有订阅</span>
+            <button onclick="sendClashCommand('sync_all')" style="background:#1e293b; border:1px solid #334155; color:#38bdf8; font-size:0.75rem; padding:0.25rem 0.5rem; border-radius:4px; cursor:pointer;">更新列表</button>
+          </div>
+          <div id="clashProfilesContainer">
+            <div style="color:#94a3b8; font-size:0.82rem; text-align:center; padding:1.5rem 0;">点击下方刷新状态获取订阅...</div>
+          </div>
+        </div>
+
+        <!-- TAB 3: 节点列表 -->
+        <div id="clashTabNodes" style="display:none;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.6rem;">
+            <span style="font-size:0.85rem; font-weight:600; color:#cbd5e1;">按地区分类的全部节点 (点击即换)</span>
+            <button onclick="sendClashCommand('check_delay')" style="background:#1e293b; border:1px solid #334155; color:#38bdf8; font-size:0.75rem; padding:0.25rem 0.5rem; border-radius:4px; cursor:pointer;">测速刷新</button>
+          </div>
+          <div id="clashNodesContainer">
+            <div style="color:#94a3b8; font-size:0.82rem; text-align:center; padding:1.5rem 0;">点击刷新状态获取节点...</div>
+          </div>
+        </div>
+
       </div>
 
-      <!-- 最近执行反馈 -->
-      <div id="clashLatestResult" style="background:#090d16; border-radius:8px; padding:0.6rem 0.75rem; font-size:0.8rem; color:#94a3b8; line-height:1.4; border-left:3px solid #0284c7;">
+      <!-- 底部指令执行反馈 -->
+      <div id="clashLatestResult" style="background:#090d16; border-radius:8px; padding:0.5rem 0.75rem; font-size:0.78rem; color:#94a3b8; line-height:1.4; border-left:3px solid #0284c7; margin-top:0.6rem;">
         最近指令反馈将显示在这里...
       </div>
 

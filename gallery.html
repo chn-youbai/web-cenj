@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
@@ -861,7 +861,9 @@
         photoBtn.classList.remove('active');
         photoGrid.style.display = 'none';
         videoGrid.style.display = 'grid';
-        if (loadedVideos.length === 0) {
+        if (loadedVideos.length > 0) {
+          renderVideos();
+        } else {
           fetchVideos();
         }
       }
@@ -962,6 +964,9 @@
           loadedVideos = d.videos;
           const vCountEl = document.getElementById('videoCount');
           if (vCountEl) vCountEl.textContent = d.videos.length;
+          if (currentCategory === 'video') {
+            renderVideos();
+          }
         }
       }).catch(() => {});
 

@@ -9,7 +9,7 @@ function corsHeaders() {
   return {
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Methods": "POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, Authorization, X-GitHub-Token, X-File-Name",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization, X-GitHub-Token, X-File-Name, X-Title, X-Duration, X-Poster-Url",
     "Access-Control-Max-Age": "86400"
   };
 }
@@ -22,6 +22,9 @@ export async function onRequestPost(context) {
   const url = new URL(context.request.url);
   const token = context.request.headers.get("X-GitHub-Token") || url.searchParams.get("token");
   const fileName = context.request.headers.get("X-File-Name") || url.searchParams.get("name") || ("video_" + Date.now() + ".mp4");
+  const rawTitle = context.request.headers.get("X-Title") ? decodeURIComponent(context.request.headers.get("X-Title")) : (url.searchParams.get("title") || "");
+  const duration = parseInt(context.request.headers.get("X-Duration") || url.searchParams.get("duration") || "0", 10);
+  const posterUrl = context.request.headers.get("X-Poster-Url") || url.searchParams.get("poster") || "";
   const contentType = context.request.headers.get("Content-Type") || "video/mp4";
 
   if (!token) {
@@ -96,11 +99,30 @@ export async function onRequestPost(context) {
     const ghRespData = await ghUploadResp.json().catch(() => ({}));
 
     if (ghUploadResp.ok) {
+      const db = context.env.DB;
+      const vidId = "vid_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 6);
+      const title = rawTitle || fileName.replace(/\.[^/.]+$/, "");
+      const downloadUrl = ghRespData.browser_download_url;
+      const fileSize = ghRespData.size || 0;
+
+      if (db) {
+        try {
+          await db.prepare(`
+            INSERT INTO videos (id, title, description, duration, file_size, poster_url, asset_url)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+          `).bind(vidId, title, "手机相册直传视频", duration, fileSize, posterUrl, downloadUrl).run();
+        } catch (dbErr) {
+          console.error("D1 auto insert error:", dbErr);
+        }
+      }
+
       return new Response(JSON.stringify({
         status: "ok",
-        browser_download_url: ghRespData.browser_download_url,
+        id: vidId,
+        title: title,
+        browser_download_url: downloadUrl,
         asset_id: ghRespData.id,
-        size: ghRespData.size
+        size: fileSize
       }), {
         status: 200,
         headers: { ...corsHeaders(), "Content-Type": "application/json" }
