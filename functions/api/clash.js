@@ -66,7 +66,7 @@ export async function onRequest(context) {
         const hbTime = new Date(map['heartbeat'].updated_at + " UTC").getTime();
         const nowTime = Date.now();
         const diffSec = Math.max(0, Math.round((nowTime - hbTime) / 1000));
-        const isOnline = diffSec <= 45; // 45秒内有心跳则在线，否则关机/离线
+        const isOnline = diffSec <= 75; // 75秒内有心跳则判定在线(完美兼容夜间30秒节能轮询)，超过则判定关机/离线
 
         heartbeatObj = {
           status: isOnline ? "online" : "offline",
