@@ -84,6 +84,8 @@ export async function onRequest(context) {
           payload: map['latest'].payload,
           status: map['latest'].status,
           result: map['latest'].result,
+          dispatched_at: map['latest'].dispatched_at || null,
+          responded_at: map['latest'].responded_at || null,
           updated_at: map['latest'].updated_at
         } : null,
         heartbeat: heartbeatObj,
@@ -106,14 +108,15 @@ export async function onRequest(context) {
       if (action === "dispatch_command") {
         const cmd = data.command; // 'update_sub', 'switch_node', 'switch_profile', 'check_delay', 'restart'
         const payload = data.payload || "";
+        const nowIso = new Date().toISOString();
 
         await db.prepare(
-          "INSERT INTO clash_control (id, command, payload, status, result, updated_at) " +
-          "VALUES ('latest', ?, ?, 'pending', '等待电脑执行...', datetime('now')) " +
-          "ON CONFLICT(id) DO UPDATE SET command = excluded.command, payload = excluded.payload, status = excluded.status, result = excluded.result, updated_at = excluded.updated_at"
-        ).bind(cmd, payload).run();
+          "INSERT INTO clash_control (id, command, payload, status, result, dispatched_at, responded_at, updated_at) " +
+          "VALUES ('latest', ?, ?, 'pending', '等待电脑执行...', ?, NULL, datetime('now')) " +
+          "ON CONFLICT(id) DO UPDATE SET command = excluded.command, payload = excluded.payload, status = excluded.status, result = excluded.result, dispatched_at = excluded.dispatched_at, responded_at = NULL, updated_at = excluded.updated_at"
+        ).bind(cmd, payload, nowIso).run();
 
-        return new Response(JSON.stringify({ status: "ok", message: "指令已下发" }), { headers: corsHeaders });
+        return new Response(JSON.stringify({ status: "ok", message: "指令已下发", dispatched_at: nowIso }), { headers: corsHeaders });
       }
 
       // PC 端：上报心跳
@@ -133,12 +136,13 @@ export async function onRequest(context) {
         const cmd = data.command;
         const result = data.result || "";
         const status = data.exec_status || "done";
+        const nowIso = new Date().toISOString();
 
         await db.prepare(
-          "UPDATE clash_control SET status = ?, result = ?, updated_at = datetime('now') WHERE id = 'latest'"
-        ).bind(status, result).run();
+          "UPDATE clash_control SET status = ?, result = ?, responded_at = ?, updated_at = datetime('now') WHERE id = 'latest'"
+        ).bind(status, result, nowIso).run();
 
-        return new Response(JSON.stringify({ status: "ok" }), { headers: corsHeaders });
+        return new Response(JSON.stringify({ status: "ok", responded_at: nowIso }), { headers: corsHeaders });
       }
 
       // PC 端：同步订阅列表详情
