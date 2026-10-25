@@ -64,6 +64,145 @@
     }
     .back-home-btn:hover { color: #fff; background: #334155; }
 
+    .header-action-btn {
+      color: #cbd5e1;
+      background: #1e293b;
+      border: 1px solid #334155;
+      font-size: 0.82rem;
+      padding: 0.4rem 0.65rem;
+      border-radius: 8px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      transition: all 0.2s;
+    }
+    .header-action-btn:hover { color: #fff; background: #334155; }
+
+    /* Auth Modal & Password System (和账单一致的高级玻璃拟物风) */
+    .auth-modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 99999;
+      background: rgba(10, 15, 29, 0.88);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .auth-modal-backdrop.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .auth-modal-card {
+      background: rgba(15, 23, 42, 0.95);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      border-radius: 24px;
+      padding: 2.2rem 2rem;
+      max-width: 420px;
+      width: 100%;
+      box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.8), 0 0 40px rgba(2, 132, 199, 0.2);
+      text-align: center;
+      transform: scale(0.92) translateY(10px);
+      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .auth-modal-backdrop.show .auth-modal-card {
+      transform: scale(1) translateY(0);
+    }
+    .auth-title {
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+    .auth-desc {
+      font-size: 0.86rem;
+      color: #94a3b8;
+      line-height: 1.5;
+      margin-bottom: 1.4rem;
+    }
+    .auth-input-wrap {
+      position: relative;
+      margin-bottom: 0.6rem;
+    }
+    .auth-input {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 0.85rem 1rem;
+      background: rgba(30, 41, 59, 0.7);
+      border: 1.5px solid rgba(255, 255, 255, 0.18);
+      border-radius: 12px;
+      color: #fff;
+      font-size: 1.15rem;
+      letter-spacing: 0.25em;
+      text-align: center;
+      outline: none;
+      transition: border-color 0.25s, box-shadow 0.25s;
+    }
+    .auth-input:focus {
+      border-color: #0284c7;
+      box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.25);
+    }
+    .auth-error {
+      color: #ef4444;
+      font-size: 0.82rem;
+      min-height: 1.3rem;
+      margin-bottom: 0.6rem;
+    }
+    .auth-remember-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      font-size: 0.85rem;
+      color: #cbd5e1;
+      margin-bottom: 1.3rem;
+      cursor: pointer;
+    }
+    .auth-btn-row {
+      display: flex;
+      gap: 0.8rem;
+    }
+    .auth-submit-btn {
+      flex: 1;
+      padding: 0.8rem;
+      border-radius: 9999px;
+      background: linear-gradient(135deg, #0284c7, #06b6d4);
+      color: white;
+      font-size: 0.95rem;
+      font-weight: 700;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 8px 20px rgba(2, 132, 199, 0.35);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .auth-submit-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 25px rgba(2, 132, 199, 0.45);
+    }
+    .auth-cancel-btn {
+      padding: 0.8rem 1.4rem;
+      border-radius: 9999px;
+      background: rgba(255, 255, 255, 0.1);
+      color: #cbd5e1;
+      font-size: 0.95rem;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .auth-cancel-btn:hover {
+      background: rgba(255, 255, 255, 0.18);
+    }
+
     /* Tabs Bar */
     .tab-bar {
       display: grid;
@@ -213,14 +352,65 @@
 </head>
 <body>
 
-<div class="container">
+<!-- 密码验证解锁遮罩/弹窗 (和账单一致) -->
+<div class="auth-modal-backdrop" id="authModalBackdrop">
+  <div class="auth-modal-card">
+    <div class="auth-title">
+      <span>🔐</span>
+      <span>Clash 云控终端</span>
+    </div>
+    <div class="auth-desc">请输入独立访问密码以进入（初始默认密码：<strong>8888</strong>）</div>
+    <div class="auth-input-wrap">
+      <input type="password" id="clashAuthInput" class="auth-input" placeholder="输入密码" maxlength="20">
+    </div>
+    <div class="auth-error" id="authErrorMsg"></div>
+    <label class="auth-remember-row">
+      <input type="checkbox" id="authRememberCheck" checked>
+      <span>记住解锁状态 (30天免密访问)</span>
+    </label>
+    <div class="auth-btn-row">
+      <a href="./index.html" class="auth-cancel-btn" style="text-decoration:none; display:inline-flex; align-items:center; justify-content:center;">返回主页</a>
+      <button class="auth-submit-btn" onclick="submitClashAuth()">解锁进入 🚀</button>
+    </div>
+  </div>
+</div>
+
+<!-- 修改访问密码弹窗 (和账单一致) -->
+<div class="auth-modal-backdrop" id="changePwdModal">
+  <div class="auth-modal-card" style="max-width:380px;">
+    <div class="auth-title">
+      <span>🔑</span>
+      <span>修改访问密码</span>
+    </div>
+    <div class="auth-desc" style="margin-bottom:1rem;">修改后所有设备均需使用新密码访问</div>
+    <div style="text-align:left; margin-bottom:0.8rem;">
+      <label style="font-size:0.8rem; color:#cbd5e1; display:block; margin-bottom:0.3rem;">原访问密码：</label>
+      <input type="password" id="pwdCurrentInput" class="auth-input" style="font-size:0.95rem; padding:0.6rem; letter-spacing:normal;" placeholder="当前密码 (默认8888)">
+    </div>
+    <div style="text-align:left; margin-bottom:1rem;">
+      <label style="font-size:0.8rem; color:#cbd5e1; display:block; margin-bottom:0.3rem;">新密码 (至少4位)：</label>
+      <input type="password" id="pwdNewInput" class="auth-input" style="font-size:0.95rem; padding:0.6rem; letter-spacing:normal;" placeholder="输入新的访问密码">
+    </div>
+    <div class="auth-error" id="changePwdErrorMsg"></div>
+    <div class="auth-btn-row">
+      <button class="auth-cancel-btn" onclick="closeChangePwdModal()">取消</button>
+      <button class="auth-submit-btn" onclick="saveNewPassword()">确认修改</button>
+    </div>
+  </div>
+</div>
+
+<div class="container" id="mainAppContainer">
   <!-- Header -->
   <header class="header">
     <div class="header-title">
       <span>⚡</span>
-      <span>Clash Verge 智能云控终端</span>
+      <span>Clash Verge 云控终端</span>
     </div>
-    <a href="./index.html" class="back-home-btn">← 返回主页</a>
+    <div style="display:flex; gap:0.4rem; align-items:center;">
+      <button class="header-action-btn" onclick="openChangePwdModal()" title="修改访问密码">🔑 密码</button>
+      <button class="header-action-btn" onclick="logoutAuth()" title="退出锁定">🚪 锁定</button>
+      <a href="./index.html" class="back-home-btn">← 主页</a>
+    </div>
   </header>
 
   <!-- Navigation Tabs -->
@@ -233,10 +423,15 @@
 
   <!-- Auth & Status Strip -->
   <section class="status-strip">
-    <div class="auth-row">
-      <input type="password" id="clashPwdInput" class="pwd-input" placeholder="输入控制密码 (默认8888)">
-      <button class="btn" onclick="refreshStatus()">刷新状态</button>
-      <button class="btn btn-speed" onclick="sendCommand('check_delay')">⚡ 测速刷新</button>
+    <div class="auth-row" style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.6rem;">
+      <div style="display:flex; align-items:center; gap:0.4rem; color:#cbd5e1; font-weight:700; font-size:0.85rem;">
+        <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#10b981; box-shadow:0 0 8px #10b981;"></span>
+        <span>已鉴权 (30天免密中)</span>
+      </div>
+      <div style="display:flex; gap:0.5rem;">
+        <button class="btn" style="background:#1e293b; border:1px solid #334155; padding:0.4rem 0.8rem;" onclick="refreshStatus()">🔄 刷新状态</button>
+        <button class="btn btn-speed" style="padding:0.4rem 0.8rem;" onclick="sendCommand('check_delay')">⚡ 测速刷新</button>
+      </div>
     </div>
     <div id="clashStatusText" style="font-size:0.78rem; color:var(--text-muted); margin-bottom:0.4rem;">正在检测云端连接...</div>
     <div id="pcHbBar" class="pc-hb-bar">💻 电脑状态：检测中...</div>
@@ -329,6 +524,175 @@
     document.getElementById('tabNodes').style.display = (tabName === 'nodes') ? 'block' : 'none';
   }
 
+  // ==================== 1. 访问鉴权与密码安全 (和账单系统一致) ====================
+  const AUTH_KEY = 'clash_auth_token_v1';
+  const PWD_STORAGE_KEY = 'clash_custom_password_v1';
+  const DEFAULT_PASSWORD = '8888';
+
+  function getStoredPassword() {
+    return localStorage.getItem(PWD_STORAGE_KEY) || sessionStorage.getItem(PWD_STORAGE_KEY) || DEFAULT_PASSWORD;
+  }
+
+  function isAuthorized() {
+    const token = localStorage.getItem(AUTH_KEY) || sessionStorage.getItem(AUTH_KEY);
+    if (!token) return false;
+    try {
+      const data = JSON.parse(token);
+      // 30 天免密
+      if (Date.now() - data.time > 30 * 24 * 60 * 60 * 1000) {
+        localStorage.removeItem(AUTH_KEY);
+        sessionStorage.removeItem(AUTH_KEY);
+        return false;
+      }
+      return true;
+    } catch (e) {
+      localStorage.removeItem(AUTH_KEY);
+      sessionStorage.removeItem(AUTH_KEY);
+      return false;
+    }
+  }
+
+  function checkAccessGate() {
+    const backdrop = document.getElementById('authModalBackdrop');
+    const mainApp = document.getElementById('mainAppContainer');
+    const input = document.getElementById('clashAuthInput');
+    const err = document.getElementById('authErrorMsg');
+
+    if (isAuthorized()) {
+      backdrop.classList.remove('show');
+      mainApp.style.filter = '';
+      refreshStatus();
+    } else {
+      if (err) {
+        err.style.color = '#ef4444';
+        err.textContent = '';
+      }
+      if (input) input.value = '';
+      backdrop.classList.add('show');
+      mainApp.style.filter = 'blur(10px)';
+      setTimeout(() => { if (input) input.focus(); }, 150);
+    }
+  }
+
+  async function submitClashAuth() {
+    const input = document.getElementById('clashAuthInput');
+    const err = document.getElementById('authErrorMsg');
+    const remember = document.getElementById('authRememberCheck').checked;
+    const pwd = input ? input.value.trim() : '';
+
+    if (!pwd) {
+      if (err) {
+        err.style.color = '#ef4444';
+        err.textContent = '请输入访问密码';
+      }
+      return;
+    }
+
+    if (err) {
+      err.style.color = '#38bdf8';
+      err.textContent = '正在验证中...';
+    }
+
+    try {
+      const res = await fetch(`/api/clash?pwd=${encodeURIComponent(pwd)}`);
+      const data = await res.json();
+      if (data.status === 'ok') {
+        const payload = JSON.stringify({ time: Date.now() });
+        if (remember) {
+          localStorage.setItem(AUTH_KEY, payload);
+          localStorage.setItem(PWD_STORAGE_KEY, pwd);
+        } else {
+          sessionStorage.setItem(AUTH_KEY, payload);
+          sessionStorage.setItem(PWD_STORAGE_KEY, pwd);
+        }
+        if (err) {
+          err.style.color = '#10b981';
+          err.textContent = '验证成功，正在解锁...';
+        }
+        setTimeout(() => {
+          checkAccessGate();
+        }, 250);
+      } else {
+        if (err) {
+          err.style.color = '#ef4444';
+          err.textContent = '密码错误，请重新输入（初始密码：8888）';
+        }
+        if (input) input.select();
+      }
+    } catch (e) {
+      if (err) {
+        err.style.color = '#ef4444';
+        err.textContent = '网络连接异常，请重试';
+      }
+    }
+  }
+
+  document.getElementById('clashAuthInput')?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') submitClashAuth();
+  });
+
+  function openChangePwdModal() {
+    document.getElementById('pwdCurrentInput').value = '';
+    document.getElementById('pwdNewInput').value = '';
+    const err = document.getElementById('changePwdErrorMsg');
+    if (err) err.textContent = '';
+    document.getElementById('changePwdModal').classList.add('show');
+    setTimeout(() => { document.getElementById('pwdCurrentInput').focus(); }, 150);
+  }
+
+  function closeChangePwdModal() {
+    document.getElementById('changePwdModal').classList.remove('show');
+  }
+
+  async function saveNewPassword() {
+    const cur = document.getElementById('pwdCurrentInput').value.trim();
+    const next = document.getElementById('pwdNewInput').value.trim();
+    const err = document.getElementById('changePwdErrorMsg');
+
+    if (!cur) {
+      err.style.color = '#ef4444';
+      err.textContent = '请输入原访问密码';
+      return;
+    }
+    if (!next || next.length < 4) {
+      err.style.color = '#ef4444';
+      err.textContent = '新密码至少需要 4 位字符';
+      return;
+    }
+
+    err.style.color = '#38bdf8';
+    err.textContent = '正在保存至云端...';
+
+    try {
+      const res = await fetch('/api/clash', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'change_password', old_pwd: cur, new_pwd: next })
+      });
+      const data = await res.json();
+      if (data.status === 'ok') {
+        localStorage.setItem(PWD_STORAGE_KEY, next);
+        closeChangePwdModal();
+        alert('🎉 密码修改成功！请牢记新密码。');
+        refreshStatus();
+      } else {
+        err.style.color = '#ef4444';
+        err.textContent = data.message || '原访问密码错误';
+      }
+    } catch (e) {
+      err.style.color = '#ef4444';
+      err.textContent = '网络请求失败，请稍后重试';
+    }
+  }
+
+  function logoutAuth() {
+    if (confirm('确定退出锁定状态吗？退出后再次进入需要重新输入访问密码。')) {
+      localStorage.removeItem(AUTH_KEY);
+      sessionStorage.removeItem(AUTH_KEY);
+      checkAccessGate();
+    }
+  }
+
   function formatTime(isoStr) {
     if (!isoStr) return '';
     const d = new Date(isoStr);
@@ -338,19 +702,17 @@
   }
 
   async function refreshStatus() {
-    const pwd = document.getElementById('clashPwdInput').value.trim();
+    const pwd = getStoredPassword();
     const statusEl = document.getElementById('clashStatusText');
     const pcHbEl = document.getElementById('pcHbBar');
     const feedbackEl = document.getElementById('latestFeedback');
 
-    if (!pwd) return;
     statusEl.textContent = '🔄 同步中...';
 
     try {
       const res = await fetch(`/api/clash?pwd=${encodeURIComponent(pwd)}`);
       const data = await res.json();
       if (data.status === 'ok') {
-        localStorage.setItem('clash_remote_pwd', pwd);
         statusEl.innerHTML = '<span style="color:#10b981;">● 已连接云端中继 (动态秒级同步就绪)</span>';
         
         if (data.heartbeat) {
@@ -408,6 +770,8 @@
         renderSpeed(data.speed_data);
         renderSubs(data.profiles_data);
         renderNodes(data.nodes_data);
+      } else if (res.status === 401) {
+        checkAccessGate();
       } else {
         statusEl.innerHTML = `<span style="color:#ef4444;">❌ ${data.message || '密码错误'}</span>`;
       }
@@ -524,12 +888,8 @@
   }
 
   async function sendCommand(command, payload = '') {
-    const pwd = document.getElementById('clashPwdInput').value.trim();
+    const pwd = getStoredPassword();
     const statusEl = document.getElementById('clashStatusText');
-    if (!pwd) {
-      alert('请输入控制密码');
-      return;
-    }
 
     statusEl.innerHTML = '⚡ 正在下发指令并触发电脑秒级响应...';
 
@@ -547,6 +907,11 @@
         setTimeout(refreshStatus, 2500);
         setTimeout(refreshStatus, 4500);
         setTimeout(refreshStatus, 7000);
+      } else if (res.status === 401) {
+        alert('访问密码已失效或已被修改，请重新解锁');
+        localStorage.removeItem(AUTH_KEY);
+        sessionStorage.removeItem(AUTH_KEY);
+        checkAccessGate();
       } else {
         statusEl.innerHTML = `<span style="color:#ef4444;">❌ 失败: ${data.message}</span>`;
       }
@@ -565,11 +930,9 @@
     document.getElementById('newSubUrlInput').value = '';
   }
 
-  // 页面载入时自动恢复密码并刷新
+  // 页面载入时执行安全门禁鉴权检查
   window.addEventListener('DOMContentLoaded', () => {
-    const savedPwd = localStorage.getItem('clash_remote_pwd') || '8888';
-    document.getElementById('clashPwdInput').value = savedPwd;
-    refreshStatus();
+    checkAccessGate();
   });
 </script>
 </body>

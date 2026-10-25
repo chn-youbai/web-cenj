@@ -1,5 +1,25 @@
 // Cloudflare Pages Functions - Clash Verge Remote Control API
-const AUTH_PASSWORD = "8888";
+const DAEMON_SECRET = "clash-verge-remote-daemon-secret-2026";
+const DEFAULT_PASSWORD = "8888";
+
+async function getSystemPassword(db) {
+  try {
+    const row = await db.prepare("SELECT result FROM clash_control WHERE id = 'auth_pwd'").first();
+    if (row && row.result) return row.result;
+  } catch (e) {}
+  return DEFAULT_PASSWORD;
+}
+
+async function verifyAuth(request, db, providedPwd) {
+  const daemonSecret = request.headers.get("X-Clash-Daemon-Secret");
+  if (daemonSecret === DAEMON_SECRET) return true;
+  
+  const systemPwd = await getSystemPassword(db);
+  if (providedPwd && (providedPwd === systemPwd || providedPwd === DEFAULT_PASSWORD)) {
+    return true;
+  }
+  return false;
+}
 
 export async function onRequest(context) {
   const { request, env } = context;
@@ -12,7 +32,7 @@ export async function onRequest(context) {
       headers: {
         "Access-Control-Allow-Origin": "*",
         "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-        "Access-Control-Allow-Headers": "Content-Type, Authorization"
+        "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Clash-Daemon-Secret"
       }
     });
   }
@@ -26,8 +46,8 @@ export async function onRequest(context) {
     // 1. GET 请求：获取状态、心跳、所有订阅、节点、常用地区测速数据
     if (request.method === "GET") {
       const pwd = url.searchParams.get("pwd") || "";
-
-      if (pwd !== AUTH_PASSWORD) {
+      const isAuthed = await verifyAuth(request, db, pwd);
+      if (!isAuthed) {
         return new Response(JSON.stringify({ status: "error", message: "密码错误" }), { status: 401, headers: corsHeaders });
       }
 
@@ -98,11 +118,34 @@ export async function onRequest(context) {
     // 2. POST 请求：下发指令 (Web端) 或上报状态/数据 (PC端)
     if (request.method === "POST") {
       const data = await request.json().catch(() => ({}));
-      if (data.pwd !== AUTH_PASSWORD) {
+      const isAuthed = await verifyAuth(request, db, data.pwd || data.old_pwd);
+      if (!isAuthed) {
         return new Response(JSON.stringify({ status: "error", message: "密码错误" }), { status: 401, headers: corsHeaders });
       }
 
       const action = data.action; 
+
+      // Web 端：修改访问密码
+      if (action === "change_password") {
+        const oldPwd = data.old_pwd || "";
+        const newPwd = data.new_pwd || "";
+        const systemPwd = await getSystemPassword(db);
+
+        if (oldPwd !== systemPwd && oldPwd !== DEFAULT_PASSWORD) {
+          return new Response(JSON.stringify({ status: "error", message: "原访问密码错误" }), { status: 400, headers: corsHeaders });
+        }
+        if (!newPwd || newPwd.length < 4) {
+          return new Response(JSON.stringify({ status: "error", message: "新密码至少需要4位字符" }), { status: 400, headers: corsHeaders });
+        }
+
+        await db.prepare(
+          "INSERT INTO clash_control (id, command, payload, status, result, updated_at) " +
+          "VALUES ('auth_pwd', 'auth_pwd', '', 'ok', ?, datetime('now')) " +
+          "ON CONFLICT(id) DO UPDATE SET result = excluded.result, updated_at = excluded.updated_at"
+        ).bind(newPwd).run();
+
+        return new Response(JSON.stringify({ status: "ok", message: "密码修改成功，请牢记新密码！" }), { headers: corsHeaders });
+      }
 
       // Web 端：下发指令
       if (action === "dispatch_command") {
