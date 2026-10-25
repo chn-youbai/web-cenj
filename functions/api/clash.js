@@ -23,7 +23,7 @@ export async function onRequest(context) {
   };
 
   try {
-    // 1. GET 请求：获取状态、心跳、所有订阅与所有节点
+    // 1. GET 请求：获取状态、心跳、所有订阅、节点、常用地区测速数据
     if (request.method === "GET") {
       const pwd = url.searchParams.get("pwd") || "";
 
@@ -31,8 +31,7 @@ export async function onRequest(context) {
         return new Response(JSON.stringify({ status: "error", message: "密码错误" }), { status: 401, headers: corsHeaders });
       }
 
-      // 获取指令记录、心跳、订阅缓存、节点缓存
-      const records = await db.prepare("SELECT * FROM clash_control WHERE id IN ('latest', 'heartbeat', 'profiles', 'nodes')").all();
+      const records = await db.prepare("SELECT * FROM clash_control WHERE id IN ('latest', 'heartbeat', 'profiles', 'nodes', 'speed_data')").all();
       const map = {};
       for (const row of records.results || []) {
         map[row.id] = row;
@@ -40,6 +39,8 @@ export async function onRequest(context) {
 
       let parsedProfiles = null;
       let parsedNodes = null;
+      let parsedSpeed = null;
+
       try {
         if (map['profiles'] && map['profiles'].payload) {
           parsedProfiles = JSON.parse(map['profiles'].payload);
@@ -49,6 +50,12 @@ export async function onRequest(context) {
       try {
         if (map['nodes'] && map['nodes'].payload) {
           parsedNodes = JSON.parse(map['nodes'].payload);
+        }
+      } catch (e) {}
+
+      try {
+        if (map['speed_data'] && map['speed_data'].payload) {
+          parsedSpeed = JSON.parse(map['speed_data'].payload);
         }
       } catch (e) {}
 
@@ -67,7 +74,8 @@ export async function onRequest(context) {
           updated_at: map['heartbeat'].updated_at
         } : null,
         profiles_data: parsedProfiles,
-        nodes_data: parsedNodes
+        nodes_data: parsedNodes,
+        speed_data: parsedSpeed
       }), { headers: corsHeaders });
     }
 
@@ -131,9 +139,17 @@ export async function onRequest(context) {
         return new Response(JSON.stringify({ status: "ok" }), { headers: corsHeaders });
       }
 
-      // PC 端：同步节点列表与延迟
-      if (action === "sync_nodes") {
-        const nodesJson = JSON.stringify(data.nodes || {});
+      // PC 端：同步常用地区测速数据及全量节点
+      if (action === "sync_speed_data") {
+        const speedJson = JSON.stringify(data.speed_data || {});
+        const nodesJson = JSON.stringify(data.nodes_data || {});
+
+        await db.prepare(
+          "INSERT INTO clash_control (id, command, payload, status, result, updated_at) " +
+          "VALUES ('speed_data', 'speed_data', ?, 'ok', '已同步', datetime('now')) " +
+          "ON CONFLICT(id) DO UPDATE SET payload = excluded.payload, updated_at = excluded.updated_at"
+        ).bind(speedJson).run();
+
         await db.prepare(
           "INSERT INTO clash_control (id, command, payload, status, result, updated_at) " +
           "VALUES ('nodes', 'nodes', ?, 'ok', '已同步', datetime('now')) " +

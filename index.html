@@ -1113,6 +1113,7 @@
         btn.classList.toggle('active', btn.getAttribute('data-tab') === tabName);
       });
       document.getElementById('clashTabHub').style.display = (tabName === 'hub') ? 'block' : 'none';
+      document.getElementById('clashTabSpeed').style.display = (tabName === 'speed') ? 'block' : 'none';
       document.getElementById('clashTabSubs').style.display = (tabName === 'subs') ? 'block' : 'none';
       document.getElementById('clashTabNodes').style.display = (tabName === 'nodes') ? 'block' : 'none';
     }
@@ -1145,6 +1146,7 @@
             latestResultEl.innerHTML = `最近指令：[${cmd.command}] 状态: ${badge}<br><span style="color:#93c5fd;">${cmd.result || ''}</span>`;
           }
 
+          renderSpeedList(data.speed_data);
           renderProfilesList(data.profiles_data);
           renderNodesList(data.nodes_data);
         } else {
@@ -1153,6 +1155,49 @@
       } catch (e) {
         statusEl.innerHTML = `<span style="color:#ef4444;">❌ 网络异常</span>`;
       }
+    }
+
+    function renderSpeedList(speedData) {
+      const container = document.getElementById('clashSpeedContainer');
+      if (!speedData || !speedData.regions_summary || speedData.regions_summary.length === 0) {
+        container.innerHTML = '<div style="color:#94a3b8; font-size:0.82rem; text-align:center; padding:1.5rem 0;">暂无常用地区测速，点击右上角【⚡ 刷新测速】获取...</div>';
+        return;
+      }
+
+      let html = `<div style="font-size:0.75rem; color:#64748b; margin-bottom:0.6rem; text-align:right;">上次测速时间：${speedData.updated_at || '刚刚'}</div>`;
+      
+      speedData.regions_summary.forEach(reg => {
+        const isBestValid = reg.best_delay && reg.best_delay !== '超时' && reg.best_delay !== '-';
+        const delayBadgeColor = isBestValid ? (parseInt(reg.best_delay) < 100 ? '#10b981' : '#38bdf8') : '#ef4444';
+        const safeBestNode = (reg.best_node || '').replace(/'/g, "\\'");
+
+        html += `
+          <div style="background:#1e293b; border:${reg.active ? '1px solid #0284c7' : '1px solid #334155'}; border-radius:10px; padding:0.75rem; margin-bottom:0.6rem;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.4rem;">
+              <span style="font-weight:700; color:#f8fafc; font-size:0.92rem; display:inline-flex; align-items:center; gap:0.4rem;">
+                ${reg.label}
+                <span style="font-size:0.75rem; color:#94a3b8; font-weight:normal;">(${reg.node_count}个节点)</span>
+              </span>
+              <span style="background:rgba(15,23,42,0.6); color:${delayBadgeColor}; font-weight:700; font-size:0.85rem; padding:0.2rem 0.55rem; border-radius:6px; border:1px solid ${delayBadgeColor}44;">
+                ${reg.best_delay}
+              </span>
+            </div>
+            
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:0.35rem;">
+              <span style="font-size:0.78rem; color:#94a3b8; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:65%;">
+                最快: <span style="color:#cbd5e1;">${reg.best_node || '暂无'}</span>
+              </span>
+              ${reg.best_node ? `
+                <button onclick="sendClashCommand('switch_node', '${safeBestNode}')" style="background:#0284c7; border:none; color:#fff; font-size:0.72rem; font-weight:600; padding:0.25rem 0.55rem; border-radius:4px; cursor:pointer;">
+                  一键切此最快
+                </button>
+              ` : ''}
+            </div>
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
     }
 
     function renderProfilesList(profilesData) {
@@ -1308,11 +1353,12 @@
         <button onclick="closeClashModal()" style="background:transparent; border:none; color:#94a3b8; font-size:1.5rem; cursor:pointer; line-height:1;">&times;</button>
       </div>
 
-      <!-- 选项卡导航栏 (3个Tab) -->
+      <!-- 选项卡导航栏 (4个Tab) -->
       <div style="display:flex; background:#1e293b; padding:0.25rem; border-radius:10px; margin-bottom:0.8rem; gap:0.25rem;">
-        <button class="clash-tab-btn active" data-tab="hub" onclick="switchClashTab('hub')">⚡ 控制中枢</button>
-        <button class="clash-tab-btn" data-tab="subs" onclick="switchClashTab('subs')">📋 订阅管理</button>
-        <button class="clash-tab-btn" data-tab="nodes" onclick="switchClashTab('nodes')">🌍 节点列表</button>
+        <button class="clash-tab-btn active" data-tab="hub" onclick="switchClashTab('hub')">⚡ 中枢</button>
+        <button class="clash-tab-btn" data-tab="speed" onclick="switchClashTab('speed')">🚀 常用测速</button>
+        <button class="clash-tab-btn" data-tab="subs" onclick="switchClashTab('subs')">📋 订阅</button>
+        <button class="clash-tab-btn" data-tab="nodes" onclick="switchClashTab('nodes')">🌍 节点</button>
       </div>
 
       <!-- 状态指示条 -->
@@ -1357,6 +1403,17 @@
             <button onclick="sendClashCommand('check_delay')" style="flex:1; background:#334155; border:none; color:#f8fafc; padding:0.5rem; border-radius:6px; font-size:0.8rem; cursor:pointer;">📡 全量测速</button>
             <button onclick="sendClashCommand('sync_all')" style="flex:1; background:#0369a1; border:none; color:#f8fafc; padding:0.5rem; border-radius:6px; font-size:0.8rem; cursor:pointer;">🔄 同步订阅列表</button>
             <button onclick="sendClashCommand('restart')" style="flex:1; background:#475569; border:none; color:#f8fafc; padding:0.5rem; border-radius:6px; font-size:0.8rem; cursor:pointer;">⚙️ 重启内核</button>
+          </div>
+        </div>
+
+        <!-- TAB: 常用测速 (专为6大核心常用地区定制) -->
+        <div id="clashTabSpeed" style="display:none;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.6rem;">
+            <span style="font-size:0.85rem; font-weight:600; color:#cbd5e1;">🚀 常用核心地区延迟看板</span>
+            <button onclick="sendClashCommand('check_delay')" style="background:linear-gradient(135deg, #10b981, #059669); border:none; color:#fff; font-size:0.75rem; padding:0.25rem 0.6rem; border-radius:6px; cursor:pointer; font-weight:700;">⚡ 刷新测速</button>
+          </div>
+          <div id="clashSpeedContainer">
+            <div style="color:#94a3b8; font-size:0.82rem; text-align:center; padding:1.5rem 0;">点击下方刷新状态或刷新测速获取...</div>
           </div>
         </div>
 
