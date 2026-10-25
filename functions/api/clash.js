@@ -59,8 +59,26 @@ export async function onRequest(context) {
         }
       } catch (e) {}
 
+
+      // 计算心跳距离当前时间的秒数差距 (判断电脑是否在线)
+      let heartbeatObj = null;
+      if (map['heartbeat']) {
+        const hbTime = new Date(map['heartbeat'].updated_at + " UTC").getTime();
+        const nowTime = Date.now();
+        const diffSec = Math.max(0, Math.round((nowTime - hbTime) / 1000));
+        const isOnline = diffSec <= 45; // 45秒内有心跳则在线，否则关机/离线
+
+        heartbeatObj = {
+          status: isOnline ? "online" : "offline",
+          diff_sec: diffSec,
+          result: map['heartbeat'].result,
+          updated_at: map['heartbeat'].updated_at
+        };
+      }
+
       return new Response(JSON.stringify({
         status: "ok",
+        server_time: new Date().toISOString(),
         latest_command: map['latest'] ? {
           command: map['latest'].command,
           payload: map['latest'].payload,
@@ -68,11 +86,7 @@ export async function onRequest(context) {
           result: map['latest'].result,
           updated_at: map['latest'].updated_at
         } : null,
-        heartbeat: map['heartbeat'] ? {
-          status: map['heartbeat'].status,
-          result: map['heartbeat'].result,
-          updated_at: map['heartbeat'].updated_at
-        } : null,
+        heartbeat: heartbeatObj,
         profiles_data: parsedProfiles,
         nodes_data: parsedNodes,
         speed_data: parsedSpeed

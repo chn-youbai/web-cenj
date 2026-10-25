@@ -1135,9 +1135,15 @@
           statusEl.innerHTML = '<span style="color:#10b981;">● 已连接云端中继 (已激活动态高频同步)</span>';
           
           if (data.heartbeat) {
-            pcHbEl.innerHTML = `💻 电脑状态：<span style="color:#38bdf8;">${data.heartbeat.result || '在线'}</span> <span style="font-size:0.75rem; color:#94a3b8;">(${data.heartbeat.updated_at || ''})</span>`;
+            const hb = data.heartbeat;
+            if (hb.status === 'online') {
+              pcHbEl.innerHTML = `💻 电脑状态：<span style="color:#10b981; font-weight:700;">● 在线</span> <span style="color:#cbd5e1; font-size:0.78rem;">(${hb.result.replace('在线 | ', '')})</span> <span style="font-size:0.72rem; color:#94a3b8;">(${hb.diff_sec}秒前活跃)</span>`;
+            } else {
+              const diffText = hb.diff_sec < 60 ? `${hb.diff_sec}秒前` : (hb.diff_sec < 3600 ? `${Math.round(hb.diff_sec/60)}分钟前` : `${Math.round(hb.diff_sec/3600)}小时前`);
+              pcHbEl.innerHTML = `💻 电脑状态：<span style="color:#ef4444; font-weight:700;">○ 离线/已关机</span> <span style="font-size:0.75rem; color:#94a3b8;">(最后活跃于 ${diffText})</span>`;
+            }
           } else {
-            pcHbEl.innerHTML = `💻 电脑状态：<span style="color:#94a3b8;">等待心跳同步...</span>`;
+            pcHbEl.innerHTML = `💻 电脑状态：<span style="color:#94a3b8;">暂无心跳记录</span>`;
           }
 
           if (data.latest_command) {
