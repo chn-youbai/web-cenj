@@ -12,6 +12,12 @@
   <!-- Top Header -->
   <header class="app-header">
     <div class="app-title-box">
+      <a href="./index.html" class="header-back-btn" title="返回主页" aria-label="返回主页">
+        <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="19" y1="12" x2="5" y2="12"></line>
+          <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+      </a>
       <div class="app-logo">沙</div>
       <div>
         <div class="app-title">沙县外卖记账</div>
@@ -247,6 +253,20 @@
             <div class="setting-desc">立即清除免密授权，重新进入需输密码</div>
           </div>
           <button class="icon-btn" style="color:var(--warning);" onclick="logoutAuth()">退出锁定</button>
+        </div>
+      </div>
+
+      <!-- Return Home Card -->
+      <div class="card">
+        <div class="setting-item" style="cursor:pointer;" onclick="window.location.href='./index.html'">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <div style="font-size:20px;">🏠</div>
+            <div>
+              <div class="setting-label">返回主页</div>
+              <div class="setting-desc">退出外卖记账助手，返回个人主页导航</div>
+            </div>
+          </div>
+          <button class="icon-btn" style="pointer-events:none;">← 返回主页</button>
         </div>
       </div>
 

@@ -72,6 +72,33 @@
       gap: 8px;
     }
 
+    .header-back-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 10px;
+      background: var(--bg-page);
+      border: 1px solid var(--border-dark);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-main);
+      text-decoration: none;
+      flex-shrink: 0;
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+
+    .header-back-btn:hover {
+      background: #e2e8f0;
+      color: var(--primary);
+      border-color: var(--primary);
+    }
+
+    .header-back-btn:active {
+      transform: scale(0.92);
+      background: #cbd5e1;
+    }
+
     .app-logo {
       width: 32px;
       height: 32px;
