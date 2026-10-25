@@ -1082,7 +1082,7 @@
 
         if (clashClickCount >= 5) {
           clashClickCount = 0;
-          openClashModal();
+          window.open('./clash.html', '_blank');
         } else {
           clashClickTimer = setTimeout(() => {
             clashClickCount = 0;

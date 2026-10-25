@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Clash Verge 智能云控终端</title>
+  <style>
+    :root {
+      --bg: #090d16;
+      --card-bg: #0f172a;
+      --card-border: rgba(56, 189, 248, 0.2);
+      --primary: #0284c7;
+      --primary-glow: rgba(2, 132, 199, 0.4);
+      --accent: #38bdf8;
+      --success: #10b981;
+      --danger: #ef4444;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      min-height: 100vh;
+      padding: 1rem 0.75rem 2rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .container {
+      max-width: 600px;
+      width: 100%;
+    }
+    /* Header */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.75rem 0 1.2rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      margin-bottom: 1rem;
+    }
+    .header-title {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: var(--accent);
+      letter-spacing: -0.5px;
+    }
+    .back-home-btn {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.85rem;
+      background: #1e293b;
+      padding: 0.4rem 0.8rem;
+      border-radius: 8px;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      transition: all 0.2s;
+    }
+    .back-home-btn:hover { color: #fff; background: #334155; }
+
+    /* Tabs Bar */
+    .tab-bar {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      background: #1e293b;
+      padding: 0.3rem;
+      border-radius: 12px;
+      gap: 0.3rem;
+      margin-bottom: 1rem;
+    }
+    .tab-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      padding: 0.6rem 0.2rem;
+      font-size: 0.85rem;
+      font-weight: 700;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-align: center;
+    }
+    .tab-btn.active {
+      background: var(--primary);
+      color: #fff;
+      box-shadow: 0 4px 12px var(--primary-glow);
+    }
+
+    /* Auth & Status Strip */
+    .status-strip {
+      background: #111827;
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 12px;
+      padding: 0.8rem 1rem;
+      margin-bottom: 1rem;
+    }
+    .auth-row {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 0.6rem;
+    }
+    .pwd-input {
+      flex: 1;
+      background: #1f2937;
+      border: 1px solid #374151;
+      color: #fff;
+      padding: 0.5rem 0.8rem;
+      border-radius: 8px;
+      font-size: 0.88rem;
+      outline: none;
+    }
+    .btn {
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 0.5rem 1rem;
+      font-size: 0.85rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.1s, opacity 0.2s;
+    }
+    .btn:active { transform: scale(0.97); }
+    .btn-speed {
+      background: linear-gradient(135deg, #10b981, #059669);
+      box-shadow: 0 2px 10px rgba(16,185,129,0.3);
+    }
+    .pc-hb-bar {
+      font-size: 0.82rem;
+      color: #cbd5e1;
+      background: #1f2937;
+      padding: 0.5rem 0.8rem;
+      border-radius: 8px;
+      line-height: 1.4;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+    }
+
+    /* Cards & Content */
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 1.1rem;
+      margin-bottom: 1rem;
+    }
+    .card-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #e2e8f0;
+      margin-bottom: 0.8rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* Feedback Banner */
+    .latest-feedback {
+      background: #0b1120;
+      border-left: 4px solid var(--primary);
+      border-radius: 8px;
+      padding: 0.7rem 0.9rem;
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+      margin-top: 1rem;
+    }
+
+    /* Subscriptions & Nodes */
+    .item-card {
+      background: #1e293b;
+      border-radius: 10px;
+      padding: 0.85rem;
+      margin-bottom: 0.65rem;
+      border: 1px solid #334155;
+    }
+    .item-card.active { border-color: var(--primary); }
+
+    /* Speed Test Cards */
+    .speed-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 0.75rem;
+    }
+    @media (min-width: 480px) {
+      .speed-grid { grid-template-columns: 1fr 1fr; }
+    }
+    .speed-card {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 12px;
+      padding: 0.9rem;
+      position: relative;
+    }
+    .speed-card.active-region { border-color: var(--primary); }
+    .speed-badge {
+      font-size: 0.9rem;
+      font-weight: 800;
+      padding: 0.2rem 0.6rem;
+      border-radius: 6px;
+      background: rgba(15,23,42,0.8);
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <!-- Header -->
+  <header class="header">
+    <div class="header-title">
+      <span>⚡</span>
+      <span>Clash Verge 智能云控终端</span>
+    </div>
+    <a href="./index.html" class="back-home-btn">← 返回主页</a>
+  </header>
+
+  <!-- Navigation Tabs -->
+  <nav class="tab-bar">
+    <button class="tab-btn active" data-tab="hub" onclick="switchTab('hub')">⚡ 控制中枢</button>
+    <button class="tab-btn" data-tab="speed" onclick="switchTab('speed')">🚀 常用测速</button>
+    <button class="tab-btn" data-tab="subs" onclick="switchTab('subs')">📋 订阅管理</button>
+    <button class="tab-btn" data-tab="nodes" onclick="switchTab('nodes')">🌍 全量节点</button>
+  </nav>
+
+  <!-- Auth & Status Strip -->
+  <section class="status-strip">
+    <div class="auth-row">
+      <input type="password" id="clashPwdInput" class="pwd-input" placeholder="输入控制密码 (默认8888)">
+      <button class="btn" onclick="refreshStatus()">刷新状态</button>
+      <button class="btn btn-speed" onclick="sendCommand('check_delay')">⚡ 测速刷新</button>
+    </div>
+    <div id="clashStatusText" style="font-size:0.78rem; color:var(--text-muted); margin-bottom:0.4rem;">正在检测云端连接...</div>
+    <div id="pcHbBar" class="pc-hb-bar">💻 电脑状态：检测中...</div>
+  </section>
+
+  <!-- Tab 1: 控制中枢 -->
+  <main id="tabHub" class="tab-content">
+    <!-- 快速换订阅 -->
+    <div class="card">
+      <div class="card-title">🔗 远程添加/更新订阅链接</div>
+      <input type="text" id="newSubUrlInput" placeholder="粘贴新机场订阅链接 (https://...)" style="width:100%; background:#0b1120; border:1px solid #334155; border-radius:8px; padding:0.65rem 0.8rem; color:#fff; font-size:0.85rem; margin-bottom:0.75rem; outline:none;">
+      <button onclick="submitNewSub()" style="width:100%; background:linear-gradient(135deg, #0284c7, #06b6d4); border:none; color:#fff; border-radius:8px; padding:0.7rem; font-weight:700; font-size:0.9rem; cursor:pointer;">🚀 极速下发电脑生效</button>
+    </div>
+
+    <!-- 常用地区快捷切节点 -->
+    <div class="card">
+      <div class="card-title">🌍 常用地区一键切换</div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.6rem;">
+        <button class="btn" style="background:#1e293b; border:1px solid #334155; padding:0.7rem;" onclick="sendCommand('switch_node', 'Singapore')">🇸🇬 新加坡节点</button>
+        <button class="btn" style="background:#1e293b; border:1px solid #334155; padding:0.7rem;" onclick="sendCommand('switch_node', 'Hong Kong')">🇭🇰 香港节点</button>
+        <button class="btn" style="background:#1e293b; border:1px solid #334155; padding:0.7rem;" onclick="sendCommand('switch_node', 'Japan')">🇯🇵 日本节点</button>
+        <button class="btn" style="background:#1e293b; border:1px solid var(--primary); color:var(--accent); padding:0.7rem;" onclick="sendCommand('switch_node', 'auto_lowest')">⚡ 自动选最低延迟</button>
+      </div>
+    </div>
+
+    <!-- 工具按钮组 -->
+    <div style="display:flex; gap:0.6rem;">
+      <button class="btn" style="flex:1; background:#334155; padding:0.65rem;" onclick="sendCommand('check_delay')">📡 快速测速</button>
+      <button class="btn" style="flex:1; background:#0369a1; padding:0.65rem;" onclick="sendCommand('sync_all')">🔄 同步配置</button>
+      <button class="btn" style="flex:1; background:#475569; padding:0.65rem;" onclick="sendCommand('restart')">⚙️ 重启内核</button>
+    </div>
+  </main>
+
+  <!-- Tab 2: 常用测速 -->
+  <main id="tabSpeed" class="tab-content" style="display:none;">
+    <div class="card">
+      <div class="card-title">
+        <span>🚀 常用核心地区延迟看板</span>
+        <button class="btn btn-speed" style="padding:0.35rem 0.75rem; font-size:0.78rem;" onclick="sendCommand('check_delay')">⚡ 测速刷新</button>
+      </div>
+      <div id="speedListContainer" class="speed-grid">
+        <div style="color:var(--text-muted); font-size:0.85rem; padding:2rem 0; text-align:center; grid-column:span 2;">点击刷新状态获取常用测速...</div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Tab 3: 订阅管理 -->
+  <main id="tabSubs" class="tab-content" style="display:none;">
+    <div class="card">
+      <div class="card-title">
+        <span>📋 电脑已配置的所有订阅</span>
+        <button class="btn" style="padding:0.35rem 0.75rem; font-size:0.78rem; background:#334155;" onclick="sendCommand('sync_all')">更新列表</button>
+      </div>
+      <div id="subsListContainer">
+        <div style="color:var(--text-muted); font-size:0.85rem; padding:2rem 0; text-align:center;">暂无订阅数据，正在获取...</div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Tab 4: 全量节点 -->
+  <main id="tabNodes" class="tab-content" style="display:none;">
+    <div class="card">
+      <div class="card-title">
+        <span>🌍 按地区分类的全部节点 (点击即换)</span>
+        <button class="btn btn-speed" style="padding:0.35rem 0.75rem; font-size:0.78rem;" onclick="sendCommand('check_delay')">测速刷新</button>
+      </div>
+      <div id="nodesListContainer">
+        <div style="color:var(--text-muted); font-size:0.85rem; padding:2rem 0; text-align:center;">暂无节点数据，正在获取...</div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Bottom Feedback -->
+  <section id="latestFeedback" class="latest-feedback">
+    最近指令反馈将显示在这里...
+  </section>
+</div>
+
+<script>
+  let currentTab = 'hub';
+
+  function switchTab(tabName) {
+    currentTab = tabName;
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.getAttribute('data-tab') === tabName);
+    });
+    document.getElementById('tabHub').style.display = (tabName === 'hub') ? 'block' : 'none';
+    document.getElementById('tabSpeed').style.display = (tabName === 'speed') ? 'block' : 'none';
+    document.getElementById('tabSubs').style.display = (tabName === 'subs') ? 'block' : 'none';
+    document.getElementById('tabNodes').style.display = (tabName === 'nodes') ? 'block' : 'none';
+  }
+
+  async function refreshStatus() {
+    const pwd = document.getElementById('clashPwdInput').value.trim();
+    const statusEl = document.getElementById('clashStatusText');
+    const pcHbEl = document.getElementById('pcHbBar');
+    const feedbackEl = document.getElementById('latestFeedback');
+
+    if (!pwd) return;
+    statusEl.textContent = '🔄 同步中...';
+
+    try {
+      const res = await fetch(`/api/clash?pwd=${encodeURIComponent(pwd)}`);
+      const data = await res.json();
+      if (data.status === 'ok') {
+        localStorage.setItem('clash_remote_pwd', pwd);
+        statusEl.innerHTML = '<span style="color:#10b981;">● 已连接云端中继 (动态秒级同步就绪)</span>';
+        
+        if (data.heartbeat) {
+          const hb = data.heartbeat;
+          if (hb.status === 'online') {
+            pcHbEl.innerHTML = `<span>💻 电脑状态：<strong style="color:#10b981;">● 在线</strong> (${hb.result.replace('在线 | ', '')})</span> <span style="font-size:0.75rem; color:#94a3b8;">${hb.diff_sec}秒前活跃</span>`;
+          } else {
+            const diffText = hb.diff_sec < 60 ? `${hb.diff_sec}秒前` : (hb.diff_sec < 3600 ? `${Math.round(hb.diff_sec/60)}分钟前` : `${Math.round(hb.diff_sec/3600)}小时前`);
+            pcHbEl.innerHTML = `<span>💻 电脑状态：<strong style="color:#ef4444;">○ 离线 / 已关机</strong></span> <span style="font-size:0.75rem; color:#94a3b8;">(最后活跃于 ${diffText})</span>`;
+          }
+        } else {
+          pcHbEl.innerHTML = `💻 电脑状态：<span style="color:#94a3b8;">暂无心跳记录</span>`;
+        }
+
+        if (data.latest_command) {
+          const cmd = data.latest_command;
+          const badge = cmd.status === 'done' ? '✅ 完成' : (cmd.status === 'pending' ? '⏳ 电脑高速执行中' : '❌ 失败');
+          feedbackEl.innerHTML = `最近指令：[${cmd.command}] 状态: ${badge}<br><span style="color:#93c5fd;">${cmd.result || ''}</span>`;
+        }
+
+        renderSpeed(data.speed_data);
+        renderSubs(data.profiles_data);
+        renderNodes(data.nodes_data);
+      } else {
+        statusEl.innerHTML = `<span style="color:#ef4444;">❌ ${data.message || '密码错误'}</span>`;
+      }
+    } catch (e) {
+      statusEl.innerHTML = `<span style="color:#ef4444;">❌ 网络请求异常</span>`;
+    }
+  }
+
+  function renderSpeed(speedData) {
+    const container = document.getElementById('speedListContainer');
+    if (!speedData || !speedData.regions_summary || speedData.regions_summary.length === 0) {
+      container.innerHTML = '<div style="color:var(--text-muted); font-size:0.85rem; padding:2rem 0; text-align:center; grid-column:span 2;">暂无常用测速数据，请点击右上角【⚡ 测速刷新】获取...</div>';
+      return;
+    }
+
+    let html = '';
+    speedData.regions_summary.forEach(reg => {
+      const isBestValid = reg.best_delay && reg.best_delay !== '超时' && reg.best_delay !== '-';
+      const delayColor = isBestValid ? (parseInt(reg.best_delay) < 100 ? '#10b981' : '#38bdf8') : '#ef4444';
+      const safeNode = (reg.best_node || '').replace(/'/g, "\\'");
+
+      html += `
+        <div class="speed-card ${reg.active ? 'active-region' : ''}">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
+            <span style="font-size:1rem; font-weight:800; color:#fff;">${reg.label} <small style="font-size:0.75rem; color:#94a3b8; font-weight:normal;">(${reg.node_count}节点)</small></span>
+            <span class="speed-badge" style="color:${delayColor}; border:1px solid ${delayColor}44;">${reg.best_delay}</span>
+          </div>
+          <div style="font-size:0.78rem; color:#94a3b8; margin-bottom:0.6rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+            最快: <span style="color:#cbd5e1;">${reg.best_node || '暂无'}</span>
+          </div>
+          ${reg.best_node ? `
+            <button onclick="sendCommand('switch_node', '${safeNode}')" class="btn" style="width:100%; padding:0.4rem; font-size:0.78rem;">一键切此最快</button>
+          ` : ''}
+        </div>
+      `;
+    });
+    container.innerHTML = html;
+  }
+
+  function renderSubs(profilesData) {
+    const container = document.getElementById('subsListContainer');
+    if (!profilesData || !profilesData.items || profilesData.items.length === 0) {
+      container.innerHTML = '<div style="color:var(--text-muted); font-size:0.85rem; padding:2rem 0; text-align:center;">暂无订阅数据，正在获取...</div>';
+      return;
+    }
+
+    let html = '';
+    profilesData.items.forEach(p => {
+      const activeBadge = p.is_active ? 
+        '<span style="background:#0284c7; color:#fff; font-size:0.72rem; padding:0.2rem 0.5rem; border-radius:4px; font-weight:700;">当前生效中</span>' : 
+        `<button onclick="sendCommand('switch_profile', '${p.uid}')" class="btn" style="padding:0.25rem 0.6rem; font-size:0.75rem; background:#334155;">切换到此订阅</button>`;
+
+      html += `
+        <div class="item-card ${p.is_active ? 'active' : ''}">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.4rem;">
+            <span style="font-weight:700; font-size:0.95rem; color:#fff;">${p.name || p.uid}</span>
+            ${activeBadge}
+          </div>
+          <div style="font-size:0.8rem; color:var(--text-muted); line-height:1.5;">
+            <div>流量：<span style="color:var(--accent);">${p.used_gb} GB</span> / ${p.total_gb > 0 ? p.total_gb + ' GB' : '不限'} | 到期：<span style="color:#e2e8f0;">${p.expire}</span></div>
+            <div style="word-break:break-all; font-size:0.72rem; color:#64748b; margin-top:0.25rem;">${p.url || ''}</div>
+          </div>
+        </div>
+      `;
+    });
+    container.innerHTML = html;
+  }
+
+  function renderNodes(nodesData) {
+    const container = document.getElementById('nodesListContainer');
+    if (!nodesData || !nodesData.regions) {
+      container.innerHTML = '<div style="color:var(--text-muted); font-size:0.85rem; padding:2rem 0; text-align:center;">暂无节点数据，正在获取...</div>';
+      return;
+    }
+
+    let html = '';
+    const nowNode = nodesData.now || '';
+
+    for (const [region, nodes] of Object.entries(nodesData.regions)) {
+      if (!nodes || nodes.length === 0) continue;
+      const count = nodes.length;
+      const containsActive = nodes.some(n => n.name === nowNode);
+      
+      html += `
+        <details ${containsActive ? 'open' : ''} style="background:#1e293b; border-radius:10px; margin-bottom:0.7rem; border:1px solid #334155; overflow:hidden;">
+          <summary style="padding:0.7rem 0.9rem; font-size:0.9rem; font-weight:700; color:#cbd5e1; cursor:pointer; background:#182234; display:flex; justify-content:space-between; align-items:center; list-style:none;">
+            <span>${region} (${count})</span>
+            ${containsActive ? '<span style="color:var(--accent); font-size:0.75rem; font-weight:normal;">● 正在使用此区域</span>' : '<span style="color:#64748b; font-size:0.75rem;">展开 ▼</span>'}
+          </summary>
+          <div style="padding:0.6rem; max-height:260px; overflow-y:auto;">
+      `;
+
+      nodes.forEach(n => {
+        const isCurrent = (n.name === nowNode);
+        const safeName = n.name.replace(/'/g, "\\'");
+        html += `
+          <div onclick="sendCommand('switch_node', '${safeName}')" style="display:flex; justify-content:space-between; align-items:center; padding:0.5rem 0.7rem; margin-bottom:0.4rem; border-radius:6px; cursor:pointer; background:${isCurrent ? 'rgba(2, 132, 199, 0.25)' : '#0f172a'}; border:${isCurrent ? '1px solid var(--primary)' : '1px solid rgba(255,255,255,0.05)'};">
+            <span style="font-size:0.85rem; color:${isCurrent ? 'var(--accent)' : '#e2e8f0'}; font-weight:${isCurrent ? '700' : '400'}; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:70%;">
+              ${isCurrent ? '✔ ' : ''}${n.name}
+            </span>
+            <span style="font-size:0.78rem; color:${n.delay_num < 100 ? '#10b981' : (n.delay_num < 250 ? '#38bdf8' : '#94a3b8')}; font-weight:700;">
+              ${n.delay}
+            </span>
+          </div>
+        `;
+      });
+
+      html += `
+          </div>
+        </details>
+      `;
+    }
+    container.innerHTML = html;
+  }
+
+  async function sendCommand(command, payload = '') {
+    const pwd = document.getElementById('clashPwdInput').value.trim();
+    const statusEl = document.getElementById('clashStatusText');
+    if (!pwd) {
+      alert('请输入控制密码');
+      return;
+    }
+
+    statusEl.innerHTML = '⚡ 正在下发指令并触发电脑秒级响应...';
+
+    try {
+      const res = await fetch('/api/clash', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pwd, action: 'dispatch_command', command, payload })
+      });
+      const data = await res.json();
+      if (data.status === 'ok') {
+        statusEl.innerHTML = '<span style="color:#10b981;">🚀 指令已直达云端！电脑秒级执行中</span>';
+        setTimeout(refreshStatus, 1500);
+        setTimeout(refreshStatus, 4000);
+      } else {
+        statusEl.innerHTML = `<span style="color:#ef4444;">❌ 失败: ${data.message}</span>`;
+      }
+    } catch (e) {
+      statusEl.innerHTML = `<span style="color:#ef4444;">❌ 网络请求失败</span>`;
+    }
+  }
+
+  function submitNewSub() {
+    const url = document.getElementById('newSubUrlInput').value.trim();
+    if (!url || !url.startsWith('http')) {
+      alert('请输入有效的 http/https 订阅链接');
+      return;
+    }
+    sendCommand('update_sub', url);
+    document.getElementById('newSubUrlInput').value = '';
+  }
+
+  // 页面载入时自动恢复密码并刷新
+  window.addEventListener('DOMContentLoaded', () => {
+    const savedPwd = localStorage.getItem('clash_remote_pwd') || '8888';
+    document.getElementById('clashPwdInput').value = savedPwd;
+    refreshStatus();
+  });
+</script>
+</body>
+</html>
