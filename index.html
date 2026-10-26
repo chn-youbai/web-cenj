@@ -513,10 +513,10 @@
         <span style="font-size: 0.82em; opacity: 0.9;">(安全登录) →</span>
       </button>
 
-      <!-- 高中英语课本查词系统入口 -->
+      <!-- 英语综合词库与查词系统入口 -->
       <a href="./vocab.html" class="vocab-btn" id="vocabLink">
-        <span>📖 高中英语课本查词</span>
-        <span style="font-size: 0.85em; opacity: 0.9;">(人教版7册/批量检测) →</span>
+        <span>📖 英语综合查词与词库</span>
+        <span style="font-size: 0.85em; opacity: 0.9;">(高中7册 + 四六级全量/1.1万词) →</span>
       </a>
 
       <a href="./gallery.html" class="gallery-btn">
@@ -1066,7 +1066,7 @@
         if (err) err.textContent = '请先输入访问密码解锁进入';
       }
     } catch (e) {}
-    // --- Clash Verge 远程控制 5次点击暗号与多Tab交互 ---
+    // --- Clash Verge 远程控制 5次点击暗号与跳转 ---
     let clashClickCount = 0;
     let clashClickTimer = null;
     let currentClashTab = 'hub';
@@ -1077,12 +1077,19 @@
         clashClickCount++;
         clearTimeout(clashClickTimer);
         
-        triggerImg.style.transform = `scale(${1 + clashClickCount * 0.05})`;
+        triggerImg.style.transform = `scale(${1 + clashClickCount * 0.08})`;
         setTimeout(() => { triggerImg.style.transform = ''; }, 150);
 
         if (clashClickCount >= 5) {
           clashClickCount = 0;
-          window.open('./clash.html', '_blank');
+          try {
+            const win = window.open('./clash.html', '_blank');
+            if (!win || win.closed || typeof win.closed === 'undefined') {
+              window.location.href = './clash.html';
+            }
+          } catch (err) {
+            window.location.href = './clash.html';
+          }
         } else {
           clashClickTimer = setTimeout(() => {
             clashClickCount = 0;

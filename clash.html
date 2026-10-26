@@ -361,7 +361,10 @@
     </div>
     <div class="auth-desc">请输入独立访问密码以进入（初始默认密码：<strong>8888</strong>）</div>
     <div class="auth-input-wrap">
-      <input type="password" id="clashAuthInput" class="auth-input" placeholder="输入密码" maxlength="20">
+      <input type="password" id="clashAuthInput" class="auth-input" placeholder="输入密码" maxlength="20" autocomplete="current-password">
+    </div>
+    <div style="margin-bottom:0.8rem; display:flex; justify-content:center;">
+      <button type="button" onclick="fillDefaultPwd()" style="background:rgba(2,132,199,0.15); border:1px solid rgba(56,189,248,0.3); color:#38bdf8; font-size:0.75rem; padding:0.25rem 0.65rem; border-radius:6px; cursor:pointer;">⚡ 点击一键填入默认密码 (8888)</button>
     </div>
     <div class="auth-error" id="authErrorMsg"></div>
     <label class="auth-remember-row">
@@ -552,6 +555,14 @@
     }
   }
 
+  function fillDefaultPwd() {
+    const input = document.getElementById('clashAuthInput');
+    if (input) {
+      input.value = '8888';
+      submitClashAuth();
+    }
+  }
+
   function checkAccessGate() {
     const backdrop = document.getElementById('authModalBackdrop');
     const mainApp = document.getElementById('mainAppContainer');
@@ -562,7 +573,9 @@
       backdrop.classList.remove('show');
       mainApp.style.filter = '';
       refreshStatus();
+      startAutoRefresh();
     } else {
+      stopAutoRefresh();
       if (err) {
         err.style.color = '#ef4444';
         err.textContent = '';
@@ -611,7 +624,7 @@
         }
         setTimeout(() => {
           checkAccessGate();
-        }, 250);
+        }, 200);
       } else {
         if (err) {
           err.style.color = '#ef4444';
@@ -687,11 +700,36 @@
 
   function logoutAuth() {
     if (confirm('确定退出锁定状态吗？退出后再次进入需要重新输入访问密码。')) {
+      stopAutoRefresh();
       localStorage.removeItem(AUTH_KEY);
       sessionStorage.removeItem(AUTH_KEY);
       checkAccessGate();
     }
   }
+
+  // 动态自动定时刷新系统 (进入页面后每 6 秒平滑同步一次)
+  let autoRefreshTimer = null;
+  function startAutoRefresh() {
+    if (autoRefreshTimer) clearInterval(autoRefreshTimer);
+    autoRefreshTimer = setInterval(() => {
+      if (isAuthorized() && !document.hidden) {
+        refreshStatus(true);
+      }
+    }, 6000);
+  }
+
+  function stopAutoRefresh() {
+    if (autoRefreshTimer) {
+      clearInterval(autoRefreshTimer);
+      autoRefreshTimer = null;
+    }
+  }
+
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden && isAuthorized()) {
+      refreshStatus(true);
+    }
+  });
 
   function formatTime(isoStr) {
     if (!isoStr) return '';
@@ -701,21 +739,40 @@
     return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
   }
 
-  async function refreshStatus() {
+  let isStatusRefreshing = false;
+
+  async function refreshStatus(isBackground = false) {
+    if (isStatusRefreshing && isBackground) return;
+    isStatusRefreshing = true;
+
     const pwd = getStoredPassword();
     const statusEl = document.getElementById('clashStatusText');
     const pcHbEl = document.getElementById('pcHbBar');
     const feedbackEl = document.getElementById('latestFeedback');
 
-    statusEl.textContent = '🔄 同步中...';
+    if (!isBackground && statusEl) {
+      statusEl.textContent = '🔄 同步中...';
+    }
 
     try {
       const res = await fetch(`/api/clash?pwd=${encodeURIComponent(pwd)}`);
+      if (res.status === 401) {
+        // 关键防护：遇到401密码错误，立刻清除本地授权Token并停止定时器，防止死循环无限重试卡死页面
+        localStorage.removeItem(AUTH_KEY);
+        sessionStorage.removeItem(AUTH_KEY);
+        stopAutoRefresh();
+        checkAccessGate();
+        isStatusRefreshing = false;
+        return;
+      }
+
       const data = await res.json();
       if (data.status === 'ok') {
-        statusEl.innerHTML = '<span style="color:#10b981;">● 已连接云端中继 (动态秒级同步就绪)</span>';
+        if (statusEl) {
+          statusEl.innerHTML = '<span style="color:#10b981;">● 已连接云端中继 (秒级自动同步中)</span>';
+        }
         
-        if (data.heartbeat) {
+        if (data.heartbeat && pcHbEl) {
           const hb = data.heartbeat;
           if (hb.status === 'online') {
             pcHbEl.innerHTML = `<span>💻 电脑状态：<strong style="color:#10b981;">● 在线</strong> (${hb.result.replace('在线 | ', '')})</span> <span style="font-size:0.75rem; color:#94a3b8;">${hb.diff_sec}秒前活跃</span>`;
@@ -723,11 +780,11 @@
             const diffText = hb.diff_sec < 60 ? `${hb.diff_sec}秒前` : (hb.diff_sec < 3600 ? `${Math.round(hb.diff_sec/60)}分钟前` : `${Math.round(hb.diff_sec/3600)}小时前`);
             pcHbEl.innerHTML = `<span>💻 电脑状态：<strong style="color:#ef4444;">○ 离线 / 已关机</strong></span> <span style="font-size:0.75rem; color:#94a3b8;">(最后活跃于 ${diffText})</span>`;
           }
-        } else {
+        } else if (pcHbEl) {
           pcHbEl.innerHTML = `💻 电脑状态：<span style="color:#94a3b8;">暂无心跳记录</span>`;
         }
 
-        if (data.latest_command) {
+        if (data.latest_command && feedbackEl) {
           const cmd = data.latest_command;
           const isDone = cmd.status === 'done';
           const isPending = cmd.status === 'pending';
@@ -770,13 +827,17 @@
         renderSpeed(data.speed_data);
         renderSubs(data.profiles_data);
         renderNodes(data.nodes_data);
-      } else if (res.status === 401) {
-        checkAccessGate();
       } else {
-        statusEl.innerHTML = `<span style="color:#ef4444;">❌ ${data.message || '密码错误'}</span>`;
+        if (statusEl) {
+          statusEl.innerHTML = `<span style="color:#ef4444;">❌ ${data.message || '密码错误'}</span>`;
+        }
       }
     } catch (e) {
-      statusEl.innerHTML = `<span style="color:#ef4444;">❌ 网络请求异常</span>`;
+      if (!isBackground && statusEl) {
+        statusEl.innerHTML = `<span style="color:#ef4444;">❌ 网络请求异常</span>`;
+      }
+    } finally {
+      isStatusRefreshing = false;
     }
   }
 
@@ -931,9 +992,11 @@
   }
 
   // 页面载入时执行安全门禁鉴权检查
-  window.addEventListener('DOMContentLoaded', () => {
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', checkAccessGate);
+  } else {
     checkAccessGate();
-  });
+  }
 </script>
 </body>
 </html>
