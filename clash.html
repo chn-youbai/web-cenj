@@ -741,6 +741,8 @@
 
   let isStatusRefreshing = false;
 
+  let isLastPCOnline = true;
+
   async function refreshStatus(isBackground = false) {
     if (isStatusRefreshing && isBackground) return;
     isStatusRefreshing = true;
@@ -768,7 +770,12 @@
 
       const data = await res.json();
       if (data.status === 'ok') {
-        if (statusEl) {
+        const isOnline = !!(data.heartbeat && data.heartbeat.status === 'online');
+        isLastPCOnline = isOnline;
+
+        if (statusEl && isBackground) {
+          statusEl.innerHTML = '<span style="color:#10b981;">● 已连接云端中继 (秒级自动同步中)</span>';
+        } else if (statusEl && !statusEl.innerHTML.includes('🚀') && !statusEl.innerHTML.includes('⚠️')) {
           statusEl.innerHTML = '<span style="color:#10b981;">● 已连接云端中继 (秒级自动同步中)</span>';
         }
         
@@ -788,7 +795,14 @@
           const cmd = data.latest_command;
           const isDone = cmd.status === 'done';
           const isPending = cmd.status === 'pending';
-          const badge = isDone ? '<span style="color:#10b981;">✅ 完成</span>' : (isPending ? '<span style="color:#f59e0b;">⏳ 电脑高速执行中</span>' : '<span style="color:#ef4444;">❌ 失败</span>');
+          let badge = '';
+          if (isDone) {
+            badge = '<span style="color:#10b981;">✅ 完成</span>';
+          } else if (isPending) {
+            badge = isOnline ? '<span style="color:#f59e0b;">⏳ 电脑高速执行中</span>' : '<span style="color:#ef4444;">⏸️ 电脑离线等待中</span>';
+          } else {
+            badge = '<span style="color:#ef4444;">❌ 失败</span>';
+          }
           
           const dispatchText = cmd.dispatched_at ? formatTime(cmd.dispatched_at) : (cmd.updated_at || '刚刚');
           let responseText = '';
@@ -803,9 +817,13 @@
           } else if (isPending) {
             if (cmd.dispatched_at) {
               const wait = Math.max(0, Math.round((Date.now() - new Date(cmd.dispatched_at)) / 1000));
-              responseText = `<span style="color:#fbbf24;">等待中... (已等 ${wait}秒)</span>`;
+              if (isOnline) {
+                responseText = `<span style="color:#fbbf24;">执行中... (已等 ${wait}秒)</span>`;
+              } else {
+                responseText = `<span style="color:#ef4444;">电脑离线，待电脑开机后自动执行 (已等 ${wait}秒)</span>`;
+              }
             } else {
-              responseText = '<span style="color:#fbbf24;">等待响应...</span>';
+              responseText = isOnline ? '<span style="color:#fbbf24;">等待响应...</span>' : '<span style="color:#ef4444;">电脑离线中...</span>';
             }
           } else {
             responseText = cmd.updated_at || '-';
@@ -962,12 +980,16 @@
       });
       const data = await res.json();
       if (data.status === 'ok') {
-        statusEl.innerHTML = '<span style="color:#10b981;">🚀 指令已直达云端！电脑秒级执行中...</span>';
-        refreshStatus();
-        setTimeout(refreshStatus, 1200);
-        setTimeout(refreshStatus, 2500);
-        setTimeout(refreshStatus, 4500);
-        setTimeout(refreshStatus, 7000);
+        if (!isLastPCOnline) {
+          statusEl.innerHTML = '<span style="color:#f59e0b;">⚠️ 指令已提交云端！电脑当前离线/已关机，待电脑开机联网后将自动秒级执行。</span>';
+        } else {
+          statusEl.innerHTML = '<span style="color:#10b981;">🚀 指令已直达云端！电脑秒级执行中...</span>';
+        }
+        refreshStatus(true);
+        setTimeout(() => refreshStatus(true), 1200);
+        setTimeout(() => refreshStatus(true), 2500);
+        setTimeout(() => refreshStatus(true), 4500);
+        setTimeout(() => refreshStatus(true), 7000);
       } else if (res.status === 401) {
         alert('访问密码已失效或已被修改，请重新解锁');
         localStorage.removeItem(AUTH_KEY);
