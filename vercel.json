@@ -1,8 +1,0 @@
-{
-  "functions": {
-    "api/**/*.py": {
-      "includeFiles": "exam_typesetter/**",
-      "excludeFiles": "{p/**,s/**,**/*.jpg,**/*.JPG,**/*.png,**/*.pdf,**/*.docx}"
-    }
-  }
-}
