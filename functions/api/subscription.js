@@ -77,7 +77,8 @@ async function fetchFromVpn07(email, password) {
     throw new Error(loginJson?.message || `登录失败 (HTTP ${loginRes.status})`);
   }
 
-  const token = loginJson.data.token || loginJson.data.auth_data;
+  // 重要：必须优先使用 auth_data (JWT 格式的用户认证凭证)，而非 token (32位订阅标识码)
+  const token = loginJson.data.auth_data || loginJson.data.token;
   if (!token) {
     throw new Error("登录成功但未返回有效认证 Token");
   }
@@ -93,7 +94,12 @@ async function fetchFromVpn07(email, password) {
     fetch("https://vpn07.com/api/v1/user/info", { headers: authHeaders }).then(r => r.json()).catch(() => null)
   ]);
 
-  const subUrl = subRes?.data?.subscribe_url;
+  let subUrl = subRes?.data?.subscribe_url;
+  // 若 getSubscribe 偶尔波动，可基于用户唯一的订阅 token 兜底拼接官网真实订阅直链
+  if (!subUrl && loginJson.data.token) {
+    subUrl = `https://vpn07.vip/cdn/baidu?token=${loginJson.data.token}`;
+  }
+
   if (!subUrl) {
     throw new Error(subRes?.message || "未能获取到订阅直链");
   }
