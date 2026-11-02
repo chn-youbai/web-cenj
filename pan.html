@@ -524,15 +524,15 @@
           </div>
           <div class="metric-item">
             <span class="metric-label">剩余流量</span>
-            <span class="metric-val success" id="metricTraffic">--</span>
+            <span class="metric-val success" id="metricRemaining">--</span>
+          </div>
+          <div class="metric-item">
+            <span class="metric-label">已用 / 总配额</span>
+            <span class="metric-val" id="metricUsedTotal">--</span>
           </div>
           <div class="metric-item">
             <span class="metric-label">到期时间</span>
             <span class="metric-val" id="metricExpire">--</span>
-          </div>
-          <div class="metric-item">
-            <span class="metric-label">同步模式</span>
-            <span class="metric-val" id="metricStatus" style="font-size: 0.82rem;">云端同步</span>
           </div>
         </div>
 
@@ -634,8 +634,9 @@
             document.getElementById('subscribeText').textContent = data.subscribe_url;
           }
           if (data.plan_name) document.getElementById('metricPlan').textContent = data.plan_name;
-          if (data.traffic && data.traffic.remaining) {
-            document.getElementById('metricTraffic').textContent = `${data.traffic.remaining} / ${data.traffic.total}`;
+          if (data.traffic) {
+            document.getElementById('metricRemaining').textContent = data.traffic.remaining || "--";
+            document.getElementById('metricUsedTotal').textContent = `${data.traffic.used || "0.00 GB"} / ${data.traffic.total || "--"}`;
           }
           if (data.expired_date_str) document.getElementById('metricExpire').textContent = data.expired_date_str;
           if (statusEl) {

@@ -104,17 +104,48 @@ async function fetchFromVpn07(email, password) {
     throw new Error(subRes?.message || "未能获取到订阅直链");
   }
 
-  const info = infoRes?.data || {};
-  const transferEnable = info.transfer_enable || 0;
-  const used = (info.u || 0) + (info.d || 0);
-  const remaining = Math.max(0, transferEnable - used);
+  // 合并用户信息字段 (部分站点 u/d 存放在 getSubscribe 或 info 之一)
+  const info = { ...(infoRes?.data || {}), ...(subRes?.data || {}) };
+  let transferEnable = info.transfer_enable || 0;
+  let used = (info.u || 0) + (info.d || 0);
+  let remaining = Math.max(0, transferEnable - used);
+  let expiredAt = info.expired_at || 0;
+
+  // 3. 权威计费流校准：从订阅直链的 Subscription-Userinfo 标头中提取实时精准流量
+  try {
+    const headRes = await fetch(subUrl, {
+      method: "HEAD",
+      headers: { "User-Agent": "ClashMetaForAndroid/v2.11.36" }
+    });
+    const userInfoHeader = headRes.headers.get("subscription-userinfo");
+    if (userInfoHeader) {
+      // 标头格式: upload=98683552440; download=60472362302; total=268435456000; expire=1794795704
+      const parts = {};
+      userInfoHeader.split(";").forEach(item => {
+        const [k, v] = item.trim().split("=");
+        if (k && v) parts[k.toLowerCase()] = parseInt(v, 10);
+      });
+      if (parts.total && parts.total > 0) {
+        transferEnable = parts.total;
+      }
+      if (parts.upload !== undefined && parts.download !== undefined) {
+        used = parts.upload + parts.download;
+        remaining = Math.max(0, transferEnable - used);
+      }
+      if (parts.expire) {
+        expiredAt = parts.expire;
+      }
+    }
+  } catch (e) {
+    console.warn("读取 subscription-userinfo 标头失败:", e);
+  }
 
   return {
     success: true,
     subscribe_url: subUrl,
-    plan_name: info.plan_name || (info.plan && info.plan.name) || "VIP 正式套餐",
-    expired_at: info.expired_at || 0,
-    expired_date_str: formatDate(info.expired_at),
+    plan_name: info.plan_name || (info.plan && info.plan.name) || (transferEnable > 0 ? "VIP 正式套餐" : "已订阅套餐"),
+    expired_at: expiredAt,
+    expired_date_str: formatDate(expiredAt),
     traffic: {
       total: formatBytes(transferEnable),
       used: formatBytes(used),
