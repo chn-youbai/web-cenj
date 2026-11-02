@@ -167,8 +167,6 @@ f:\zuomian\code\antitest\ (或 f:\zuomian\code\web-cenj\)
 └── PROJECT_ARCHITECTURE.md     # 本全局架构手册 (持续更新)
 ```
 
-> **注**：早期开发阶段遗留的 AI 试卷智能排版项目相关文件（`main.py`、`exam.html`、`exam_typesetter/`、`sample_math_exam.*` 等共 31 个文件）已完整移入独立归档工程 [`F:\zuomian\code\exam-typesetter`](file:///f:/zuomian/code/exam-typesetter)，主站保持 100% 纯净。
-
 ---
 
 ## 4. 核心功能模块与底层实现机制

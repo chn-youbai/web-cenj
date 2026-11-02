@@ -3,6 +3,31 @@
 // 支持 HEAD、GET、Range 断点续传与多线程下载工具 (如 IDM / 浏览器原生下载器)
 
 const PRESET_FILES = {
+  cmfa: {
+    url: "https://github.com/MetaCubeX/ClashMetaForAndroid/releases/download/v2.11.36/cmfa-2.11.36-meta-arm64-v8a-release.apk",
+    name: "cmfa-2.11.36-meta-arm64-v8a-release.apk",
+    type: "application/vnd.android.package-archive"
+  },
+  "cmfa-arm64": {
+    url: "https://github.com/MetaCubeX/ClashMetaForAndroid/releases/download/v2.11.36/cmfa-2.11.36-meta-arm64-v8a-release.apk",
+    name: "cmfa-2.11.36-meta-arm64-v8a-release.apk",
+    type: "application/vnd.android.package-archive"
+  },
+  cmfa_arm64: {
+    url: "https://github.com/MetaCubeX/ClashMetaForAndroid/releases/download/v2.11.36/cmfa-2.11.36-meta-arm64-v8a-release.apk",
+    name: "cmfa-2.11.36-meta-arm64-v8a-release.apk",
+    type: "application/vnd.android.package-archive"
+  },
+  "cmfa-2.11.36": {
+    url: "https://github.com/MetaCubeX/ClashMetaForAndroid/releases/download/v2.11.36/cmfa-2.11.36-meta-arm64-v8a-release.apk",
+    name: "cmfa-2.11.36-meta-arm64-v8a-release.apk",
+    type: "application/vnd.android.package-archive"
+  },
+  cmfa_2_11_36: {
+    url: "https://github.com/MetaCubeX/ClashMetaForAndroid/releases/download/v2.11.36/cmfa-2.11.36-meta-arm64-v8a-release.apk",
+    name: "cmfa-2.11.36-meta-arm64-v8a-release.apk",
+    type: "application/vnd.android.package-archive"
+  },
   cfma: {
     url: "https://github.com/chn-youbai/web-cenj/releases/download/v_media/cfma_latest.apk",
     name: "cfma_latest.apk",
