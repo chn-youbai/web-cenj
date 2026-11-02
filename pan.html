@@ -307,6 +307,47 @@
       gap: 0.9rem;
       width: 100%;
     }
+    .airport-tabs {
+      display: flex;
+      gap: 0.5rem;
+      border-bottom: 1px solid rgba(168, 85, 247, 0.25);
+      padding-bottom: 0.75rem;
+      margin-bottom: 0.25rem;
+      flex-wrap: wrap;
+    }
+    .airport-tab-btn {
+      padding: 0.55rem 1.2rem;
+      border-radius: 10px;
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: #94a3b8;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .airport-tab-btn:hover {
+      color: #f1f5f9;
+      background: rgba(255, 255, 255, 0.08);
+    }
+    .airport-tab-btn.active {
+      color: #ffffff;
+      background: linear-gradient(135deg, rgba(168, 85, 247, 0.35), rgba(59, 130, 246, 0.25));
+      border: 1px solid rgba(168, 85, 247, 0.6);
+      box-shadow: 0 4px 12px rgba(168, 85, 247, 0.25);
+    }
+    .btn-relay {
+      background: linear-gradient(135deg, #10b981, #06b6d4) !important;
+      color: #ffffff !important;
+      box-shadow: 0 4px 15px rgba(16, 185, 129, 0.35) !important;
+    }
+    .btn-relay:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(16, 185, 129, 0.5) !important;
+    }
     .sub-metrics-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
@@ -516,6 +557,16 @@
 
       <!-- 状态 B：解锁后（展示完整链接与一键复制按钮） -->
       <div class="sub-unlocked-section" id="subUnlockedSection" style="display: none;">
+        <!-- 双机场 Tab 选项卡 -->
+        <div class="airport-tabs">
+          <button class="airport-tab-btn active" id="tabDjjc" onclick="switchAirportTab('djjc')">
+            ✈️ 顶级机场 (200GB 长期有效)
+          </button>
+          <button class="airport-tab-btn" id="tabVpn07" onclick="switchAirportTab('vpn07')">
+            🚀 VPN07 (250GB 月付)
+          </button>
+        </div>
+
         <!-- 套餐微看板 -->
         <div class="sub-metrics-grid" id="subMetricsGrid">
           <div class="metric-item">
@@ -539,30 +590,43 @@
         <div class="subscribe-box" id="subscribeText">加载中...</div>
 
         <div style="display: flex; gap: 0.8rem; flex-wrap: wrap; align-items: center;">
-          <button class="copy-btn" style="background: linear-gradient(135deg, #a855f7, #6366f1); color: #ffffff; box-shadow: 0 4px 15px rgba(168, 85, 247, 0.4);" onclick="copyCurrentSubscribe()">
-            📋 一键复制订阅链接
+          <button class="copy-btn btn-relay" onclick="copyRelaySubscribe()">
+            🌟 📋 复制私人永久直链 (推荐)
           </button>
-          <button class="copy-btn btn-refresh" id="btnRefreshSub" onclick="fetchSubscription(true)">
+          <button class="copy-btn" style="background: linear-gradient(135deg, #a855f7, #6366f1); color: #ffffff; box-shadow: 0 4px 15px rgba(168, 85, 247, 0.4);" onclick="copyRawSubscribe()">
+            🌐 复制官方原生直链
+          </button>
+          <button class="copy-btn btn-refresh" id="btnRefreshSub" onclick="fetchSubscription(currentAirport, true)">
             🔄 强制刷新最新订阅
           </button>
         </div>
 
         <div class="sub-hint-text">
           <span id="subSyncTime">⏱️ 最近拉取：刚刚</span>
-          <a href="javascript:void(0)" onclick="openBindModal()" style="color: #c084fc; text-decoration: underline; cursor: pointer; font-size: 0.78rem;">⚙️ 绑定/修改官网账号</a>
-          <span id="subTip" style="width: 100%;">💡 提示：如遇官网节点变动，点击「强制刷新」即可同步最新节点直链</span>
+          <a href="javascript:void(0)" id="bindAccountLink" onclick="openBindModal()" style="color: #c084fc; text-decoration: underline; cursor: pointer; font-size: 0.78rem;">⚙️ 绑定/修改账号凭据</a>
+          <span id="subTip" style="width: 100%;">💡 提示：私人永久直链支持多域名自动探活自愈，导入 Clash / 手机客户端后终身免改链接</span>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- 绑定 vpn07 账号模态窗 -->
+  <!-- 绑定/修改账号与 Token 模态窗 -->
   <div id="bindModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 1000; align-items: center; justify-content: center; padding: 1rem;">
-    <div style="background: #0f172a; border: 1px solid rgba(168, 85, 247, 0.4); border-radius: 16px; padding: 1.5rem; max-width: 400px; width: 100%; box-shadow: 0 20px 40px rgba(0,0,0,0.6);">
-      <h3 style="color: #f1f5f9; margin-bottom: 0.5rem; font-size: 1.15rem; font-weight: 700;">⚙️ 绑定 vpn07.com 官网账号</h3>
-      <p style="color: #94a3b8; font-size: 0.8rem; margin-bottom: 1rem; line-height: 1.4;">凭证将安全保存在 Cloudflare D1 云端。配置后系统将自动登录并实时提取您的专属订阅与剩余流量。</p>
-      <input type="text" id="bindEmail" class="unlock-input" placeholder="输入官网登录邮箱" style="width: 100%; margin-bottom: 0.75rem;" autocomplete="off">
-      <input type="password" id="bindPassword" class="unlock-input" placeholder="输入官网登录密码" style="width: 100%; margin-bottom: 1rem;" autocomplete="off">
+    <div style="background: #0f172a; border: 1px solid rgba(168, 85, 247, 0.4); border-radius: 16px; padding: 1.5rem; max-width: 420px; width: 100%; box-shadow: 0 20px 40px rgba(0,0,0,0.6);">
+      <h3 id="bindModalTitle" style="color: #f1f5f9; margin-bottom: 0.5rem; font-size: 1.15rem; font-weight: 700;">⚙️ 配置账号凭据</h3>
+      <p id="bindModalDesc" style="color: #94a3b8; font-size: 0.8rem; margin-bottom: 1rem; line-height: 1.4;">凭证将安全保存在 Cloudflare D1 边缘数据库中，用于自动化同步与监控。</p>
+      
+      <!-- VPN07 表单 -->
+      <div id="formVpn07">
+        <input type="text" id="bindEmail" class="unlock-input" placeholder="输入 VPN07 官网登录邮箱" style="width: 100%; margin-bottom: 0.75rem;" autocomplete="off">
+        <input type="password" id="bindPassword" class="unlock-input" placeholder="输入 VPN07 官网登录密码" style="width: 100%; margin-bottom: 1rem;" autocomplete="off">
+      </div>
+
+      <!-- 顶级机场 表单 -->
+      <div id="formDjjc" style="display: none;">
+        <input type="text" id="bindDjjcToken" class="unlock-input" placeholder="粘贴顶级机场完整订阅直链 或 32位Token" style="width: 100%; margin-bottom: 1rem;" autocomplete="off">
+      </div>
+
       <div style="display: flex; gap: 0.6rem; justify-content: flex-end;">
         <button onclick="closeBindModal()" class="download-action sub-line" style="cursor: pointer; padding: 0.6rem 1.2rem;">取消</button>
         <button onclick="submitBindAccount()" class="unlock-btn" style="cursor: pointer; padding: 0.6rem 1.4rem;">保存并立即拉取</button>
@@ -574,11 +638,14 @@
 
   <script>
     // 真实订阅地址与访问密码保护
-    const REAL_SUBSCRIBE_URL = "https://dash.djjc.cfd/api/v1/client/subscribe?token=4bc2e53e3df5a9a50e1cd626e72f0c06";
     const ACCESS_PASSWORD = "227929";
     const MEMORY_MS = 5 * 60 * 1000; // 5分钟记忆时间 (300,000 毫秒)
 
-    let currentSubscribeUrl = REAL_SUBSCRIBE_URL;
+    let currentAirport = localStorage.getItem('selected_airport') || 'djjc';
+    let airportCache = {
+      djjc: { rawUrl: "https://dash.djjc.cfd/api/v1/client/subscribe?token=4bc2e53e3df5a9a50e1cd626e72f0c06", relayUrl: "/api/sub?type=djjc" },
+      vpn07: { rawUrl: "", relayUrl: "/api/sub?type=vpn07" }
+    };
     let isFetchingSub = false;
 
     // 检查 5 分钟会话记忆
@@ -598,10 +665,9 @@
       if (e) e.preventDefault();
       const pwd = document.getElementById('unlockInput').value.trim();
       if (pwd === ACCESS_PASSWORD) {
-        // 记录 5 分钟后过期的时间戳
         localStorage.setItem('sub_unlock_expire', (Date.now() + MEMORY_MS).toString());
         showUnlockedUI();
-        showToast("🎉 密码正确！已解锁订阅信息（5分钟内免输）");
+        showToast("🎉 密码正确！已解锁双机场订阅中枢（5分钟内免输）");
       } else {
         showToast("❌ 密码错误，请重新输入");
         const input = document.getElementById('unlockInput');
@@ -610,7 +676,29 @@
       }
     }
 
-    async function fetchSubscription(forceRefresh = false) {
+    function switchAirportTab(type) {
+      currentAirport = type;
+      localStorage.setItem('selected_airport', type);
+
+      const tabDjjc = document.getElementById('tabDjjc');
+      const tabVpn07 = document.getElementById('tabVpn07');
+      if (type === 'djjc') {
+        tabDjjc.classList.add('active');
+        tabVpn07.classList.remove('active');
+      } else {
+        tabDjjc.classList.remove('active');
+        tabVpn07.classList.add('active');
+      }
+
+      // 呈现已记录的直链
+      const activeData = airportCache[type];
+      const relayFullUrl = `${window.location.origin}${activeData.relayUrl}`;
+      document.getElementById('subscribeText').textContent = relayFullUrl;
+
+      fetchSubscription(type, false);
+    }
+
+    async function fetchSubscription(type, forceRefresh = false) {
       if (isFetchingSub) return;
       isFetchingSub = true;
       const refreshBtn = document.getElementById('btnRefreshSub');
@@ -619,48 +707,42 @@
         refreshBtn.textContent = "⏳ 同步中...";
       }
 
-      const statusEl = document.getElementById('metricStatus');
-      if (statusEl) {
-        statusEl.textContent = forceRefresh ? "官网拉取中" : "读取缓存";
-      }
-
       try {
-        const url = `/api/subscription?pwd=${encodeURIComponent(ACCESS_PASSWORD)}${forceRefresh ? '&refresh=true' : ''}`;
+        const url = `/api/subscription?type=${type}&pwd=${encodeURIComponent(ACCESS_PASSWORD)}${forceRefresh ? '&refresh=true' : ''}`;
         const res = await fetch(url);
         if (res.ok) {
           const data = await res.json();
           if (data.subscribe_url) {
-            currentSubscribeUrl = data.subscribe_url;
-            document.getElementById('subscribeText').textContent = data.subscribe_url;
+            airportCache[type].rawUrl = data.subscribe_url;
           }
-          if (data.plan_name) document.getElementById('metricPlan').textContent = data.plan_name;
-          if (data.traffic) {
-            document.getElementById('metricRemaining').textContent = data.traffic.remaining || "--";
-            document.getElementById('metricUsedTotal').textContent = `${data.traffic.used || "0.00 GB"} / ${data.traffic.total || "--"}`;
+          if (data.relay_url) {
+            airportCache[type].relayUrl = data.relay_url;
           }
-          if (data.expired_date_str) document.getElementById('metricExpire').textContent = data.expired_date_str;
-          if (statusEl) {
-            statusEl.textContent = data.from_cache ? "⚡ 毫秒缓存" : "✨ 官网实时";
-            statusEl.className = "metric-val success";
+          
+          if (currentAirport === type) {
+            const relayFullUrl = `${window.location.origin}${airportCache[type].relayUrl}`;
+            document.getElementById('subscribeText').textContent = relayFullUrl;
+
+            if (data.plan_name) document.getElementById('metricPlan').textContent = data.plan_name;
+            if (data.traffic) {
+              document.getElementById('metricRemaining').textContent = data.traffic.remaining || "--";
+              document.getElementById('metricUsedTotal').textContent = `${data.traffic.used || "0.00 GB"} / ${data.traffic.total || "--"}`;
+            }
+            if (data.expired_date_str) document.getElementById('metricExpire').textContent = data.expired_date_str;
+
+            const now = new Date();
+            const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
+            document.getElementById('subSyncTime').textContent = `⏱️ 同步时间：${timeStr} (${data.from_cache ? '云端缓存' : '实时探活'})`;
           }
-          const now = new Date();
-          const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
-          document.getElementById('subSyncTime').textContent = `⏱️ 同步时间：${timeStr} (${data.from_cache ? '云端缓存' : '官网直刷'})`;
+
           if (forceRefresh) {
-            showToast(data.warning || "🎉 已成功同步官网最新订阅！");
+            showToast(data.warning || `🎉 已成功同步 ${data.airport_name || ''} 最新配置与流量！`);
           }
-        } else {
-          throw new Error(`HTTP ${res.status}`);
         }
       } catch (e) {
-        console.warn("拉取云端订阅失败，保留当前可用订阅:", e);
-        document.getElementById('subscribeText').textContent = currentSubscribeUrl;
-        if (statusEl) {
-          statusEl.textContent = "备用模式";
-          statusEl.className = "metric-val warning";
-        }
+        console.warn("拉取云端订阅失败:", e);
         if (forceRefresh) {
-          showToast("⚠️ 网络波动，已为您保留当前可用订阅");
+          showToast("⚠️ 网络轻微波动，已为您保留当前可用订阅");
         }
       } finally {
         isFetchingSub = false;
@@ -674,8 +756,7 @@
     function showUnlockedUI() {
       document.getElementById('subLockedSection').style.display = 'none';
       document.getElementById('subUnlockedSection').style.display = 'flex';
-      document.getElementById('subscribeText').textContent = currentSubscribeUrl;
-      fetchSubscription(false);
+      switchAirportTab(currentAirport);
     }
 
     function showLockedUI() {
@@ -684,8 +765,15 @@
       document.getElementById('subscribeText').textContent = '';
     }
 
-    function copyCurrentSubscribe() {
-      copyText(currentSubscribeUrl, '订阅地址');
+    function copyRelaySubscribe() {
+      const activeData = airportCache[currentAirport];
+      const relayFullUrl = `${window.location.origin}${activeData.relayUrl}`;
+      copyText(relayFullUrl, '私人永久固定直链');
+    }
+
+    function copyRawSubscribe() {
+      const activeData = airportCache[currentAirport];
+      copyText(activeData.rawUrl, '官方原生订阅直链');
     }
 
     function copyText(text, label) {
@@ -703,6 +791,13 @@
     }
 
     function openBindModal() {
+      const isVpn07 = currentAirport === 'vpn07';
+      document.getElementById('bindModalTitle').textContent = isVpn07 ? "⚙️ 绑定 VPN07 官网账号" : "⚙️ 绑定/修改顶级机场 Token";
+      document.getElementById('bindModalDesc').textContent = isVpn07 
+        ? "凭据将安全保存在 Cloudflare D1 边缘数据库中，云端自动登录并抓取专属节点。" 
+        : "可直接粘贴完整订阅直链或 32 位 Token，云端中继将自动以此 Token 进行多域名探活自愈。";
+      document.getElementById('formVpn07').style.display = isVpn07 ? "block" : "none";
+      document.getElementById('formDjjc').style.display = isVpn07 ? "none" : "block";
       document.getElementById('bindModal').style.display = 'flex';
     }
 
@@ -711,34 +806,72 @@
     }
 
     async function submitBindAccount() {
-      const email = document.getElementById('bindEmail').value.trim();
-      const password = document.getElementById('bindPassword').value.trim();
-      if (!email || !password) {
-        showToast("⚠️ 请输入官网邮箱和密码");
-        return;
-      }
-      showToast("⏳ 正在保存并向云端验证...");
-      try {
-        const res = await fetch('/api/subscription', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            pwd: ACCESS_PASSWORD,
-            action: 'set_credentials',
-            email: email,
-            vpn_password: password
-          })
-        });
-        const json = await res.json();
-        if (json.success) {
-          closeBindModal();
-          showToast("🎉 账号凭证绑定成功！正在拉取最新订阅...");
-          fetchSubscription(true);
-        } else {
-          showToast("❌ " + (json.message || "保存失败"));
+      if (currentAirport === 'vpn07') {
+        const email = document.getElementById('bindEmail').value.trim();
+        const password = document.getElementById('bindPassword').value.trim();
+        if (!email || !password) {
+          showToast("⚠️ 请输入官网邮箱和密码");
+          return;
         }
-      } catch (e) {
-        showToast("❌ 请求异常: " + e.message);
+        showToast("⏳ 正在保存并向云端验证...");
+        try {
+          const res = await fetch('/api/subscription', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              pwd: ACCESS_PASSWORD,
+              type: 'vpn07',
+              action: 'set_credentials',
+              email: email,
+              vpn_password: password
+            })
+          });
+          const json = await res.json();
+          if (json.success) {
+            closeBindModal();
+            showToast("🎉 VPN07 凭证保存成功！正在拉取最新订阅...");
+            fetchSubscription('vpn07', true);
+          } else {
+            showToast("❌ " + (json.message || "保存失败"));
+          }
+        } catch (e) {
+          showToast("❌ 请求异常: " + e.message);
+        }
+      } else {
+        // 顶级机场 token 绑定
+        let rawInput = document.getElementById('bindDjjcToken').value.trim();
+        if (!rawInput) {
+          showToast("⚠️ 请输入订阅直链或 Token");
+          return;
+        }
+        let token = rawInput;
+        if (rawInput.includes("token=")) {
+          const m = rawInput.match(/token=([a-zA-Z0-9_-]+)/);
+          if (m && m[1]) token = m[1];
+        }
+        showToast("⏳ 正在更新顶级机场 Token...");
+        try {
+          const res = await fetch('/api/subscription', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              pwd: ACCESS_PASSWORD,
+              type: 'djjc',
+              action: 'set_djjc_token',
+              token: token
+            })
+          });
+          const json = await res.json();
+          if (json.success) {
+            closeBindModal();
+            showToast("🎉 顶级机场 Token 更新成功！正在探活最新节点...");
+            fetchSubscription('djjc', true);
+          } else {
+            showToast("❌ " + (json.message || "保存失败"));
+          }
+        } catch (e) {
+          showToast("❌ 请求异常: " + e.message);
+        }
       }
     }
 

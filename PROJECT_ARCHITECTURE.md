@@ -27,6 +27,7 @@
    - [5.6 1.1万全量英语词库云边端协同与离线存储架构](#56-11万全量英语词库云边端协同与离线存储架构)
    - [5.7 跨 NAT 局域网反向信标穿透与 Clash 远程信令总线](#57-跨-nat-局域网反向信标穿透与-clash-远程信令总线)
    - [5.8 vpn07.com 自动化订阅同步与凭证安全总线 (/api/subscription.js)](#58-vpn07com-自动化订阅同步与凭证安全总线-apisubscriptionjs)
+   - [5.9 双机场与方案 B 私人专属固定免密中继 (/api/sub.js)](#59-双机场与方案-b-私人专属固定免密中继-apisubjs)
 6. [数据库表结构与存储设计全解](#6-数据库表结构与存储设计全解)
 7. [外部守护进程与内网穿透机制](#7-外部守护进程与内网穿透机制)
 8. [运维部署、数据迁移与自动化脚本指南](#8-运维部署数据迁移与自动化脚本指南)
@@ -405,6 +406,20 @@ sequenceDiagram
   2. **云端安全隔离**：账号密码存放于 Cloudflare Pages 环境变量（`VPN07_EMAIL`、`VPN07_PASSWORD`）或 D1 安全记录（`id = 'vpn07_credentials'`），对外完全屏蔽敏感凭证。
   3. **D1 毫秒级缓存 (Cache-First)**：拉取成功后持久化至 `clash_control` 表的 `vpn07_sub` 记录中。用户日常访问页面解锁（密码 `227929`）时直接读取 D1 缓存，0 延迟展现。
   4. **一键强制刷新**：用户点击「🔄 强制刷新最新订阅」时，透传 `refresh=true` 实时穿透官网拉取最新状态并更新数据库，兼顾高可用与极速响应。
+
+### 5.9 双机场与方案 B 私人专属固定免密中继 (/api/sub.js)
+
+#### 1. 业务痛点
+第三方机场（如「顶级机场」`xn--mes358a9urctx.com` / `dash.djjc.cfd`）由于 GFW 封锁经常被迫更换分发域名。普通用户每逢换域都需要重新登录后台复制订阅并修改手机/电脑客户端，体验割裂。
+
+#### 2. 方案 B 核心架构实现
+- **中继网关**：`/api/sub.js`。
+- **免密直连**：对外暴露纯净的固定 URL：
+  - 顶级机场：`https://web-cenj.pages.dev/api/sub?type=djjc`
+  - VPN07：`https://web-cenj.pages.dev/api/sub?type=vpn07`
+- **自动协议伪装**：自动注入 `User-Agent: ClashMetaForAndroid/v2.11.36`，绕过第三方 Cloudflare 5秒盾，触发官方下发原生标准 Clash YAML 规则。
+- **多域名容灾探活**：在云端维护备用分发域名池（`dash.djjc.cfd`、`sub.djjc.cfd`、`api.djjc.cfd` 等），一旦主力域名被封，后端自动毫秒级切换可用新域名，客户端导入一次即可终身免改。
+- **流量标头透传**：透传 `subscription-userinfo` 响应头，使用户在 Clash 客户端界面直接就能看见剩余流量条。
 
 ---
 
