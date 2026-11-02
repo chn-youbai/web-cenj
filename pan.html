@@ -307,6 +307,61 @@
       gap: 0.9rem;
       width: 100%;
     }
+    .sub-metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 0.75rem;
+      width: 100%;
+    }
+    .metric-item {
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(168, 85, 247, 0.25);
+      border-radius: 12px;
+      padding: 0.65rem 0.9rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+    .metric-label {
+      font-size: 0.75rem;
+      color: #94a3b8;
+      font-weight: 500;
+    }
+    .metric-val {
+      font-size: 0.95rem;
+      color: #f1f5f9;
+      font-weight: 700;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+    .metric-val.highlight {
+      color: #38bdf8;
+    }
+    .metric-val.success {
+      color: #4ade80;
+    }
+    .metric-val.warning {
+      color: #fbbf24;
+    }
+    .btn-refresh {
+      background: rgba(255, 255, 255, 0.08);
+      color: #e2e8f0;
+      border: 1px solid rgba(168, 85, 247, 0.4);
+      box-shadow: none;
+    }
+    .btn-refresh:hover {
+      background: rgba(168, 85, 247, 0.2);
+      color: #ffffff;
+      border-color: rgba(168, 85, 247, 0.7);
+    }
+    .sub-hint-text {
+      font-size: 0.75rem;
+      color: #94a3b8;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
     .subscribe-box {
       width: 100%;
       background: rgba(0, 0, 0, 0.45);
@@ -461,12 +516,56 @@
 
       <!-- 状态 B：解锁后（展示完整链接与一键复制按钮） -->
       <div class="sub-unlocked-section" id="subUnlockedSection" style="display: none;">
-        <div class="subscribe-box" id="subscribeText"></div>
-        <div style="display: flex; gap: 0.8rem; flex-wrap: wrap;">
-          <button class="copy-btn" style="background: linear-gradient(135deg, #a855f7, #6366f1); color: #ffffff; box-shadow: 0 4px 15px rgba(168, 85, 247, 0.4);" onclick="copyText(REAL_SUBSCRIBE_URL, '订阅地址')">
+        <!-- 套餐微看板 -->
+        <div class="sub-metrics-grid" id="subMetricsGrid">
+          <div class="metric-item">
+            <span class="metric-label">当前套餐</span>
+            <span class="metric-val highlight" id="metricPlan">加载中...</span>
+          </div>
+          <div class="metric-item">
+            <span class="metric-label">剩余流量</span>
+            <span class="metric-val success" id="metricTraffic">--</span>
+          </div>
+          <div class="metric-item">
+            <span class="metric-label">到期时间</span>
+            <span class="metric-val" id="metricExpire">--</span>
+          </div>
+          <div class="metric-item">
+            <span class="metric-label">同步模式</span>
+            <span class="metric-val" id="metricStatus" style="font-size: 0.82rem;">云端同步</span>
+          </div>
+        </div>
+
+        <div class="subscribe-box" id="subscribeText">加载中...</div>
+
+        <div style="display: flex; gap: 0.8rem; flex-wrap: wrap; align-items: center;">
+          <button class="copy-btn" style="background: linear-gradient(135deg, #a855f7, #6366f1); color: #ffffff; box-shadow: 0 4px 15px rgba(168, 85, 247, 0.4);" onclick="copyCurrentSubscribe()">
             📋 一键复制订阅链接
           </button>
+          <button class="copy-btn btn-refresh" id="btnRefreshSub" onclick="fetchSubscription(true)">
+            🔄 强制刷新最新订阅
+          </button>
         </div>
+
+        <div class="sub-hint-text">
+          <span id="subSyncTime">⏱️ 最近拉取：刚刚</span>
+          <a href="javascript:void(0)" onclick="openBindModal()" style="color: #c084fc; text-decoration: underline; cursor: pointer; font-size: 0.78rem;">⚙️ 绑定/修改官网账号</a>
+          <span id="subTip" style="width: 100%;">💡 提示：如遇官网节点变动，点击「强制刷新」即可同步最新节点直链</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 绑定 vpn07 账号模态窗 -->
+  <div id="bindModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 1000; align-items: center; justify-content: center; padding: 1rem;">
+    <div style="background: #0f172a; border: 1px solid rgba(168, 85, 247, 0.4); border-radius: 16px; padding: 1.5rem; max-width: 400px; width: 100%; box-shadow: 0 20px 40px rgba(0,0,0,0.6);">
+      <h3 style="color: #f1f5f9; margin-bottom: 0.5rem; font-size: 1.15rem; font-weight: 700;">⚙️ 绑定 vpn07.com 官网账号</h3>
+      <p style="color: #94a3b8; font-size: 0.8rem; margin-bottom: 1rem; line-height: 1.4;">凭证将安全保存在 Cloudflare D1 云端。配置后系统将自动登录并实时提取您的专属订阅与剩余流量。</p>
+      <input type="text" id="bindEmail" class="unlock-input" placeholder="输入官网登录邮箱" style="width: 100%; margin-bottom: 0.75rem;" autocomplete="off">
+      <input type="password" id="bindPassword" class="unlock-input" placeholder="输入官网登录密码" style="width: 100%; margin-bottom: 1rem;" autocomplete="off">
+      <div style="display: flex; gap: 0.6rem; justify-content: flex-end;">
+        <button onclick="closeBindModal()" class="download-action sub-line" style="cursor: pointer; padding: 0.6rem 1.2rem;">取消</button>
+        <button onclick="submitBindAccount()" class="unlock-btn" style="cursor: pointer; padding: 0.6rem 1.4rem;">保存并立即拉取</button>
       </div>
     </div>
   </div>
@@ -478,6 +577,9 @@
     const REAL_SUBSCRIBE_URL = "https://dash.djjc.cfd/api/v1/client/subscribe?token=4bc2e53e3df5a9a50e1cd626e72f0c06";
     const ACCESS_PASSWORD = "227929";
     const MEMORY_MS = 5 * 60 * 1000; // 5分钟记忆时间 (300,000 毫秒)
+
+    let currentSubscribeUrl = REAL_SUBSCRIBE_URL;
+    let isFetchingSub = false;
 
     // 检查 5 分钟会话记忆
     checkSessionMemory();
@@ -499,7 +601,7 @@
         // 记录 5 分钟后过期的时间戳
         localStorage.setItem('sub_unlock_expire', (Date.now() + MEMORY_MS).toString());
         showUnlockedUI();
-        showToast("🎉 密码正确！已解锁订阅地址（5分钟内免输）");
+        showToast("🎉 密码正确！已解锁订阅信息（5分钟内免输）");
       } else {
         showToast("❌ 密码错误，请重新输入");
         const input = document.getElementById('unlockInput');
@@ -508,16 +610,81 @@
       }
     }
 
+    async function fetchSubscription(forceRefresh = false) {
+      if (isFetchingSub) return;
+      isFetchingSub = true;
+      const refreshBtn = document.getElementById('btnRefreshSub');
+      if (refreshBtn) {
+        refreshBtn.disabled = true;
+        refreshBtn.textContent = "⏳ 同步中...";
+      }
+
+      const statusEl = document.getElementById('metricStatus');
+      if (statusEl) {
+        statusEl.textContent = forceRefresh ? "官网拉取中" : "读取缓存";
+      }
+
+      try {
+        const url = `/api/subscription?pwd=${encodeURIComponent(ACCESS_PASSWORD)}${forceRefresh ? '&refresh=true' : ''}`;
+        const res = await fetch(url);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.subscribe_url) {
+            currentSubscribeUrl = data.subscribe_url;
+            document.getElementById('subscribeText').textContent = data.subscribe_url;
+          }
+          if (data.plan_name) document.getElementById('metricPlan').textContent = data.plan_name;
+          if (data.traffic && data.traffic.remaining) {
+            document.getElementById('metricTraffic').textContent = `${data.traffic.remaining} / ${data.traffic.total}`;
+          }
+          if (data.expired_date_str) document.getElementById('metricExpire').textContent = data.expired_date_str;
+          if (statusEl) {
+            statusEl.textContent = data.from_cache ? "⚡ 毫秒缓存" : "✨ 官网实时";
+            statusEl.className = "metric-val success";
+          }
+          const now = new Date();
+          const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
+          document.getElementById('subSyncTime').textContent = `⏱️ 同步时间：${timeStr} (${data.from_cache ? '云端缓存' : '官网直刷'})`;
+          if (forceRefresh) {
+            showToast(data.warning || "🎉 已成功同步官网最新订阅！");
+          }
+        } else {
+          throw new Error(`HTTP ${res.status}`);
+        }
+      } catch (e) {
+        console.warn("拉取云端订阅失败，保留当前可用订阅:", e);
+        document.getElementById('subscribeText').textContent = currentSubscribeUrl;
+        if (statusEl) {
+          statusEl.textContent = "备用模式";
+          statusEl.className = "metric-val warning";
+        }
+        if (forceRefresh) {
+          showToast("⚠️ 网络波动，已为您保留当前可用订阅");
+        }
+      } finally {
+        isFetchingSub = false;
+        if (refreshBtn) {
+          refreshBtn.disabled = false;
+          refreshBtn.textContent = "🔄 强制刷新最新订阅";
+        }
+      }
+    }
+
     function showUnlockedUI() {
       document.getElementById('subLockedSection').style.display = 'none';
       document.getElementById('subUnlockedSection').style.display = 'flex';
-      document.getElementById('subscribeText').textContent = REAL_SUBSCRIBE_URL;
+      document.getElementById('subscribeText').textContent = currentSubscribeUrl;
+      fetchSubscription(false);
     }
 
     function showLockedUI() {
       document.getElementById('subLockedSection').style.display = 'flex';
       document.getElementById('subUnlockedSection').style.display = 'none';
       document.getElementById('subscribeText').textContent = '';
+    }
+
+    function copyCurrentSubscribe() {
+      copyText(currentSubscribeUrl, '订阅地址');
     }
 
     function copyText(text, label) {
@@ -531,6 +698,46 @@
         document.execCommand('copy');
         document.body.removeChild(input);
         showToast(`✅ ${label} 已复制到剪贴板！`);
+      }
+    }
+
+    function openBindModal() {
+      document.getElementById('bindModal').style.display = 'flex';
+    }
+
+    function closeBindModal() {
+      document.getElementById('bindModal').style.display = 'none';
+    }
+
+    async function submitBindAccount() {
+      const email = document.getElementById('bindEmail').value.trim();
+      const password = document.getElementById('bindPassword').value.trim();
+      if (!email || !password) {
+        showToast("⚠️ 请输入官网邮箱和密码");
+        return;
+      }
+      showToast("⏳ 正在保存并向云端验证...");
+      try {
+        const res = await fetch('/api/subscription', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            pwd: ACCESS_PASSWORD,
+            action: 'set_credentials',
+            email: email,
+            vpn_password: password
+          })
+        });
+        const json = await res.json();
+        if (json.success) {
+          closeBindModal();
+          showToast("🎉 账号凭证绑定成功！正在拉取最新订阅...");
+          fetchSubscription(true);
+        } else {
+          showToast("❌ " + (json.message || "保存失败"));
+        }
+      } catch (e) {
+        showToast("❌ 请求异常: " + e.message);
       }
     }
 
