@@ -634,28 +634,30 @@
               </span>
             </div>
 
-            <!-- Card Center: Headword + Audio + Meaning + Exam Forms -->
-            <div id="cardCenterArea" class="my-auto py-1 text-center flex flex-col items-center justify-center cursor-pointer" title="点击揭晓释义或朗读单词">
-              <!-- Headword -->
-              <div id="cardWordText" class="text-[34px] sm:text-[38px] leading-tight font-extrabold tracking-tight select-text break-words max-w-full px-1">
-                for
-              </div>
+            <!-- Card Center: Headword + Audio + Meaning + Exam Forms + High Frequency Phrases -->
+            <div id="cardCenterArea" class="flex-1 min-h-0 flex flex-col justify-around items-center py-1.5 text-center cursor-pointer" title="点击揭晓释义或朗读单词">
+              <!-- Headword Area -->
+              <div class="flex flex-col items-center justify-center">
+                <div id="cardWordText" class="text-[38px] sm:text-[44px] leading-tight font-black tracking-tight select-text break-words max-w-full px-1">
+                  for
+                </div>
 
-              <!-- Pronunciation Trigger Buttons -->
-              <div class="mt-1 flex items-center gap-1.5">
-                <button id="btnSpeakWord" type="button" class="btn-press px-3 py-1 rounded-full bg-teal-500/10 hover:bg-teal-500/20 text-teal-600 dark:text-teal-300 border border-teal-500/25 text-xs font-semibold flex items-center gap-1 transition">
-                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/></svg>
-                  <span id="speakBtnText">点击发音</span>
-                </button>
-                <button id="btnSpeakSlow" type="button" class="btn-press px-2 py-1 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 sub-text text-[10px] font-medium transition" title="0.7x 慢速跟读">
-                  🐢 慢速
-                </button>
+                <!-- Pronunciation Trigger Buttons -->
+                <div class="mt-1 flex items-center gap-1.5">
+                  <button id="btnSpeakWord" type="button" class="btn-press px-3.5 py-1 rounded-full bg-teal-500/10 hover:bg-teal-500/20 text-teal-600 dark:text-teal-300 border border-teal-500/25 text-xs font-semibold flex items-center gap-1 transition">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/></svg>
+                    <span id="speakBtnText">点击发音</span>
+                  </button>
+                  <button id="btnSpeakSlow" type="button" class="btn-press px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 sub-text text-[10px] font-medium transition" title="0.7x 慢速跟读">
+                    🐢 慢速
+                  </button>
+                </div>
               </div>
 
               <!-- Chinese Meaning Box -->
-              <div id="cardMeaningWrapper" class="mt-2 w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/70 dark:border-slate-700/60 transition">
+              <div id="cardMeaningWrapper" class="w-full px-3.5 py-2.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/70 dark:border-slate-700/60 transition">
                 <div class="text-[9px] uppercase tracking-wider sub-text mb-0.5 font-semibold">高考核心释义</div>
-                <div id="cardMeaningText" class="text-[16px] sm:text-[18px] font-bold leading-snug text-slate-800 dark:text-slate-100 select-text">
+                <div id="cardMeaningText" class="text-[17px] sm:text-[19px] font-extrabold leading-snug text-slate-800 dark:text-slate-100 select-text">
                   为了……、对于……、因为
                 </div>
                 <div id="maskHintText" class="hidden text-[10px] text-teal-600 dark:text-teal-400 mt-0.5 font-medium">
@@ -663,14 +665,26 @@
                 </div>
               </div>
 
-              <!-- Exam Forms (考查形式) -->
-              <div id="cardFormsSection" class="mt-1.5 w-full text-left px-2.5 py-1.5 rounded-xl bg-teal-500/5 border border-teal-500/15 max-h-[75px] overflow-y-auto scroll-area">
+              <!-- Exam Forms (历年真题变形) -->
+              <div id="cardFormsSection" class="w-full text-left px-3 py-2 rounded-2xl bg-teal-500/5 border border-teal-500/15 max-h-[80px] overflow-y-auto scroll-area">
                 <div class="flex items-center justify-between mb-1">
                   <span class="text-[10px] font-bold text-teal-700 dark:text-teal-300 flex items-center gap-1">
                     <span>📌 历年真题考查变形</span>
                   </span>
                 </div>
                 <div id="cardFormsList" class="flex flex-wrap gap-1.5">
+                  <!-- Populated dynamically -->
+                </div>
+              </div>
+
+              <!-- High-Frequency Exam Phrases & Collocations (高考常考短语 & 课本搭配) -->
+              <div id="cardPhrasesSection" class="w-full text-left px-3 py-2 rounded-2xl bg-amber-500/5 dark:bg-amber-500/10 border border-amber-500/20 max-h-[95px] overflow-y-auto scroll-area">
+                <div class="flex items-center justify-between mb-1">
+                  <span class="text-[10px] font-bold text-amber-700 dark:text-amber-400 flex items-center gap-1">
+                    <span>📚 高考真题常考短语 & 课本搭配</span>
+                  </span>
+                </div>
+                <div id="cardPhrasesList" class="space-y-1 text-[11px] text-slate-700 dark:text-slate-200">
                   <!-- Populated dynamically -->
                 </div>
               </div>
@@ -698,21 +712,21 @@
 
           <!-- 3-Tier Marking Buttons ALWAYS PINNED ABOVE NAV BAR -->
           <div class="mt-1.5 grid grid-cols-3 gap-2 flex-shrink-0">
-            <button id="btnMarkKnown" type="button" class="btn-press py-2 px-1 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white shadow-sm flex flex-col items-center justify-center transition">
+            <button id="btnMarkKnown" type="button" class="btn-press py-2.5 px-1 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white shadow-sm flex flex-col items-center justify-center transition">
               <span class="text-sm font-extrabold flex items-center gap-1">
                 <span>🟢</span><span>很熟</span>
               </span>
               <span class="text-[9px] opacity-90 mt-0.5 whitespace-nowrap">秒认无需想 (1)</span>
             </button>
 
-            <button id="btnMarkFuzzy" type="button" class="btn-press py-2 px-1 rounded-xl bg-amber-500 hover:bg-amber-600 text-white shadow-sm flex flex-col items-center justify-center transition">
+            <button id="btnMarkFuzzy" type="button" class="btn-press py-2.5 px-1 rounded-2xl bg-amber-500 hover:bg-amber-600 text-white shadow-sm flex flex-col items-center justify-center transition">
               <span class="text-sm font-extrabold flex items-center gap-1">
                 <span>🟡</span><span>有点模糊</span>
               </span>
               <span class="text-[9px] opacity-90 mt-0.5 whitespace-nowrap">需巩固 (2)</span>
             </button>
 
-            <button id="btnMarkUnknown" type="button" class="btn-press py-2 px-1 rounded-xl bg-rose-500 hover:bg-rose-600 text-white shadow-sm flex flex-col items-center justify-center transition">
+            <button id="btnMarkUnknown" type="button" class="btn-press py-2.5 px-1 rounded-2xl bg-rose-500 hover:bg-rose-600 text-white shadow-sm flex flex-col items-center justify-center transition">
               <span class="text-sm font-extrabold flex items-center gap-1">
                 <span>🔴</span><span>完全不会</span>
               </span>
@@ -1084,6 +1098,9 @@
       '/api/recite-vocab'
     ];
     const CLOUD_SYNC_API = '/api/recite-sync';
+    // 高考真题与课本常考短语库 (填补卡片空白，提供高价值备考内容)
+    const GAOKAO_PHRASES_DICT = {"take":["take part in 参加 (活动)","take care of 照顾；负责","take advantage of 充分利用","take (...) for granted 认为理所当然","take place 发生","take off 起飞；脱下"],"for":["for example 例如","for free 免费","for ever / good 永远","for a while 一会儿","for the sake of 为了...着想"],"change":["change one's mind 改变主意","for a change 换个花样","change into 变成","social change 社会变迁"],"care":["care about 关心；在乎","take care of 照料；照顾","care for 喜欢；照料","with care 小心地"],"look":["look after 照料","look forward to 期待","look through 浏览","look for 寻找","look up to 尊敬"],"promise":["make a promise 做出承诺","keep a promise 信守承诺","break a promise 违背承诺"],"decide":["decide to do sth 决定做某事","make a decision 做出决定","decide on 选定"],"make":["make sure 确保","make sense 有意义","make use of 利用","make up 组成/弥补","make progress 取得进步"],"on":["on time 准时","on the other hand 另一方面","on purpose 故意","on average 平均"],"courage":["have the courage to do 有勇气做...","take / pluck up courage 鼓起勇气"],"hope":["in the hope of 怀着...的希望","hope for the best 做最好的打算","hope to do 期望做某事"],"interest":["be interested in 对...感兴趣","places of interest 名胜古迹","in the interest of 为了...的利益"],"surprise":["to one's surprise 令某人惊讶的是","in surprise 惊讶地","take sb by surprise 使某人措手不及"],"work":["work out 算出；锻炼；解决","at work 在上班","out of work 失业","hard work 辛勤工作"],"expect":["expect sb to do 期待某人做某事","as expected 正如所料","beyond expectation 出乎预料"],"disappoint":["be disappointed at/with 对...感到失望","to one's disappointment 令人失望的是"],"plan":["make a plan for 为...制定计划","plan to do 计划做某事","according to plan 按计划进行"],"with":["along with 连同；随同","cope with 应付；处理","deal with 处理；涉及"],"believe":["believe in 信任；信仰","make believe 假装","It is believed that... 人们相信..."],"leave":["leave behind 留下；落下","leave out 遗漏；省去","leave for 动身前往","leave a message 留言"],"proud":["be proud of 为...自豪","take pride in 以...为荣"],"accept":["accept an offer 接受提议","accept sb as 接纳某人为..."],"find":["find out 查明；弄清","find it + adj + to do 发现做某事很...","find one's way 找到道路"],"realize":["realize one's dream 实现梦想","realize the importance 意识到重要性"],"show":["show off 炫耀","show up 露面；出席","on show 展出中","show around 带某人参观"],"since":["ever since 从那以后","since then 自那时起"],"act":["act as 充当；担任","take action 采取行动","act on 遵照...行事"],"agree":["agree with sb 同意某人","agree to a plan 同意计划","agree on 达成一致意见"],"regret":["regret doing sth 后悔做过某事","regret to say 遗憾地说","to one's regret 令人遗憾的是"],"think":["think of 想到；认为","think about 考虑","think over 仔细考虑","think twice 三思而后行"],"chance":["by chance 偶然","take a chance 碰运气；冒险","have a chance to 有机会做..."],"experience":["gain experience 获得经验","from experience 凭经验","rich experience 丰富经验"],"hold":["hold on 坚持；别挂断","hold back 抑制；阻挡","hold out 维持；伸出","hold a meeting 举行会议"],"notice":["take notice of 注意到","at short notice 临时通知","without notice 不预先通知"],"patience":["with patience 耐心地","lose patience with 对...失去耐心","have the patience to 有耐心做..."],"give":["give up 放弃","give in 屈服；让步","give out 分发；耗尽","give away 赠送；泄露"],"remember":["remember to do 记得去做","remember doing 记得做过","remember me to 向...问好"],"confident":["be confident in/about 对...有信心","with confidence 满怀信心地"],"discover":["discover a cure 发现疗法","discover the truth 发现真相"],"imagine":["imagine doing sth 想象做某事","beyond imagination 难以想象"],"suggest":["suggest doing sth 建议做某事","suggest that sb (should) do 建议某人做..."],"check":["check in 办理登记","check out 结账离开","check up 核实；检查"],"doubt":["no doubt 毫无疑问","without doubt 必定","in doubt 存疑"],"learn":["learn from 向...学习","learn about 得知；了解","learn to do 学会做..."],"return":["in return 作为回报","in return for 作为对...的回报","return to 回到..."],"know":["be known as 作为...而闻名","be known for 因...而闻名","know of / about 听说/了解"],"run":["run out of 用光；耗尽","run across 偶然碰到","in the long run 从长远来看"],"choose":["choose from 从...中选择","choose to do 选择做某事"],"friend":["make friends with 与...交朋友","a close friend 亲密朋友"],"lose":["lose heart 丧失信心","lose one's way 迷路","lose weight 减肥","lose track of 失去联系"],"remind":["remind sb of 提醒某人某事","remind sb to do 提醒某人做某事"],"pay":["pay for 为...付钱/受罚","pay attention to 注意","pay off 付清；取得成功"],"put":["put forward 提出","put off 推迟","put on 穿上；上演","put up 张贴；搭建；举起","put out 扑灭"],"set":["set up 建立；设立","set out 出发；着手","set off 出发；引爆","set an example 树立榜样"],"get":["get along with 与...相处","get rid of 摆脱","get over 克服","get through 接通；度过"],"keep":["keep up with 跟上","keep in touch 保持联系","keep doing 持续做","keep from 阻止"],"turn":["turn down 拒绝；调低","turn up 出现；调大","turn off 关掉","turn into 变成","turn out 证明是"],"come":["come across 偶然遇见","come true 实现","come up with 提出","come out 出版；开花"],"go":["go on 继续","go through 经历；经受","go ahead 进行；请便","go over 复习；仔细检查"],"bring":["bring about 引起；导致","bring up 抚养；提出","bring out 激发；出版"],"call":["call for 需要；要求","call off 取消","call on 拜访；号召"],"break":["break down 出故障；崩溃","break out 爆发","break into 闯入","break up 分手；破裂"],"catch":["catch up with 赶上","catch one's eye 吸引注意力","catch fire 着火"],"fall":["fall asleep 入睡","fall in love with 爱上","fall behind 落后"],"stand":["stand for 代表；主张","stand out 脱颖而出","stand by 支持；袖手旁观"],"carry":["carry out 执行；实施","carry on 继续开展"],"cut":["cut down 砍倒；削减","cut off 切断；阻断","cut in 插嘴"],"lead":["lead to 导致；通向","lead the way 带路"],"meet":["meet the needs 满足需求","meet with 偶遇；遭遇"],"pass":["pass by 经过","pass away 去世","pass on 传递"],"point":["point out 指出","to the point 中肯；切题","point at 指向"],"play":["play a role in 在...中扮演角色","play a part in 起作用"],"reach":["reach an agreement 达成协议","reach for 伸手去拿"],"read":["read aloud 大声朗读","read through 读完"],"say":["that is to say 也就是说","it goes without saying 不言而喻"],"see":["see off 为...送行","see to 负责处理"],"send":["send out 发出","send for 派人去请"],"spend":["spend on 花费在...","spend doing 花时间做..."],"stay":["stay up 熬夜","stay in touch 保持联系"],"tell":["tell the truth 说实话","tell apart 分辨出","tell a lie 撒谎"],"touch":["keep in touch 保持联系","get in touch with 取得联系","out of touch 失去联系"],"try":["try out 尝试；试用","try one's best 尽某人最大努力"],"wait":["wait for 等待","can't wait to 迫不及待想要..."],"wish":["make a wish 许愿","best wishes 最美好的祝愿"]};
+
     const IDB_NAME = 'gaokao_2050_db_v1';
     const IDB_STORE = 'vocab_store';
 
@@ -1747,6 +1764,32 @@
         ).join('');
       } else {
         cardFormsSection.classList.add('hidden');
+      }
+
+      // High-Frequency Exam Phrases & Collocations
+      const phrasesSection = document.getElementById('cardPhrasesSection');
+      const phrasesList = document.getElementById('cardPhrasesList');
+      if (phrasesSection && phrasesList) {
+        const lowerW = (item.word || '').toLowerCase();
+        const found = GAOKAO_PHRASES_DICT[lowerW];
+        if (found && found.length > 0) {
+          phrasesSection.classList.remove('hidden');
+          phrasesList.innerHTML = found.slice(0, 4).map(p =>
+            `<div class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-amber-500 flex-shrink-0"></span><span class="font-medium">${p}</span></div>`
+          ).join('');
+        } else {
+          // If no specific phrase, show high-yield exam tips based on frequency tier
+          phrasesSection.classList.remove('hidden');
+          const freqLabel = item.freq >= 15 ? '🔥 真题超高频核心考点 (年年必考)' : (item.freq >= 5 ? '⚡ 经典中高频考点 (完形阅读高频)' : '🎯 真题重要词汇 (熟练掌握)');
+          phrasesList.innerHTML = `
+            <div class="flex items-center gap-1.5 text-amber-700 dark:text-amber-400 font-semibold">
+              <span>${freqLabel}</span>
+            </div>
+            <div class="text-[10px] sub-text leading-tight mt-0.5">
+              • 建议结合变形词及核心释义形成肌肉记忆，自测掌握后即可秒过。
+            </div>
+          `;
+        }
       }
 
       // Memo
