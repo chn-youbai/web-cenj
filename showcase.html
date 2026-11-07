@@ -833,8 +833,8 @@
           <div class="hall-header-left">
             <div class="hall-header-icon">📖</div>
             <div>
-              <h2>英语词库与认知展厅 (vocab.html)</h2>
-              <p>11,160 词条结构化检索 · Cloudflare D1 分布式关系型数据库 · 客户端 IndexedDB 离线双层预热</p>
+              <h2>英语词库与认知展厅 (vocab.html / recite.html)</h2>
+              <p>11,160 词条综合查词 · 高考 2050 智能过词系统 · 匿名短码跨端漫游 · D1 + IndexedDB 双层引擎</p>
             </div>
           </div>
           <span class="hall-tag">D1 边缘 SQL + IndexedDB 离线事务</span>
@@ -847,6 +847,7 @@
               <li><strong>结构化关系型持久化</strong>：全站 11,160 核心词汇完整沉淀于 Cloudflare D1 分布式 SQL 数据库中，包含音标、释义、例句、频级（CET4/CET6/GRE/IELTS）以及三级派生词结构。</li>
               <li><strong>归一化小写词头索引 (`head_lower`)</strong>：在数据库层面预先建立小写归一化前缀索引，检索 API 采用参数化 SQL 结合 `LIMIT / OFFSET` 游标查询，单次边缘查询时间控制在 10ms 级别。</li>
               <li><strong>派生词关联三级网络图谱</strong>：后端维护词根与词缀衍生派生词关联，单次请求即可向下级展平词族谱系，实现系统化记忆扩展。</li>
+              <li><strong>高考 2050 智能过词中枢 (`recite.html`)</strong>：将 2,050 条真题核心词（含考频、考查变形）解耦沉淀至云端，结合 3 档掌握度标记、极速刷、双模式快测，以及 GK-XXXX 匿名短码跨端云同步。</li>
             </ul>
           </div>
 

@@ -219,6 +219,26 @@
       box-shadow: 0 15px 30px rgba(79, 70, 229, 0.45);
       color: #ffffff;
     }
+    .recite-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.6rem;
+      padding: 0.75rem 1.6rem;
+      border-radius: 9999px;
+      color: #ffffff;
+      font-size: 0.95rem;
+      font-weight: 700;
+      text-decoration: none;
+      background: linear-gradient(135deg, #0d9488, #10b981);
+      box-shadow: 0 10px 25px rgba(13, 148, 136, 0.35);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .recite-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 15px 30px rgba(16, 185, 129, 0.45);
+      color: #ffffff;
+    }
     .showcase-btn {
       display: inline-flex;
       align-items: center;
@@ -488,7 +508,7 @@
         gap: 0.6rem;
         margin-top: 0.7rem;
       }
-      .gallery-btn, .pan-btn, .like-btn, .vocab-btn, .showcase-btn {
+      .gallery-btn, .pan-btn, .like-btn, .vocab-btn, .recite-btn, .showcase-btn {
         padding: 0.65rem 1.2rem;
         font-size: 0.9rem;
       }
@@ -507,7 +527,7 @@
       .btn-group {
         gap: 0.45rem;
       }
-      .gallery-btn, .pan-btn, .like-btn, .takeout-portal-btn, .vocab-btn, .showcase-btn {
+      .gallery-btn, .pan-btn, .like-btn, .takeout-portal-btn, .vocab-btn, .recite-btn, .showcase-btn {
         padding: 0.5rem 1rem;
         font-size: 0.82rem;
       }
@@ -560,6 +580,12 @@
       <a href="./vocab.html" class="vocab-btn" id="vocabLink">
         <span>📖 英语综合查词与词库</span>
         <span style="font-size: 0.85em; opacity: 0.9;">(高中7册 + 四六级全量/1.1万词) →</span>
+      </a>
+
+      <!-- 高考英语 2050 智能过词系统入口 -->
+      <a href="./recite.html" class="recite-btn" id="reciteLink">
+        <span>📖 智能过词 (2050核心词)</span>
+        <span style="font-size: 0.85em; opacity: 0.9;">(极速刷/快测/跨端漫游) →</span>
       </a>
 
       <a href="./gallery.html" class="gallery-btn">
