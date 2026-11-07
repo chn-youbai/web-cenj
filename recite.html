@@ -564,9 +564,9 @@
       <main class="flex-1 overflow-hidden relative flex flex-col">
 
         <!-- ==================== VIEW 1: FLASHCARD STUDY (过单词) ==================== -->
-        <section id="viewStudy" class="flex-1 flex flex-col px-3 pt-1.5 pb-1 overflow-hidden">
+        <section id="viewStudy" class="flex-1 flex flex-col pt-1.5 overflow-hidden">
           <!-- Sleek Single-Line Focus Bar: Group Selector + Minimal Progress + Preferences Drawer Trigger -->
-          <div class="flex items-center justify-between gap-2 mb-1.5 flex-shrink-0">
+          <div class="flex items-center justify-between gap-2 px-3 mb-1.5 flex-shrink-0">
             <!-- Left: Group Selector -->
             <div class="flex-1 min-w-0 max-w-[190px]">
               <select id="selectGroup" aria-label="选择分组" class="w-full card-surface border rounded-xl px-2 py-1 text-[11px] font-bold text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-teal-500 truncate shadow-2xs">
@@ -588,12 +588,14 @@
           </div>
 
           <!-- Thin smooth progress line -->
-          <div class="w-full h-1 bg-slate-200/70 dark:bg-slate-700/60 rounded-full overflow-hidden mb-1.5 flex-shrink-0">
-            <div id="deckProgressBar" class="h-full bg-gradient-to-r from-teal-500 to-emerald-400 transition-all duration-300" style="width: 0%"></div>
+          <div class="px-3 mb-1.5 flex-shrink-0">
+            <div class="w-full h-1 bg-slate-200/70 dark:bg-slate-700/60 rounded-full overflow-hidden">
+              <div id="deckProgressBar" class="h-full bg-gradient-to-r from-teal-500 to-emerald-400 transition-all duration-300" style="width: 0%"></div>
+            </div>
           </div>
 
           <!-- Main Word Flashcard (Clean Auto-Fit Hero Card) -->
-          <div id="wordCardContainer" class="flex-1 min-h-0 flex flex-col justify-between py-1 relative overflow-y-auto scroll-area">
+          <div id="wordCardContainer" class="flex-1 min-h-0 flex flex-col justify-between px-3 py-1 relative overflow-y-auto scroll-area">
             <!-- Card Top Metadata: Unified Left-Aligned Pills with Breathing Space -->
             <div class="flex items-center gap-2 pt-1 px-1.5 z-10 flex-shrink-0 flex-wrap">
               <span id="cardWordId" class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 dark:bg-slate-800 sub-text shadow-2xs">
@@ -607,50 +609,54 @@
               </span>
             </div>
 
-            <!-- Card Center: Headword + Audio + Meaning + Exam Forms + High Frequency Phrases -->
-            <div id="cardCenterArea" class="flex-1 min-h-0 flex flex-col justify-around items-center py-1.5 text-center cursor-pointer" title="点击揭晓释义或朗读单词">
-              <!-- Headword Area (Clean, Pure, Tap-to-Speak) -->
-              <div class="flex flex-col items-center justify-center my-auto">
-                <div id="cardWordText" class="text-[38px] sm:text-[44px] leading-tight font-black tracking-tight select-text break-words max-w-full px-1 hover:opacity-90 active:scale-95 transition cursor-pointer" title="点击朗读单词">
+            <!-- Card Center: Anchored Core Zone (Fixed Vertical Screen Placement) + Expandable Bottom Zone -->
+            <div id="cardCenterArea" class="flex-1 min-h-0 flex flex-col items-center py-1 text-center cursor-pointer" title="点击揭晓释义或朗读单词">
+              <!-- Rock-Solid Anchored Core: English Word + Chinese Meaning (Never jumps up/down between cards) -->
+              <div class="w-full flex flex-col items-center justify-center pt-4 sm:pt-6 pb-2 min-h-[170px] sm:min-h-[190px] flex-shrink-0">
+                <!-- English Headword -->
+                <div id="cardWordText" class="leading-tight font-black tracking-tight select-text break-words max-w-full px-1 hover:opacity-90 active:scale-95 transition cursor-pointer" title="点击朗读单词">
                   for
                 </div>
-              </div>
 
-              <!-- Chinese Meaning (Clean, Unboxed, Prominent 28-32px) -->
-              <div id="cardMeaningWrapper" class="w-full py-2 text-center transition my-auto">
-                <div id="cardMeaningText" class="text-[28px] sm:text-[32px] font-black leading-tight text-slate-800 dark:text-slate-100 select-text tracking-normal">
-                  为了……、对于……、因为
-                </div>
-                <div id="maskHintText" class="hidden text-[11px] text-teal-600 dark:text-teal-400 mt-1.5 font-semibold">
-                  👆 点击卡片揭晓释义
-                </div>
-              </div>
-
-              <!-- Unified High-Yield Exam Notes (真题考点与搭配 - 单一轻量拓展卡片) -->
-              <div id="cardExamExpandedSection" class="w-full text-left px-3.5 py-2.5 rounded-2xl bg-slate-50/85 dark:bg-slate-800/55 border border-slate-200/60 dark:border-slate-700/50 space-y-2 max-h-[140px] overflow-y-auto scroll-area transition-all">
-                <!-- Forms Sub-row (if any) -->
-                <div id="cardFormsContainer">
-                  <div class="text-[10px] font-bold text-teal-700 dark:text-teal-300 mb-1 flex items-center gap-1">
-                    <span>📌 历年真题考查变形</span>
+                <!-- Chinese Meaning (Directly below, constant distance) -->
+                <div id="cardMeaningWrapper" class="w-full text-center transition mt-3 sm:mt-4">
+                  <div id="cardMeaningText" class="font-black leading-tight text-slate-800 dark:text-slate-100 select-text tracking-normal">
+                    为了……、对于……、因为
                   </div>
-                  <div id="cardFormsList" class="flex flex-wrap gap-1.5">
-                    <!-- Populated dynamically -->
-                  </div>
-                </div>
-
-                <!-- Phrases Sub-row (if any) -->
-                <div id="cardPhrasesContainer">
-                  <div class="text-[10px] font-bold text-amber-700 dark:text-amber-400 mb-1 flex items-center gap-1">
-                    <span>📚 高考真题常考短语 & 课本搭配</span>
-                  </div>
-                  <div id="cardPhrasesList" class="space-y-1 text-[11px] text-slate-700 dark:text-slate-200">
-                    <!-- Populated dynamically -->
+                  <div id="maskHintText" class="hidden text-[11px] text-teal-600 dark:text-teal-400 mt-1.5 font-semibold">
+                    👆 点击卡片揭晓释义
                   </div>
                 </div>
               </div>
-              <!-- Hidden compatibility stubs for cardFormsSection & cardPhrasesSection -->
-              <div id="cardFormsSection" class="hidden"></div>
-              <div id="cardPhrasesSection" class="hidden"></div>
+
+              <!-- Expandable Bottom Zone: Collocations & Forms (Docked at bottom, never shifts the headword) -->
+              <div class="w-full mt-auto mb-1 flex flex-col justify-end min-h-0">
+                <!-- Unified High-Yield Exam Notes (真题考点与搭配 - 单一轻量拓展卡片) -->
+                <div id="cardExamExpandedSection" class="w-full text-left px-3.5 py-2.5 rounded-2xl bg-slate-50/85 dark:bg-slate-800/55 border border-slate-200/60 dark:border-slate-700/50 space-y-2 max-h-[135px] overflow-y-auto scroll-area transition-all">
+                  <!-- Forms Sub-row (if any) -->
+                  <div id="cardFormsContainer">
+                    <div class="text-[10px] font-bold text-teal-700 dark:text-teal-300 mb-1 flex items-center gap-1">
+                      <span>📌 历年真题考查变形</span>
+                    </div>
+                    <div id="cardFormsList" class="flex flex-wrap gap-1.5">
+                      <!-- Populated dynamically -->
+                    </div>
+                  </div>
+
+                  <!-- Phrases Sub-row (if any) -->
+                  <div id="cardPhrasesContainer">
+                    <div class="text-[10px] font-bold text-amber-700 dark:text-amber-400 mb-1 flex items-center gap-1">
+                      <span>📚 高考真题常考短语 & 课本搭配</span>
+                    </div>
+                    <div id="cardPhrasesList" class="space-y-1 text-[11px] text-slate-700 dark:text-slate-200">
+                      <!-- Populated dynamically -->
+                    </div>
+                  </div>
+                </div>
+                <!-- Hidden compatibility stubs for cardFormsSection & cardPhrasesSection -->
+                <div id="cardFormsSection" class="hidden"></div>
+                <div id="cardPhrasesSection" class="hidden"></div>
+              </div>
             </div>
 
             <!-- Card Footer: Prev / Next & Personal Note -->
@@ -668,13 +674,13 @@
           </div>
 
           <!-- User Memo Display (if any) -->
-          <div id="memoDisplayBar" class="hidden mt-1 px-2.5 py-1 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-700 dark:text-amber-300 flex items-center justify-between flex-shrink-0">
+          <div id="memoDisplayBar" class="hidden mx-3 mt-1 px-2.5 py-1 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-700 dark:text-amber-300 flex items-center justify-between flex-shrink-0">
             <span id="memoDisplayText" class="truncate"></span>
             <button id="btnEditMemoInline" type="button" class="ml-2 underline text-[11px] flex-shrink-0">修改</button>
           </div>
 
-          <!-- 3-Tier Marking Buttons: Full-Bleed Edge-to-Edge Action Bar (底部铺满) -->
-          <div class="mt-1.5 -mx-3 -mb-1 flex items-stretch flex-shrink-0 divide-x divide-white/20 dark:divide-white/10 shadow-lg border-t border-slate-200/40 dark:border-slate-700/40">
+          <!-- 3-Tier Marking Buttons: 100% True Full-Bleed Action Bar (左右彻底通栏贴边) -->
+          <div class="w-full flex items-stretch flex-shrink-0 divide-x divide-white/20 dark:divide-white/10 shadow-lg border-t border-slate-200/40 dark:border-slate-700/40 rounded-none m-0">
             <button id="btnMarkKnown" type="button" class="btn-press flex-1 py-3 px-1 bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 text-white flex flex-col items-center justify-center transition">
               <span class="text-sm font-extrabold flex items-center gap-1">
                 <span>🟢</span><span>很熟</span>
@@ -1074,25 +1080,41 @@
             </select>
           </div>
 
-          <!-- Font Size Adjustment (字号调节功能) -->
-          <div class="space-y-1.5 pt-1 border-t border-slate-100 dark:border-slate-800">
+          <!-- Dual Font Size Sliders (中英双轨独立字号滑动条) -->
+          <div class="space-y-3 pt-2 border-t border-slate-100 dark:border-slate-800">
             <div class="flex items-center justify-between">
-              <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">🔤 核心字号大小调节</label>
-              <span id="fontSizeDisplayLabel" class="text-[10px] font-bold text-teal-600 dark:text-teal-400">标准 (100%)</span>
+              <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">🔤 核心字号双轨调节</label>
+              <button id="btnResetFontSizes" type="button" class="text-[10px] text-teal-600 dark:text-teal-400 font-bold hover:underline">
+                🔄 恢复默认
+              </button>
             </div>
-            <div class="grid grid-cols-3 gap-1.5 p-1 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200/50 dark:border-slate-700/50">
-              <button type="button" data-font-scale="standard" class="font-scale-tab py-1.5 px-1 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1">
-                <span>标准</span>
-                <span class="text-[9px] opacity-75">100%</span>
-              </button>
-              <button type="button" data-font-scale="large" class="font-scale-tab py-1.5 px-1 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1">
-                <span>放大</span>
-                <span class="text-[9px] opacity-75">120%</span>
-              </button>
-              <button type="button" data-font-scale="xlarge" class="font-scale-tab py-1.5 px-1 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1">
-                <span>特大</span>
-                <span class="text-[9px] opacity-75">140%</span>
-              </button>
+
+            <!-- English Font Size Slider -->
+            <div class="space-y-1">
+              <div class="flex items-center justify-between text-xs">
+                <span class="font-semibold text-slate-700 dark:text-slate-200">🔤 英文单词大小</span>
+                <span id="valEnFontSize" class="font-mono text-teal-600 dark:text-teal-400 font-bold">42px</span>
+              </div>
+              <input id="sliderEnFontSize" type="range" min="28" max="56" value="42" step="2" class="w-full accent-teal-600 cursor-pointer h-1.5 bg-slate-200 dark:bg-slate-700 rounded-lg" />
+              <div class="flex justify-between text-[9px] text-slate-400 font-mono">
+                <span>28px (紧凑)</span>
+                <span>标准 42px</span>
+                <span>56px (超大)</span>
+              </div>
+            </div>
+
+            <!-- Chinese Font Size Slider -->
+            <div class="space-y-1">
+              <div class="flex items-center justify-between text-xs">
+                <span class="font-semibold text-slate-700 dark:text-slate-200">🇨🇳 中文释义大小</span>
+                <span id="valCnFontSize" class="font-mono text-teal-600 dark:text-teal-400 font-bold">30px</span>
+              </div>
+              <input id="sliderCnFontSize" type="range" min="18" max="42" value="30" step="2" class="w-full accent-teal-600 cursor-pointer h-1.5 bg-slate-200 dark:bg-slate-700 rounded-lg" />
+              <div class="flex justify-between text-[9px] text-slate-400 font-mono">
+                <span>18px (紧凑)</span>
+                <span>标准 30px</span>
+                <span>42px (超大)</span>
+              </div>
             </div>
           </div>
 
@@ -1446,7 +1468,8 @@
       autoSpeak: false,
       accent: 'en-US',     // 'en-US' or 'en-GB'
       speechRate: 1.0,     // 1.0 or 0.7
-      fontScale: 'standard', // 'standard' (1.0), 'large' (1.2), 'xlarge' (1.4)
+      enFontSize: 42,
+      cnFontSize: 30,
       darkMode: false,
       currentIndex: 0,
       cardRevealed: false,
@@ -1482,7 +1505,8 @@
           if (parsed.currentGroup) state.currentGroup = parsed.currentGroup;
           if (parsed.accent) state.accent = parsed.accent;
           if (parsed.speechRate) state.speechRate = parsed.speechRate;
-          if (parsed.fontScale) state.fontScale = parsed.fontScale;
+          if (parsed.enFontSize) state.enFontSize = parsed.enFontSize;
+          if (parsed.cnFontSize) state.cnFontSize = parsed.cnFontSize;
           if (typeof parsed.autoSpeak === 'boolean') state.autoSpeak = parsed.autoSpeak;
           if (typeof parsed.darkMode === 'boolean') state.darkMode = parsed.darkMode;
           if (Number.isInteger(parsed.currentIndex) && parsed.currentIndex >= 0) state.currentIndex = parsed.currentIndex;
@@ -1500,7 +1524,8 @@
           currentGroup: state.currentGroup,
           accent: state.accent,
           speechRate: state.speechRate,
-          fontScale: state.fontScale,
+          enFontSize: state.enFontSize,
+          cnFontSize: state.cnFontSize,
           autoSpeak: state.autoSpeak,
           darkMode: state.darkMode,
           currentIndex: state.currentIndex
@@ -1772,28 +1797,18 @@
       if (document.getElementById('drawerAccentLabel')) document.getElementById('drawerAccentLabel').textContent = state.accent === 'en-US' ? '口音: 美音 (US)' : '口音: 英式 (UK)';
       if (document.getElementById('drawerSpeedLabel')) document.getElementById('drawerSpeedLabel').textContent = state.speechRate === 0.7 ? '语速: 慢速 (0.7x)' : '语速: 正常 (1.0x)';
       if (document.getElementById('drawerSpeedIcon')) document.getElementById('drawerSpeedIcon').textContent = state.speechRate === 0.7 ? '🐢' : '⚡';
-      const scaleTabs = document.querySelectorAll('.font-scale-tab');
-      scaleTabs.forEach(tab => {
-        const isCurrent = tab.getAttribute('data-font-scale') === state.fontScale;
-        if (isCurrent) {
-          tab.className = 'font-scale-tab py-1.5 px-1 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1 bg-teal-600 text-white shadow-xs';
-        } else {
-          tab.className = 'font-scale-tab py-1.5 px-1 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1 text-slate-600 dark:text-slate-300 hover:text-slate-900';
-        }
-      });
-      const scaleLabels = {
-        standard: '标准 (100%)',
-        large: '放大 (120%)',
-        xlarge: '特大 (140%)'
-      };
-      const scaleLabelEl = document.getElementById('fontSizeDisplayLabel');
-      if (scaleLabelEl) scaleLabelEl.textContent = scaleLabels[state.fontScale] || '标准 (100%)';
-    }
-
-    function getFontScaleMultiplier() {
-      if (state.fontScale === 'large') return 1.2;
-      if (state.fontScale === 'xlarge') return 1.4;
-      return 1.0;
+      const sliderEn = document.getElementById('sliderEnFontSize');
+      const valEn = document.getElementById('valEnFontSize');
+      if (sliderEn && valEn) {
+        sliderEn.value = state.enFontSize || 42;
+        valEn.textContent = (state.enFontSize || 42) + 'px';
+      }
+      const sliderCn = document.getElementById('sliderCnFontSize');
+      const valCn = document.getElementById('valCnFontSize');
+      if (sliderCn && valCn) {
+        sliderCn.value = state.cnFontSize || 30;
+        valCn.textContent = (state.cnFontSize || 30) + 'px';
+      }
     }
 
     function renderStudyCard() {
@@ -1841,12 +1856,15 @@
 
       cardWordText.textContent = item.word;
       cardWordText.className = `leading-tight font-extrabold tracking-tight select-text whitespace-nowrap max-w-full px-1 ${hideEn ? 'meaning-masked' : 'meaning-revealed'}`;
-      const fontMultiplier = getFontScaleMultiplier();
-      fitTextSingleLine(cardWordText, Math.round(44 * fontMultiplier), Math.round(20 * fontMultiplier), 340);
+      const enMax = state.enFontSize || 42;
+      const enMin = Math.max(18, Math.round(enMax * 0.5));
+      fitTextSingleLine(cardWordText, enMax, enMin, 340);
 
       cardMeaningText.textContent = item.meaning;
       cardMeaningText.className = `font-bold leading-snug select-text whitespace-nowrap max-w-full ${hideCn ? 'meaning-masked' : 'meaning-revealed'}`;
-      fitTextSingleLine(cardMeaningText, Math.round(32 * fontMultiplier), Math.round(18 * fontMultiplier), 340);
+      const cnMax = state.cnFontSize || 30;
+      const cnMin = Math.max(14, Math.round(cnMax * 0.55));
+      fitTextSingleLine(cardMeaningText, cnMax, cnMin, 340);
 
       if (hideCn || hideEn) {
         maskHintText.classList.remove('hidden');
@@ -2780,16 +2798,32 @@
         document.getElementById('prefDrawerModal')?.classList.add('hidden');
       });
       // Drawer Audio Controls Listeners
-      // Font scale tabs listeners
-      document.querySelectorAll('.font-scale-tab').forEach(tab => {
-        tab.addEventListener('click', () => {
-          state.fontScale = tab.getAttribute('data-font-scale') || 'standard';
-          saveState();
-          renderHeaderAndMiniStats();
-          renderStudyCard();
-          const scaleLabels = { standard: '标准字号', large: '放大字号 (120%)', xlarge: '特大字号 (140%)' };
-          showToast('🔤 已切换为' + (scaleLabels[state.fontScale] || '标准字号'));
-        });
+      // Dual font size range sliders listeners
+      const sliderEn = document.getElementById('sliderEnFontSize');
+      sliderEn?.addEventListener('input', (e) => {
+        state.enFontSize = parseInt(e.target.value, 10);
+        const valEl = document.getElementById('valEnFontSize');
+        if (valEl) valEl.textContent = state.enFontSize + 'px';
+        saveState();
+        renderStudyCard();
+      });
+
+      const sliderCn = document.getElementById('sliderCnFontSize');
+      sliderCn?.addEventListener('input', (e) => {
+        state.cnFontSize = parseInt(e.target.value, 10);
+        const valEl = document.getElementById('valCnFontSize');
+        if (valEl) valEl.textContent = state.cnFontSize + 'px';
+        saveState();
+        renderStudyCard();
+      });
+
+      document.getElementById('btnResetFontSizes')?.addEventListener('click', () => {
+        state.enFontSize = 42;
+        state.cnFontSize = 30;
+        saveState();
+        renderHeaderAndMiniStats();
+        renderStudyCard();
+        showToast('🔤 已恢复默认字号 (英文42px / 中文30px)');
       });
 
       document.getElementById('btnDrawerAccentToggle')?.addEventListener('click', () => {
