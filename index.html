@@ -219,6 +219,43 @@
       box-shadow: 0 15px 30px rgba(79, 70, 229, 0.45);
       color: #ffffff;
     }
+    .showcase-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.6rem;
+      padding: 0.75rem 1.6rem;
+      border-radius: 9999px;
+      color: #ffffff;
+      font-size: 0.95rem;
+      font-weight: 700;
+      text-decoration: none;
+      background: linear-gradient(135deg, #8b5cf6, #06b6d4);
+      box-shadow: 0 10px 25px rgba(139, 92, 246, 0.35);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+    }
+    .showcase-btn::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.25), transparent);
+      transform: rotate(45deg);
+      animation: shineBtn 4s infinite;
+    }
+    @keyframes shineBtn {
+      0% { transform: translateX(-120%) rotate(45deg); }
+      25%, 100% { transform: translateX(120%) rotate(45deg); }
+    }
+    .showcase-btn:hover {
+      transform: translateY(-2px) scale(1.02);
+      box-shadow: 0 16px 36px rgba(6, 182, 212, 0.5);
+      color: #ffffff;
+    }
 
     /* 密码解锁模态弹窗 */
     .auth-modal-backdrop {
@@ -451,7 +488,7 @@
         gap: 0.6rem;
         margin-top: 0.7rem;
       }
-      .gallery-btn, .pan-btn, .like-btn, .vocab-btn {
+      .gallery-btn, .pan-btn, .like-btn, .vocab-btn, .showcase-btn {
         padding: 0.65rem 1.2rem;
         font-size: 0.9rem;
       }
@@ -470,7 +507,7 @@
       .btn-group {
         gap: 0.45rem;
       }
-      .gallery-btn, .pan-btn, .like-btn, .takeout-portal-btn, .vocab-btn {
+      .gallery-btn, .pan-btn, .like-btn, .takeout-portal-btn, .vocab-btn, .showcase-btn {
         padding: 0.5rem 1rem;
         font-size: 0.82rem;
       }
@@ -506,6 +543,12 @@
         <span>为网站点赞</span>
         <span class="like-badge" id="likeCount">...</span>
       </button>
+
+      <!-- 技术展馆与架构解密入口 -->
+      <a href="./showcase.html" class="showcase-btn" id="showcaseLink">
+        <span>🏛️ 技术展馆 · 架构演进与破局记</span>
+        <span style="font-size: 0.82em; opacity: 0.9;">(流程解密 · 交互实测) →</span>
+      </a>
 
       <!-- 沙县外卖记账助手入口（密码鉴权保护） -->
       <button class="takeout-portal-btn" id="takeoutBtn" onclick="openTakeoutPortal()">
