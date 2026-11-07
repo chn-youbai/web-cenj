@@ -553,10 +553,7 @@
           <a href="./" class="btn-press w-7 h-7 rounded-lg card-surface border flex items-center justify-center text-xs" title="返回站点首页">
             <span>🏠</span>
           </a>
-          <!-- Jump to Dictionary -->
-          <a href="./vocab.html" class="btn-press w-7 h-7 rounded-lg card-surface border flex items-center justify-center text-xs" title="前往英语综合查词字典">
-            <span>📖</span>
-          </a>
+          
           <!-- Accent Toggle -->
           <button id="btnAccentToggle" type="button" class="btn-press px-1.5 h-7 rounded-lg text-[10px] font-semibold card-surface border flex items-center gap-0.5" title="切换美音/英音">
             <span>🔊</span>
@@ -1673,7 +1670,7 @@
       const selectedText = groupSelect.options[groupSelect.selectedIndex]?.text || '全词库';
       document.getElementById('headerGroupBadge').textContent = selectedText.split(' ')[1] || '全词库';
 
-      document.getElementById('miniPoolCount').textContent = filteredDeck.length;
+      const miniPool = document.getElementById('miniPoolCount'); if (miniPool) miniPool.textContent = filteredDeck.length;
       document.getElementById('miniKnownCount').textContent = known;
       document.getElementById('miniFuzzyCount').textContent = fuzzy;
       document.getElementById('miniUnknownCount').textContent = unknown;
@@ -2431,11 +2428,11 @@
       const topHeader = document.getElementById('appTopHeader');
       const miniBar = document.getElementById('appMiniStatusBar');
       if (tabName === 'zen') {
-        topHeader.classList.add('hidden');
-        miniBar.classList.add('hidden');
+        topHeader?.classList.add('hidden');
+        miniBar?.classList.add('hidden');
       } else {
-        topHeader.classList.remove('hidden');
-        miniBar.classList.remove('hidden');
+        topHeader?.classList.remove('hidden');
+        miniBar?.classList.remove('hidden');
       }
 
       document.querySelectorAll('.nav-tab-btn').forEach(btn => {
@@ -2459,12 +2456,20 @@
       renderAll();
     }
 
-    window.addEventListener('DOMContentLoaded', async () => {
-      loadState();
-      populateGroupSelector();
-      updateSyncUI();
-      await initVocabDataset();
-      updateQuizScoreUI();
+    function initReciteApp() {
+      try {
+        loadState();
+        populateGroupSelector();
+        updateSyncUI();
+        initVocabDataset();
+        updateQuizScoreUI();
+      } catch (err) {
+        console.warn('InitReciteApp error:', err);
+      }
+    }
+
+    function setupApp() {
+      initReciteApp();
 
       // Cloud Sync Event Listeners (Custom Sync Code & Random & Copy)
       const copyCurrentKey = () => {
@@ -2485,7 +2490,7 @@
       if (syncKeyEl) syncKeyEl.addEventListener('click', copyCurrentKey);
       if (copyBtn) copyBtn.addEventListener('click', copyCurrentKey);
 
-      document.getElementById('btnManualSync').addEventListener('click', () => {
+      document.getElementById('btnManualSync')?.addEventListener('click', () => {
         pushCloudSync(true);
       });
 
@@ -2532,7 +2537,7 @@
       window.addEventListener('orientationchange', updateAppHeight);
       updateAppHeight();
 
-      document.getElementById('btnShowShortcuts').addEventListener('click', () => {
+      document.getElementById('btnShowShortcuts')?.addEventListener('click', () => {
         openModal({
           title: '⌨️ 键盘快捷键与手势指南',
           body: `
@@ -2550,7 +2555,7 @@
       });
 
       // Header buttons
-      document.getElementById('btnAccentToggle').addEventListener('click', () => {
+      document.getElementById('btnAccentToggle')?.addEventListener('click', () => {
         state.accent = state.accent === 'en-US' ? 'en-GB' : 'en-US';
         saveState();
         renderHeaderAndMiniStats();
@@ -2558,7 +2563,7 @@
         if (filteredDeck[state.currentIndex]) speakText(filteredDeck[state.currentIndex].word);
       });
 
-      document.getElementById('btnThemeToggle').addEventListener('click', () => {
+      document.getElementById('btnThemeToggle')?.addEventListener('click', () => {
         state.darkMode = !state.darkMode;
         saveState();
         renderAll();
@@ -2582,30 +2587,30 @@
       });
 
       // Study controls
-      document.getElementById('selectGroup').addEventListener('change', (e) => {
+      document.getElementById('selectGroup')?.addEventListener('change', (e) => {
         state.currentGroup = e.target.value;
         saveState();
         rebuildFilteredDeck(true);
       });
 
-      document.getElementById('selectStatusFilter').addEventListener('change', (e) => {
+      document.getElementById('selectStatusFilter')?.addEventListener('change', (e) => {
         state.statusFilter = e.target.value;
         rebuildFilteredDeck(true);
       });
 
-      document.getElementById('selectMaskMode').addEventListener('change', (e) => {
+      document.getElementById('selectMaskMode')?.addEventListener('change', (e) => {
         state.maskMode = e.target.value;
         state.cardRevealed = false;
         renderStudyCard();
       });
 
-      document.getElementById('btnShuffleDeck').addEventListener('click', () => {
+      document.getElementById('btnShuffleDeck')?.addEventListener('click', () => {
         state.isShuffled = !state.isShuffled;
         rebuildFilteredDeck(true);
         showToast(state.isShuffled ? '🔀 已随机打乱当前词表' : '📋 已恢复词频顺序');
       });
 
-      document.getElementById('btnAutoPlayAudio').addEventListener('click', () => {
+      document.getElementById('btnAutoPlayAudio')?.addEventListener('click', () => {
         state.autoSpeak = !state.autoSpeak;
         saveState();
         renderHeaderAndMiniStats();
@@ -2613,21 +2618,21 @@
       });
 
       // Card speech & reveal
-      document.getElementById('btnSpeakWord').addEventListener('click', (e) => {
+      document.getElementById('btnSpeakWord')?.addEventListener('click', (e) => {
         e.stopPropagation();
         if (filteredDeck[state.currentIndex]) {
           speakText(filteredDeck[state.currentIndex].word, 1.0);
         }
       });
 
-      document.getElementById('btnSpeakSlow').addEventListener('click', (e) => {
+      document.getElementById('btnSpeakSlow')?.addEventListener('click', (e) => {
         e.stopPropagation();
         if (filteredDeck[state.currentIndex]) {
           speakText(filteredDeck[state.currentIndex].word, 0.65);
         }
       });
 
-      document.getElementById('cardCenterArea').addEventListener('click', (e) => {
+      document.getElementById('cardCenterArea')?.addEventListener('click', (e) => {
         const formBtn = e.target.closest('[data-speak-form]');
         if (formBtn) {
           e.stopPropagation();
@@ -2644,8 +2649,8 @@
       });
 
       // Prev / Next / Memo
-      document.getElementById('btnPrevWord').addEventListener('click', () => stepWord(-1));
-      document.getElementById('btnNextWord').addEventListener('click', () => stepWord(1));
+      document.getElementById('btnPrevWord')?.addEventListener('click', () => stepWord(-1));
+      document.getElementById('btnNextWord')?.addEventListener('click', () => stepWord(1));
 
       function openMemoEditor() {
         if (filteredDeck.length === 0) return;
@@ -2667,16 +2672,16 @@
         });
       }
 
-      document.getElementById('btnAddMemo').addEventListener('click', openMemoEditor);
-      document.getElementById('btnEditMemoInline').addEventListener('click', openMemoEditor);
+      document.getElementById('btnAddMemo')?.addEventListener('click', openMemoEditor);
+      document.getElementById('btnEditMemoInline')?.addEventListener('click', openMemoEditor);
 
       // Zen Mode Tap-to-Next Listener (entire screen area)
-      document.getElementById('viewZen').addEventListener('click', () => advanceZenWord(1));
+      document.getElementById('viewZen')?.addEventListener('click', () => advanceZenWord(1));
 
       // 3-Tier Mark Buttons
-      document.getElementById('btnMarkKnown').addEventListener('click', () => markCurrentWord('known'));
-      document.getElementById('btnMarkFuzzy').addEventListener('click', () => markCurrentWord('fuzzy'));
-      document.getElementById('btnMarkUnknown').addEventListener('click', () => markCurrentWord('unknown'));
+      document.getElementById('btnMarkKnown')?.addEventListener('click', () => markCurrentWord('known'));
+      document.getElementById('btnMarkFuzzy')?.addEventListener('click', () => markCurrentWord('fuzzy'));
+      document.getElementById('btnMarkUnknown')?.addEventListener('click', () => markCurrentWord('unknown'));
 
       // Touch swipe gesture on flashcard
       let touchStartX = 0;
@@ -2693,12 +2698,12 @@
       }, { passive: true });
 
       // Quiz Events
-      document.getElementById('selectQuizPool').addEventListener('change', (e) => {
+      document.getElementById('selectQuizPool')?.addEventListener('change', (e) => {
         state.quizPool = e.target.value;
         nextQuizQuestion();
       });
 
-      document.getElementById('btnQuizTypeChoice').addEventListener('click', () => {
+      document.getElementById('btnQuizTypeChoice')?.addEventListener('click', () => {
         state.quizType = 'choice';
         document.getElementById('btnQuizTypeChoice').className = 'py-1.5 rounded-lg bg-white dark:bg-slate-700 shadow-sm text-teal-600 dark:text-teal-300 transition';
         document.getElementById('btnQuizTypeSpell').className = 'py-1.5 rounded-lg sub-text transition';
@@ -2714,14 +2719,14 @@
         }
       });
 
-      document.getElementById('btnQuizTypeSpell').addEventListener('click', () => {
+      document.getElementById('btnQuizTypeSpell')?.addEventListener('click', () => {
         state.quizType = 'spell';
         document.getElementById('btnQuizTypeSpell').className = 'py-1.5 rounded-lg bg-white dark:bg-slate-700 shadow-sm text-teal-600 dark:text-teal-300 transition';
         document.getElementById('btnQuizTypeChoice').className = 'py-1.5 rounded-lg sub-text transition';
         nextQuizQuestion();
       });
 
-      document.getElementById('btnQuizRefreshOptions').addEventListener('click', () => {
+      document.getElementById('btnQuizRefreshOptions')?.addEventListener('click', () => {
         if (!state.currentQuizWord) {
           nextQuizQuestion();
           return;
@@ -2730,11 +2735,11 @@
         showToast('🔄 已更换另外三个干扰选项');
       });
 
-      document.getElementById('btnQuizSpeak').addEventListener('click', () => {
+      document.getElementById('btnQuizSpeak')?.addEventListener('click', () => {
         if (state.currentQuizWord) speakText(state.currentQuizWord.word);
       });
 
-      document.getElementById('quizChoiceContainer').addEventListener('click', (e) => {
+      document.getElementById('quizChoiceContainer')?.addEventListener('click', (e) => {
         const btn = e.target.closest('[data-quiz-opt]');
         if (!btn || state.quizAnswered || !state.currentQuizWord) return;
         state.quizAnswered = true;
@@ -2768,7 +2773,7 @@
         updateQuizScoreUI();
       });
 
-      document.getElementById('btnQuizSpellHintTrigger').addEventListener('click', () => {
+      document.getElementById('btnQuizSpellHintTrigger')?.addEventListener('click', () => {
         if (!state.currentQuizWord) return;
         const w = state.currentQuizWord.word.split('/')[0].trim();
         state.quizHintLevel = Math.min(w.length, state.quizHintLevel + 2);
@@ -2777,7 +2782,7 @@
         speakText(w);
       });
 
-      document.getElementById('btnQuizSpellSubmit').addEventListener('click', () => {
+      document.getElementById('btnQuizSpellSubmit')?.addEventListener('click', () => {
         if (!state.currentQuizWord || state.quizAnswered) return;
         const inputVal = document.getElementById('inputQuizSpell').value.trim().toLowerCase();
         if (!inputVal) return;
@@ -2802,14 +2807,14 @@
         updateQuizScoreUI();
       });
 
-      document.getElementById('inputQuizSpell').addEventListener('keydown', (e) => {
+      document.getElementById('inputQuizSpell')?.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
           if (state.quizAnswered) nextQuizQuestion();
           else document.getElementById('btnQuizSpellSubmit').click();
         }
       });
 
-      document.getElementById('btnQuizNext').addEventListener('click', nextQuizQuestion);
+      document.getElementById('btnQuizNext')?.addEventListener('click', nextQuizQuestion);
 
       // Word List Search & Filter Events
       const searchInput = document.getElementById('inputListSearch');
@@ -2842,15 +2847,15 @@
         });
       });
 
-      document.getElementById('btnListPrevPage').addEventListener('click', () => {
+      document.getElementById('btnListPrevPage')?.addEventListener('click', () => {
         if (state.listPage > 1) { state.listPage--; renderWordList(); }
       });
-      document.getElementById('btnListNextPage').addEventListener('click', () => {
+      document.getElementById('btnListNextPage')?.addEventListener('click', () => {
         state.listPage++;
         renderWordList();
       });
 
-      document.getElementById('wordListScroll').addEventListener('click', (e) => {
+      document.getElementById('wordListScroll')?.addEventListener('click', (e) => {
         const speakBtn = e.target.closest('[data-list-speak]');
         if (speakBtn) {
           speakText(speakBtn.getAttribute('data-list-speak'));
@@ -2869,27 +2874,27 @@
       });
 
       // Stats & CSV Export Buttons
-      document.getElementById('btnExportAllCsv').addEventListener('click', () => {
+      document.getElementById('btnExportAllCsv')?.addEventListener('click', () => {
         exportCsvByFilter(() => true, '全部2050词');
       });
-      document.getElementById('btnExportReviewCsv').addEventListener('click', () => {
+      document.getElementById('btnExportReviewCsv')?.addEventListener('click', () => {
         exportCsvByFilter(w => state.marks[w.id] === 'unknown' || state.marks[w.id] === 'fuzzy', '重点攻克词表_不会与模糊');
       });
-      document.getElementById('btnExportUnknownCsv').addEventListener('click', () => {
+      document.getElementById('btnExportUnknownCsv')?.addEventListener('click', () => {
         exportCsvByFilter(w => state.marks[w.id] === 'unknown', '完全不会词表');
       });
-      document.getElementById('btnExportFuzzyCsv').addEventListener('click', () => {
+      document.getElementById('btnExportFuzzyCsv')?.addEventListener('click', () => {
         exportCsvByFilter(w => state.marks[w.id] === 'fuzzy', '有点模糊词表');
       });
 
-      document.getElementById('inputImportCsv').addEventListener('change', (e) => {
+      document.getElementById('inputImportCsv')?.addEventListener('change', (e) => {
         if (e.target.files && e.target.files[0]) {
           handleImportCsv(e.target.files[0]);
           e.target.value = '';
         }
       });
 
-      document.getElementById('btnResetProgress').addEventListener('click', () => {
+      document.getElementById('btnResetProgress')?.addEventListener('click', () => {
         openModal({
           title: '⚠️ 确认清空学习进度？',
           body: '此操作将清除所有单词的「很熟 / 有点模糊 / 完全不会」标记及笔记。建议清空前先导出 CSV 备份。',
@@ -2906,8 +2911,8 @@
       });
 
       // Modal buttons
-      document.getElementById('btnModalCancel').addEventListener('click', closeModal);
-      document.getElementById('btnModalConfirm').addEventListener('click', () => {
+      document.getElementById('btnModalCancel')?.addEventListener('click', closeModal);
+      document.getElementById('btnModalConfirm')?.addEventListener('click', () => {
         if (modalConfirmCallback) modalConfirmCallback();
         else closeModal();
       });
@@ -2949,7 +2954,13 @@
           if (filteredDeck[state.currentIndex]) speakText(filteredDeck[state.currentIndex].word);
         }
       });
-    });
+    }
+
+    if (document.readyState !== 'loading') {
+      setupApp();
+    } else {
+      window.addEventListener('DOMContentLoaded', setupApp);
+    }
   </script>
 </body>
 </html>
