@@ -673,23 +673,23 @@
             <button id="btnEditMemoInline" type="button" class="ml-2 underline text-[11px] flex-shrink-0">修改</button>
           </div>
 
-          <!-- 3-Tier Marking Buttons: Seamless Unified Segmented Capsule Bar -->
-          <div class="mt-1.5 flex items-stretch rounded-2xl overflow-hidden shadow-sm border border-slate-200/50 dark:border-slate-700/50 flex-shrink-0 divide-x divide-white/20 dark:divide-white/10">
-            <button id="btnMarkKnown" type="button" class="btn-press flex-1 py-2.5 px-1 bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 text-white flex flex-col items-center justify-center transition">
+          <!-- 3-Tier Marking Buttons: Full-Bleed Edge-to-Edge Action Bar (底部铺满) -->
+          <div class="mt-1.5 -mx-3 -mb-1 flex items-stretch flex-shrink-0 divide-x divide-white/20 dark:divide-white/10 shadow-lg border-t border-slate-200/40 dark:border-slate-700/40">
+            <button id="btnMarkKnown" type="button" class="btn-press flex-1 py-3 px-1 bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 text-white flex flex-col items-center justify-center transition">
               <span class="text-sm font-extrabold flex items-center gap-1">
                 <span>🟢</span><span>很熟</span>
               </span>
               <span class="text-[9px] opacity-90 mt-0.5 whitespace-nowrap">秒认无需想 (1)</span>
             </button>
 
-            <button id="btnMarkFuzzy" type="button" class="btn-press flex-1 py-2.5 px-1 bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-white flex flex-col items-center justify-center transition">
+            <button id="btnMarkFuzzy" type="button" class="btn-press flex-1 py-3 px-1 bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-white flex flex-col items-center justify-center transition">
               <span class="text-sm font-extrabold flex items-center gap-1">
                 <span>🟡</span><span>有点模糊</span>
               </span>
               <span class="text-[9px] opacity-90 mt-0.5 whitespace-nowrap">需巩固 (2)</span>
             </button>
 
-            <button id="btnMarkUnknown" type="button" class="btn-press flex-1 py-2.5 px-1 bg-rose-500 hover:bg-rose-600 active:bg-rose-700 text-white flex flex-col items-center justify-center transition">
+            <button id="btnMarkUnknown" type="button" class="btn-press flex-1 py-3 px-1 bg-rose-500 hover:bg-rose-600 active:bg-rose-700 text-white flex flex-col items-center justify-center transition">
               <span class="text-sm font-extrabold flex items-center gap-1">
                 <span>🔴</span><span>完全不会</span>
               </span>
@@ -1074,6 +1074,28 @@
             </select>
           </div>
 
+          <!-- Font Size Adjustment (字号调节功能) -->
+          <div class="space-y-1.5 pt-1 border-t border-slate-100 dark:border-slate-800">
+            <div class="flex items-center justify-between">
+              <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">🔤 核心字号大小调节</label>
+              <span id="fontSizeDisplayLabel" class="text-[10px] font-bold text-teal-600 dark:text-teal-400">标准 (100%)</span>
+            </div>
+            <div class="grid grid-cols-3 gap-1.5 p-1 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200/50 dark:border-slate-700/50">
+              <button type="button" data-font-scale="standard" class="font-scale-tab py-1.5 px-1 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1">
+                <span>标准</span>
+                <span class="text-[9px] opacity-75">100%</span>
+              </button>
+              <button type="button" data-font-scale="large" class="font-scale-tab py-1.5 px-1 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1">
+                <span>放大</span>
+                <span class="text-[9px] opacity-75">120%</span>
+              </button>
+              <button type="button" data-font-scale="xlarge" class="font-scale-tab py-1.5 px-1 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1">
+                <span>特大</span>
+                <span class="text-[9px] opacity-75">140%</span>
+              </button>
+            </div>
+          </div>
+
           <!-- Audio & Pronunciation Controls (收纳进设置面板) -->
           <div class="space-y-1.5 pt-1 border-t border-slate-100 dark:border-slate-800">
             <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">🔊 发音偏好与口音语速</label>
@@ -1424,6 +1446,7 @@
       autoSpeak: false,
       accent: 'en-US',     // 'en-US' or 'en-GB'
       speechRate: 1.0,     // 1.0 or 0.7
+      fontScale: 'standard', // 'standard' (1.0), 'large' (1.2), 'xlarge' (1.4)
       darkMode: false,
       currentIndex: 0,
       cardRevealed: false,
@@ -1459,6 +1482,7 @@
           if (parsed.currentGroup) state.currentGroup = parsed.currentGroup;
           if (parsed.accent) state.accent = parsed.accent;
           if (parsed.speechRate) state.speechRate = parsed.speechRate;
+          if (parsed.fontScale) state.fontScale = parsed.fontScale;
           if (typeof parsed.autoSpeak === 'boolean') state.autoSpeak = parsed.autoSpeak;
           if (typeof parsed.darkMode === 'boolean') state.darkMode = parsed.darkMode;
           if (Number.isInteger(parsed.currentIndex) && parsed.currentIndex >= 0) state.currentIndex = parsed.currentIndex;
@@ -1476,6 +1500,7 @@
           currentGroup: state.currentGroup,
           accent: state.accent,
           speechRate: state.speechRate,
+          fontScale: state.fontScale,
           autoSpeak: state.autoSpeak,
           darkMode: state.darkMode,
           currentIndex: state.currentIndex
@@ -1747,6 +1772,28 @@
       if (document.getElementById('drawerAccentLabel')) document.getElementById('drawerAccentLabel').textContent = state.accent === 'en-US' ? '口音: 美音 (US)' : '口音: 英式 (UK)';
       if (document.getElementById('drawerSpeedLabel')) document.getElementById('drawerSpeedLabel').textContent = state.speechRate === 0.7 ? '语速: 慢速 (0.7x)' : '语速: 正常 (1.0x)';
       if (document.getElementById('drawerSpeedIcon')) document.getElementById('drawerSpeedIcon').textContent = state.speechRate === 0.7 ? '🐢' : '⚡';
+      const scaleTabs = document.querySelectorAll('.font-scale-tab');
+      scaleTabs.forEach(tab => {
+        const isCurrent = tab.getAttribute('data-font-scale') === state.fontScale;
+        if (isCurrent) {
+          tab.className = 'font-scale-tab py-1.5 px-1 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1 bg-teal-600 text-white shadow-xs';
+        } else {
+          tab.className = 'font-scale-tab py-1.5 px-1 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1 text-slate-600 dark:text-slate-300 hover:text-slate-900';
+        }
+      });
+      const scaleLabels = {
+        standard: '标准 (100%)',
+        large: '放大 (120%)',
+        xlarge: '特大 (140%)'
+      };
+      const scaleLabelEl = document.getElementById('fontSizeDisplayLabel');
+      if (scaleLabelEl) scaleLabelEl.textContent = scaleLabels[state.fontScale] || '标准 (100%)';
+    }
+
+    function getFontScaleMultiplier() {
+      if (state.fontScale === 'large') return 1.2;
+      if (state.fontScale === 'xlarge') return 1.4;
+      return 1.0;
     }
 
     function renderStudyCard() {
@@ -1794,11 +1841,12 @@
 
       cardWordText.textContent = item.word;
       cardWordText.className = `leading-tight font-extrabold tracking-tight select-text whitespace-nowrap max-w-full px-1 ${hideEn ? 'meaning-masked' : 'meaning-revealed'}`;
-      fitTextSingleLine(cardWordText, 46, 20, 310);
+      const fontMultiplier = getFontScaleMultiplier();
+      fitTextSingleLine(cardWordText, Math.round(44 * fontMultiplier), Math.round(20 * fontMultiplier), 340);
 
       cardMeaningText.textContent = item.meaning;
       cardMeaningText.className = `font-bold leading-snug select-text whitespace-nowrap max-w-full ${hideCn ? 'meaning-masked' : 'meaning-revealed'}`;
-      fitTextSingleLine(cardMeaningText, 32, 18, 330);
+      fitTextSingleLine(cardMeaningText, Math.round(32 * fontMultiplier), Math.round(18 * fontMultiplier), 340);
 
       if (hideCn || hideEn) {
         maskHintText.classList.remove('hidden');
@@ -2732,6 +2780,18 @@
         document.getElementById('prefDrawerModal')?.classList.add('hidden');
       });
       // Drawer Audio Controls Listeners
+      // Font scale tabs listeners
+      document.querySelectorAll('.font-scale-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+          state.fontScale = tab.getAttribute('data-font-scale') || 'standard';
+          saveState();
+          renderHeaderAndMiniStats();
+          renderStudyCard();
+          const scaleLabels = { standard: '标准字号', large: '放大字号 (120%)', xlarge: '特大字号 (140%)' };
+          showToast('🔤 已切换为' + (scaleLabels[state.fontScale] || '标准字号'));
+        });
+      });
+
       document.getElementById('btnDrawerAccentToggle')?.addEventListener('click', () => {
         state.accent = state.accent === 'en-US' ? 'en-GB' : 'en-US';
         saveState();
