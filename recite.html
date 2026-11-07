@@ -302,11 +302,13 @@
     .text-\[34px\] { font-size: 34px; line-height: 1.15; }
     .text-\[36px\] { font-size: 36px; line-height: 1.15; }
 
+    .font-light { font-weight: 300; }
     .font-normal { font-weight: 400; }
     .font-medium { font-weight: 500; }
     .font-semibold { font-weight: 600; }
     .font-bold { font-weight: 700; }
     .font-extrabold { font-weight: 800; }
+    .font-black { font-weight: 900; }
     .font-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
 
     .leading-tight { line-height: 1.25; }
@@ -1062,40 +1064,70 @@
             </select>
           </div>
 
-          <!-- Dual Font Size Sliders (中英双轨独立字号滑动条 - 上限200px) -->
+          <!-- Typography: Font Size (max 100px) & Weight (粗细) Sliders -->
           <div class="space-y-3 pt-2 border-t border-slate-100 dark:border-slate-800">
             <div class="flex items-center justify-between">
-              <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">🔤 核心字号双轨调节 (上限200px)</label>
+              <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">🔤 字号与粗细调节 (上限100px)</label>
               <button id="btnResetFontSizes" type="button" class="text-[10px] text-teal-600 dark:text-teal-400 font-bold hover:underline">
                 🔄 恢复默认
               </button>
             </div>
 
-            <!-- English Font Size Slider (max 200) -->
+            <!-- English Font Size Slider (max 100) -->
             <div class="space-y-1">
               <div class="flex items-center justify-between text-xs">
-                <span class="font-semibold text-slate-700 dark:text-slate-200">🔤 英文单词大小</span>
+                <span class="font-semibold text-slate-700 dark:text-slate-200">🔤 英文单词字号</span>
                 <span id="valEnFontSize" class="font-mono text-teal-600 dark:text-teal-400 font-bold">42px</span>
               </div>
-              <input id="sliderEnFontSize" type="range" min="24" max="200" value="42" step="2" class="w-full accent-teal-600 cursor-pointer h-2 bg-slate-200 dark:bg-slate-700 rounded-lg" />
+              <input id="sliderEnFontSize" type="range" min="20" max="100" value="42" step="2" class="w-full accent-teal-600 cursor-pointer h-2 bg-slate-200 dark:bg-slate-700 rounded-lg" />
               <div class="flex justify-between text-[9px] text-slate-400 font-mono">
-                <span>24px (精细)</span>
+                <span>20px (小)</span>
                 <span>标准 42px</span>
-                <span>200px (超大)</span>
+                <span>100px (上限)</span>
               </div>
             </div>
 
-            <!-- Chinese Font Size Slider (max 200) -->
+            <!-- Chinese Font Size Slider (max 100) -->
             <div class="space-y-1">
               <div class="flex items-center justify-between text-xs">
-                <span class="font-semibold text-slate-700 dark:text-slate-200">🇨🇳 中文释义大小</span>
+                <span class="font-semibold text-slate-700 dark:text-slate-200">🇨🇳 中文释义字号</span>
                 <span id="valCnFontSize" class="font-mono text-teal-600 dark:text-teal-400 font-bold">30px</span>
               </div>
-              <input id="sliderCnFontSize" type="range" min="16" max="200" value="30" step="2" class="w-full accent-teal-600 cursor-pointer h-2 bg-slate-200 dark:bg-slate-700 rounded-lg" />
+              <input id="sliderCnFontSize" type="range" min="16" max="100" value="30" step="2" class="w-full accent-teal-600 cursor-pointer h-2 bg-slate-200 dark:bg-slate-700 rounded-lg" />
               <div class="flex justify-between text-[9px] text-slate-400 font-mono">
-                <span>16px (精细)</span>
+                <span>16px (小)</span>
                 <span>标准 30px</span>
-                <span>200px (超大)</span>
+                <span>100px (上限)</span>
+              </div>
+            </div>
+
+            <!-- English Font Weight Slider (300-900) -->
+            <div class="space-y-1">
+              <div class="flex items-center justify-between text-xs">
+                <span class="font-semibold text-slate-700 dark:text-slate-200">✏️ 英文单词粗细</span>
+                <span id="valEnFontWeight" class="font-mono text-teal-600 dark:text-teal-400 font-bold">特粗 (800)</span>
+              </div>
+              <input id="sliderEnFontWeight" type="range" min="300" max="900" value="800" step="100" class="w-full accent-teal-600 cursor-pointer h-2 bg-slate-200 dark:bg-slate-700 rounded-lg" />
+              <div class="flex justify-between text-[9px] text-slate-400 font-mono">
+                <span>300 (细)</span>
+                <span>500 (中)</span>
+                <span>700 (粗)</span>
+                <span>900 (极粗)</span>
+              </div>
+            </div>
+
+            <!-- Chinese Font Weight Slider (300-900) -->
+            <div class="space-y-1">
+              <div class="flex items-center justify-between text-xs">
+                <span class="font-semibold text-slate-700 dark:text-slate-200">🖌️ 中文释义粗细</span>
+                <span id="valCnFontWeight" class="font-mono text-teal-600 dark:text-teal-400 font-bold">粗体 (700)</span>
+              </div>
+              <input id="sliderCnFontWeight" type="range" min="300" max="900" value="700" step="100" class="w-full accent-teal-600 cursor-pointer h-2 bg-slate-200 dark:bg-slate-700 rounded-lg" />
+              <div class="flex justify-between text-[9px] text-slate-400 font-mono">
+                <span>300 (细)</span>
+                <span>500 (中)</span>
+                <span>700 (粗)</span>
+                <span>900 (极粗)</span>
               </div>
             </div>
           </div>
@@ -1452,6 +1484,8 @@
       speechRate: 1.0,     // 1.0 or 0.7
       enFontSize: 42,
       cnFontSize: 30,
+      enFontWeight: 800,
+      cnFontWeight: 700,
       darkMode: false,
       currentIndex: 0,
       cardRevealed: false,
@@ -1487,8 +1521,10 @@
           if (parsed.currentGroup) state.currentGroup = parsed.currentGroup;
           if (parsed.accent) state.accent = parsed.accent;
           if (parsed.speechRate) state.speechRate = parsed.speechRate;
-          if (parsed.enFontSize) state.enFontSize = parsed.enFontSize;
-          if (parsed.cnFontSize) state.cnFontSize = parsed.cnFontSize;
+          if (parsed.enFontSize) state.enFontSize = Math.min(100, Math.max(20, parsed.enFontSize));
+          if (parsed.cnFontSize) state.cnFontSize = Math.min(100, Math.max(16, parsed.cnFontSize));
+          if (parsed.enFontWeight) state.enFontWeight = parsed.enFontWeight;
+          if (parsed.cnFontWeight) state.cnFontWeight = parsed.cnFontWeight;
           if (typeof parsed.autoSpeak === 'boolean') state.autoSpeak = parsed.autoSpeak;
           if (typeof parsed.darkMode === 'boolean') state.darkMode = parsed.darkMode;
           if (Number.isInteger(parsed.currentIndex) && parsed.currentIndex >= 0) state.currentIndex = parsed.currentIndex;
@@ -1508,6 +1544,8 @@
           speechRate: state.speechRate,
           enFontSize: state.enFontSize,
           cnFontSize: state.cnFontSize,
+          enFontWeight: state.enFontWeight,
+          cnFontWeight: state.cnFontWeight,
           autoSpeak: state.autoSpeak,
           darkMode: state.darkMode,
           currentIndex: state.currentIndex
@@ -1795,6 +1833,19 @@
       if (document.getElementById('drawerAccentLabel')) document.getElementById('drawerAccentLabel').textContent = state.accent === 'en-US' ? '口音: 美音 (US)' : '口音: 英式 (UK)';
       if (document.getElementById('drawerSpeedLabel')) document.getElementById('drawerSpeedLabel').textContent = state.speechRate === 0.7 ? '语速: 慢速 (0.7x)' : '语速: 正常 (1.0x)';
       if (document.getElementById('drawerSpeedIcon')) document.getElementById('drawerSpeedIcon').textContent = state.speechRate === 0.7 ? '🐢' : '⚡';
+      function getFontWeightLabel(weight) {
+        const map = {
+          300: '细体 (300)',
+          400: '常规 (400)',
+          500: '中等 (500)',
+          600: '半粗 (600)',
+          700: '粗体 (700)',
+          800: '特粗 (800)',
+          900: '极粗 (900)'
+        };
+        return map[weight] || (weight + '');
+      }
+
       const sliderEn = document.getElementById('sliderEnFontSize');
       const valEn = document.getElementById('valEnFontSize');
       if (sliderEn && valEn) {
@@ -1806,6 +1857,19 @@
       if (sliderCn && valCn) {
         sliderCn.value = state.cnFontSize || 30;
         valCn.textContent = (state.cnFontSize || 30) + 'px';
+      }
+
+      const sliderEnWeight = document.getElementById('sliderEnFontWeight');
+      const valEnWeight = document.getElementById('valEnFontWeight');
+      if (sliderEnWeight && valEnWeight) {
+        sliderEnWeight.value = state.enFontWeight || 800;
+        valEnWeight.textContent = getFontWeightLabel(state.enFontWeight || 800);
+      }
+      const sliderCnWeight = document.getElementById('sliderCnFontWeight');
+      const valCnWeight = document.getElementById('valCnFontWeight');
+      if (sliderCnWeight && valCnWeight) {
+        sliderCnWeight.value = state.cnFontWeight || 700;
+        valCnWeight.textContent = getFontWeightLabel(state.cnFontWeight || 700);
       }
     }
 
@@ -1853,16 +1917,18 @@
       const hideEn = state.maskMode === 'hide_en' && !state.cardRevealed;
 
       cardWordText.textContent = item.word;
-      cardWordText.className = `leading-tight font-black tracking-tight select-none sm:select-text break-words max-w-full px-1 cursor-pointer transition hover:opacity-90 active:scale-95 ${hideEn ? 'meaning-masked' : 'meaning-revealed'}`;
+      cardWordText.className = `leading-tight tracking-tight select-none sm:select-text break-words max-w-full px-1 cursor-pointer transition hover:opacity-90 active:scale-95 ${hideEn ? 'meaning-masked' : 'meaning-revealed'}`;
       const enSize = state.enFontSize || 42;
       cardWordText.style.fontSize = enSize + 'px';
+      cardWordText.style.fontWeight = state.enFontWeight || 800;
       cardWordText.style.lineHeight = '1.1';
       cardWordText.style.wordBreak = 'break-word';
 
       cardMeaningText.textContent = item.meaning;
-      cardMeaningText.className = `font-black leading-tight select-text break-words max-w-full ${hideCn ? 'meaning-masked' : 'meaning-revealed'}`;
+      cardMeaningText.className = `leading-tight select-text break-words max-w-full ${hideCn ? 'meaning-masked' : 'meaning-revealed'}`;
       const cnSize = state.cnFontSize || 30;
       cardMeaningText.style.fontSize = cnSize + 'px';
+      cardMeaningText.style.fontWeight = state.cnFontWeight || 700;
       cardMeaningText.style.lineHeight = '1.2';
       cardMeaningText.style.wordBreak = 'break-word';
 
@@ -2798,7 +2864,7 @@
         document.getElementById('prefDrawerModal')?.classList.add('hidden');
       });
       // Drawer Audio Controls Listeners
-      // Dual font size range sliders listeners
+      // Typography sliders listeners (Size max 100 + Weight 300-900)
       const sliderEn = document.getElementById('sliderEnFontSize');
       sliderEn?.addEventListener('input', (e) => {
         state.enFontSize = parseInt(e.target.value, 10);
@@ -2817,13 +2883,33 @@
         renderStudyCard();
       });
 
+      const sliderEnWeight = document.getElementById('sliderEnFontWeight');
+      sliderEnWeight?.addEventListener('input', (e) => {
+        state.enFontWeight = parseInt(e.target.value, 10);
+        const valEl = document.getElementById('valEnFontWeight');
+        if (valEl) valEl.textContent = getFontWeightLabel(state.enFontWeight);
+        saveState();
+        renderStudyCard();
+      });
+
+      const sliderCnWeight = document.getElementById('sliderCnFontWeight');
+      sliderCnWeight?.addEventListener('input', (e) => {
+        state.cnFontWeight = parseInt(e.target.value, 10);
+        const valEl = document.getElementById('valCnFontWeight');
+        if (valEl) valEl.textContent = getFontWeightLabel(state.cnFontWeight);
+        saveState();
+        renderStudyCard();
+      });
+
       document.getElementById('btnResetFontSizes')?.addEventListener('click', () => {
         state.enFontSize = 42;
         state.cnFontSize = 30;
+        state.enFontWeight = 800;
+        state.cnFontWeight = 700;
         saveState();
         renderHeaderAndMiniStats();
         renderStudyCard();
-        showToast('🔤 已恢复默认字号 (英文42px / 中文30px)');
+        showToast('🔤 已恢复默认字号与粗细 (英文42px/特粗, 中文30px/粗体)');
       });
 
       document.getElementById('btnDrawerAccentToggle')?.addEventListener('click', () => {
