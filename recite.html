@@ -513,17 +513,6 @@
       color: #2dd4bf !important;
       box-shadow: 0 4px 12px -2px rgba(20, 184, 166, 0.28);
     }
-    .nav-tab-btn.tab-active::before {
-      content: '';
-      position: absolute;
-      top: -6px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 24px;
-      height: 3.5px;
-      border-radius: 999px;
-      background: linear-gradient(90deg, #0d9488, #10b981);
-    }
 
   </style>
 </head>
@@ -698,23 +687,23 @@
             <button id="btnEditMemoInline" type="button" class="ml-2 underline text-[11px] flex-shrink-0">修改</button>
           </div>
 
-          <!-- 3-Tier Marking Buttons ALWAYS PINNED ABOVE NAV BAR -->
-          <div class="mt-1.5 grid grid-cols-3 gap-2 flex-shrink-0">
-            <button id="btnMarkKnown" type="button" class="btn-press py-2.5 px-1 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white shadow-sm flex flex-col items-center justify-center transition">
+          <!-- 3-Tier Marking Buttons: Seamless Unified Segmented Capsule Bar -->
+          <div class="mt-1.5 flex items-stretch rounded-2xl overflow-hidden shadow-sm border border-slate-200/50 dark:border-slate-700/50 flex-shrink-0 divide-x divide-white/20 dark:divide-white/10">
+            <button id="btnMarkKnown" type="button" class="btn-press flex-1 py-2.5 px-1 bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 text-white flex flex-col items-center justify-center transition">
               <span class="text-sm font-extrabold flex items-center gap-1">
                 <span>🟢</span><span>很熟</span>
               </span>
               <span class="text-[9px] opacity-90 mt-0.5 whitespace-nowrap">秒认无需想 (1)</span>
             </button>
 
-            <button id="btnMarkFuzzy" type="button" class="btn-press py-2.5 px-1 rounded-2xl bg-amber-500 hover:bg-amber-600 text-white shadow-sm flex flex-col items-center justify-center transition">
+            <button id="btnMarkFuzzy" type="button" class="btn-press flex-1 py-2.5 px-1 bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-white flex flex-col items-center justify-center transition">
               <span class="text-sm font-extrabold flex items-center gap-1">
                 <span>🟡</span><span>有点模糊</span>
               </span>
               <span class="text-[9px] opacity-90 mt-0.5 whitespace-nowrap">需巩固 (2)</span>
             </button>
 
-            <button id="btnMarkUnknown" type="button" class="btn-press py-2.5 px-1 rounded-2xl bg-rose-500 hover:bg-rose-600 text-white shadow-sm flex flex-col items-center justify-center transition">
+            <button id="btnMarkUnknown" type="button" class="btn-press flex-1 py-2.5 px-1 bg-rose-500 hover:bg-rose-600 active:bg-rose-700 text-white flex flex-col items-center justify-center transition">
               <span class="text-sm font-extrabold flex items-center gap-1">
                 <span>🔴</span><span>完全不会</span>
               </span>
