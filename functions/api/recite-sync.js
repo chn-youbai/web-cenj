@@ -105,6 +105,7 @@ export async function onRequestPost(context) {
 
   const marks = body.marks || {};
   const memos = body.memos || {};
+  const settings = body.settings || {};
   const updatedAt = typeof body.updatedAt === "number" ? body.updatedAt : Date.now();
 
   const payload = {
@@ -113,7 +114,8 @@ export async function onRequestPost(context) {
     marksCount: Object.keys(marks).length,
     memosCount: Object.keys(memos).length,
     marks: marks,
-    memos: memos
+    memos: memos,
+    settings: settings
   };
 
   const db = context.env.DB;

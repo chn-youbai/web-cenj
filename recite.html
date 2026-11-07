@@ -1064,7 +1064,7 @@
             </select>
           </div>
 
-          <!-- Typography: Font Size (max 100px) & Weight (粗细) Sliders -->
+          <!-- Typography: Font Size (max 100px) & Weight (粗细) Sliders (默认 英文58px/粗体700, 中文34px/粗体700) -->
           <div class="space-y-3 pt-2 border-t border-slate-100 dark:border-slate-800">
             <div class="flex items-center justify-between">
               <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">🔤 字号与粗细调节 (上限100px)</label>
@@ -1073,50 +1073,50 @@
               </button>
             </div>
 
-            <!-- English Font Size Slider (max 100) -->
+            <!-- English Font Size Slider (max 100, default 58) -->
             <div class="space-y-1">
               <div class="flex items-center justify-between text-xs">
                 <span class="font-semibold text-slate-700 dark:text-slate-200">🔤 英文单词字号</span>
-                <span id="valEnFontSize" class="font-mono text-teal-600 dark:text-teal-400 font-bold">42px</span>
+                <span id="valEnFontSize" class="font-mono text-teal-600 dark:text-teal-400 font-bold">58px</span>
               </div>
-              <input id="sliderEnFontSize" type="range" min="20" max="100" value="42" step="2" class="w-full accent-teal-600 cursor-pointer h-2 bg-slate-200 dark:bg-slate-700 rounded-lg" />
+              <input id="sliderEnFontSize" type="range" min="20" max="100" value="58" step="2" class="w-full accent-teal-600 cursor-pointer h-2 bg-slate-200 dark:bg-slate-700 rounded-lg" />
               <div class="flex justify-between text-[9px] text-slate-400 font-mono">
                 <span>20px (小)</span>
-                <span>标准 42px</span>
+                <span>默认 58px</span>
                 <span>100px (上限)</span>
               </div>
             </div>
 
-            <!-- Chinese Font Size Slider (max 100) -->
+            <!-- Chinese Font Size Slider (max 100, default 34) -->
             <div class="space-y-1">
               <div class="flex items-center justify-between text-xs">
                 <span class="font-semibold text-slate-700 dark:text-slate-200">🇨🇳 中文释义字号</span>
-                <span id="valCnFontSize" class="font-mono text-teal-600 dark:text-teal-400 font-bold">30px</span>
+                <span id="valCnFontSize" class="font-mono text-teal-600 dark:text-teal-400 font-bold">34px</span>
               </div>
-              <input id="sliderCnFontSize" type="range" min="16" max="100" value="30" step="2" class="w-full accent-teal-600 cursor-pointer h-2 bg-slate-200 dark:bg-slate-700 rounded-lg" />
+              <input id="sliderCnFontSize" type="range" min="16" max="100" value="34" step="2" class="w-full accent-teal-600 cursor-pointer h-2 bg-slate-200 dark:bg-slate-700 rounded-lg" />
               <div class="flex justify-between text-[9px] text-slate-400 font-mono">
                 <span>16px (小)</span>
-                <span>标准 30px</span>
+                <span>默认 34px</span>
                 <span>100px (上限)</span>
               </div>
             </div>
 
-            <!-- English Font Weight Slider (300-900) -->
+            <!-- English Font Weight Slider (300-900, default 700) -->
             <div class="space-y-1">
               <div class="flex items-center justify-between text-xs">
                 <span class="font-semibold text-slate-700 dark:text-slate-200">✏️ 英文单词粗细</span>
-                <span id="valEnFontWeight" class="font-mono text-teal-600 dark:text-teal-400 font-bold">特粗 (800)</span>
+                <span id="valEnFontWeight" class="font-mono text-teal-600 dark:text-teal-400 font-bold">粗体 (700)</span>
               </div>
-              <input id="sliderEnFontWeight" type="range" min="300" max="900" value="800" step="100" class="w-full accent-teal-600 cursor-pointer h-2 bg-slate-200 dark:bg-slate-700 rounded-lg" />
+              <input id="sliderEnFontWeight" type="range" min="300" max="900" value="700" step="100" class="w-full accent-teal-600 cursor-pointer h-2 bg-slate-200 dark:bg-slate-700 rounded-lg" />
               <div class="flex justify-between text-[9px] text-slate-400 font-mono">
                 <span>300 (细)</span>
                 <span>500 (中)</span>
-                <span>700 (粗)</span>
+                <span>默认 700 (粗)</span>
                 <span>900 (极粗)</span>
               </div>
             </div>
 
-            <!-- Chinese Font Weight Slider (300-900) -->
+            <!-- Chinese Font Weight Slider (300-900, default 700) -->
             <div class="space-y-1">
               <div class="flex items-center justify-between text-xs">
                 <span class="font-semibold text-slate-700 dark:text-slate-200">🖌️ 中文释义粗细</span>
@@ -1126,7 +1126,7 @@
               <div class="flex justify-between text-[9px] text-slate-400 font-mono">
                 <span>300 (细)</span>
                 <span>500 (中)</span>
-                <span>700 (粗)</span>
+                <span>默认 700 (粗)</span>
                 <span>900 (极粗)</span>
               </div>
             </div>
@@ -1379,12 +1379,30 @@
       }, 3000);
     }
 
+    function getUserStorageKey(syncKey) {
+      const key = (syncKey || getOrCreateSyncKey()).trim().toLowerCase();
+      return 'gaokao_2050_user_' + encodeURIComponent(key) + '_state';
+    }
+
     async function pushCloudSync(isManual = false) {
       const key = getOrCreateSyncKey();
       const payload = {
         key: key,
         marks: state.marks,
         memos: state.memos,
+        settings: {
+          enFontSize: state.enFontSize,
+          cnFontSize: state.cnFontSize,
+          enFontWeight: state.enFontWeight,
+          cnFontWeight: state.cnFontWeight,
+          accent: state.accent,
+          speechRate: state.speechRate,
+          autoSpeak: state.autoSpeak,
+          maskMode: state.maskMode,
+          statusFilter: state.statusFilter,
+          currentGroup: state.currentGroup,
+          currentIndex: state.currentIndex
+        },
         updatedAt: Date.now()
       };
 
@@ -1399,14 +1417,13 @@
           const nowStr = new Date().toLocaleTimeString();
           localStorage.setItem(LAST_SYNC_STORAGE, nowStr);
           updateSyncUI();
-          if (isManual) showToast(`☁️ 已同步至云端 (${nowStr})`);
+          if (isManual) showToast(`☁️ 已保存并同步至专属云端 (${nowStr})`);
         } else if (res.status === 'conflict' && res.cloudData) {
-          // 云端版本较新，智能合并
           mergeCloudData(res.cloudData);
           if (isManual) showToast('☁️ 已与云端最新进度智能对齐！');
         }
       } catch (e) {
-        if (isManual) showToast('⚠️ 云端同步暂不可用，已保留在本地');
+        if (isManual) showToast('⚠️ 云端同步暂不可用，已保存在个人本地空间');
       }
     }
 
@@ -1416,19 +1433,21 @@
       try {
         const resp = await fetch(`${CLOUD_SYNC_API}?key=${encodeURIComponent(targetKey)}`);
         const res = await resp.json();
+        localStorage.setItem(SYNC_KEY_STORAGE, targetKey);
+        // Switch to this user's isolated local storage
+        loadState(targetKey);
+
         if (res.status === 'ok' && res.data) {
-          localStorage.setItem(SYNC_KEY_STORAGE, targetKey);
           mergeCloudData(res.data);
           const nowStr = new Date().toLocaleTimeString();
           localStorage.setItem(LAST_SYNC_STORAGE, nowStr);
           updateSyncUI();
-          showToast(`✅ 配对成功！已从「${targetKey}」拉取云端进度`);
+          showToast(`✅ 已载入用户「${targetKey}」的专属个性化数据`);
         } else if (res.status === 'empty') {
-          localStorage.setItem(SYNC_KEY_STORAGE, targetKey);
           updateSyncUI();
-          // 云端尚无数据，将本机进度初始化至该自定义同步码下
+          // Initialize fresh cloud storage for this new user code
           await pushCloudSync(true);
-          showToast(`✅ 已绑定同步码「${targetKey}」，并将本机进度推送到云端！`);
+          showToast(`✅ 已绑定新用户同步码「${targetKey}」，个性化数据独立保存！`);
         } else {
           showToast(`⚠️ 同步失败：${res.message || '同步码无效'}`);
         }
@@ -1444,6 +1463,20 @@
       }
       if (cloudData.memos) {
         state.memos = { ...state.memos, ...cloudData.memos };
+      }
+      if (cloudData.settings) {
+        const s = cloudData.settings;
+        if (s.enFontSize) state.enFontSize = Math.min(100, Math.max(20, s.enFontSize));
+        if (s.cnFontSize) state.cnFontSize = Math.min(100, Math.max(16, s.cnFontSize));
+        if (s.enFontWeight) state.enFontWeight = s.enFontWeight;
+        if (s.cnFontWeight) state.cnFontWeight = s.cnFontWeight;
+        if (s.accent) state.accent = s.accent;
+        if (s.speechRate) state.speechRate = s.speechRate;
+        if (typeof s.autoSpeak === 'boolean') state.autoSpeak = s.autoSpeak;
+        if (s.maskMode) state.maskMode = s.maskMode;
+        if (s.statusFilter) state.statusFilter = s.statusFilter;
+        if (s.currentGroup) state.currentGroup = s.currentGroup;
+        if (Number.isInteger(s.currentIndex) && s.currentIndex >= 0) state.currentIndex = s.currentIndex;
       }
       saveState();
       rebuildFilteredDeck(false);
@@ -1472,32 +1505,46 @@
         badge.textContent = `云端就绪 · ${key}`;
       }
     }
-    const state = {
-      marks: {},        // { [wordId]: 'known' | 'fuzzy' | 'unknown' }
-      memos: {},        // { [wordId]: 'user note' }
-      currentGroup: 'all', // 'all', 'tier_high', 'tier_mid', 'tier_low', 'tier_zero', or 'g_1'..'g_41'
-      statusFilter: 'all', // 'all', 'unmarked', 'review', 'unknown', 'fuzzy', 'known'
-      maskMode: 'none',    // 'none', 'hide_cn', 'hide_en'
-      isShuffled: false,
-      autoSpeak: false,
-      accent: 'en-US',     // 'en-US' or 'en-GB'
-      speechRate: 1.0,     // 1.0 or 0.7
-      enFontSize: 42,
-      cnFontSize: 30,
-      enFontWeight: 800,
+
+    // Default Baseline (English 58px / Bold 700, Chinese 34px / Bold 700)
+    const SYSTEM_DEFAULTS = {
+      enFontSize: 58,
+      cnFontSize: 34,
+      enFontWeight: 700,
       cnFontWeight: 700,
+      accent: 'en-US',
+      speechRate: 1.0,
+      autoSpeak: false,
+      maskMode: 'none',
+      statusFilter: 'all',
+      currentGroup: 'all',
+      currentIndex: 0
+    };
+
+    const state = {
+      marks: {},
+      memos: {},
+      currentGroup: SYSTEM_DEFAULTS.currentGroup,
+      statusFilter: SYSTEM_DEFAULTS.statusFilter,
+      maskMode: SYSTEM_DEFAULTS.maskMode,
+      isShuffled: false,
+      autoSpeak: SYSTEM_DEFAULTS.autoSpeak,
+      accent: SYSTEM_DEFAULTS.accent,
+      speechRate: SYSTEM_DEFAULTS.speechRate,
+      enFontSize: SYSTEM_DEFAULTS.enFontSize,
+      cnFontSize: SYSTEM_DEFAULTS.cnFontSize,
+      enFontWeight: SYSTEM_DEFAULTS.enFontWeight,
+      cnFontWeight: SYSTEM_DEFAULTS.cnFontWeight,
       darkMode: false,
-      currentIndex: 0,
+      currentIndex: SYSTEM_DEFAULTS.currentIndex,
       cardRevealed: false,
       activeTab: 'study',
-      // List view state
       listSearch: '',
       listTab: 'all',
       listPage: 1,
       listPageSize: 50,
-      // Quiz state
       quizPool: 'current_group',
-      quizType: 'choice', // 'choice' | 'spell'
+      quizType: 'choice',
       quizTotal: 0,
       quizCorrect: 0,
       quizStreak: 0,
@@ -1511,23 +1558,44 @@
     let audioPlayer = null;
     let modalConfirmCallback = null;
 
-    function loadState() {
+    function loadState(targetSyncKey) {
       try {
-        const saved = localStorage.getItem(STORAGE_KEY);
+        const userKey = getUserStorageKey(targetSyncKey);
+        let saved = localStorage.getItem(userKey);
+        // Fallback to legacy global storage if user-specific key does not exist yet
+        if (!saved && !targetSyncKey) {
+          saved = localStorage.getItem(STORAGE_KEY);
+        }
+
         if (saved) {
           const parsed = JSON.parse(saved);
-          if (parsed.marks) state.marks = parsed.marks;
-          if (parsed.memos) state.memos = parsed.memos;
-          if (parsed.currentGroup) state.currentGroup = parsed.currentGroup;
-          if (parsed.accent) state.accent = parsed.accent;
-          if (parsed.speechRate) state.speechRate = parsed.speechRate;
-          if (parsed.enFontSize) state.enFontSize = Math.min(100, Math.max(20, parsed.enFontSize));
-          if (parsed.cnFontSize) state.cnFontSize = Math.min(100, Math.max(16, parsed.cnFontSize));
-          if (parsed.enFontWeight) state.enFontWeight = parsed.enFontWeight;
-          if (parsed.cnFontWeight) state.cnFontWeight = parsed.cnFontWeight;
-          if (typeof parsed.autoSpeak === 'boolean') state.autoSpeak = parsed.autoSpeak;
-          if (typeof parsed.darkMode === 'boolean') state.darkMode = parsed.darkMode;
-          if (Number.isInteger(parsed.currentIndex) && parsed.currentIndex >= 0) state.currentIndex = parsed.currentIndex;
+          state.marks = parsed.marks || {};
+          state.memos = parsed.memos || {};
+          state.currentGroup = parsed.currentGroup || SYSTEM_DEFAULTS.currentGroup;
+          state.accent = parsed.accent || SYSTEM_DEFAULTS.accent;
+          state.speechRate = parsed.speechRate || SYSTEM_DEFAULTS.speechRate;
+          state.enFontSize = parsed.enFontSize ? Math.min(100, Math.max(20, parsed.enFontSize)) : SYSTEM_DEFAULTS.enFontSize;
+          state.cnFontSize = parsed.cnFontSize ? Math.min(100, Math.max(16, parsed.cnFontSize)) : SYSTEM_DEFAULTS.cnFontSize;
+          state.enFontWeight = parsed.enFontWeight || SYSTEM_DEFAULTS.enFontWeight;
+          state.cnFontWeight = parsed.cnFontWeight || SYSTEM_DEFAULTS.cnFontWeight;
+          state.autoSpeak = typeof parsed.autoSpeak === 'boolean' ? parsed.autoSpeak : SYSTEM_DEFAULTS.autoSpeak;
+          state.darkMode = typeof parsed.darkMode === 'boolean' ? parsed.darkMode : false;
+          state.currentIndex = (Number.isInteger(parsed.currentIndex) && parsed.currentIndex >= 0) ? parsed.currentIndex : 0;
+        } else {
+          // Fresh profile initialized with system defaults
+          state.marks = {};
+          state.memos = {};
+          state.enFontSize = SYSTEM_DEFAULTS.enFontSize;
+          state.cnFontSize = SYSTEM_DEFAULTS.cnFontSize;
+          state.enFontWeight = SYSTEM_DEFAULTS.enFontWeight;
+          state.cnFontWeight = SYSTEM_DEFAULTS.cnFontWeight;
+          state.accent = SYSTEM_DEFAULTS.accent;
+          state.speechRate = SYSTEM_DEFAULTS.speechRate;
+          state.autoSpeak = SYSTEM_DEFAULTS.autoSpeak;
+          state.maskMode = SYSTEM_DEFAULTS.maskMode;
+          state.statusFilter = SYSTEM_DEFAULTS.statusFilter;
+          state.currentGroup = SYSTEM_DEFAULTS.currentGroup;
+          state.currentIndex = SYSTEM_DEFAULTS.currentIndex;
         }
       } catch (e) {
         console.warn('LocalStorage unavailable:', e);
@@ -1536,10 +1604,13 @@
 
     function saveState() {
       try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        const userKey = getUserStorageKey();
+        const data = {
           marks: state.marks,
           memos: state.memos,
           currentGroup: state.currentGroup,
+          statusFilter: state.statusFilter,
+          maskMode: state.maskMode,
           accent: state.accent,
           speechRate: state.speechRate,
           enFontSize: state.enFontSize,
@@ -1548,12 +1619,16 @@
           cnFontWeight: state.cnFontWeight,
           autoSpeak: state.autoSpeak,
           darkMode: state.darkMode,
-          currentIndex: state.currentIndex
-        }));
+          currentIndex: state.currentIndex,
+          updatedAt: Date.now()
+        };
+        localStorage.setItem(userKey, JSON.stringify(data));
+        // Keep legacy key synced for backup
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        triggerAutoSync();
       } catch (e) {
         // Ignore storage errors in sandboxed iframes
       }
-      triggerAutoSync();
     }
 
     // ==================== 3. TOAST & MODAL HELPERS ====================
@@ -1849,21 +1924,21 @@
       const sliderEn = document.getElementById('sliderEnFontSize');
       const valEn = document.getElementById('valEnFontSize');
       if (sliderEn && valEn) {
-        sliderEn.value = state.enFontSize || 42;
-        valEn.textContent = (state.enFontSize || 42) + 'px';
+        sliderEn.value = state.enFontSize || 58;
+        valEn.textContent = (state.enFontSize || 58) + 'px';
       }
       const sliderCn = document.getElementById('sliderCnFontSize');
       const valCn = document.getElementById('valCnFontSize');
       if (sliderCn && valCn) {
-        sliderCn.value = state.cnFontSize || 30;
-        valCn.textContent = (state.cnFontSize || 30) + 'px';
+        sliderCn.value = state.cnFontSize || 34;
+        valCn.textContent = (state.cnFontSize || 34) + 'px';
       }
 
       const sliderEnWeight = document.getElementById('sliderEnFontWeight');
       const valEnWeight = document.getElementById('valEnFontWeight');
       if (sliderEnWeight && valEnWeight) {
-        sliderEnWeight.value = state.enFontWeight || 800;
-        valEnWeight.textContent = getFontWeightLabel(state.enFontWeight || 800);
+        sliderEnWeight.value = state.enFontWeight || 700;
+        valEnWeight.textContent = getFontWeightLabel(state.enFontWeight || 700);
       }
       const sliderCnWeight = document.getElementById('sliderCnFontWeight');
       const valCnWeight = document.getElementById('valCnFontWeight');
@@ -1918,15 +1993,15 @@
 
       cardWordText.textContent = item.word;
       cardWordText.className = `leading-tight tracking-tight select-none sm:select-text break-words max-w-full px-1 cursor-pointer transition hover:opacity-90 active:scale-95 ${hideEn ? 'meaning-masked' : 'meaning-revealed'}`;
-      const enSize = state.enFontSize || 42;
+      const enSize = state.enFontSize || 58;
       cardWordText.style.fontSize = enSize + 'px';
-      cardWordText.style.fontWeight = state.enFontWeight || 800;
+      cardWordText.style.fontWeight = state.enFontWeight || 700;
       cardWordText.style.lineHeight = '1.1';
       cardWordText.style.wordBreak = 'break-word';
 
       cardMeaningText.textContent = item.meaning;
       cardMeaningText.className = `leading-tight select-text break-words max-w-full ${hideCn ? 'meaning-masked' : 'meaning-revealed'}`;
-      const cnSize = state.cnFontSize || 30;
+      const cnSize = state.cnFontSize || 34;
       cardMeaningText.style.fontSize = cnSize + 'px';
       cardMeaningText.style.fontWeight = state.cnFontWeight || 700;
       cardMeaningText.style.lineHeight = '1.2';
@@ -2902,14 +2977,14 @@
       });
 
       document.getElementById('btnResetFontSizes')?.addEventListener('click', () => {
-        state.enFontSize = 42;
-        state.cnFontSize = 30;
-        state.enFontWeight = 800;
+        state.enFontSize = 58;
+        state.cnFontSize = 34;
+        state.enFontWeight = 700;
         state.cnFontWeight = 700;
         saveState();
         renderHeaderAndMiniStats();
         renderStudyCard();
-        showToast('🔤 已恢复默认字号与粗细 (英文42px/特粗, 中文30px/粗体)');
+        showToast('🔤 已恢复默认字号与粗细 (英文58px/粗体, 中文34px/粗体)');
       });
 
       document.getElementById('btnDrawerAccentToggle')?.addEventListener('click', () => {
