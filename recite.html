@@ -595,7 +595,8 @@
           </div>
 
           <!-- Main Word Flashcard (Clean Auto-Fit Hero Card) -->
-          <div id="wordCardContainer" class="flex-1 min-h-0 flex flex-col justify-between px-3 py-1 relative overflow-y-auto scroll-area">
+          <div id="wordCardContainer" class="flex-1 min-h-0 flex flex-col px-3 py-1 relative overflow-y-auto scroll-area">
+
             <!-- Card Top Metadata: Unified Left-Aligned Pills with Breathing Space -->
             <div class="flex items-center gap-2 pt-1 px-1.5 z-10 flex-shrink-0 flex-wrap">
               <span id="cardWordId" class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 dark:bg-slate-800 sub-text shadow-2xs">
@@ -625,19 +626,6 @@
                   👆 点击卡片揭晓释义
                 </div>
               </div>
-            </div>
-
-            <!-- Card Footer: Prev / Next & Personal Note -->
-            <div class="flex items-center justify-between pt-1.5 border-t border-slate-100 dark:border-slate-800 text-xs sub-text z-10 flex-shrink-0">
-              <button id="btnPrevWord" type="button" class="btn-press px-2 py-0.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-0.5 font-medium text-[11px]">
-                <span>← 上一词</span>
-              </button>
-              <button id="btnAddMemo" type="button" class="btn-press px-2 py-0.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-0.5 font-medium text-teal-600 dark:text-teal-400 text-[11px]">
-                <span>✍️ 助记笔记</span>
-              </button>
-              <button id="btnNextWord" type="button" class="btn-press px-2 py-0.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-0.5 font-medium text-[11px]">
-                <span>下一词 →</span>
-              </button>
             </div>
           </div>
 
@@ -1636,47 +1624,63 @@
       modalConfirmCallback = null;
     }
 
-    // ==================== 4. PRONUNCIATION ENGINE (TTS + Youdao Audio Fallback) ====================
+    // ==================== 4. PRONUNCIATION ENGINE (Youdao Human Audio + Web Speech API Fallback) ====================
     function cleanWordForSpeech(raw) {
-      // Handle entries like "bear / bore" or "lie / lay"
-      return raw.replace(/\s*\/\s*/g, ', ').trim();
+      if (!raw) return '';
+      return raw.split('/')[0].trim().replace(/[^a-zA-Z\s\-']/g, '');
     }
 
     function speakText(text, rate = (state.speechRate || 1.0)) {
-      const cleaned = cleanWordForSpeech(text);
+      if (!text) return;
+      const primaryWord = cleanWordForSpeech(text);
+      if (!primaryWord) return;
+
       const btn = document.getElementById('btnSpeakWord');
       if (btn) btn.classList.add('speaking-pulse');
 
-      // Prefer Web Speech API first
-      if ('speechSynthesis' in window) {
-        try {
-          window.speechSynthesis.cancel();
-          const utter = new SpeechSynthesisUtterance(cleaned);
-          utter.lang = state.accent;
-          utter.rate = rate;
-          utter.onend = () => { if (btn) btn.classList.remove('speaking-pulse'); };
-          utter.onerror = () => { if (btn) btn.classList.remove('speaking-pulse'); };
-          window.speechSynthesis.speak(utter);
-          return;
-        } catch (err) {
-          console.warn('SpeechSynthesis fallback:', err);
-        }
-      }
+      const stopPulse = () => {
+        if (btn) btn.classList.remove('speaking-pulse');
+      };
 
-      // Fallback to online dictionary audio stream
+      // 1. Prefer authentic human voice from dictionary audio (fast, clear, 100% reliable across all browsers)
       try {
         if (!audioPlayer) audioPlayer = new Audio();
         const type = state.accent === 'en-US' ? 2 : 1;
-        const primaryWord = text.split('/')[0].trim();
         audioPlayer.src = 'https://dict.youdao.com/dictvoice?audio=' + encodeURIComponent(primaryWord) + '&type=' + type;
         audioPlayer.playbackRate = rate;
-        audioPlayer.onended = () => { if (btn) btn.classList.remove('speaking-pulse'); };
-        audioPlayer.play().catch(() => {
-          if (btn) btn.classList.remove('speaking-pulse');
-        });
+        audioPlayer.onended = stopPulse;
+        audioPlayer.onerror = () => {
+          speakWebSpeechFallback(primaryWord, rate, stopPulse);
+        };
+        const playPromise = audioPlayer.play();
+        if (playPromise !== undefined) {
+          playPromise.catch(() => {
+            speakWebSpeechFallback(primaryWord, rate, stopPulse);
+          });
+        }
       } catch (e) {
-        if (btn) btn.classList.remove('speaking-pulse');
+        speakWebSpeechFallback(primaryWord, rate, stopPulse);
       }
+    }
+
+    function speakWebSpeechFallback(text, rate, callback) {
+      if ('speechSynthesis' in window) {
+        try {
+          if (window.speechSynthesis.speaking) {
+            window.speechSynthesis.cancel();
+          }
+          const utter = new SpeechSynthesisUtterance(text);
+          utter.lang = state.accent || 'en-US';
+          utter.rate = rate || 1.0;
+          utter.onend = () => { if (callback) callback(); };
+          utter.onerror = () => { if (callback) callback(); };
+          window.speechSynthesis.speak(utter);
+          return;
+        } catch (err) {
+          console.warn('SpeechSynthesis fallback error:', err);
+        }
+      }
+      if (callback) callback();
     }
 
     // ==================== 5. GROUPING & FILTERING LOGIC ====================
@@ -1849,7 +1853,7 @@
       const hideEn = state.maskMode === 'hide_en' && !state.cardRevealed;
 
       cardWordText.textContent = item.word;
-      cardWordText.className = `leading-tight font-extrabold tracking-tight select-text whitespace-nowrap max-w-full px-1 ${hideEn ? 'meaning-masked' : 'meaning-revealed'}`;
+      cardWordText.className = `leading-tight font-black tracking-tight select-none sm:select-text break-words max-w-full px-1 cursor-pointer transition hover:opacity-90 active:scale-95 ${hideEn ? 'meaning-masked' : 'meaning-revealed'}`;
       const enSize = state.enFontSize || 42;
       cardWordText.style.fontSize = enSize + 'px';
       cardWordText.style.lineHeight = '1.1';
@@ -2872,6 +2876,17 @@
         e.stopPropagation();
         if (filteredDeck[state.currentIndex]) {
           speakText(filteredDeck[state.currentIndex].word, 0.65);
+        }
+      });
+
+      // Direct Click on Word to Pronounce Instantly
+      const cardWordEl = document.getElementById('cardWordText');
+      cardWordEl?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (filteredDeck[state.currentIndex]) {
+          speakText(filteredDeck[state.currentIndex].word);
+          cardWordEl.classList.add('opacity-70', 'scale-95');
+          setTimeout(() => cardWordEl.classList.remove('opacity-70', 'scale-95'), 120);
         }
       });
 
