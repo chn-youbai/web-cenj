@@ -576,45 +576,31 @@
 
         <!-- ==================== VIEW 1: FLASHCARD STUDY (过单词) ==================== -->
         <section id="viewStudy" class="flex-1 flex flex-col px-3 pt-1.5 pb-1 overflow-hidden">
-          <!-- Compact Controls Row (Selectors + Shuffle + Auto-Play) -->
-          <div class="flex items-center gap-1 mb-1 flex-shrink-0">
-            <select id="selectGroup" aria-label="选择分组" class="flex-1 min-w-0 card-surface border rounded-xl px-1.5 py-1 text-[11px] font-medium focus:outline-none focus:ring-1 focus:ring-teal-500 truncate">
-              <!-- Populated by JS -->
-            </select>
-            <select id="selectStatusFilter" aria-label="筛选状态" class="flex-1 min-w-0 card-surface border rounded-xl px-1.5 py-1 text-[11px] font-medium focus:outline-none focus:ring-1 focus:ring-teal-500 truncate">
-              <option value="all">📋 全部状态</option>
-              <option value="unmarked">⚪ 未标记</option>
-              <option value="review">🔥 不会+模糊</option>
-              <option value="unknown">🔴 完全不会</option>
-              <option value="fuzzy">🟡 有点模糊</option>
-              <option value="known">🟢 很熟</option>
-            </select>
-            <select id="selectMaskMode" aria-label="记忆遮罩模式" class="w-20 card-surface border rounded-xl px-1 py-1 text-[11px] font-medium focus:outline-none focus:ring-1 focus:ring-teal-500 truncate flex-shrink-0">
-              <option value="none">👁️ 释义</option>
-              <option value="hide_cn">🙈 遮中</option>
-              <option value="hide_en">🎧 遮英</option>
-            </select>
-            <button id="btnShuffleDeck" type="button" class="btn-press w-7 h-7 rounded-xl card-surface border flex items-center justify-center text-xs flex-shrink-0" title="切换顺序/随机乱序">
-              <span id="shuffleIcon">🔀</span>
-            </button>
-            <button id="btnAutoPlayAudio" type="button" class="btn-press w-7 h-7 rounded-xl card-surface border flex items-center justify-center text-xs flex-shrink-0" title="切换切词自动发音">
-              <span id="autoAudioIcon">🔔</span>
+          <!-- Sleek Single-Line Focus Bar: Group Selector + Minimal Progress + Preferences Drawer Trigger -->
+          <div class="flex items-center justify-between gap-2 mb-1.5 flex-shrink-0">
+            <!-- Left: Group Selector -->
+            <div class="flex-1 min-w-0 max-w-[190px]">
+              <select id="selectGroup" aria-label="选择分组" class="w-full card-surface border rounded-xl px-2 py-1 text-[11px] font-bold text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-teal-500 truncate shadow-2xs">
+                <!-- Populated by JS -->
+              </select>
+            </div>
+
+            <!-- Center: Inline Slim Progress Text -->
+            <div class="flex items-center gap-1.5 min-w-0 flex-shrink-0">
+              <span id="deckPositionText" class="text-[11px] font-bold font-mono text-teal-700 dark:text-teal-300">1 / 2050</span>
+              <span id="activeFilterPill" class="hidden px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-teal-500/15 text-teal-600 dark:text-teal-300">筛选中</span>
+            </div>
+
+            <!-- Right: Preferences & Filters Drawer Trigger -->
+            <button id="btnOpenPrefDrawer" type="button" class="btn-press px-2.5 py-1 rounded-xl card-surface border flex items-center gap-1 text-[11px] font-bold text-slate-700 dark:text-slate-200 shadow-2xs hover:bg-slate-50 dark:hover:bg-slate-800 transition flex-shrink-0" title="打开刷词偏好设置与状态筛选">
+              <span>⚙️</span>
+              <span>设置</span>
             </button>
           </div>
 
-          <!-- Progress Bar & Mini Stats Live Counters -->
-          <div class="mb-1.5 flex-shrink-0">
-            <div class="flex items-center justify-between text-[10px] sub-text mb-0.5">
-              <span id="deckPositionText" class="font-semibold text-slate-700 dark:text-slate-300">第 1 / 2050 词</span>
-              <div class="flex items-center gap-2 font-mono">
-                <span class="inline-flex items-center gap-0.5 text-emerald-600 dark:text-emerald-400 font-bold" title="很熟"><span>🟢</span><strong id="miniKnownCount">0</strong></span>
-                <span class="inline-flex items-center gap-0.5 text-amber-500 font-bold" title="模糊"><span>🟡</span><strong id="miniFuzzyCount">0</strong></span>
-                <span class="inline-flex items-center gap-0.5 text-rose-500 font-bold" title="不会"><span>🔴</span><strong id="miniUnknownCount">0</strong></span>
-              </div>
-            </div>
-            <div class="w-full h-1 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
-              <div id="deckProgressBar" class="h-full bg-gradient-to-r from-teal-500 to-emerald-400 transition-all duration-300" style="width: 0%"></div>
-            </div>
+          <!-- Thin smooth progress line -->
+          <div class="w-full h-1 bg-slate-200/70 dark:bg-slate-700/60 rounded-full overflow-hidden mb-1.5 flex-shrink-0">
+            <div id="deckProgressBar" class="h-full bg-gradient-to-r from-teal-500 to-emerald-400 transition-all duration-300" style="width: 0%"></div>
           </div>
 
           <!-- Main Word Flashcard (Clean Auto-Fit Hero Card) -->
@@ -665,29 +651,31 @@
                 </div>
               </div>
 
-              <!-- Exam Forms (历年真题变形) -->
-              <div id="cardFormsSection" class="w-full text-left px-3 py-2 rounded-2xl bg-teal-500/5 border border-teal-500/15 max-h-[80px] overflow-y-auto scroll-area">
-                <div class="flex items-center justify-between mb-1">
-                  <span class="text-[10px] font-bold text-teal-700 dark:text-teal-300 flex items-center gap-1">
+              <!-- Unified High-Yield Exam Notes (真题考点与搭配 - 单一轻量拓展卡片) -->
+              <div id="cardExamExpandedSection" class="w-full text-left px-3.5 py-2.5 rounded-2xl bg-slate-50/85 dark:bg-slate-800/55 border border-slate-200/60 dark:border-slate-700/50 space-y-2 max-h-[140px] overflow-y-auto scroll-area transition-all">
+                <!-- Forms Sub-row (if any) -->
+                <div id="cardFormsContainer">
+                  <div class="text-[10px] font-bold text-teal-700 dark:text-teal-300 mb-1 flex items-center gap-1">
                     <span>📌 历年真题考查变形</span>
-                  </span>
+                  </div>
+                  <div id="cardFormsList" class="flex flex-wrap gap-1.5">
+                    <!-- Populated dynamically -->
+                  </div>
                 </div>
-                <div id="cardFormsList" class="flex flex-wrap gap-1.5">
-                  <!-- Populated dynamically -->
-                </div>
-              </div>
 
-              <!-- High-Frequency Exam Phrases & Collocations (高考常考短语 & 课本搭配) -->
-              <div id="cardPhrasesSection" class="w-full text-left px-3 py-2 rounded-2xl bg-amber-500/5 dark:bg-amber-500/10 border border-amber-500/20 max-h-[95px] overflow-y-auto scroll-area">
-                <div class="flex items-center justify-between mb-1">
-                  <span class="text-[10px] font-bold text-amber-700 dark:text-amber-400 flex items-center gap-1">
+                <!-- Phrases Sub-row (if any) -->
+                <div id="cardPhrasesContainer">
+                  <div class="text-[10px] font-bold text-amber-700 dark:text-amber-400 mb-1 flex items-center gap-1">
                     <span>📚 高考真题常考短语 & 课本搭配</span>
-                  </span>
-                </div>
-                <div id="cardPhrasesList" class="space-y-1 text-[11px] text-slate-700 dark:text-slate-200">
-                  <!-- Populated dynamically -->
+                  </div>
+                  <div id="cardPhrasesList" class="space-y-1 text-[11px] text-slate-700 dark:text-slate-200">
+                    <!-- Populated dynamically -->
+                  </div>
                 </div>
               </div>
+              <!-- Hidden compatibility stubs for cardFormsSection & cardPhrasesSection -->
+              <div id="cardFormsSection" class="hidden"></div>
+              <div id="cardPhrasesSection" class="hidden"></div>
             </div>
 
             <!-- Card Footer: Prev / Next & Personal Note -->
@@ -1068,6 +1056,70 @@
       </nav>
 
       <!-- In-App Modal (for Memo / Reset Confirmation / Shortcuts) -->
+      <!-- Preferences & Filters Bottom Sheet Modal -->
+      <div id="prefDrawerModal" class="hidden absolute inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-end justify-center transition-all">
+        <div class="card-surface border-t border-x border-slate-200 dark:border-slate-800 rounded-t-3xl p-5 w-full shadow-2xl space-y-4 max-h-[85%] overflow-y-auto scroll-area">
+          <!-- Drawer Header -->
+          <div class="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
+            <div class="flex items-center gap-2">
+              <span class="text-base">⚙️</span>
+              <h3 class="text-sm font-extrabold">刷词偏好与状态筛选</h3>
+            </div>
+            <button id="btnClosePrefDrawer" type="button" class="btn-press w-7 h-7 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-xs sub-text hover:text-slate-900">
+              ✕
+            </button>
+          </div>
+
+          <!-- Filter by Mastery Status -->
+          <div class="space-y-1.5">
+            <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">🎯 单词状态筛选</label>
+            <select id="selectStatusFilter" class="w-full card-surface border rounded-xl px-3 py-2 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-teal-500">
+              <option value="all">📋 全部词汇 (不限状态)</option>
+              <option value="unmarked">⚪ 仅看 未标记</option>
+              <option value="review">🔥 仅看 不会+模糊 (重点攻克)</option>
+              <option value="unknown">🔴 仅看 完全不会</option>
+              <option value="fuzzy">🟡 仅看 有点模糊</option>
+              <option value="known">🟢 仅看 很熟</option>
+            </select>
+            <!-- Live Count Summary in Drawer -->
+            <div class="flex items-center justify-between text-[11px] px-2.5 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 font-mono">
+              <span class="text-emerald-600 dark:text-emerald-400 font-bold">🟢 很熟: <strong id="miniKnownCount">0</strong></span>
+              <span class="text-amber-500 font-bold">🟡 模糊: <strong id="miniFuzzyCount">0</strong></span>
+              <span class="text-rose-500 font-bold">🔴 不会: <strong id="miniUnknownCount">0</strong></span>
+            </div>
+          </div>
+
+          <!-- Mask Mode -->
+          <div class="space-y-1.5">
+            <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">👁️ 记忆遮罩模式</label>
+            <select id="selectMaskMode" class="w-full card-surface border rounded-xl px-3 py-2 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-teal-500">
+              <option value="none">👁️ 正常显示 (看词看义)</option>
+              <option value="hide_cn">🙈 遮挡中文 (先回忆释义，点击揭晓)</option>
+              <option value="hide_en">🎧 遮挡英文 (听音辨义，点击揭晓)</option>
+            </select>
+          </div>
+
+          <!-- Shuffle & Auto-Speak Switches -->
+          <div class="grid grid-cols-2 gap-2 pt-1">
+            <button id="btnShuffleDeck" type="button" class="btn-press flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl card-surface border text-xs font-bold transition">
+              <span id="shuffleIcon">🔀</span>
+              <span id="shuffleLabel">顺序播放</span>
+            </button>
+            <button id="btnAutoPlayAudio" type="button" class="btn-press flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl card-surface border text-xs font-bold transition">
+              <span id="autoAudioIcon">🔔</span>
+              <span id="autoAudioLabel">切词发音: 关</span>
+            </button>
+          </div>
+
+          <!-- Close / Confirm Button -->
+          <div class="pt-1">
+            <button id="btnSavePrefDrawer" type="button" class="w-full py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-md transition">
+              完成并开始刷词
+            </button>
+          </div>
+        </div>
+      </div>
+
       <div id="appModal" class="hidden absolute inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-5">
         <div class="card-surface border rounded-3xl p-5 w-full max-w-[330px] shadow-2xl space-y-3">
           <h3 id="modalTitle" class="text-sm font-extrabold">提示</h3>
@@ -1696,7 +1748,9 @@
       document.getElementById('themeIcon').textContent = state.darkMode ? '☀️' : '🌙';
       if (document.getElementById('shuffleLabel')) document.getElementById('shuffleLabel').textContent = state.isShuffled ? '乱序' : '顺序';
       if (document.getElementById('shuffleIcon')) document.getElementById('shuffleIcon').textContent = state.isShuffled ? '🔀' : '➡️';
-      document.getElementById('autoAudioIcon').textContent = state.autoSpeak ? '🔊' : '🔇';
+      document.getElementById('autoAudioIcon').textContent = state.autoSpeak ? '🔔' : '🔕';
+      if (document.getElementById('shuffleLabel')) document.getElementById('shuffleLabel').textContent = state.isShuffled ? '随机乱序' : '顺序播放';
+      if (document.getElementById('autoAudioLabel')) document.getElementById('autoAudioLabel').textContent = state.autoSpeak ? '切词发音: 开' : '切词发音: 关';
     }
 
     function renderStudyCard() {
@@ -1756,39 +1810,66 @@
         maskHintText.classList.add('hidden');
       }
 
-      // Exam forms
+      // Unified High-Yield Exam Notes (Forms + Phrases)
+      const examExpandedSection = document.getElementById('cardExamExpandedSection');
+      const formsContainer = document.getElementById('cardFormsContainer');
+      const formsList = document.getElementById('cardFormsList');
+      const phrasesContainer = document.getElementById('cardPhrasesContainer');
+      const phrasesList = document.getElementById('cardPhrasesList');
+
+      let hasForms = false;
       if (item.forms && item.forms.length > 0) {
-        cardFormsSection.classList.remove('hidden');
-        cardFormsList.innerHTML = item.forms.map(f =>
-          `<button type="button" data-speak-form="${f.replace(/"/g, '&quot;')}" class="form-chip px-2 py-0.5 rounded-lg bg-white dark:bg-slate-800 border border-teal-500/20 text-[11px] font-medium text-teal-700 dark:text-teal-300 hover:bg-teal-500 hover:text-white transition">${f}</button>`
-        ).join('');
+        hasForms = true;
+        if (formsContainer) formsContainer.classList.remove('hidden');
+        if (formsList) {
+          formsList.innerHTML = item.forms.map(f =>
+            `<button type="button" data-speak-form="${f.replace(/"/g, '&quot;')}" class="form-chip px-2 py-0.5 rounded-lg bg-white dark:bg-slate-800 border border-teal-500/20 text-[11px] font-medium text-teal-700 dark:text-teal-300 hover:bg-teal-500 hover:text-white transition">${f}</button>`
+          ).join('');
+        }
       } else {
-        cardFormsSection.classList.add('hidden');
+        if (formsContainer) formsContainer.classList.add('hidden');
       }
 
-      // High-Frequency Exam Phrases & Collocations
-      const phrasesSection = document.getElementById('cardPhrasesSection');
-      const phrasesList = document.getElementById('cardPhrasesList');
-      if (phrasesSection && phrasesList) {
-        const lowerW = (item.word || '').toLowerCase();
-        const found = GAOKAO_PHRASES_DICT[lowerW];
-        if (found && found.length > 0) {
-          phrasesSection.classList.remove('hidden');
-          phrasesList.innerHTML = found.slice(0, 4).map(p =>
+      let hasPhrases = false;
+      const lowerW = (item.word || '').toLowerCase();
+      const foundPhrases = GAOKAO_PHRASES_DICT[lowerW];
+      if (foundPhrases && foundPhrases.length > 0) {
+        hasPhrases = true;
+        if (phrasesContainer) phrasesContainer.classList.remove('hidden');
+        if (phrasesList) {
+          phrasesList.innerHTML = foundPhrases.slice(0, 4).map(p =>
             `<div class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-amber-500 flex-shrink-0"></span><span class="font-medium">${p}</span></div>`
           ).join('');
+        }
+      } else {
+        // No phrases: DO NOT show any generic placeholder text! Keep it hidden.
+        if (phrasesContainer) phrasesContainer.classList.add('hidden');
+      }
+
+      // If neither forms nor phrases exist, hide the entire box
+      if (examExpandedSection) {
+        if (hasForms || hasPhrases) {
+          examExpandedSection.classList.remove('hidden');
         } else {
-          // If no specific phrase, show high-yield exam tips based on frequency tier
-          phrasesSection.classList.remove('hidden');
-          const freqLabel = item.freq >= 15 ? '🔥 真题超高频核心考点 (年年必考)' : (item.freq >= 5 ? '⚡ 经典中高频考点 (完形阅读高频)' : '🎯 真题重要词汇 (熟练掌握)');
-          phrasesList.innerHTML = `
-            <div class="flex items-center gap-1.5 text-amber-700 dark:text-amber-400 font-semibold">
-              <span>${freqLabel}</span>
-            </div>
-            <div class="text-[10px] sub-text leading-tight mt-0.5">
-              • 建议结合变形词及核心释义形成肌肉记忆，自测掌握后即可秒过。
-            </div>
-          `;
+          examExpandedSection.classList.add('hidden');
+        }
+      }
+
+      // Active Filter Pill indicator
+      const filterPill = document.getElementById('activeFilterPill');
+      if (filterPill) {
+        if (state.statusFilter !== 'all') {
+          const filterLabels = {
+            unmarked: '⚪未标',
+            review: '🔥重难点',
+            unknown: '🔴不会',
+            fuzzy: '🟡模糊',
+            known: '🟢熟词'
+          };
+          filterPill.textContent = filterLabels[state.statusFilter] || '筛选中';
+          filterPill.classList.remove('hidden');
+        } else {
+          filterPill.classList.add('hidden');
         }
       }
 
@@ -2645,6 +2726,22 @@
         state.maskMode = e.target.value;
         state.cardRevealed = false;
         renderStudyCard();
+      });
+
+      // Preferences Drawer open/close listeners
+      document.getElementById('btnOpenPrefDrawer')?.addEventListener('click', () => {
+        document.getElementById('prefDrawerModal')?.classList.remove('hidden');
+      });
+      document.getElementById('btnClosePrefDrawer')?.addEventListener('click', () => {
+        document.getElementById('prefDrawerModal')?.classList.add('hidden');
+      });
+      document.getElementById('btnSavePrefDrawer')?.addEventListener('click', () => {
+        document.getElementById('prefDrawerModal')?.classList.add('hidden');
+      });
+      document.getElementById('prefDrawerModal')?.addEventListener('click', (e) => {
+        if (e.target === document.getElementById('prefDrawerModal')) {
+          document.getElementById('prefDrawerModal').classList.add('hidden');
+        }
       });
 
       document.getElementById('btnShuffleDeck')?.addEventListener('click', () => {
