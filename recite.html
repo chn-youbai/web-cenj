@@ -593,7 +593,7 @@
           </div>
 
           <!-- Main Word Flashcard (Clean Auto-Fit Hero Card) -->
-          <div id="wordCardContainer" class="flex-1 min-h-0 flex flex-col justify-between card-surface border rounded-2xl p-3 shadow-sm relative overflow-y-auto scroll-area">
+          <div id="wordCardContainer" class="flex-1 min-h-0 flex flex-col justify-between py-1 relative overflow-y-auto scroll-area">
             <!-- Card Top Metadata: Unified Left-Aligned Pills with Breathing Space -->
             <div class="flex items-center gap-2 pt-1 px-1.5 z-10 flex-shrink-0 flex-wrap">
               <span id="cardWordId" class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 dark:bg-slate-800 sub-text shadow-2xs">
@@ -609,30 +609,19 @@
 
             <!-- Card Center: Headword + Audio + Meaning + Exam Forms + High Frequency Phrases -->
             <div id="cardCenterArea" class="flex-1 min-h-0 flex flex-col justify-around items-center py-1.5 text-center cursor-pointer" title="点击揭晓释义或朗读单词">
-              <!-- Headword Area -->
-              <div class="flex flex-col items-center justify-center">
-                <div id="cardWordText" class="text-[38px] sm:text-[44px] leading-tight font-black tracking-tight select-text break-words max-w-full px-1">
+              <!-- Headword Area (Clean, Pure, Tap-to-Speak) -->
+              <div class="flex flex-col items-center justify-center my-auto">
+                <div id="cardWordText" class="text-[38px] sm:text-[44px] leading-tight font-black tracking-tight select-text break-words max-w-full px-1 hover:opacity-90 active:scale-95 transition cursor-pointer" title="点击朗读单词">
                   for
-                </div>
-
-                <!-- Pronunciation Trigger Buttons -->
-                <div class="mt-1 flex items-center gap-1.5">
-                  <button id="btnSpeakWord" type="button" class="btn-press px-3.5 py-1 rounded-full bg-teal-500/10 hover:bg-teal-500/20 text-teal-600 dark:text-teal-300 border border-teal-500/25 text-xs font-semibold flex items-center gap-1 transition">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/></svg>
-                    <span id="speakBtnText">点击发音</span>
-                  </button>
-                  <button id="btnSpeakSlow" type="button" class="btn-press px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 sub-text text-[10px] font-medium transition" title="0.7x 慢速跟读">
-                    🐢 慢速
-                  </button>
                 </div>
               </div>
 
-              <!-- Chinese Meaning (Clean, Unboxed - No border, No background, No subtitle) -->
-              <div id="cardMeaningWrapper" class="w-full py-1.5 text-center transition">
-                <div id="cardMeaningText" class="text-[19px] sm:text-[22px] font-black leading-snug text-slate-800 dark:text-slate-100 select-text tracking-wide">
+              <!-- Chinese Meaning (Clean, Unboxed, Prominent 28-32px) -->
+              <div id="cardMeaningWrapper" class="w-full py-2 text-center transition my-auto">
+                <div id="cardMeaningText" class="text-[28px] sm:text-[32px] font-black leading-tight text-slate-800 dark:text-slate-100 select-text tracking-normal">
                   为了……、对于……、因为
                 </div>
-                <div id="maskHintText" class="hidden text-[10px] text-teal-600 dark:text-teal-400 mt-1 font-medium">
+                <div id="maskHintText" class="hidden text-[11px] text-teal-600 dark:text-teal-400 mt-1.5 font-semibold">
                   👆 点击卡片揭晓释义
                 </div>
               </div>
@@ -1085,6 +1074,21 @@
             </select>
           </div>
 
+          <!-- Audio & Pronunciation Controls (收纳进设置面板) -->
+          <div class="space-y-1.5 pt-1 border-t border-slate-100 dark:border-slate-800">
+            <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">🔊 发音偏好与口音语速</label>
+            <div class="grid grid-cols-2 gap-2">
+              <button id="btnDrawerAccentToggle" type="button" class="btn-press flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl card-surface border text-xs font-bold transition">
+                <span>🗣️</span>
+                <span id="drawerAccentLabel">口音: 美音 (US)</span>
+              </button>
+              <button id="btnDrawerSpeedToggle" type="button" class="btn-press flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl card-surface border text-xs font-bold transition">
+                <span id="drawerSpeedIcon">⚡</span>
+                <span id="drawerSpeedLabel">语速: 正常 (1.0x)</span>
+              </button>
+            </div>
+          </div>
+
           <!-- Shuffle & Auto-Speak Switches -->
           <div class="grid grid-cols-2 gap-2 pt-1">
             <button id="btnShuffleDeck" type="button" class="btn-press flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl card-surface border text-xs font-bold transition">
@@ -1419,6 +1423,7 @@
       isShuffled: false,
       autoSpeak: false,
       accent: 'en-US',     // 'en-US' or 'en-GB'
+      speechRate: 1.0,     // 1.0 or 0.7
       darkMode: false,
       currentIndex: 0,
       cardRevealed: false,
@@ -1453,6 +1458,7 @@
           if (parsed.memos) state.memos = parsed.memos;
           if (parsed.currentGroup) state.currentGroup = parsed.currentGroup;
           if (parsed.accent) state.accent = parsed.accent;
+          if (parsed.speechRate) state.speechRate = parsed.speechRate;
           if (typeof parsed.autoSpeak === 'boolean') state.autoSpeak = parsed.autoSpeak;
           if (typeof parsed.darkMode === 'boolean') state.darkMode = parsed.darkMode;
           if (Number.isInteger(parsed.currentIndex) && parsed.currentIndex >= 0) state.currentIndex = parsed.currentIndex;
@@ -1469,6 +1475,7 @@
           memos: state.memos,
           currentGroup: state.currentGroup,
           accent: state.accent,
+          speechRate: state.speechRate,
           autoSpeak: state.autoSpeak,
           darkMode: state.darkMode,
           currentIndex: state.currentIndex
@@ -1591,7 +1598,7 @@
       return raw.replace(/\s*\/\s*/g, ', ').trim();
     }
 
-    function speakText(text, rate = 1.0) {
+    function speakText(text, rate = (state.speechRate || 1.0)) {
       const cleaned = cleanWordForSpeech(text);
       const btn = document.getElementById('btnSpeakWord');
       if (btn) btn.classList.add('speaking-pulse');
@@ -1737,6 +1744,9 @@
       document.getElementById('autoAudioIcon').textContent = state.autoSpeak ? '🔔' : '🔕';
       if (document.getElementById('shuffleLabel')) document.getElementById('shuffleLabel').textContent = state.isShuffled ? '随机乱序' : '顺序播放';
       if (document.getElementById('autoAudioLabel')) document.getElementById('autoAudioLabel').textContent = state.autoSpeak ? '切词发音: 开' : '切词发音: 关';
+      if (document.getElementById('drawerAccentLabel')) document.getElementById('drawerAccentLabel').textContent = state.accent === 'en-US' ? '口音: 美音 (US)' : '口音: 英式 (UK)';
+      if (document.getElementById('drawerSpeedLabel')) document.getElementById('drawerSpeedLabel').textContent = state.speechRate === 0.7 ? '语速: 慢速 (0.7x)' : '语速: 正常 (1.0x)';
+      if (document.getElementById('drawerSpeedIcon')) document.getElementById('drawerSpeedIcon').textContent = state.speechRate === 0.7 ? '🐢' : '⚡';
     }
 
     function renderStudyCard() {
@@ -1788,7 +1798,7 @@
 
       cardMeaningText.textContent = item.meaning;
       cardMeaningText.className = `font-bold leading-snug select-text whitespace-nowrap max-w-full ${hideCn ? 'meaning-masked' : 'meaning-revealed'}`;
-      fitTextSingleLine(cardMeaningText, 24, 13, 300);
+      fitTextSingleLine(cardMeaningText, 32, 18, 330);
 
       if (hideCn || hideEn) {
         maskHintText.classList.remove('hidden');
@@ -2721,6 +2731,23 @@
       document.getElementById('btnClosePrefDrawer')?.addEventListener('click', () => {
         document.getElementById('prefDrawerModal')?.classList.add('hidden');
       });
+      // Drawer Audio Controls Listeners
+      document.getElementById('btnDrawerAccentToggle')?.addEventListener('click', () => {
+        state.accent = state.accent === 'en-US' ? 'en-GB' : 'en-US';
+        saveState();
+        renderHeaderAndMiniStats();
+        showToast(state.accent === 'en-US' ? '🇺🇸 已切换为美式发音' : '🇬🇧 已切换为英式发音');
+        if (filteredDeck[state.currentIndex]) speakText(filteredDeck[state.currentIndex].word);
+      });
+
+      document.getElementById('btnDrawerSpeedToggle')?.addEventListener('click', () => {
+        state.speechRate = state.speechRate === 0.7 ? 1.0 : 0.7;
+        saveState();
+        renderHeaderAndMiniStats();
+        showToast(state.speechRate === 0.7 ? '🐢 已切换为 0.7x 慢速跟读' : '⚡ 已恢复正常 1.0x 语速');
+        if (filteredDeck[state.currentIndex]) speakText(filteredDeck[state.currentIndex].word);
+      });
+
       document.getElementById('btnSavePrefDrawer')?.addEventListener('click', () => {
         document.getElementById('prefDrawerModal')?.classList.add('hidden');
       });
