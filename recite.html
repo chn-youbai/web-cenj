@@ -221,6 +221,10 @@
     .h-7 { height: 1.75rem; }
     .h-8 { height: 2rem; }
     .h-\[68px\] { height: 68px; }
+    .h-\[58px\] { height: 58px; }
+    .min-h-0 { min-height: 0px; }
+    .max-h-\[75px\] { max-height: 75px; }
+    .max-h-\[90px\] { max-height: 90px; }
     .h-full { height: 100%; }
     .min-h-\[340px\] { min-height: 340px; }
     .min-h-\[36px\] { min-height: 36px; }
@@ -276,17 +280,20 @@
     .ml-2 { margin-left: 0.5rem; }
 
     /* Typography */
+    .text-\[9px\] { font-size: 9px; line-height: 1.25; }
     .text-\[10px\] { font-size: 10px; line-height: 1.35; }
     .text-\[11px\] { font-size: 11px; line-height: 1.4; }
     .text-xs { font-size: 0.75rem; line-height: 1rem; }
     .text-sm { font-size: 0.875rem; line-height: 1.25rem; }
     .text-base { font-size: 1rem; line-height: 1.5rem; }
+    .text-\[15px\] { font-size: 15px; line-height: 1.35; }
     .text-\[16px\] { font-size: 16px; line-height: 1.35; }
     .text-\[17px\] { font-size: 17px; line-height: 1.4; }
     .text-\[18px\] { font-size: 18px; line-height: 1.4; }
     .text-lg { font-size: 1.125rem; line-height: 1.75rem; }
     .text-2xl { font-size: 1.5rem; line-height: 2rem; }
     .text-3xl { font-size: 1.875rem; line-height: 2.25rem; }
+    .text-\[32px\] { font-size: 32px; line-height: 1.15; }
     .text-\[34px\] { font-size: 34px; line-height: 1.15; }
     .text-\[36px\] { font-size: 36px; line-height: 1.15; }
 
@@ -311,6 +318,7 @@
     .whitespace-nowrap { white-space: nowrap; }
     .break-words { overflow-wrap: break-word; word-break: break-word; }
     .select-text { user-select: text; -webkit-user-select: text; }
+    .select-all { user-select: all; -webkit-user-select: all; }
 
     /* Overflow */
     .overflow-hidden { overflow: hidden; }
@@ -518,46 +526,44 @@
   <div id="workspaceShell" class="workspace-shell">
     <div id="deviceFrame" class="device-frame app-surface">
       <!-- Top App Header -->
-      <header id="appTopHeader" class="px-4 pt-3 pb-2.5 border-b border-slate-200/70 dark:border-slate-700/60 flex items-center justify-between flex-shrink-0">
-        <div>
-          <div class="flex items-center gap-1.5">
-            <h1 class="text-[16px] font-extrabold tracking-tight text-teal-600 dark:text-teal-400">高考2050核心词</h1>
-            <span id="headerGroupBadge" class="px-2 py-0.5 text-[10px] font-semibold rounded-full bg-teal-500/10 text-teal-600 dark:text-teal-300 border border-teal-500/20">
+      <header id="appTopHeader" class="px-3 pt-2 pb-1.5 border-b border-slate-200/70 dark:border-slate-700/60 flex items-center justify-between flex-shrink-0">
+        <div class="flex-1 min-w-0 pr-1.5">
+          <div class="flex items-center gap-1.5 flex-nowrap">
+            <h1 class="text-[15px] font-extrabold tracking-tight text-teal-600 dark:text-teal-400 whitespace-nowrap">高考2050核心词</h1>
+            <span id="headerGroupBadge" class="px-1.5 py-0.5 text-[10px] font-semibold rounded-full bg-teal-500/10 text-teal-600 dark:text-teal-300 border border-teal-500/20 whitespace-nowrap">
               全词库
             </span>
           </div>
-          <p id="headerProgressSub" class="text-[11px] sub-text mt-0.5">已刷 0 / 2050 词 · 掌握率 0%</p>
+          <p id="headerProgressSub" class="text-[10px] sub-text truncate mt-0.5">已刷 0 / 2050 词 · 掌握率 0%</p>
         </div>
 
-        <div class="flex items-center gap-1.5">
+        <div class="flex items-center gap-1 flex-shrink-0">
           <!-- Back to Homepage -->
-          <a href="./" class="btn-press px-2 py-1.5 rounded-xl text-[11px] font-semibold card-surface border shadow-sm flex items-center gap-1 text-slate-700 dark:text-slate-200" title="返回站点首页">
+          <a href="./" class="btn-press w-7 h-7 rounded-lg card-surface border flex items-center justify-center text-xs" title="返回站点首页">
             <span>🏠</span>
-            <span class="hidden sm:inline">首页</span>
           </a>
           <!-- Jump to Comprehensive Dictionary -->
-          <a href="./vocab.html" class="btn-press px-2 py-1.5 rounded-xl text-[11px] font-semibold card-surface border shadow-sm flex items-center gap-1 text-slate-700 dark:text-slate-200" title="前往英语综合查词字典">
+          <a href="./vocab.html" class="btn-press w-7 h-7 rounded-lg card-surface border flex items-center justify-center text-xs" title="前往英语综合查词字典">
             <span>📖</span>
-            <span class="hidden sm:inline">查词</span>
           </a>
           <!-- Accent Toggle (US / UK) -->
-          <button id="btnAccentToggle" type="button" class="btn-press px-2.5 py-1.5 rounded-xl text-[11px] font-semibold card-surface border shadow-sm flex items-center gap-1" title="切换美音/英音">
+          <button id="btnAccentToggle" type="button" class="btn-press px-2 h-7 rounded-lg text-[10px] font-semibold card-surface border flex items-center gap-0.5" title="切换美音/英音">
             <span>🔊</span>
             <span id="accentLabel">美音</span>
           </button>
-          <!-- Shortcuts / Help Guide -->
-          <button id="btnShowShortcuts" type="button" class="btn-press w-8 h-8 rounded-xl card-surface border shadow-sm flex items-center justify-center text-xs" title="操作指南与快捷键">
+          <!-- Shortcuts / Help Guide (Desktop only) -->
+          <button id="btnShowShortcuts" type="button" class="btn-press w-7 h-7 rounded-lg card-surface border hidden sm:flex items-center justify-center text-xs" title="操作指南与快捷键">
             <span>⌨️</span>
           </button>
           <!-- Theme Toggle -->
-          <button id="btnThemeToggle" type="button" class="btn-press w-8 h-8 rounded-xl card-surface border shadow-sm flex items-center justify-center text-sm" title="切换深色/浅色模式">
+          <button id="btnThemeToggle" type="button" class="btn-press w-7 h-7 rounded-lg card-surface border flex items-center justify-center text-xs" title="切换深色/浅色模式">
             <span id="themeIcon">🌙</span>
           </button>
         </div>
       </header>
 
       <!-- Mini Live Status Bar (Always visible quick counters) -->
-      <div id="appMiniStatusBar" class="px-4 py-2 bg-slate-100/80 dark:bg-slate-800/50 border-b border-slate-200/60 dark:border-slate-700/50 flex items-center justify-between text-[11px] flex-shrink-0">
+      <div id="appMiniStatusBar" class="px-3 py-1.5 bg-slate-100/80 dark:bg-slate-800/50 border-b border-slate-200/60 dark:border-slate-700/50 flex items-center justify-between text-[11px] flex-shrink-0">
         <button type="button" data-quick-filter="all" class="quick-stat-pill flex items-center gap-1 font-medium px-2 py-0.5 rounded-full bg-white dark:bg-slate-800 shadow-sm border border-slate-200/80 dark:border-slate-700">
           <span>📚 范围</span>
           <strong id="miniPoolCount" class="text-teal-600">2050</strong>
@@ -583,9 +589,9 @@
       <main class="flex-1 overflow-hidden relative flex flex-col">
 
         <!-- ==================== VIEW 1: FLASHCARD STUDY (过单词) ==================== -->
-        <section id="viewStudy" class="flex-1 flex flex-col px-4 pt-2.5 pb-2 overflow-y-auto scroll-area">
+        <section id="viewStudy" class="flex-1 flex flex-col px-3 pt-2 pb-1 overflow-hidden">
           <!-- Study Controls Row: Group Selector, Filter, Mask Mode -->
-          <div class="grid grid-cols-3 gap-1.5 mb-2.5 flex-shrink-0">
+          <div class="grid grid-cols-3 gap-1.5 mb-1.5 flex-shrink-0">
             <select id="selectGroup" aria-label="选择分组" class="card-surface border rounded-xl px-2 py-1.5 text-[11px] font-medium focus:outline-none focus:ring-2 focus:ring-teal-500 truncate">
               <!-- Populated by JS -->
             </select>
@@ -605,7 +611,7 @@
           </div>
 
           <!-- Progress bar for current filtered deck -->
-          <div class="mb-2.5 flex-shrink-0">
+          <div class="mb-1.5 flex-shrink-0">
             <div class="flex items-center justify-between text-[11px] sub-text mb-1">
               <span id="deckPositionText">第 1 / 2050 词</span>
               <div class="flex items-center gap-2">
@@ -624,7 +630,7 @@
           </div>
 
           <!-- Main Word Flashcard -->
-          <div id="wordCardContainer" class="flex-1 flex flex-col justify-between card-surface border rounded-3xl p-4 shadow-sm relative overflow-hidden min-h-[340px]">
+          <div id="wordCardContainer" class="flex-1 min-h-0 flex flex-col justify-between card-surface border rounded-2xl p-3 shadow-sm relative overflow-y-auto scroll-area">
             <!-- Card Top Metadata -->
             <div class="flex items-center justify-between z-10">
               <div class="flex items-center gap-1.5">
@@ -641,14 +647,14 @@
             </div>
 
             <!-- Card Center: Headword + Audio + Meaning + Exam Forms -->
-            <div id="cardCenterArea" class="my-auto py-3 text-center flex flex-col items-center justify-center cursor-pointer" title="点击揭晓释义或朗读单词">
+            <div id="cardCenterArea" class="my-auto py-1 text-center flex flex-col items-center justify-center cursor-pointer" title="点击揭晓释义或朗读单词">
               <!-- Headword -->
-              <div id="cardWordText" class="text-[36px] leading-tight font-extrabold tracking-tight select-text break-words max-w-full px-2">
+              <div id="cardWordText" class="text-[32px] sm:text-[36px] leading-tight font-extrabold tracking-tight select-text break-words max-w-full px-1">
                 for
               </div>
 
               <!-- Pronunciation Trigger Button -->
-              <div class="mt-2.5 flex items-center gap-2">
+              <div class="mt-1.5 flex items-center gap-1.5">
                 <button id="btnSpeakWord" type="button" class="btn-press px-3.5 py-1.5 rounded-full bg-teal-500/10 hover:bg-teal-500/20 text-teal-600 dark:text-teal-300 border border-teal-500/25 text-xs font-semibold flex items-center gap-1.5 transition">
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/></svg>
                   <span id="speakBtnText">点击发音</span>
@@ -659,9 +665,9 @@
               </div>
 
               <!-- Chinese Meaning Box -->
-              <div id="cardMeaningWrapper" class="mt-5 w-full px-3 py-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/70 dark:border-slate-700/60 transition">
-                <div class="text-[10px] uppercase tracking-wider sub-text mb-1 font-semibold">高考核心释义</div>
-                <div id="cardMeaningText" class="text-[18px] font-bold leading-snug text-slate-800 dark:text-slate-100 select-text">
+              <div id="cardMeaningWrapper" class="mt-2 w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/70 dark:border-slate-700/60 transition">
+                <div class="text-[9px] uppercase tracking-wider sub-text mb-0.5 font-semibold">高考核心释义</div>
+                <div id="cardMeaningText" class="text-[16px] sm:text-[18px] font-bold leading-snug text-slate-800 dark:text-slate-100 select-text">
                   为了……、对于……、因为
                 </div>
                 <div id="maskHintText" class="hidden text-[11px] text-teal-600 dark:text-teal-400 mt-1 font-medium">
@@ -670,7 +676,7 @@
               </div>
 
               <!-- Exam Forms (考查形式) -->
-              <div id="cardFormsSection" class="mt-3 w-full text-left px-3 py-2.5 rounded-2xl bg-teal-500/5 border border-teal-500/15">
+              <div id="cardFormsSection" class="mt-1.5 w-full text-left px-2.5 py-1.5 rounded-xl bg-teal-500/5 border border-teal-500/15 max-h-[75px] overflow-y-auto scroll-area">
                 <div class="flex items-center justify-between mb-1.5">
                   <span class="text-[10px] font-bold text-teal-700 dark:text-teal-300 flex items-center gap-1">
                     <span>📌 历年真题考查变形</span>
@@ -684,7 +690,7 @@
             </div>
 
             <!-- Card Footer: Prev / Next & Personal Note -->
-            <div class="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800 text-xs sub-text z-10">
+            <div class="flex items-center justify-between pt-1.5 border-t border-slate-100 dark:border-slate-800 text-xs sub-text z-10 flex-shrink-0">
               <button id="btnPrevWord" type="button" class="btn-press px-2.5 py-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-1 font-medium">
                 <span>← 上一词</span>
               </button>
@@ -698,32 +704,32 @@
           </div>
 
           <!-- User Memo Display (if any) -->
-          <div id="memoDisplayBar" class="hidden mt-2 px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-700 dark:text-amber-300 flex items-center justify-between">
+          <div id="memoDisplayBar" class="hidden mt-1.5 px-2.5 py-1 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-700 dark:text-amber-300 flex items-center justify-between">
             <span id="memoDisplayText" class="truncate"></span>
             <button id="btnEditMemoInline" type="button" class="ml-2 underline text-[11px] flex-shrink-0">修改</button>
           </div>
 
-          <!-- 3-Tier Marking Buttons (很熟 / 有点模糊 / 完全不会) -->
-          <div class="mt-3 grid grid-cols-3 gap-2.5 flex-shrink-0">
-            <button id="btnMarkKnown" type="button" class="btn-press py-3 px-2 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white shadow-md shadow-emerald-500/20 flex flex-col items-center justify-center transition">
-              <span class="text-base font-extrabold flex items-center gap-1">
+          <!-- 3-Tier Marking Buttons (很熟 / 有点模糊 / 完全不会) - ALWAYS PINNED ABOVE NAV BAR -->
+          <div class="mt-1.5 grid grid-cols-3 gap-2 flex-shrink-0">
+            <button id="btnMarkKnown" type="button" class="btn-press py-2 px-1 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white shadow-sm flex flex-col items-center justify-center transition">
+              <span class="text-sm font-extrabold flex items-center gap-1">
                 <span>🟢</span><span>很熟</span>
               </span>
-              <span class="text-[10px] opacity-90 mt-0.5">秒认无需想 (1)</span>
+              <span class="text-[9px] opacity-90 mt-0.5 whitespace-nowrap">秒认无需想 (1)</span>
             </button>
 
-            <button id="btnMarkFuzzy" type="button" class="btn-press py-3 px-2 rounded-2xl bg-amber-500 hover:bg-amber-600 text-white shadow-md shadow-amber-500/20 flex flex-col items-center justify-center transition">
-              <span class="text-base font-extrabold flex items-center gap-1">
+            <button id="btnMarkFuzzy" type="button" class="btn-press py-2 px-1 rounded-xl bg-amber-500 hover:bg-amber-600 text-white shadow-sm flex flex-col items-center justify-center transition">
+              <span class="text-sm font-extrabold flex items-center gap-1">
                 <span>🟡</span><span>有点模糊</span>
               </span>
-              <span class="text-[10px] opacity-90 mt-0.5">似曾相识需巩固 (2)</span>
+              <span class="text-[9px] opacity-90 mt-0.5 whitespace-nowrap">似曾相识需巩固 (2)</span>
             </button>
 
-            <button id="btnMarkUnknown" type="button" class="btn-press py-3 px-2 rounded-2xl bg-rose-500 hover:bg-rose-600 text-white shadow-md shadow-rose-500/20 flex flex-col items-center justify-center transition">
-              <span class="text-base font-extrabold flex items-center gap-1">
+            <button id="btnMarkUnknown" type="button" class="btn-press py-2 px-1 rounded-xl bg-rose-500 hover:bg-rose-600 text-white shadow-sm flex flex-col items-center justify-center transition">
+              <span class="text-sm font-extrabold flex items-center gap-1">
                 <span>🔴</span><span>完全不会</span>
               </span>
-              <span class="text-[10px] opacity-90 mt-0.5">重点生词反复刷 (3)</span>
+              <span class="text-[9px] opacity-90 mt-0.5 whitespace-nowrap">重点生词反复刷 (3)</span>
             </button>
           </div>
         </section>
@@ -930,45 +936,55 @@
             </div>
           </div>
 
-          <!-- Cloud Pairing Sync Center (匿名配对跨端漫游云同步) -->
-          <div class="card-surface border rounded-3xl p-4 shadow-sm space-y-2.5">
+          <!-- Cloud Pairing Sync Center (跨端漫游与自定义云同步) -->
+          <div class="card-surface border rounded-3xl p-4 shadow-sm space-y-3">
             <div class="flex items-center justify-between">
               <div>
                 <h3 class="text-xs font-extrabold flex items-center gap-1.5">
-                  <span>☁️ 匿名配对跨端漫游云同步</span>
+                  <span>☁️ 跨端漫游与自定义云同步</span>
                   <span id="syncStatusBadge" class="px-2 py-0.5 text-[10px] rounded-full bg-teal-500/10 text-teal-600 dark:text-teal-400 font-semibold">云端在线</span>
                 </h3>
-                <p class="text-[11px] sub-text mt-0.5">无密码短码配对 · 进度自动在手机与电脑间双向漫游</p>
+                <p class="text-[11px] sub-text mt-0.5">支持自定义专属同步码 · 多设备输入同一同步码实时互通</p>
               </div>
               <button id="btnManualSync" type="button" class="btn-press px-2.5 py-1 rounded-xl bg-teal-600 text-white text-[11px] font-bold flex items-center gap-1 shadow-sm">
                 <span>🔄 立即同步</span>
               </button>
             </div>
 
-            <!-- Pairing Key display & copy -->
-            <div class="flex items-center gap-2 p-2.5 rounded-2xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700">
-              <div class="flex-1 min-w-0">
-                <div class="text-[10px] sub-text font-semibold">本设备同步短码 (点击可复制)</div>
-                <div id="displaySyncKey" class="text-[17px] font-extrabold font-mono tracking-wider text-teal-600 dark:text-teal-400 cursor-pointer" title="点击复制短码">GK-8823</div>
+            <!-- Current Bound Key Display -->
+            <div class="p-3 rounded-2xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700 flex items-center justify-between">
+              <div class="flex-1 min-w-0 pr-2">
+                <div class="text-[10px] sub-text font-semibold">当前绑定的同步码 (点击可复制)</div>
+                <div id="displaySyncKey" class="text-[17px] font-extrabold font-mono tracking-wider text-teal-600 dark:text-teal-400 select-all cursor-pointer" title="点击复制同步码">GK-8823</div>
               </div>
-              <button id="btnCopySyncKey" type="button" class="btn-press px-3 py-1.5 rounded-xl card-surface border text-xs font-bold flex items-center gap-1 flex-shrink-0">
-                <span>📋 复制短码</span>
-              </button>
-            </div>
-
-            <!-- Input key for pairing another device -->
-            <div class="grid grid-cols-1 gap-2 pt-0.5">
-              <div class="flex items-center gap-2">
-                <input id="inputPairKey" type="text" placeholder="输入另一台设备的短码（如 GK-7A9B）..." class="flex-1 px-3 py-2 rounded-xl card-surface border text-xs font-mono font-bold uppercase focus:outline-none focus:ring-2 focus:ring-teal-500" />
-                <button id="btnApplyPairKey" type="button" class="btn-press px-3.5 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold flex-shrink-0">
-                  配对并拉取
+              <div class="flex items-center gap-1.5 flex-shrink-0">
+                <button id="btnCopySyncKey" type="button" class="btn-press px-2.5 py-1.5 rounded-xl card-surface border text-xs font-bold flex items-center gap-1">
+                  <span>📋 复制</span>
+                </button>
+                <button id="btnRandomKey" type="button" class="btn-press px-2.5 py-1.5 rounded-xl card-surface border text-xs font-semibold sub-text hover:text-teal-600" title="生成随机短码">
+                  <span>🎲 随机</span>
                 </button>
               </div>
             </div>
 
-            <div class="flex items-center justify-between text-[10px] sub-text pt-0.5">
+            <!-- Custom Sync Code Input & Actions -->
+            <div class="space-y-2 pt-1">
+              <div class="text-[11px] font-bold text-slate-700 dark:text-slate-300">
+                ✏️ 自定义设置 / 跨端绑定同步码
+              </div>
+              <div class="flex items-center gap-2">
+                <input id="inputCustomSyncKey" type="text" placeholder="输入专属同步码（如 cenji / 高考必胜 / mywords）..." class="flex-1 px-3 py-2 rounded-xl card-surface border text-xs font-bold focus:outline-none focus:ring-2 focus:ring-teal-500" />
+                <button id="btnApplyCustomKey" type="button" class="btn-press px-3.5 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold flex-shrink-0">
+                  绑定并同步
+                </button>
+              </div>
+              <p class="text-[10px] sub-text leading-tight">
+                💡 <strong>多端同步使用指南</strong>：在另一台手机或电脑上输入完全相同的自定义同步码，点击「绑定并同步」，即可自动拉取此设备的学习进度；后续任意设备标记单词，均可实时双向漫游！
+              </p>
+            </div>
+
+            <div class="flex items-center justify-between text-[10px] sub-text pt-1 border-t border-slate-200/50 dark:border-slate-700/50">
               <span id="lastSyncTimeText">上次同步：尚未进行云端同步</span>
-              <button id="btnRegenerateKey" type="button" class="hover:text-rose-500 underline">重新生成短码</button>
             </div>
           </div>
 
@@ -1023,28 +1039,28 @@
       </main>
 
       <!-- Bottom iOS Navigation Tab Bar -->
-      <nav class="h-[68px] pb-3 pt-1.5 px-2 card-surface border-t flex items-center justify-around flex-shrink-0 z-20">
-        <button type="button" data-nav="study" class="nav-tab-btn tab-active flex flex-col items-center justify-center gap-0.5 text-teal-600 dark:text-teal-400 font-bold text-[11px] w-16">
+      <nav class="h-[58px] pb-1 pt-1 px-2 card-surface border-t flex items-center justify-around flex-shrink-0 z-20">
+        <button type="button" data-nav="study" class="nav-tab-btn tab-active flex flex-col items-center justify-center gap-0.5 text-teal-600 dark:text-teal-400 font-bold text-[10px] w-16">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
           <span>过单词</span>
         </button>
 
-        <button type="button" data-nav="zen" class="nav-tab-btn flex flex-col items-center justify-center gap-0.5 sub-text font-medium text-[11px] w-16">
+        <button type="button" data-nav="zen" class="nav-tab-btn flex flex-col items-center justify-center gap-0.5 sub-text font-medium text-[10px] w-16">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"/></svg>
           <span>极速刷</span>
         </button>
 
-        <button type="button" data-nav="quiz" class="nav-tab-btn flex flex-col items-center justify-center gap-0.5 sub-text font-medium text-[11px] w-16">
+        <button type="button" data-nav="quiz" class="nav-tab-btn flex flex-col items-center justify-center gap-0.5 sub-text font-medium text-[10px] w-16">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
           <span>快测巩固</span>
         </button>
 
-        <button type="button" data-nav="list" class="nav-tab-btn flex flex-col items-center justify-center gap-0.5 sub-text font-medium text-[11px] w-16">
+        <button type="button" data-nav="list" class="nav-tab-btn flex flex-col items-center justify-center gap-0.5 sub-text font-medium text-[10px] w-16">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
           <span>词表检索</span>
         </button>
 
-        <button type="button" data-nav="stats" class="nav-tab-btn flex flex-col items-center justify-center gap-0.5 sub-text font-medium text-[11px] w-16 relative">
+        <button type="button" data-nav="stats" class="nav-tab-btn flex flex-col items-center justify-center gap-0.5 sub-text font-medium text-[10px] w-16 relative">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
           <span>统计导出</span>
         </button>
@@ -1090,12 +1106,12 @@
     // 匿名配对短码管理器
     function getOrCreateSyncKey() {
       let key = localStorage.getItem(SYNC_KEY_STORAGE);
-      if (!key || key.length < 4) {
+      if (!key || !key.trim()) {
         const rand = Math.random().toString(36).substring(2, 6).toUpperCase();
         key = `GK-${rand}`;
         localStorage.setItem(SYNC_KEY_STORAGE, key);
       }
-      return key.toUpperCase();
+      return key.trim();
     }
 
     // IndexedDB 本地词库缓存
@@ -1242,7 +1258,7 @@
 
     async function pullCloudSync(targetKey) {
       if (!targetKey) return;
-      targetKey = targetKey.trim().toUpperCase();
+      targetKey = targetKey.trim();
       try {
         const resp = await fetch(`${CLOUD_SYNC_API}?key=${encodeURIComponent(targetKey)}`);
         const res = await resp.json();
@@ -1252,15 +1268,15 @@
           const nowStr = new Date().toLocaleTimeString();
           localStorage.setItem(LAST_SYNC_STORAGE, nowStr);
           updateSyncUI();
-          showToast(`✅ 配对成功！已拉取云端进度 (${targetKey})`);
+          showToast(`✅ 配对成功！已从「${targetKey}」拉取云端进度`);
         } else if (res.status === 'empty') {
           localStorage.setItem(SYNC_KEY_STORAGE, targetKey);
           updateSyncUI();
-          // 云端尚无数据，将本地数据推上去
+          // 云端尚无数据，将本机进度初始化至该自定义同步码下
           await pushCloudSync(true);
-          showToast(`✅ 已绑定新短码 ${targetKey}，并将本地进度初始化至云端！`);
+          showToast(`✅ 已绑定同步码「${targetKey}」，并将本机进度推送到云端！`);
         } else {
-          showToast(`⚠️ 配对失败：${res.message || '短码无效'}`);
+          showToast(`⚠️ 同步失败：${res.message || '同步码无效'}`);
         }
       } catch (e) {
         showToast(`❌ 网络请求失败：${e.message}`);
@@ -1285,6 +1301,11 @@
       const displayEl = document.getElementById('displaySyncKey');
       if (displayEl) displayEl.textContent = key;
 
+      const customInput = document.getElementById('inputCustomSyncKey');
+      if (customInput && !customInput.value) {
+        customInput.placeholder = `当前同步码: ${key} (可输入新同步码)`;
+      }
+
       const lastSyncStr = localStorage.getItem(LAST_SYNC_STORAGE);
       const timeEl = document.getElementById('lastSyncTimeText');
       if (timeEl) {
@@ -1292,7 +1313,7 @@
       }
       const badge = document.getElementById('syncStatusBadge');
       if (badge) {
-        badge.textContent = `云端在线 · ${key}`;
+        badge.textContent = `云端就绪 · ${key}`;
       }
     }
     const state = {
@@ -2304,7 +2325,7 @@
 
       document.querySelectorAll('.nav-tab-btn').forEach(btn => {
         const isCurrent = btn.getAttribute('data-nav') === tabName;
-        btn.className = `nav-tab-btn flex flex-col items-center justify-center gap-0.5 text-[11px] w-16 ${
+        btn.className = `nav-tab-btn flex flex-col items-center justify-center gap-0.5 text-[10px] w-16 ${
           isCurrent ? 'tab-active text-teal-600 dark:text-teal-400 font-bold' : 'sub-text font-medium'
         }`;
       });
@@ -2330,17 +2351,22 @@
       await initVocabDataset();
       updateQuizScoreUI();
 
-      // Cloud Sync Event Listeners
+      // Cloud Sync Event Listeners (Custom Sync Code & Random & Copy)
+      const copyCurrentKey = () => {
+        const key = getOrCreateSyncKey();
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(key).then(() => {
+            showToast(`✅ 已复制同步码: ${key}`);
+          }).catch(() => {
+            prompt('请手动长按复制同步码：', key);
+          });
+        } else {
+          prompt('请手动长按复制同步码：', key);
+        }
+      };
+
       const syncKeyEl = document.getElementById('displaySyncKey');
       const copyBtn = document.getElementById('btnCopySyncKey');
-      function copyCurrentKey() {
-        const key = getOrCreateSyncKey();
-        navigator.clipboard?.writeText(key).then(() => {
-          showToast(`📋 已复制同步短码: ${key}`);
-        }).catch(() => {
-          showToast(`短码: ${key}`);
-        });
-      }
       if (syncKeyEl) syncKeyEl.addEventListener('click', copyCurrentKey);
       if (copyBtn) copyBtn.addEventListener('click', copyCurrentKey);
 
@@ -2348,33 +2374,34 @@
         pushCloudSync(true);
       });
 
-      document.getElementById('btnApplyPairKey').addEventListener('click', () => {
-        const inp = document.getElementById('inputPairKey');
-        const val = (inp.value || '').trim();
-        if (!val) {
-          showToast('请输入要配对的同步短码');
-          return;
-        }
-        pullCloudSync(val);
-      });
-
-      document.getElementById('btnRegenerateKey').addEventListener('click', () => {
-        openModal({
-          title: '🔄 重新生成同步短码？',
-          body: '重新生成后，其他设备需输入新短码才能与本机同步。当前本地数据不受影响。',
-          onConfirm: () => {
-            const rand = Math.random().toString(36).substring(2, 6).toUpperCase();
-            const newKey = `GK-${rand}`;
-            localStorage.setItem(SYNC_KEY_STORAGE, newKey);
-            updateSyncUI();
-            closeModal();
-            showToast(`已生成新短码: ${newKey}`);
-            pushCloudSync(true);
+      // Bind / Apply Custom Key
+      const btnApplyCustom = document.getElementById('btnApplyCustomKey');
+      if (btnApplyCustom) {
+        btnApplyCustom.addEventListener('click', () => {
+          const inp = document.getElementById('inputCustomSyncKey');
+          const val = (inp.value || '').trim();
+          if (!val) {
+            showToast('请输入你想自定义的同步码');
+            inp.focus();
+            return;
           }
+          pullCloudSync(val);
+          inp.value = '';
         });
-      });
+      }
 
-      // Clean 390x844 viewport layout (no fake phone frame)
+      // Random Key Generator
+      const btnRandom = document.getElementById('btnRandomKey');
+      if (btnRandom) {
+        btnRandom.addEventListener('click', () => {
+          const rand = Math.random().toString(36).substring(2, 6).toUpperCase();
+          const newKey = `GK-${rand}`;
+          localStorage.setItem(SYNC_KEY_STORAGE, newKey);
+          updateSyncUI();
+          showToast(`已生成新随机同步码: ${newKey}`);
+          pushCloudSync(true);
+        });
+      }
 
       document.getElementById('btnShowShortcuts').addEventListener('click', () => {
         openModal({

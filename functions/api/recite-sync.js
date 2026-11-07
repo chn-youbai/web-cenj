@@ -18,17 +18,18 @@ async function ensureTable(db) {
 
 export async function onRequestGet(context) {
   const url = new URL(context.request.url);
-  const key = (url.searchParams.get("key") || "").trim().toUpperCase();
+  const rawKey = (url.searchParams.get("key") || "").trim();
 
-  if (!key || key.length < 4 || key.length > 32 || !/^[A-Z0-9_\-]+$/.test(key)) {
+  if (!rawKey || rawKey.length > 50 || /[\x00-\x1F\x7F]/.test(rawKey)) {
     return new Response(JSON.stringify({
       status: "error",
-      message: "Invalid or missing sync key. Example: GK-8823"
+      message: "无效的同步码 (请使用1-50位字符)"
     }), {
       status: 400,
       headers: { "Content-Type": "application/json; charset=utf-8", "Access-Control-Allow-Origin": "*" }
     });
   }
+  const key = rawKey;
 
   const db = context.env.DB;
   if (!db) {
@@ -95,11 +96,12 @@ export async function onRequestPost(context) {
     });
   }
 
-  let key = (body.key || "").trim().toUpperCase();
-  if (!key || key.length < 4 || !/^[A-Z0-9_\-]+$/.test(key)) {
+  let rawKey = (body.key || "").trim();
+  if (!rawKey || rawKey.length > 50 || /[\x00-\x1F\x7F]/.test(rawKey)) {
     const randomHex = Math.random().toString(36).substring(2, 6).toUpperCase();
-    key = `GK-${randomHex}`;
+    rawKey = `GK-${randomHex}`;
   }
+  const key = rawKey;
 
   const marks = body.marks || {};
   const memos = body.memos || {};
