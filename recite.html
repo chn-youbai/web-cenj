@@ -609,53 +609,21 @@
               </span>
             </div>
 
-            <!-- Card Center: Anchored Core Zone (Fixed Vertical Screen Placement) + Expandable Bottom Zone -->
-            <div id="cardCenterArea" class="flex-1 min-h-0 flex flex-col items-center py-1 text-center cursor-pointer" title="点击揭晓释义或朗读单词">
-              <!-- Rock-Solid Anchored Core: English Word + Chinese Meaning (Never jumps up/down between cards) -->
-              <div class="w-full flex flex-col items-center justify-center pt-4 sm:pt-6 pb-2 min-h-[170px] sm:min-h-[190px] flex-shrink-0">
-                <!-- English Headword -->
-                <div id="cardWordText" class="leading-tight font-black tracking-tight select-text break-words max-w-full px-1 hover:opacity-90 active:scale-95 transition cursor-pointer" title="点击朗读单词">
-                  for
-                </div>
-
-                <!-- Chinese Meaning (Directly below, constant distance) -->
-                <div id="cardMeaningWrapper" class="w-full text-center transition mt-3 sm:mt-4">
-                  <div id="cardMeaningText" class="font-black leading-tight text-slate-800 dark:text-slate-100 select-text tracking-normal">
-                    为了……、对于……、因为
-                  </div>
-                  <div id="maskHintText" class="hidden text-[11px] text-teal-600 dark:text-teal-400 mt-1.5 font-semibold">
-                    👆 点击卡片揭晓释义
-                  </div>
-                </div>
+            <!-- Card Center: Pure Focused Study Area (English Word + Chinese Meaning Perfectly Anchored) -->
+            <div id="cardCenterArea" class="flex-1 min-h-0 flex flex-col items-center justify-center py-4 text-center cursor-pointer select-text" title="点击揭晓释义或朗读单词">
+              <!-- English Headword -->
+              <div id="cardWordText" class="leading-tight font-black tracking-tight select-text break-words max-w-full px-1 hover:opacity-90 active:scale-95 transition cursor-pointer" title="点击朗读单词">
+                for
               </div>
 
-              <!-- Expandable Bottom Zone: Collocations & Forms (Docked at bottom, never shifts the headword) -->
-              <div class="w-full mt-auto mb-1 flex flex-col justify-end min-h-0">
-                <!-- Unified High-Yield Exam Notes (真题考点与搭配 - 单一轻量拓展卡片) -->
-                <div id="cardExamExpandedSection" class="w-full text-left px-3.5 py-2.5 rounded-2xl bg-slate-50/85 dark:bg-slate-800/55 border border-slate-200/60 dark:border-slate-700/50 space-y-2 max-h-[135px] overflow-y-auto scroll-area transition-all">
-                  <!-- Forms Sub-row (if any) -->
-                  <div id="cardFormsContainer">
-                    <div class="text-[10px] font-bold text-teal-700 dark:text-teal-300 mb-1 flex items-center gap-1">
-                      <span>📌 历年真题考查变形</span>
-                    </div>
-                    <div id="cardFormsList" class="flex flex-wrap gap-1.5">
-                      <!-- Populated dynamically -->
-                    </div>
-                  </div>
-
-                  <!-- Phrases Sub-row (if any) -->
-                  <div id="cardPhrasesContainer">
-                    <div class="text-[10px] font-bold text-amber-700 dark:text-amber-400 mb-1 flex items-center gap-1">
-                      <span>📚 高考真题常考短语 & 课本搭配</span>
-                    </div>
-                    <div id="cardPhrasesList" class="space-y-1 text-[11px] text-slate-700 dark:text-slate-200">
-                      <!-- Populated dynamically -->
-                    </div>
-                  </div>
+              <!-- Chinese Meaning (Constant distance directly below English) -->
+              <div id="cardMeaningWrapper" class="w-full text-center transition mt-3 sm:mt-5">
+                <div id="cardMeaningText" class="font-black leading-tight text-slate-800 dark:text-slate-100 select-text break-words tracking-normal">
+                  为了……、对于……、因为
                 </div>
-                <!-- Hidden compatibility stubs for cardFormsSection & cardPhrasesSection -->
-                <div id="cardFormsSection" class="hidden"></div>
-                <div id="cardPhrasesSection" class="hidden"></div>
+                <div id="maskHintText" class="hidden text-[11px] text-teal-600 dark:text-teal-400 mt-2 font-semibold">
+                  👆 点击卡片揭晓释义
+                </div>
               </div>
             </div>
 
@@ -672,6 +640,32 @@
               </button>
             </div>
           </div>
+
+          <!-- 历年真题考查卡片 (做到主卡片下方独立展示) -->
+          <div id="cardExamExpandedSection" class="mx-3 my-1 text-left px-3.5 py-2.5 rounded-2xl bg-slate-50/90 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/50 space-y-2 max-h-[125px] overflow-y-auto scroll-area transition-all flex-shrink-0">
+            <!-- Forms Sub-row (if any) -->
+            <div id="cardFormsContainer">
+              <div class="text-[10px] font-bold text-teal-700 dark:text-teal-300 mb-1 flex items-center gap-1">
+                <span>📌 历年真题考查变形</span>
+              </div>
+              <div id="cardFormsList" class="flex flex-wrap gap-1.5">
+                <!-- Populated dynamically -->
+              </div>
+            </div>
+
+            <!-- Phrases Sub-row (if any) -->
+            <div id="cardPhrasesContainer">
+              <div class="text-[10px] font-bold text-amber-700 dark:text-amber-400 mb-1 flex items-center gap-1">
+                <span>📚 高考真题常考短语 & 课本搭配</span>
+              </div>
+              <div id="cardPhrasesList" class="space-y-1 text-[11px] text-slate-700 dark:text-slate-200">
+                <!-- Populated dynamically -->
+              </div>
+            </div>
+          </div>
+          <!-- Hidden compatibility stubs -->
+          <div id="cardFormsSection" class="hidden"></div>
+          <div id="cardPhrasesSection" class="hidden"></div>
 
           <!-- User Memo Display (if any) -->
           <div id="memoDisplayBar" class="hidden mx-3 mt-1 px-2.5 py-1 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-700 dark:text-amber-300 flex items-center justify-between flex-shrink-0">
@@ -1080,40 +1074,40 @@
             </select>
           </div>
 
-          <!-- Dual Font Size Sliders (中英双轨独立字号滑动条) -->
+          <!-- Dual Font Size Sliders (中英双轨独立字号滑动条 - 上限200px) -->
           <div class="space-y-3 pt-2 border-t border-slate-100 dark:border-slate-800">
             <div class="flex items-center justify-between">
-              <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">🔤 核心字号双轨调节</label>
+              <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">🔤 核心字号双轨调节 (上限200px)</label>
               <button id="btnResetFontSizes" type="button" class="text-[10px] text-teal-600 dark:text-teal-400 font-bold hover:underline">
                 🔄 恢复默认
               </button>
             </div>
 
-            <!-- English Font Size Slider -->
+            <!-- English Font Size Slider (max 200) -->
             <div class="space-y-1">
               <div class="flex items-center justify-between text-xs">
                 <span class="font-semibold text-slate-700 dark:text-slate-200">🔤 英文单词大小</span>
                 <span id="valEnFontSize" class="font-mono text-teal-600 dark:text-teal-400 font-bold">42px</span>
               </div>
-              <input id="sliderEnFontSize" type="range" min="28" max="56" value="42" step="2" class="w-full accent-teal-600 cursor-pointer h-1.5 bg-slate-200 dark:bg-slate-700 rounded-lg" />
+              <input id="sliderEnFontSize" type="range" min="24" max="200" value="42" step="2" class="w-full accent-teal-600 cursor-pointer h-2 bg-slate-200 dark:bg-slate-700 rounded-lg" />
               <div class="flex justify-between text-[9px] text-slate-400 font-mono">
-                <span>28px (紧凑)</span>
+                <span>24px (精细)</span>
                 <span>标准 42px</span>
-                <span>56px (超大)</span>
+                <span>200px (超大)</span>
               </div>
             </div>
 
-            <!-- Chinese Font Size Slider -->
+            <!-- Chinese Font Size Slider (max 200) -->
             <div class="space-y-1">
               <div class="flex items-center justify-between text-xs">
                 <span class="font-semibold text-slate-700 dark:text-slate-200">🇨🇳 中文释义大小</span>
                 <span id="valCnFontSize" class="font-mono text-teal-600 dark:text-teal-400 font-bold">30px</span>
               </div>
-              <input id="sliderCnFontSize" type="range" min="18" max="42" value="30" step="2" class="w-full accent-teal-600 cursor-pointer h-1.5 bg-slate-200 dark:bg-slate-700 rounded-lg" />
+              <input id="sliderCnFontSize" type="range" min="16" max="200" value="30" step="2" class="w-full accent-teal-600 cursor-pointer h-2 bg-slate-200 dark:bg-slate-700 rounded-lg" />
               <div class="flex justify-between text-[9px] text-slate-400 font-mono">
-                <span>18px (紧凑)</span>
+                <span>16px (精细)</span>
                 <span>标准 30px</span>
-                <span>42px (超大)</span>
+                <span>200px (超大)</span>
               </div>
             </div>
           </div>
@@ -1856,15 +1850,17 @@
 
       cardWordText.textContent = item.word;
       cardWordText.className = `leading-tight font-extrabold tracking-tight select-text whitespace-nowrap max-w-full px-1 ${hideEn ? 'meaning-masked' : 'meaning-revealed'}`;
-      const enMax = state.enFontSize || 42;
-      const enMin = Math.max(18, Math.round(enMax * 0.5));
-      fitTextSingleLine(cardWordText, enMax, enMin, 340);
+      const enSize = state.enFontSize || 42;
+      cardWordText.style.fontSize = enSize + 'px';
+      cardWordText.style.lineHeight = '1.1';
+      cardWordText.style.wordBreak = 'break-word';
 
       cardMeaningText.textContent = item.meaning;
-      cardMeaningText.className = `font-bold leading-snug select-text whitespace-nowrap max-w-full ${hideCn ? 'meaning-masked' : 'meaning-revealed'}`;
-      const cnMax = state.cnFontSize || 30;
-      const cnMin = Math.max(14, Math.round(cnMax * 0.55));
-      fitTextSingleLine(cardMeaningText, cnMax, cnMin, 340);
+      cardMeaningText.className = `font-black leading-tight select-text break-words max-w-full ${hideCn ? 'meaning-masked' : 'meaning-revealed'}`;
+      const cnSize = state.cnFontSize || 30;
+      cardMeaningText.style.fontSize = cnSize + 'px';
+      cardMeaningText.style.lineHeight = '1.2';
+      cardMeaningText.style.wordBreak = 'break-word';
 
       if (hideCn || hideEn) {
         maskHintText.classList.remove('hidden');
