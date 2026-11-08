@@ -437,6 +437,156 @@
       transform: translateX(-50%) translateY(0);
       opacity: 1;
     }
+  
+    /* iOS 共享 Apple ID 与客户端下载板块 */
+    .apple-id-card {
+      background: rgba(15, 23, 42, 0.75);
+      border: 1px solid rgba(168, 85, 247, 0.35);
+      border-radius: 16px;
+      padding: 1.2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+      margin-top: 0.5rem;
+    }
+    .apple-id-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.8rem;
+    }
+    .apple-id-icon {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      background: rgba(56, 189, 248, 0.15);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      flex-shrink: 0;
+    }
+    .apple-warning-box {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      border-radius: 10px;
+      padding: 0.7rem 0.9rem;
+      font-size: 0.78rem;
+    }
+    .warning-title {
+      color: #f87171;
+      font-weight: 700;
+      margin-bottom: 0.3rem;
+      display: flex;
+      align-items: center;
+      gap: 0.2rem;
+    }
+    .warning-list {
+      margin: 0;
+      padding-left: 1.2rem;
+      color: #fca5a5;
+      line-height: 1.5;
+    }
+    .apple-creds-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 0.65rem;
+    }
+    .cred-item {
+      background: rgba(0, 0, 0, 0.45);
+      border: 1px solid rgba(168, 85, 247, 0.25);
+      border-radius: 10px;
+      padding: 0.65rem 0.85rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+    .cred-label {
+      font-size: 0.72rem;
+      color: #94a3b8;
+      font-weight: 600;
+    }
+    .cred-val-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+    }
+    .cred-text {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: #38bdf8;
+      word-break: break-all;
+    }
+    .mini-copy-btn {
+      padding: 0.28rem 0.7rem;
+      border-radius: 6px;
+      border: 1px solid rgba(56, 189, 248, 0.4);
+      background: rgba(56, 189, 248, 0.15);
+      color: #38bdf8;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      flex-shrink: 0;
+    }
+    .mini-copy-btn:hover {
+      background: rgba(56, 189, 248, 0.35);
+      color: #ffffff;
+      transform: translateY(-1px);
+    }
+    .apps-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 0.65rem;
+    }
+    .app-item {
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 10px;
+      padding: 0.65rem 0.85rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+    }
+    .app-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .app-badge {
+      font-size: 0.68rem;
+      padding: 0.15rem 0.45rem;
+      border-radius: 9999px;
+      font-weight: 600;
+    }
+    .app-badge.clash {
+      background: rgba(168, 85, 247, 0.2);
+      color: #d8b4fe;
+      border: 1px solid rgba(168, 85, 247, 0.4);
+    }
+    .app-badge.singbox {
+      background: rgba(16, 185, 129, 0.2);
+      color: #6ee7b7;
+      border: 1px solid rgba(16, 185, 129, 0.4);
+    }
+    .app-desc {
+      color: #94a3b8;
+      font-size: 0.74rem;
+      margin: 0;
+      line-height: 1.35;
+    }
+    .apple-guide-step {
+      font-size: 0.75rem;
+      color: #cbd5e1;
+      background: rgba(168, 85, 247, 0.08);
+      border: 1px dashed rgba(168, 85, 247, 0.3);
+      border-radius: 8px;
+      padding: 0.55rem 0.8rem;
+      line-height: 1.45;
+    }
+
   </style>
 </head>
 <body>
@@ -605,6 +755,82 @@
           <span id="subSyncTime">⏱️ 最近拉取：刚刚</span>
           <a href="javascript:void(0)" id="bindAccountLink" onclick="openBindModal()" style="color: #c084fc; text-decoration: underline; cursor: pointer; font-size: 0.78rem;">⚙️ 绑定/修改账号凭据</a>
           <span id="subTip" style="width: 100%;">💡 提示：私人永久直链支持多域名自动探活自愈，导入 Clash / 手机客户端后终身免改链接</span>
+        </div>
+
+        <!-- iOS 共享美区 Apple ID 与免翻墙下载指南 (仅密码解锁后可见) -->
+        <div class="apple-id-card">
+          <div class="apple-id-header">
+            <div class="apple-id-icon">🍎</div>
+            <div style="flex: 1;">
+              <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                <h3 style="color: #f1f5f9; font-size: 0.98rem; font-weight: 700; margin: 0;">iOS 美区 Apple ID 共享账号</h3>
+                <span class="tag" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); font-size: 0.72rem;">免翻墙下载代理软件</span>
+              </div>
+              <p style="color: #94a3b8; font-size: 0.76rem; margin-top: 0.2rem; line-height: 1.35;">
+                专供苹果用户下载国区 App Store 未上架的代理工具，下载后请退出切回自己账号。
+              </p>
+            </div>
+          </div>
+
+          <!-- 安全防锁机红字警告 -->
+          <div class="apple-warning-box">
+            <div class="warning-title">⚠️ 防锁机安全警告（必读）：</div>
+            <ul class="warning-list">
+              <li><strong>严禁在手机「设置 ➔ iCloud」登录！</strong>会导致个人相册/通讯录同步，甚至因锁机变砖。</li>
+              <li><strong>只能在「App Store」应用内登录！</strong>（打开 App Store ➔ 点击右上角头像 ➔ 滑到最底退出当前账号 ➔ 登录此美区账号）。</li>
+              <li>若提示<strong>「Apple ID 安全 / 双重认证」</strong>，务必点击<strong>「其他选项」➔「不升级」</strong>，切勿绑定个人手机号！</li>
+            </ul>
+          </div>
+
+          <!-- 账号密码与一键复制 -->
+          <div class="apple-creds-grid">
+            <div class="cred-item">
+              <span class="cred-label">👤 美区 Apple ID 账号</span>
+              <div class="cred-val-row">
+                <span class="cred-text" id="appleIdUserText">JohnStephenson4172@hotmail.com</span>
+                <button type="button" class="mini-copy-btn" onclick="copyText('JohnStephenson4172@hotmail.com', '美区 Apple ID 账号')">
+                  📋 复制
+                </button>
+              </div>
+            </div>
+            <div class="cred-item">
+              <span class="cred-label">🔑 登录密码</span>
+              <div class="cred-val-row">
+                <span class="cred-text" id="appleIdPwdText">Snww#0918</span>
+                <button type="button" class="mini-copy-btn" onclick="copyText('Snww#0918', 'Apple ID 密码')">
+                  📋 复制
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 推荐免费客户端（Clash 内核 + Sing-box 内核各推荐一款） -->
+          <div class="apple-apps-section">
+            <div style="font-size: 0.78rem; font-weight: 700; color: #c084fc; margin-bottom: 0.4rem; display: flex; align-items: center; gap: 0.3rem;">
+              <span>📦 推荐免费客户端（登录美区 App Store 后直接搜索下载）：</span>
+            </div>
+            <div class="apps-grid">
+              <div class="app-item">
+                <div class="app-header">
+                  <span class="app-badge clash">Clash 内核首选</span>
+                  <strong style="color: #f1f5f9; font-size: 0.88rem;">Karing</strong>
+                </div>
+                <p class="app-desc">完全免费，直接搜「Karing」安装。完美支持 Clash 订阅直链与精细规则分流，UI 现代化。</p>
+              </div>
+              <div class="app-item">
+                <div class="app-header">
+                  <span class="app-badge singbox">Sing-box 官方内核</span>
+                  <strong style="color: #f1f5f9; font-size: 0.88rem;">sing-box</strong>
+                </div>
+                <p class="app-desc">完全免费，直接搜「sing-box」安装。由官方维护原生核心，性能极强，支持主流加密协议。</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- 极简使用流程 -->
+          <div class="apple-guide-step">
+            💡 <strong>配置三步法</strong>：① App Store 登录下载 Karing 或 sing-box ➔ ② 退出美区账号换回自己 ID ➔ ③ 返回本页复制上方的「🌟 复制私人永久直链」，在软件中导入即可！
+          </div>
         </div>
       </div>
     </div>
