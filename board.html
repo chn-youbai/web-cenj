@@ -1,0 +1,1017 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>秘密留言板 · 畅所欲言</title>
+  <link rel="icon" href="./OIP-C.jpg" type="image/jpeg">
+  <style>
+    :root {
+      --bg-color: #0b0f19;
+      --card-bg: rgba(15, 23, 42, 0.78);
+      --card-border: rgba(168, 85, 247, 0.25);
+      --card-hover: rgba(168, 85, 247, 0.45);
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --accent-purple: #c084fc;
+      --accent-blue: #38bdf8;
+      --accent-green: #4ade80;
+      --accent-rose: #fb7185;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      background-image: 
+        radial-gradient(at 0% 0%, rgba(168, 85, 247, 0.15) 0px, transparent 50%),
+        radial-gradient(at 100% 0%, rgba(56, 189, 248, 0.12) 0px, transparent 50%),
+        radial-gradient(at 50% 100%, rgba(16, 185, 129, 0.08) 0px, transparent 50%);
+      background-attachment: fixed;
+      color: var(--text-main);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 1.2rem 1rem 3rem 1rem;
+    }
+
+    /* Container */
+    .board-container {
+      width: 100%;
+      max-width: 680px;
+      display: flex;
+      flex-direction: column;
+      gap: 1.2rem;
+    }
+
+    /* Header */
+    .board-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.8rem 1.2rem;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      backdrop-filter: blur(16px);
+      border-radius: 18px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
+    }
+
+    .btn-back {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.5rem 0.9rem;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: var(--text-main);
+      text-decoration: none;
+      font-size: 0.85rem;
+      font-weight: 600;
+      transition: all 0.2s ease;
+    }
+
+    .btn-back:hover {
+      background: rgba(255, 255, 255, 0.12);
+      transform: translateX(-2px);
+    }
+
+    .header-title-box {
+      text-align: center;
+    }
+
+    .header-title {
+      font-size: 1.15rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #f1f5f9, #c084fc);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      justify-content: center;
+    }
+
+    .header-subtitle {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      margin-top: 0.15rem;
+    }
+
+    .btn-refresh {
+      background: rgba(168, 85, 247, 0.15);
+      border: 1px solid rgba(168, 85, 247, 0.35);
+      color: var(--accent-purple);
+      padding: 0.5rem 0.85rem;
+      border-radius: 12px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      transition: all 0.2s ease;
+    }
+
+    .btn-refresh:hover {
+      background: rgba(168, 85, 247, 0.3);
+      transform: rotate(180deg);
+    }
+
+    .btn-refresh:active {
+      transform: scale(0.95);
+    }
+
+    /* Composer Box */
+    .composer-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      backdrop-filter: blur(16px);
+      border-radius: 20px;
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+    }
+
+    .composer-meta-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+    }
+
+    .nickname-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: rgba(0, 0, 0, 0.45);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 0.35rem 0.6rem;
+      flex: 1;
+      min-width: 180px;
+    }
+
+    .avatar-badge {
+      font-size: 1.25rem;
+      cursor: pointer;
+      user-select: none;
+      transition: transform 0.2s;
+    }
+
+    .avatar-badge:hover {
+      transform: scale(1.2);
+    }
+
+    .nickname-input {
+      background: transparent;
+      border: none;
+      outline: none;
+      color: #ffffff;
+      font-size: 0.88rem;
+      font-weight: 700;
+      width: 100%;
+    }
+
+    .btn-dice {
+      background: rgba(255, 255, 255, 0.08);
+      border: none;
+      color: var(--accent-purple);
+      border-radius: 8px;
+      padding: 0.25rem 0.5rem;
+      font-size: 0.75rem;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s;
+    }
+
+    .btn-dice:hover {
+      background: rgba(168, 85, 247, 0.25);
+    }
+
+    .composer-textarea {
+      width: 100%;
+      min-height: 85px;
+      background: rgba(0, 0, 0, 0.45);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 14px;
+      padding: 0.85rem 1rem;
+      color: #ffffff;
+      font-size: 0.92rem;
+      font-family: inherit;
+      line-height: 1.5;
+      resize: vertical;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .composer-textarea:focus {
+      border-color: var(--accent-purple);
+      box-shadow: 0 0 16px rgba(168, 85, 247, 0.3);
+    }
+
+    .composer-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.6rem;
+    }
+
+    .quick-emojis {
+      display: flex;
+      gap: 0.3rem;
+      flex-wrap: wrap;
+    }
+
+    .emoji-pill {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 8px;
+      padding: 0.2rem 0.45rem;
+      font-size: 0.85rem;
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.15s;
+    }
+
+    .emoji-pill:hover {
+      background: rgba(255, 255, 255, 0.15);
+      transform: scale(1.15);
+    }
+
+    .composer-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      flex-shrink: 0;
+    }
+
+    .char-counter {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      font-family: ui-monospace, monospace;
+    }
+
+    .btn-submit {
+      background: linear-gradient(135deg, #a855f7, #6366f1);
+      border: none;
+      color: #ffffff;
+      font-size: 0.88rem;
+      font-weight: 700;
+      padding: 0.55rem 1.3rem;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 15px rgba(168, 85, 247, 0.4);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .btn-submit:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(168, 85, 247, 0.6);
+    }
+
+    .btn-submit:active {
+      transform: scale(0.96);
+    }
+
+    .btn-submit:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* Message Threads List */
+    .threads-container {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .thread-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      backdrop-filter: blur(14px);
+      border-radius: 18px;
+      padding: 1.15rem 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+      transition: border-color 0.2s;
+    }
+
+    .thread-card:hover {
+      border-color: var(--card-hover);
+    }
+
+    .msg-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+    }
+
+    .msg-user-info {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .msg-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: rgba(168, 85, 247, 0.15);
+      border: 1px solid rgba(168, 85, 247, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      flex-shrink: 0;
+    }
+
+    .msg-nickname {
+      font-size: 0.92rem;
+      font-weight: 700;
+      color: #f1f5f9;
+    }
+
+    .msg-time {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+    }
+
+    .msg-floor-badge {
+      font-size: 0.7rem;
+      color: var(--accent-purple);
+      background: rgba(168, 85, 247, 0.12);
+      border: 1px solid rgba(168, 85, 247, 0.25);
+      padding: 0.15rem 0.5rem;
+      border-radius: 8px;
+      font-weight: 700;
+      font-family: ui-monospace, monospace;
+    }
+
+    .msg-content {
+      font-size: 0.94rem;
+      color: #e2e8f0;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .msg-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding-top: 0.25rem;
+    }
+
+    .btn-action {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: var(--text-muted);
+      border-radius: 8px;
+      padding: 0.3rem 0.65rem;
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      transition: all 0.2s ease;
+    }
+
+    .btn-action:hover {
+      background: rgba(255, 255, 255, 0.12);
+      color: #ffffff;
+    }
+
+    .btn-action.liked {
+      color: var(--accent-rose);
+      background: rgba(251, 113, 133, 0.15);
+      border-color: rgba(251, 113, 133, 0.3);
+    }
+
+    /* Nested Replies (楼中楼) */
+    .nested-replies-wrapper {
+      margin-top: 0.35rem;
+      padding-left: 0.9rem;
+      border-left: 2px solid rgba(168, 85, 247, 0.3);
+      display: flex;
+      flex-direction: column;
+      gap: 0.65rem;
+    }
+
+    .reply-item {
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 12px;
+      padding: 0.65rem 0.85rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+
+    .reply-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+    }
+
+    .reply-user {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--accent-blue);
+    }
+
+    .reply-content {
+      font-size: 0.86rem;
+      color: #cbd5e1;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .reply-actions {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 0.5rem;
+    }
+
+    /* Inline Reply Box */
+    .inline-reply-box {
+      margin-top: 0.4rem;
+      padding: 0.75rem;
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(168, 85, 247, 0.3);
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .inline-reply-textarea {
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: 0.5rem 0.7rem;
+      color: #ffffff;
+      font-size: 0.85rem;
+      font-family: inherit;
+      outline: none;
+      resize: vertical;
+      min-height: 60px;
+    }
+
+    .inline-reply-textarea:focus {
+      border-color: var(--accent-purple);
+    }
+
+    .inline-reply-btns {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 0.5rem;
+    }
+
+    /* Empty state & Loading */
+    .empty-state {
+      text-align: center;
+      padding: 3rem 1rem;
+      background: var(--card-bg);
+      border: 1px dashed var(--card-border);
+      border-radius: 18px;
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .loading-pulse {
+      display: flex;
+      justify-content: center;
+      padding: 2.5rem;
+    }
+
+    .spinner {
+      width: 32px;
+      height: 32px;
+      border: 3px solid rgba(168, 85, 247, 0.2);
+      border-top-color: var(--accent-purple);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: rgba(15, 23, 42, 0.95);
+      border: 1px solid var(--accent-purple);
+      color: #ffffff;
+      padding: 0.75rem 1.4rem;
+      border-radius: 9999px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+      pointer-events: none;
+      opacity: 0;
+      transition: all 0.3s ease;
+      z-index: 999;
+      white-space: nowrap;
+    }
+
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="board-container">
+    <!-- 顶部导航栏 -->
+    <header class="board-header">
+      <a href="./index.html" class="btn-back">
+        <span>←</span>
+        <span>返回主页</span>
+      </a>
+      <div class="header-title-box">
+        <h1 class="header-title">
+          <span>💬</span>
+          <span>秘密留言板</span>
+        </h1>
+        <p class="header-subtitle">
+          <span id="totalBadge">正在加载留言...</span>
+        </p>
+      </div>
+      <button type="button" class="btn-refresh" id="btnRefresh" title="刷新留言列表">
+        <span>🔄</span>
+      </button>
+    </header>
+
+    <!-- 主发言区域 (发表顶层留言) -->
+    <section class="composer-card">
+      <div class="composer-meta-row">
+        <div class="nickname-wrapper">
+          <span class="avatar-badge" id="avatarBadge" title="随机切换头像">🚀</span>
+          <input type="text" id="nicknameInput" class="nickname-input" placeholder="输入昵称" maxlength="25">
+          <button type="button" class="btn-dice" id="btnRandomNick" title="换一个趣味随机昵称">🎲 随机换</button>
+        </div>
+        <div class="quick-emojis">
+          <span class="emoji-pill" onclick="appendEmoji('✨')">✨</span>
+          <span class="emoji-pill" onclick="appendEmoji('🍉')">🍉</span>
+          <span class="emoji-pill" onclick="appendEmoji('🚀')">🚀</span>
+          <span class="emoji-pill" onclick="appendEmoji('🐱')">🐱</span>
+          <span class="emoji-pill" onclick="appendEmoji('🔥')">🔥</span>
+          <span class="emoji-pill" onclick="appendEmoji('❤️')">❤️</span>
+        </div>
+      </div>
+
+      <textarea id="contentInput" class="composer-textarea" placeholder="留下一句属于你的足迹吧（文明友善交流）..." maxlength="500"></textarea>
+
+      <div class="composer-footer">
+        <span class="char-counter" id="charCounter">0 / 500</span>
+        <div class="composer-actions">
+          <button type="button" class="btn-submit" id="btnSubmitMsg">
+            <span>🚀</span>
+            <span>发布留言</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 留言与楼中楼树状列表容器 -->
+    <main id="threadsContainer" class="threads-container">
+      <div class="loading-pulse">
+        <div class="spinner"></div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Toast 提示框 -->
+  <div id="toast" class="toast"></div>
+
+  <script>
+    const RANDOM_NICKNAMES = [
+      "星际漫游者", "吃瓜同学", "夜猫子探险家", "代码修仙者", "银河系搭车客",
+      "潜水员小明", "追光少年", "快乐干饭人", "月球背面旅人", "神秘课代表",
+      "极客老司机", "喵星守望者", "时空旅人", "宇宙观测员", "摸鱼艺术家",
+      "像素造梦师", "赛博朋克猫", "数字游民", "海岛微风", "晨曦之星"
+    ];
+
+    const RANDOM_AVATARS = [
+      "🚀", "🍉", "🐱", "👾", "🌟", "🍕", "🦊", "☕", 
+      "🎮", "🌈", "🔥", "🪐", "🎵", "🦄", "🍦", "🛸"
+    ];
+
+    const STORAGE_KEY_NICKNAME = "guestbook_nickname";
+    const STORAGE_KEY_AVATAR = "guestbook_avatar";
+    const API_URL = "/api/board";
+
+    let currentNickname = "";
+    let currentAvatar = "🚀";
+    let isSubmitting = false;
+    let lastPostTime = 0;
+
+    // Toast 提示
+    let toastTimer = null;
+    function showToast(msg) {
+      const toast = document.getElementById("toast");
+      toast.textContent = msg;
+      toast.classList.add("show");
+      if (toastTimer) clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        toast.classList.remove("show");
+      }, 2500);
+    }
+
+    // 随机昵称生成
+    function getRandomNickname() {
+      const randIdx = Math.floor(Math.random() * RANDOM_NICKNAMES.length);
+      const randSuffix = Math.floor(Math.random() * 90 + 10);
+      return `${RANDOM_NICKNAMES[randIdx]}#${randSuffix}`;
+    }
+
+    function getRandomAvatar() {
+      return RANDOM_AVATARS[Math.floor(Math.random() * RANDOM_AVATARS.length)];
+    }
+
+    function initUserIdentity() {
+      const savedNick = localStorage.getItem(STORAGE_KEY_NICKNAME);
+      const savedAvatar = localStorage.getItem(STORAGE_KEY_AVATAR);
+
+      currentNickname = savedNick || getRandomNickname();
+      currentAvatar = savedAvatar || getRandomAvatar();
+
+      document.getElementById("nicknameInput").value = currentNickname;
+      document.getElementById("avatarBadge").textContent = currentAvatar;
+    }
+
+    function saveUserIdentity() {
+      const inputNick = document.getElementById("nicknameInput").value.trim();
+      if (inputNick) {
+        currentNickname = inputNick;
+        localStorage.setItem(STORAGE_KEY_NICKNAME, currentNickname);
+      }
+      localStorage.setItem(STORAGE_KEY_AVATAR, currentAvatar);
+    }
+
+    function changeRandomIdentity() {
+      currentNickname = getRandomNickname();
+      currentAvatar = getRandomAvatar();
+      document.getElementById("nicknameInput").value = currentNickname;
+      document.getElementById("avatarBadge").textContent = currentAvatar;
+      saveUserIdentity();
+      showToast("🎲 已为您更换新昵称与头像！");
+    }
+
+    function appendEmoji(emoji) {
+      const textarea = document.getElementById("contentInput");
+      textarea.value += emoji;
+      textarea.focus();
+      updateCharCounter();
+    }
+
+    function updateCharCounter() {
+      const len = document.getElementById("contentInput").value.length;
+      document.getElementById("charCounter").textContent = `${len} / 500`;
+    }
+
+    // 时间友好格式化
+    function formatTime(timestamp) {
+      if (!timestamp) return "未知时间";
+      const diff = Math.floor((Date.now() - timestamp) / 1000);
+      if (diff < 60) return "刚刚";
+      if (diff < 3600) return `${Math.floor(diff / 60)} 分钟前`;
+      if (diff < 86400) return `${Math.floor(diff / 3600)} 小时前`;
+      if (diff < 86400 * 7) return `${Math.floor(diff / 86400)} 天前`;
+      const date = new Date(timestamp);
+      return `${date.getMonth() + 1}-${date.getDate()} ${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
+    }
+
+    // 拉取留言列表并渲染
+    async function fetchMessages(showFeedback = false) {
+      const container = document.getElementById("threadsContainer");
+      if (showFeedback) {
+        showToast("🔄 正在刷新留言...");
+      }
+
+      try {
+        const resp = await fetch(API_URL);
+        const res = await resp.json();
+
+        if (res.status === "ok") {
+          document.getElementById("totalBadge").textContent = `💭 共 ${res.total || 0} 条温暖足迹 · 实时同步`;
+          renderThreads(res.threads || []);
+          if (showFeedback) showToast("✅ 留言已更新至最新！");
+        } else {
+          showToast(`⚠️ 加载失败：${res.message || "服务异常"}`);
+        }
+      } catch (e) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <span>❌ 网络连接中断</span>
+            <span style="font-size: 0.8rem;">无法拉取云端留言，请检查网络后刷新重试</span>
+          </div>
+        `;
+      }
+    }
+
+    // 渲染楼中楼留言树
+    function renderThreads(threads) {
+      const container = document.getElementById("threadsContainer");
+      if (!threads || threads.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <span style="font-size: 2.2rem;">📭</span>
+            <strong>这里空空如也，静候第一位有缘人</strong>
+            <span style="font-size: 0.8rem;">在上方写下你的第一句留言吧！</span>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = threads.map((thread, idx) => {
+        const floorNum = threads.length - idx;
+        const replies = thread.replies || [];
+
+        const repliesHtml = replies.length > 0 
+          ? `
+            <div class="nested-replies-wrapper" id="replies-wrapper-${thread.id}">
+              ${replies.map(rep => `
+                <div class="reply-item">
+                  <div class="reply-header">
+                    <div class="reply-user">
+                      <span>${rep.avatar || "💬"}</span>
+                      <span>${rep.nickname}</span>
+                    </div>
+                    <span class="msg-time">${formatTime(rep.created_at)}</span>
+                  </div>
+                  <div class="reply-content">${rep.content}</div>
+                  <div class="reply-actions">
+                    <button type="button" class="btn-action" onclick="handleLike(${rep.id}, this)">
+                      <span>❤️</span>
+                      <span class="like-count">${rep.likes || 0}</span>
+                    </button>
+                  </div>
+                </div>
+              `).join("")}
+            </div>
+          `
+          : `<div class="nested-replies-wrapper" id="replies-wrapper-${thread.id}" style="display: none;"></div>`;
+
+        return `
+          <article class="thread-card" id="thread-${thread.id}">
+            <div class="msg-header">
+              <div class="msg-user-info">
+                <div class="msg-avatar">${thread.avatar || "🚀"}</div>
+                <div>
+                  <div class="msg-nickname">${thread.nickname}</div>
+                  <div class="msg-time">${formatTime(thread.created_at)}</div>
+                </div>
+              </div>
+              <span class="msg-floor-badge">#${floorNum}F</span>
+            </div>
+
+            <div class="msg-content">${thread.content}</div>
+
+            <div class="msg-actions">
+              <button type="button" class="btn-action" onclick="toggleReplyBox(${thread.id}, '${thread.nickname.replace(/'/g, "\\'")}')">
+                <span>💬</span>
+                <span>回复 (${replies.length})</span>
+              </button>
+              <button type="button" class="btn-action" onclick="handleLike(${thread.id}, this)">
+                <span>❤️</span>
+                <span class="like-count">${thread.likes || 0}</span>
+              </button>
+            </div>
+
+            <!-- 楼中楼二级回复区 -->
+            ${repliesHtml}
+
+            <!-- 动态内联回复框容器 -->
+            <div id="reply-box-container-${thread.id}" style="display: none;"></div>
+          </article>
+        `;
+      }).join("");
+    }
+
+    // 展开/收起二级回复输入框
+    function toggleReplyBox(parentId, parentNick) {
+      const boxContainer = document.getElementById(`reply-box-container-${parentId}`);
+      if (!boxContainer) return;
+
+      if (boxContainer.style.display !== "none" && boxContainer.innerHTML.trim() !== "") {
+        boxContainer.style.display = "none";
+        boxContainer.innerHTML = "";
+        return;
+      }
+
+      boxContainer.innerHTML = `
+        <div class="inline-reply-box">
+          <textarea id="reply-input-${parentId}" class="inline-reply-textarea" placeholder="回复 @${parentNick}：发表你的看法..." maxlength="300"></textarea>
+          <div class="inline-reply-btns">
+            <button type="button" class="btn-action" onclick="cancelReplyBox(${parentId})">取消</button>
+            <button type="button" class="btn-submit" style="padding: 0.35rem 0.9rem; font-size: 0.78rem;" onclick="submitReply(${parentId})">
+              <span>🚀 发送回复</span>
+            </button>
+          </div>
+        </div>
+      `;
+      boxContainer.style.display = "block";
+      const textarea = document.getElementById(`reply-input-${parentId}`);
+      if (textarea) textarea.focus();
+    }
+
+    function cancelReplyBox(parentId) {
+      const boxContainer = document.getElementById(`reply-box-container-${parentId}`);
+      if (boxContainer) {
+        boxContainer.style.display = "none";
+        boxContainer.innerHTML = "";
+      }
+    }
+
+    // 提交二级回复
+    async function submitReply(parentId) {
+      const now = Date.now();
+      if (now - lastPostTime < 4000) {
+        showToast("⏳ 发言太快啦，请稍候 4 秒后再试");
+        return;
+      }
+
+      const input = document.getElementById(`reply-input-${parentId}`);
+      const content = input ? input.value.trim() : "";
+      if (!content) {
+        showToast("⚠️ 回复内容不能为空");
+        return;
+      }
+
+      saveUserIdentity();
+
+      try {
+        const resp = await fetch(API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            parent_id: parentId,
+            nickname: currentNickname,
+            avatar: currentAvatar,
+            content: content
+          })
+        });
+
+        const res = await resp.json();
+        if (res.status === "ok") {
+          lastPostTime = Date.now();
+          showToast("🎉 回复成功！");
+          cancelReplyBox(parentId);
+          fetchMessages(false);
+        } else {
+          showToast(`❌ 提交失败：${res.message || "未知错误"}`);
+        }
+      } catch (e) {
+        showToast("❌ 网络连接失败，请重试");
+      }
+    }
+
+    // 提交主留言
+    async function submitMainMessage() {
+      if (isSubmitting) return;
+
+      const now = Date.now();
+      if (now - lastPostTime < 4000) {
+        showToast("⏳ 发帖太频繁啦，请休息 4 秒再发");
+        return;
+      }
+
+      const contentInput = document.getElementById("contentInput");
+      const content = contentInput.value.trim();
+      if (!content) {
+        showToast("⚠️ 请写点什么再发布吧！");
+        contentInput.focus();
+        return;
+      }
+
+      saveUserIdentity();
+      isSubmitting = true;
+      const submitBtn = document.getElementById("btnSubmitMsg");
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = `<span>⏳</span><span>发布中...</span>`;
+
+      try {
+        const resp = await fetch(API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            parent_id: null,
+            nickname: currentNickname,
+            avatar: currentAvatar,
+            content: content
+          })
+        });
+
+        const res = await resp.json();
+        if (res.status === "ok") {
+          lastPostTime = Date.now();
+          contentInput.value = "";
+          updateCharCounter();
+          showToast("🎉 留言发布成功！");
+          await fetchMessages(false);
+        } else {
+          showToast(`❌ 发布失败：${res.message || "服务异常"}`);
+        }
+      } catch (e) {
+        showToast("❌ 发送网络异常，请稍候重试");
+      } finally {
+        isSubmitting = false;
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = `<span>🚀</span><span>发布留言</span>`;
+      }
+    }
+
+    // 点赞
+    async function handleLike(messageId, btnEl) {
+      if (!btnEl) return;
+      if (btnEl.classList.contains("liked")) {
+        showToast("❤️ 您已经点过赞啦");
+        return;
+      }
+
+      btnEl.classList.add("liked");
+      const countEl = btnEl.querySelector(".like-count");
+      if (countEl) {
+        countEl.textContent = parseInt(countEl.textContent || "0", 10) + 1;
+      }
+
+      try {
+        await fetch(API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "like",
+            message_id: messageId
+          })
+        });
+      } catch (e) {
+        // 静默
+      }
+    }
+
+    // 事件监听绑定
+    document.addEventListener("DOMContentLoaded", () => {
+      initUserIdentity();
+      fetchMessages(false);
+
+      document.getElementById("btnRandomNick")?.addEventListener("click", changeRandomIdentity);
+      document.getElementById("avatarBadge")?.addEventListener("click", () => {
+        currentAvatar = getRandomAvatar();
+        document.getElementById("avatarBadge").textContent = currentAvatar;
+        saveUserIdentity();
+      });
+
+      document.getElementById("nicknameInput")?.addEventListener("blur", saveUserIdentity);
+      document.getElementById("contentInput")?.addEventListener("input", updateCharCounter);
+      document.getElementById("btnSubmitMsg")?.addEventListener("click", submitMainMessage);
+      document.getElementById("btnRefresh")?.addEventListener("click", () => fetchMessages(true));
+
+      // Ctrl + Enter 快捷发送
+      document.getElementById("contentInput")?.addEventListener("keydown", (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+          e.preventDefault();
+          submitMainMessage();
+        }
+      });
+    });
+  </script>
+</body>
+</html>

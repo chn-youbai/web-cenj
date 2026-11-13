@@ -549,7 +549,7 @@
         <img src="./OIP-C.jpg" alt="展示图片" class="avatar-img" id="secretClashTrigger" style="cursor: pointer;">
       </div>
       <div class="avatar-item">
-        <img src="./right_avatar.jpg" alt="图片2" class="avatar-img">
+        <img src="./right_avatar.jpg" alt="图片2" class="avatar-img" id="secretBoardTrigger" style="cursor: pointer;" title="秘密留言板">
       </div>
     </div>
     <h1>你好</h1>
@@ -1135,6 +1135,38 @@
         if (err) err.textContent = '请先输入访问密码解锁进入';
       }
     } catch (e) {}
+    // --- 秘密留言板 5次点击暗号与跳转 (右侧头像触发) ---
+    let boardClickCount = 0;
+    let boardClickTimer = null;
+    const boardTriggerImg = document.getElementById('secretBoardTrigger');
+
+    if (boardTriggerImg) {
+      boardTriggerImg.addEventListener('click', () => {
+        boardClickCount++;
+        clearTimeout(boardClickTimer);
+        
+        // 静默微缩放动效反馈
+        boardTriggerImg.style.transform = `scale(${1 + boardClickCount * 0.06})`;
+        setTimeout(() => { boardTriggerImg.style.transform = ''; }, 140);
+
+        if (boardClickCount >= 5) {
+          boardClickCount = 0;
+          try {
+            const win = window.open('./board.html', '_blank');
+            if (!win || win.closed || typeof win.closed === 'undefined') {
+              window.location.href = './board.html';
+            }
+          } catch (err) {
+            window.location.href = './board.html';
+          }
+        } else {
+          boardClickTimer = setTimeout(() => {
+            boardClickCount = 0;
+          }, 1800);
+        }
+      });
+    }
+
     // --- Clash Verge 远程控制 5次点击暗号与跳转 ---
     let clashClickCount = 0;
     let clashClickTimer = null;
