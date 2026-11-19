@@ -52,20 +52,21 @@ async function queryVocabWords(query: string): Promise<VocabCompactWord[]> {
   return [...exact, ...partial].slice(0, 6);
 }
 
+export function getTimeGreeting(hour = new Date().getHours()): string {
+  if (hour >= 0 && hour < 5) return "夜深了，注意休息 · 岑靖";
+  if (hour >= 5 && hour < 8) return "清晨好，岑靖";
+  if (hour >= 8 && hour < 11) return "早安，岑靖";
+  if (hour >= 11 && hour < 13) return "午安，岑靖";
+  if (hour >= 13 && hour < 17) return "下午好，岑靖";
+  if (hour >= 17 && hour < 19) return "傍晚好，岑靖";
+  if (hour >= 19 && hour < 23) return "晚上好，岑靖";
+  return "夜色渐深，岑靖";
+}
+
 export function initGreetingTitle(): void {
   const greetingEl = document.getElementById("greetingTitle");
   if (!greetingEl) return;
-
-  const hour = new Date().getHours();
-  let prefix = "你好";
-  if (hour >= 5 && hour < 12) {
-    prefix = "早安";
-  } else if (hour >= 12 && hour < 18) {
-    prefix = "午安";
-  } else {
-    prefix = "晚安";
-  }
-  greetingEl.textContent = `${prefix}，岑靖`;
+  greetingEl.textContent = getTimeGreeting(new Date().getHours());
 }
 
 export function initHomeOmnibox(): void {

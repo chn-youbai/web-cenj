@@ -1207,3 +1207,19 @@ body {
   font-size: 10.5px;
   color: var(--c-label-2);
 }
+
+.mem-photo-back {
+  padding: 0;
+  overflow: hidden;
+}
+
+.mem-photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.mem-card.matched .mem-photo-back {
+  box-shadow: inset 0 0 0 2.5px var(--c-accent);
+}

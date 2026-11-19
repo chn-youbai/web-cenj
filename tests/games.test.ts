@@ -5,6 +5,7 @@ import {
   createSolvedPuzzle,
   isPuzzleSolved,
 } from "@/pages/index/game-puzzle";
+import { getTimeGreeting } from "@/pages/index/omnibox";
 import { describe, expect, it } from "vitest";
 
 describe("playground games logic", () => {
@@ -31,15 +32,26 @@ describe("playground games logic", () => {
     expect([...shuffled].sort((a, b) => a - b)).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8]);
   });
 
-  it("creates exact pairs for memory match deck", () => {
+  it("creates exact photo pairs from gallery for memory match deck", () => {
     const deck = createMemoryDeck(8);
     expect(deck.length).toBe(16);
     const counts = new Map<string, number>();
     for (const card of deck) {
-      counts.set(card.symbol, (counts.get(card.symbol) ?? 0) + 1);
+      counts.set(card.imageName, (counts.get(card.imageName) ?? 0) + 1);
     }
     for (const count of counts.values()) {
       expect(count).toBe(2);
     }
+  });
+
+  it("returns fine-grained time greetings across 24 hours", () => {
+    expect(getTimeGreeting(2)).toContain("夜深了");
+    expect(getTimeGreeting(6)).toContain("清晨好");
+    expect(getTimeGreeting(9)).toContain("早安");
+    expect(getTimeGreeting(12)).toContain("午安");
+    expect(getTimeGreeting(15)).toContain("下午好");
+    expect(getTimeGreeting(18)).toContain("傍晚好");
+    expect(getTimeGreeting(20)).toContain("晚上好");
+    expect(getTimeGreeting(23)).toContain("夜色渐深");
   });
 });
