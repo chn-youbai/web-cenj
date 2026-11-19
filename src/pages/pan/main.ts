@@ -1,5 +1,5 @@
 import "@/core/fonts";
-import { initThemeToggle } from "@/core/theme";
+import { initAppShell } from "@/core/shell";
 import { showToast } from "@/core/toast";
 import type { AirportType } from "@shared/types";
 import { initBindModal } from "./bind-modal";
@@ -10,7 +10,7 @@ import {
   persistVerifiedSession,
 } from "./subscription";
 
-initThemeToggle();
+initAppShell({ activePage: "pan" });
 
 const state = createPanState();
 

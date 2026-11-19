@@ -3,8 +3,17 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#faf9f5">
   <title>🏛️ 技术展馆 - 全站核心架构与工作原理</title>
   <link rel="icon" href="./OIP-C.jpg" type="image/jpeg">
+  <script>
+    (function(){try{var t=localStorage.getItem("cenj_theme_v1");var d=t==="dark"||(t!=="light"&&window.matchMedia("(prefers-color-scheme: dark)").matches);document.documentElement.dataset.theme=d?"dark":"light";if(d)document.documentElement.classList.add("dark");var m=document.querySelector('meta[name="theme-color"]');if(m)m.content=d?"#262624":"#faf9f5";}catch(e){}})();
+  </script>
+  <link rel="preconnect" href="https://fonts.loli.net" crossorigin>
+  <link rel="stylesheet" href="https://fonts.loli.net/css2?family=Noto+Serif+SC:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="./src/styles/base.css">
+  <link rel="stylesheet" href="./src/styles/shell.css">
+  <link rel="stylesheet" href="./src/styles/showcase.css">
 </head>
 <body>
 
@@ -17,9 +26,6 @@
         <p>核心运作机制 · 流程图时序架构 · 协议标准解密 · 在线全真交互实测</p>
       </div>
     </div>
-    <a href="./" class="nav-back-btn">
-      <span>← 返回站点首页</span>
-    </a>
   </header>
 
   <!-- 顶部指标统计跑道 -->

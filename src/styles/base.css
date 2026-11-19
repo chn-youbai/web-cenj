@@ -297,3 +297,36 @@ label {
   animation: ui-spin 0.8s linear infinite;
   display: inline-block;
 }
+
+/* 全局轻量 Toast 提示 */
+.toast {
+  position: fixed;
+  bottom: calc(84px + var(--safe-bottom));
+  left: 50%;
+  transform: translateX(-50%) translateY(16px);
+  width: max-content;
+  max-width: calc(100vw - 32px);
+  background: var(--c-ink-btn);
+  color: var(--c-ink-btn-text);
+  font-family: var(--font-sans);
+  font-size: 13.5px;
+  font-weight: 500;
+  line-height: 1.4;
+  text-align: center;
+  padding: 10px 20px;
+  border-radius: var(--r-pill);
+  box-shadow: var(--sh-3);
+  opacity: 0;
+  transition: opacity var(--dur-2) var(--ease-out), transform var(--dur-2) var(--ease-out);
+  z-index: 2200;
+  pointer-events: none;
+}
+.toast.show {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+}
+@media (min-width: 900px) {
+  .toast {
+    bottom: calc(28px + var(--safe-bottom));
+  }
+}

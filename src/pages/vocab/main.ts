@@ -1,5 +1,7 @@
+import "@/core/fonts";
 import "@/styles/vocab.css";
 import { byId, copyToClipboard, escapeHtml, optById } from "@/core/dom";
+import { initAppShell } from "@/core/shell";
 import { getStorageItem, removeStorageItem, setStorageItem } from "@/core/storage";
 import {
   buildBatchExportCSV,
@@ -550,14 +552,6 @@ function renderBrowseList(): void {
   }
 }
 
-function goBackHome(event?: Event): void {
-  if (event) {
-    event.preventDefault();
-    event.stopPropagation();
-  }
-  window.location.href = window.location.protocol === "file:" ? "./index.html" : "/";
-}
-
 function switchTab(tabName: VocabTab): void {
   const views: Record<VocabTab, HTMLElement> = {
     lookup: byId("viewLookup"),
@@ -671,6 +665,8 @@ async function handleCsvFilesSelected(fileList: FileList | null): Promise<void> 
 }
 
 async function initApp(): Promise<void> {
+  initAppShell({ activePage: "vocab" });
+  const initialQuery = new URLSearchParams(window.location.search).get("q")?.trim() || "";
   try {
     if (getStorageItem("pep_vocab_baseline_cache_v1")) {
       removeStorageItem("pep_vocab_baseline_cache_v1");
@@ -746,6 +742,10 @@ async function initApp(): Promise<void> {
         vocabList = builtinVocab.map((e) => ({ ...e }));
         indexAllEntries(vocabList);
         renderBookFilterBarAndSelects();
+        const currentQ = optById<HTMLInputElement>("wordInput")?.value.trim() || "";
+        if (currentQ) {
+          renderLookupResults(currentQ, false);
+        }
         if (isForeground) {
           showToast(
             `词库加载完成 (${vocabList.length.toLocaleString()} 词${result.fromD1 ? " · D1云端同步" : " · 本地全量"})`,
@@ -777,6 +777,11 @@ async function initApp(): Promise<void> {
   const wordInput = byId<HTMLInputElement>("wordInput");
   const searchForm = byId<HTMLFormElement>("searchForm");
   const clearInputBtn = byId<HTMLButtonElement>("clearInputBtn");
+
+  if (initialQuery) {
+    wordInput.value = initialQuery;
+    renderLookupResults(initialQuery, true);
+  }
 
   searchForm.addEventListener("submit", (e) => {
     e.preventDefault();
@@ -965,11 +970,6 @@ async function initApp(): Promise<void> {
           inCsv: false,
         });
       }
-      return;
-    }
-
-    if (target.closest("#backToHomeBtn")) {
-      goBackHome(e);
       return;
     }
 

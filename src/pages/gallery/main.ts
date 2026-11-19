@@ -1,10 +1,10 @@
 import "@/core/fonts";
-import { initThemeToggle } from "@/core/theme";
+import { initAppShell } from "@/core/shell";
 import { createLightbox } from "./lightbox";
 import { EMBEDDED_IMAGES, IMAGE_CDN_BASE, getImageUrl } from "./photos";
 import { createVideosController } from "./videos";
 
-initThemeToggle();
+initAppShell({ activePage: "gallery" });
 
 type GalleryCategory = "photo" | "video";
 

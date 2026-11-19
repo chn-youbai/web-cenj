@@ -1,3 +1,5 @@
+import "@/core/fonts";
+import { initAppShell } from "@/core/shell";
 import "@/styles/showcase.css";
 import {
   probeClashBeacon,
@@ -35,6 +37,7 @@ function updateActiveNav(): void {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+  initAppShell({ activePage: "showcase" });
   for (const item of document.querySelectorAll<HTMLElement>(".hall-nav-item[data-hall]")) {
     item.addEventListener("click", () => {
       const hallId = item.dataset.hall;

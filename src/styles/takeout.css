@@ -1215,3 +1215,80 @@ body {
   padding: 4px 8px;
   cursor: pointer;
 }
+
+/* ==========================================================================
+   Claude Editorial Dual-Mode Theme & App Shell Compatibility
+   ========================================================================== */
+:root,
+[data-theme="dark"] {
+  --primary: var(--c-accent);
+  --primary-light: var(--c-accent-hover);
+  --primary-subtle: var(--c-accent-soft);
+  --primary-dark: var(--c-accent-press);
+  --bg-page: var(--c-bg);
+  --bg-card: var(--c-surface);
+  --text-main: var(--c-label);
+  --text-muted: var(--c-label-2);
+  --text-sub: var(--c-label-3);
+  --border: var(--c-separator);
+  --border-dark: var(--c-border-strong);
+  --success: var(--c-success);
+  --success-subtle: var(--c-success-soft);
+  --danger: var(--c-danger);
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--c-bg-subtle);
+  color: var(--c-label);
+}
+
+.app-shell {
+  background: var(--c-bg);
+  border-left: 1px solid var(--c-separator);
+  border-right: 1px solid var(--c-separator);
+}
+
+.app-header {
+  background: var(--c-material);
+  backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--c-separator);
+}
+
+.app-logo {
+  background: linear-gradient(135deg, var(--c-accent) 0%, var(--c-accent-hover) 100%);
+}
+
+.card,
+.person-selector,
+.bottom-sheet {
+  background: var(--c-surface);
+  border-color: var(--c-separator);
+  color: var(--c-label);
+}
+
+.input-field,
+.backup-textarea,
+.search-box input {
+  background: var(--c-bg-subtle);
+  color: var(--c-label);
+  border-color: var(--c-separator);
+}
+
+.input-field:focus,
+.backup-textarea:focus {
+  background: var(--c-surface);
+  border-color: var(--c-accent);
+}
+
+@media (max-width: 860px) {
+  .tab-bar {
+    bottom: calc(64px + env(safe-area-inset-bottom, 0px)) !important;
+    background: var(--c-material) !important;
+    backdrop-filter: blur(14px);
+    border-top: 1px solid var(--c-separator) !important;
+  }
+  .app-main {
+    padding-bottom: 140px !important;
+  }
+}

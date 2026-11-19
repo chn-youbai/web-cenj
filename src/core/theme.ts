@@ -26,6 +26,7 @@ export function getPreferredTheme(): ThemeMode {
 export function applyTheme(theme: ThemeMode): void {
   document.documentElement.dataset.theme = theme;
   document.documentElement.style.colorScheme = theme;
+  document.documentElement.classList.toggle("dark", theme === "dark");
 
   const meta = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
   if (meta) {

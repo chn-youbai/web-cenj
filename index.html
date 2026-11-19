@@ -4,168 +4,174 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#faf9f5">
-  <meta name="description" content="岑靖的个人小站：英语查词、智能过词、精选图库、资源网盘与外卖记账。">
-  <title>神秘小网站 - by 岑靖</title>
+  <meta name="description" content="岑靖的个人数字工作台：即输即查英语词典、智能过词、视界画廊、资源网盘与效率工具。">
+  <title>Cenj · 个人数字工作台</title>
   <link rel="icon" href="./OIP-C.jpg" type="image/jpeg">
   <script>
-    (function(){try{var t=localStorage.getItem("cenj_theme_v1");var d=t==="dark"||(t!=="light"&&window.matchMedia("(prefers-color-scheme: dark)").matches);document.documentElement.dataset.theme=d?"dark":"light";var m=document.querySelector('meta[name="theme-color"]');if(m)m.content=d?"#262624":"#faf9f5";}catch(e){}})();
+    (function(){try{var t=localStorage.getItem("cenj_theme_v1");var d=t==="dark"||(t!=="light"&&window.matchMedia("(prefers-color-scheme: dark)").matches);document.documentElement.dataset.theme=d?"dark":"light";document.documentElement.classList.toggle("dark",d);var m=document.querySelector('meta[name="theme-color"]');if(m)m.content=d?"#262624":"#faf9f5";}catch(e){}})();
   </script>
   <link rel="preconnect" href="https://fonts.loli.net" crossorigin>
   <link rel="stylesheet" href="https://fonts.loli.net/css2?family=Noto+Serif+SC:wght@400;500;600;700&display=swap">
   <link rel="stylesheet" href="./src/styles/base.css">
+  <link rel="stylesheet" href="./src/styles/shell.css">
   <link rel="stylesheet" href="./src/styles/index.css">
 </head>
 <body>
-  <main class="card" id="tiltCard">
-    <nav class="masthead" aria-label="页面工具栏">
-      <span class="masthead-edition">EDITION · CENJ</span>
-      <button type="button" class="theme-toggle-btn" data-theme-toggle aria-label="切换深浅色主题">
-        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
-        </svg>
-        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <circle cx="12" cy="12" r="4"/>
-          <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>
-        </svg>
-      </button>
-    </nav>
-
-    <header class="hero">
-      <div class="avatar-row">
-        <div class="avatar-item">
-          <img src="./left_avatar.png" alt="头像" class="avatar-img">
-        </div>
-        <div class="avatar-item">
-          <img src="./OIP-C.jpg" alt="展示图片" class="avatar-img" id="secretClashTrigger" style="cursor: pointer;">
-        </div>
-        <div class="avatar-item">
-          <img src="./right_avatar.jpg" alt="头像" class="avatar-img" id="secretBoardTrigger" style="cursor: pointer;">
-        </div>
+  <main class="workspace-stage" id="tiltCard">
+    <!-- 顶部轻量栏（手机端显示，桌面端由左侧边栏承接） -->
+    <header class="workspace-topbar">
+      <div class="avatar-cluster" aria-label="站点标识">
+        <img src="./left_avatar.png" alt="头像" class="cluster-avatar">
+        <img src="./OIP-C.jpg" alt="展示头像" class="cluster-avatar" id="secretClashTrigger">
+        <img src="./right_avatar.jpg" alt="头像" class="cluster-avatar" id="secretBoardTrigger">
+        <span class="edition-tag">EDITION · CENJ</span>
       </div>
-      <h1>你好</h1>
-      <p class="hero-sub">神秘小网站 · by 岑靖</p>
 
-      <!-- 全网云端同步互动点赞按钮 -->
-      <button type="button" class="like-btn" id="likeBtn" aria-label="为网站点赞">
-        <span class="like-icon" id="likeIcon" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
-        </span>
-        <span class="like-label">为网站点赞</span>
-        <span class="like-badge" id="likeCount">···</span>
-      </button>
+      <div class="topbar-actions">
+        <button type="button" class="like-btn" id="likeBtn" aria-label="为网站点赞">
+          <span class="like-icon" id="likeIcon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+          </span>
+          <span class="like-label">赞赏</span>
+          <span class="like-badge" id="likeCount">···</span>
+        </button>
+      </div>
     </header>
 
-    <div class="editorial-divider" aria-hidden="true">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
-        <path d="M12 2v20M4.93 7l14.14 10M19.07 7L4.93 17"/>
-      </svg>
-    </div>
+    <!-- Claude 风格居中主舞台 -->
+    <section class="claude-centerpiece" aria-labelledby="greetingTitle">
+      <div class="greeting-header">
+        <span class="greeting-star" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2L13.7 9.1L20.1 5.6L15.2 11.1L22 12L15.2 12.9L20.1 18.4L13.7 14.9L12 22L10.3 14.9L3.9 18.4L8.8 12.9L2 12L8.8 11.1L3.9 5.6L10.3 9.1Z"/>
+          </svg>
+        </span>
+        <h1 id="greetingTitle">你好，岑靖</h1>
+      </div>
+      <p class="greeting-sub">在这里直接输入英文即时查词，或输入关键词直达全站任意工具</p>
 
-    <!-- 快捷功能入口（杂志目录式） -->
-    <section aria-labelledby="grpStudy">
-      <h2 class="group-title" id="grpStudy">
-        <span class="group-index">01</span>
-        <span class="group-name">学习</span>
-      </h2>
-      <div class="list">
-        <a href="./vocab.html" class="row" id="vocabLink">
-          <span class="row-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
-          </span>
-          <span class="row-text">
-            <span class="row-title">英语查词与词库</span>
-            <span class="row-sub">高中 7 册 + 四六级全量 · 1.1 万词</span>
-          </span>
-          <svg class="chevron" viewBox="0 0 8 14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 1l6 6-6 6"/></svg>
-        </a>
+      <!-- 居中万能直达框 (Claude Composer 质感) -->
+      <div class="omnibox-shell">
+        <form class="omnibox-card" id="omniboxForm" role="search">
+          <div class="omnibox-input-row">
+            <svg class="omnibox-lead-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="11" cy="11" r="7"/>
+              <path d="M21 21l-4.35-4.35"/>
+            </svg>
+            <input
+              type="text"
+              id="omniboxInput"
+              class="omnibox-input"
+              placeholder="输入英文单词即输即查（如 abandon），或输入 / 跳转页面..."
+              autocomplete="off"
+              spellcheck="false"
+            >
+            <button type="button" id="omniboxClearBtn" class="omnibox-clear-btn" style="display: none;" aria-label="清空输入">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg>
+            </button>
+            <button type="submit" class="omnibox-submit-btn" aria-label="立即查询或前往">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+            </button>
+          </div>
 
-        <a href="./recite.html" class="row" id="reciteLink">
-          <span class="row-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
-          </span>
-          <span class="row-text">
-            <span class="row-title">智能过词</span>
-            <span class="row-sub">2050 核心词 · 极速刷 / 快测 / 跨端漫游</span>
-          </span>
-          <svg class="chevron" viewBox="0 0 8 14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 1l6 6-6 6"/></svg>
-        </a>
+          <div class="omnibox-hints">
+            <span class="hint-label">试一试：</span>
+            <button type="button" class="sample-chip" data-omni-sample="abandon">abandon</button>
+            <button type="button" class="sample-chip" data-omni-sample="resilient">resilient</button>
+            <button type="button" class="sample-chip" data-omni-sample="persuade">persuade</button>
+            <button type="button" class="sample-chip" data-cmd-open>⌘K 命令面板</button>
+          </div>
+        </form>
+
+        <!-- 即时查词与页面匹配结果面板 -->
+        <div class="omnibox-results" id="omniboxResults" aria-live="polite"></div>
+      </div>
+
+      <!-- 高频工作台胶囊卡片矩阵 -->
+      <div class="quick-capsules-section">
+        <div class="capsules-header">
+          <span class="capsules-eyebrow">QUICK ACCESS · 快捷工作台</span>
+        </div>
+        <div class="quick-grid">
+          <a href="./vocab.html" class="quick-card" id="vocabLink">
+            <span class="quick-card-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4h6a4 4 0 0 1 4 4v13a3 3 0 0 0-3-3H2z"/><path d="M22 4h-6a4 4 0 0 0-4 4v13a3 3 0 0 1 3-3h7z"/></svg>
+            </span>
+            <span class="quick-card-body">
+              <span class="quick-card-title">英语查词</span>
+              <span class="quick-card-sub">高中 7 册 · 四六级 · 词根衍生</span>
+            </span>
+          </a>
+
+          <a href="./recite.html" class="quick-card" id="reciteLink">
+            <span class="quick-card-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2.5"/><path d="M8 9h8M8 13h6M8 17h4"/></svg>
+            </span>
+            <span class="quick-card-body">
+              <span class="quick-card-title">智能过词</span>
+              <span class="quick-card-sub">高考 2050 核心词 · 跨端漫游</span>
+            </span>
+          </a>
+
+          <a href="./gallery.html" class="quick-card" id="galleryLink">
+            <span class="quick-card-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+            </span>
+            <span class="quick-card-body">
+              <span class="quick-card-title">视界画廊</span>
+              <span class="quick-card-sub">121 张航拍精选 · 4K 视频秒播</span>
+            </span>
+          </a>
+
+          <a href="./pan.html" class="quick-card" id="panLink">
+            <span class="quick-card-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+            </span>
+            <span class="quick-card-body">
+              <span class="quick-card-title">资源网盘</span>
+              <span class="quick-card-sub">客户端直连分发 · 节点订阅中枢</span>
+            </span>
+          </a>
+
+          <button type="button" class="quick-card" id="takeoutBtn">
+            <span class="quick-card-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 3h16v18l-2.5-1.5L15 21l-3-1.5L9 21l-2.5-1.5L4 21V3z"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>
+            </span>
+            <span class="quick-card-body">
+              <span class="quick-card-title">外卖记账</span>
+              <span class="quick-card-sub">点餐日历 · 账单分摊统计</span>
+            </span>
+          </button>
+
+          <a href="./board.html" class="quick-card" id="boardLink">
+            <span class="quick-card-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            </span>
+            <span class="quick-card-body">
+              <span class="quick-card-title">秘密留言板</span>
+              <span class="quick-card-sub">匿名互动树洞 · 楼中楼回复</span>
+            </span>
+          </a>
+        </div>
+
+        <div class="secondary-links-bar">
+          <a href="./upload.html" class="sec-pill-link">投递视频 →</a>
+          <a href="./clash.html" class="sec-pill-link">Clash 云控终端 →</a>
+          <a href="./showcase.html" class="sec-pill-link" id="showcaseLink">全站技术展馆 →</a>
+        </div>
       </div>
     </section>
 
-    <section aria-labelledby="grpMedia">
-      <h2 class="group-title" id="grpMedia">
-        <span class="group-index">02</span>
-        <span class="group-name">资源</span>
-      </h2>
-      <div class="list">
-        <a href="./gallery.html" class="row" id="galleryLink">
-          <span class="row-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
-          </span>
-          <span class="row-text">
-            <span class="row-title">精选图库</span>
-            <span class="row-sub">照片与在线视频</span>
-          </span>
-          <span class="row-meta">121</span>
-          <svg class="chevron" viewBox="0 0 8 14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 1l6 6-6 6"/></svg>
-        </a>
-
-        <a href="./pan.html" class="row" id="panLink">
-          <span class="row-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
-          </span>
-          <span class="row-text">
-            <span class="row-title">资源网盘</span>
-            <span class="row-sub">高速直链下载</span>
-          </span>
-          <svg class="chevron" viewBox="0 0 8 14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 1l6 6-6 6"/></svg>
-        </a>
-      </div>
-    </section>
-
-    <section aria-labelledby="grpTools">
-      <h2 class="group-title" id="grpTools">
-        <span class="group-index">03</span>
-        <span class="group-name">工具</span>
-      </h2>
-      <div class="list">
-        <button type="button" class="row" id="takeoutBtn">
-          <span class="row-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1-2-1z"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>
-          </span>
-          <span class="row-text">
-            <span class="row-title">账单</span>
-            <span class="row-sub">外卖记账与多人分摊</span>
-          </span>
-          <span class="row-meta" aria-label="需要密码">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
-          </span>
-          <svg class="chevron" viewBox="0 0 8 14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 1l6 6-6 6"/></svg>
-        </button>
-
-        <a href="./showcase.html" class="row" id="showcaseLink">
-          <span class="row-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V10M9 21V10M15 21V10M19 21V10"/><path d="M2 10l10-7 10 7z"/></svg>
-          </span>
-          <span class="row-text">
-            <span class="row-title">技术展馆</span>
-            <span class="row-sub">核心架构与技术原理</span>
-          </span>
-          <svg class="chevron" viewBox="0 0 8 14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 1l6 6-6 6"/></svg>
-        </a>
-      </div>
-    </section>
-
-    <footer class="foot">© 岑靖 · 个人数字手记</footer>
+    <footer class="workspace-foot">© 岑靖 · EDITION CENJ · 按 <kbd>⌘K</kbd> 随时唤起全局命令面板</footer>
   </main>
 
-  <!-- 密码验证解锁弹窗 -->
+  <!-- 外卖账单密码验证解锁弹窗 -->
   <div class="auth-modal-backdrop" id="authModalBackdrop" role="dialog" aria-modal="true" aria-labelledby="authTitle">
     <div class="auth-modal-card">
       <div class="auth-title" id="authTitle">
-        <span>账单</span>
+        <span>外卖记账解锁</span>
       </div>
-      <div class="auth-desc">请输入独立管理密码以解锁进入账单系统</div>
+      <div class="auth-desc">请输入独立管理密码以解锁进入外卖账单系统</div>
       <div class="auth-input-wrap">
         <input type="password" id="takeoutAuthInput" class="auth-input" placeholder="输入密码" maxlength="32" autocomplete="current-password">
       </div>

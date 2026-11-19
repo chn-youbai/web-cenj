@@ -389,3 +389,70 @@ body {
   border-radius: 6px;
   background: rgba(15, 23, 42, 0.8);
 }
+
+/* ==========================================================================
+   Claude Editorial Dual-Mode Theme Overrides
+   ========================================================================== */
+:root,
+[data-theme="dark"] {
+  --bg: var(--c-bg);
+  --card-bg: var(--c-surface);
+  --card-border: var(--c-separator);
+  --primary: var(--c-accent);
+  --primary-glow: var(--c-focus);
+  --accent: var(--c-accent);
+  --success: var(--c-success);
+  --danger: var(--c-danger);
+  --text: var(--c-label);
+  --text-muted: var(--c-label-2);
+}
+
+body {
+  background: var(--c-bg);
+  color: var(--c-label);
+  font-family: var(--font-sans);
+}
+
+.header {
+  border-bottom-color: var(--c-separator);
+}
+
+.header-title {
+  font-family: var(--font-serif);
+}
+
+.header-action-btn,
+.tab-bar,
+.status-strip,
+.card,
+.speed-card,
+.node-card,
+.auth-modal-card {
+  background: var(--c-surface);
+  border-color: var(--c-separator);
+  color: var(--c-label);
+}
+
+.tab-btn {
+  color: var(--c-label-2);
+}
+
+.tab-btn.active {
+  background: var(--c-accent);
+  color: #fff;
+}
+
+.auth-input,
+.input-field {
+  background: var(--c-bg-subtle);
+  border-color: var(--c-separator);
+  color: var(--c-label);
+}
+
+.speed-badge,
+.latency-badge,
+code {
+  font-family: var(--font-mono);
+  background: var(--c-bg-subtle);
+  color: var(--c-label);
+}

@@ -540,3 +540,62 @@ body {
   transform: translateX(-50%) translateY(0);
   opacity: 1;
 }
+
+/* ==========================================================================
+   Claude Editorial Dual-Mode Theme Overrides
+   ========================================================================== */
+:root,
+[data-theme="dark"] {
+  --bg-color: var(--c-bg);
+  --card-bg: var(--c-surface);
+  --card-border: var(--c-separator);
+  --card-hover: var(--c-border-strong);
+  --text-main: var(--c-label);
+  --text-muted: var(--c-label-2);
+  --accent-purple: var(--c-accent);
+  --accent-blue: var(--c-accent);
+  --accent-green: var(--c-success);
+  --accent-rose: var(--c-danger);
+}
+
+body {
+  background-color: var(--c-bg);
+  background-image: none;
+  color: var(--c-label);
+  font-family: var(--font-sans);
+}
+
+.board-header,
+.composer-card,
+.thread-card {
+  background: var(--c-surface);
+  border: 1px solid var(--c-separator);
+  box-shadow: var(--sh-1);
+}
+
+.header-title {
+  font-family: var(--font-serif);
+}
+
+.nickname-input,
+.composer-textarea,
+.reply-textarea {
+  background: var(--c-bg-subtle);
+  border: 1px solid var(--c-separator);
+  color: var(--c-label);
+}
+
+.nickname-input:focus,
+.composer-textarea:focus,
+.reply-textarea:focus {
+  background: var(--c-surface);
+  border-color: var(--c-accent);
+}
+
+.btn-submit {
+  background: var(--c-accent);
+  color: #fff;
+}
+.btn-submit:hover {
+  background: var(--c-accent-hover);
+}

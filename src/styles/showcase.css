@@ -718,3 +718,69 @@ body {
     align-items: flex-start;
   }
 }
+
+/* ==========================================================================
+   Claude Editorial Whitepaper Dual-Mode Theme Overrides
+   ========================================================================== */
+:root,
+[data-theme="dark"] {
+  --bg-dark: var(--c-bg);
+  --card-bg: var(--c-surface);
+  --card-border: var(--c-separator);
+  --accent-purple: var(--c-accent);
+  --accent-cyan: var(--c-accent);
+  --accent-blue: var(--c-accent);
+  --accent-green: var(--c-success);
+  --accent-amber: var(--c-warning);
+  --accent-rose: var(--c-danger);
+  --text-main: var(--c-label);
+  --text-muted: var(--c-label-2);
+}
+
+body {
+  background: var(--c-bg);
+  color: var(--c-label);
+  font-family: var(--font-sans);
+}
+
+.showcase-header {
+  background: var(--c-material);
+  border-bottom-color: var(--c-separator);
+}
+
+.header-title-group h1,
+.hall-title h2 {
+  font-family: var(--font-serif);
+}
+
+.header-icon {
+  background: var(--c-accent-soft);
+  border-color: var(--c-focus);
+}
+
+.stat-badge,
+.hall-nav-card,
+.hall-card,
+.principle-card,
+.flow-box,
+.probe-box {
+  background: var(--c-surface);
+  border-color: var(--c-separator);
+  color: var(--c-label);
+  box-shadow: var(--sh-1);
+}
+
+.hall-nav-item {
+  color: var(--c-label-2);
+}
+.hall-nav-item.active,
+.hall-nav-item:hover {
+  background: var(--c-accent-soft);
+  color: var(--c-accent);
+}
+
+code,
+pre,
+.probe-output {
+  font-family: var(--font-mono);
+}

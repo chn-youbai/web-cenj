@@ -1,0 +1,861 @@
+/* ==========================================================================
+   web-cenj · Claude App Shell 统一交互骨架样式
+   涵盖：桌面左侧可折叠侧边栏、手机底部悬浮 TabBar、手机「更多」Bottom Sheet、全局 ⌘K 命令面板
+   ========================================================================== */
+
+:root {
+  --shell-sidebar-w: 244px;
+  --shell-sidebar-collapsed-w: 68px;
+  --shell-mobile-bar-h: 64px;
+}
+
+/* ---------- 接入外壳后的全局页面布局偏移 ---------- */
+body.has-app-shell {
+  padding-bottom: calc(var(--shell-mobile-bar-h) + var(--safe-bottom) + 24px) !important;
+  transition: padding-left var(--dur-2) var(--ease), background-color var(--dur-2) var(--ease),
+    color var(--dur-2) var(--ease);
+}
+
+@media (min-width: 920px) {
+  body.has-app-shell {
+    padding-left: calc(var(--shell-sidebar-w) + 24px) !important;
+    padding-bottom: calc(36px + var(--safe-bottom)) !important;
+  }
+  body.has-app-shell.sidebar-collapsed {
+    padding-left: calc(var(--shell-sidebar-collapsed-w) + 24px) !important;
+  }
+}
+
+/* ---------- 桌面端左侧可折叠侧边栏 ---------- */
+.app-sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: var(--shell-sidebar-w);
+  background: var(--c-bg-subtle);
+  border-right: 1px solid var(--c-separator);
+  display: none;
+  flex-direction: column;
+  padding: 14px 10px;
+  z-index: 900;
+  user-select: none;
+  transition: width var(--dur-2) var(--ease), background-color var(--dur-2) var(--ease);
+}
+
+@media (min-width: 920px) {
+  .app-sidebar {
+    display: flex;
+  }
+}
+
+body.sidebar-collapsed .app-sidebar {
+  width: var(--shell-sidebar-collapsed-w);
+}
+
+.app-sidebar-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 2px 4px 10px;
+}
+
+.app-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: var(--c-label);
+  min-width: 0;
+}
+
+.app-brand-mark {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--r-sm);
+  background: var(--c-accent-soft);
+  color: var(--c-accent);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.app-brand-mark svg {
+  width: 17px;
+  height: 17px;
+}
+
+.app-brand-text {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.app-brand-name {
+  font-family: var(--font-serif);
+  font-size: 19px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--c-label);
+}
+
+.app-brand-edition {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  color: var(--c-label-3);
+}
+
+.sidebar-collapse-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--r-xs);
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--c-label-2);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background-color var(--dur-1) var(--ease), color var(--dur-1) var(--ease);
+}
+
+.sidebar-collapse-btn svg {
+  width: 17px;
+  height: 17px;
+}
+
+@media (hover: hover) {
+  .sidebar-collapse-btn:hover {
+    background: var(--c-fill);
+    color: var(--c-label);
+  }
+}
+
+body.sidebar-collapsed .app-brand-text {
+  display: none;
+}
+
+body.sidebar-collapsed .app-sidebar-top {
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* 侧边栏 ⌘K 搜索框触发器 */
+.app-sidebar-search {
+  padding: 0 2px 12px;
+}
+
+.sidebar-cmd-btn {
+  width: 100%;
+  min-height: 38px;
+  padding: 0 10px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--c-separator);
+  background: var(--c-surface);
+  color: var(--c-label-2);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: border-color var(--dur-1) var(--ease), color var(--dur-1) var(--ease), box-shadow
+    var(--dur-1) var(--ease);
+}
+
+.sidebar-cmd-btn svg {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+  color: var(--c-label-3);
+}
+
+.sidebar-cmd-label {
+  flex: 1;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar-cmd-kbd {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: var(--c-fill);
+  color: var(--c-label-3);
+}
+
+@media (hover: hover) {
+  .sidebar-cmd-btn:hover {
+    border-color: var(--c-border-strong);
+    color: var(--c-label);
+  }
+}
+
+body.sidebar-collapsed .sidebar-cmd-label,
+body.sidebar-collapsed .sidebar-cmd-kbd {
+  display: none;
+}
+
+body.sidebar-collapsed .sidebar-cmd-btn {
+  justify-content: center;
+  padding: 0;
+}
+
+/* 侧边栏分组导航列表 */
+.app-sidebar-nav {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding-right: 2px;
+}
+
+.app-nav-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.app-nav-group-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 10px 4px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  color: var(--c-label-3);
+  text-transform: uppercase;
+}
+
+body.sidebar-collapsed .app-nav-group-title {
+  justify-content: center;
+  padding: 0 0 4px;
+}
+
+body.sidebar-collapsed .app-nav-group-title .group-text {
+  display: none;
+}
+
+.app-nav-group-items {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.app-nav-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 38px;
+  padding: 0 10px;
+  border-radius: var(--r-sm);
+  color: var(--c-label-2);
+  text-decoration: none;
+  font-family: var(--font-sans);
+  font-size: 13.5px;
+  font-weight: 500;
+  transition: background-color var(--dur-1) var(--ease), color var(--dur-1) var(--ease);
+}
+
+.app-nav-icon {
+  width: 18px;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--c-label-2);
+  transition: color var(--dur-1) var(--ease);
+}
+
+.app-nav-icon svg {
+  width: 17px;
+  height: 17px;
+}
+
+.app-nav-label {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.app-nav-lock {
+  font-size: 7px;
+  color: var(--c-label-3);
+  opacity: 0.7;
+}
+
+@media (hover: hover) {
+  .app-nav-link:hover {
+    background: var(--c-fill);
+    color: var(--c-label);
+  }
+  .app-nav-link:hover .app-nav-icon {
+    color: var(--c-label);
+  }
+}
+
+.app-nav-link.active {
+  background: var(--c-surface);
+  color: var(--c-label);
+  font-weight: 600;
+  box-shadow: var(--sh-1);
+}
+
+.app-nav-link.active .app-nav-icon {
+  color: var(--c-accent);
+}
+
+body.sidebar-collapsed .app-nav-label,
+body.sidebar-collapsed .app-nav-lock {
+  display: none;
+}
+
+body.sidebar-collapsed .app-nav-link {
+  justify-content: center;
+  padding: 0;
+}
+
+/* 侧边栏底栏 */
+.app-sidebar-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-top: 10px;
+  margin-top: 8px;
+  border-top: 1px solid var(--c-separator);
+}
+
+.sidebar-current-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 4px 10px;
+  border-radius: var(--r-pill);
+  background: var(--c-fill);
+  font-family: var(--font-sans);
+  font-size: 12px;
+  color: var(--c-label-2);
+  min-width: 0;
+}
+
+.current-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--c-accent);
+  flex-shrink: 0;
+}
+
+.current-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+body.sidebar-collapsed .sidebar-current-pill {
+  display: none;
+}
+
+body.sidebar-collapsed .app-sidebar-footer {
+  justify-content: center;
+}
+
+/* ---------- 手机端底部悬浮 TabBar ---------- */
+.mobile-tabbar {
+  position: fixed;
+  left: 12px;
+  right: 12px;
+  bottom: calc(10px + var(--safe-bottom));
+  height: var(--shell-mobile-bar-h);
+  background: var(--c-material);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  backdrop-filter: saturate(180%) blur(20px);
+  border: 1px solid var(--c-separator);
+  border-radius: 20px;
+  box-shadow: var(--sh-2);
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  align-items: center;
+  padding: 4px 6px;
+  z-index: 950;
+}
+
+@media (min-width: 920px) {
+  .mobile-tabbar {
+    display: none;
+  }
+}
+
+.mobile-tab-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  height: 100%;
+  min-height: var(--tap);
+  border-radius: 14px;
+  border: none;
+  background: transparent;
+  color: var(--c-label-2);
+  text-decoration: none;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: color var(--dur-1) var(--ease), background-color var(--dur-1) var(--ease), transform
+    var(--dur-1) var(--ease);
+}
+
+.mobile-tab-item:active {
+  transform: scale(0.95);
+}
+
+.mobile-tab-icon {
+  width: 21px;
+  height: 21px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mobile-tab-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.mobile-tab-item.active {
+  color: var(--c-accent);
+  font-weight: 600;
+  background: var(--c-accent-soft);
+}
+
+/* ---------- 手机端「更多」Bottom Sheet 抽屉 ---------- */
+.ui-sheet-handle {
+  width: 36px;
+  height: 4px;
+  border-radius: var(--r-pill);
+  background: var(--c-border-strong);
+  margin: 8px auto 4px;
+  flex-shrink: 0;
+}
+
+.more-sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  background: var(--c-modal-backdrop);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  z-index: 1200;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--dur-2) var(--ease);
+}
+
+.more-sheet-backdrop.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.more-sheet-panel {
+  width: 100%;
+  max-width: 560px;
+  max-height: 84dvh;
+  background: var(--c-surface);
+  border-top: 1px solid var(--c-separator);
+  border-radius: 24px 24px 0 0;
+  box-shadow: var(--sh-3);
+  padding: 4px 16px calc(20px + var(--safe-bottom));
+  display: flex;
+  flex-direction: column;
+  transform: translateY(100%);
+  transition: transform var(--dur-2) var(--ease-out);
+}
+
+.more-sheet-backdrop.open .more-sheet-panel {
+  transform: translateY(0);
+}
+
+.more-sheet-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 4px 14px;
+  border-bottom: 1px solid var(--c-separator);
+}
+
+.more-sheet-title-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.more-sheet-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  color: var(--c-accent);
+}
+
+.more-sheet-title {
+  font-family: var(--font-serif);
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--c-label);
+}
+
+.more-sheet-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.more-sheet-cmd-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 38px;
+  padding: 0 12px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--c-separator);
+  background: var(--c-bg);
+  color: var(--c-label-2);
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.more-sheet-cmd-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+.more-sheet-close-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 1px solid var(--c-separator);
+  background: var(--c-bg);
+  color: var(--c-label-2);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.more-sheet-close-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.more-sheet-body {
+  overflow-y: auto;
+  padding-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.more-sheet-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.more-sheet-group-header {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  color: var(--c-label-3);
+  padding: 0 4px;
+}
+
+.more-sheet-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.more-sheet-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--c-separator);
+  background: var(--c-bg);
+  color: var(--c-label);
+  text-decoration: none;
+  transition: border-color var(--dur-1) var(--ease), background-color var(--dur-1) var(--ease);
+}
+
+.more-sheet-card.active {
+  border-color: var(--c-accent);
+  background: var(--c-accent-soft);
+}
+
+.more-card-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--r-xs);
+  background: var(--c-surface);
+  border: 1px solid var(--c-separator);
+  color: var(--c-accent);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.more-card-icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+.more-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.more-card-title {
+  font-family: var(--font-serif);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--c-label);
+}
+
+.more-card-sub {
+  font-family: var(--font-sans);
+  font-size: 11.5px;
+  color: var(--c-label-2);
+  line-height: 1.35;
+}
+
+/* ---------- 全局 ⌘K 命令面板 ---------- */
+.cmd-palette-backdrop {
+  position: fixed;
+  inset: 0;
+  background: var(--c-modal-backdrop);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  z-index: 1400;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--dur-1) var(--ease);
+}
+
+.cmd-palette-backdrop.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.cmd-palette-dialog {
+  width: 100%;
+  max-width: 580px;
+  max-height: 82dvh;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border-strong);
+  border-radius: 22px 22px 0 0;
+  box-shadow: var(--sh-3);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transform: translateY(24px);
+  transition: transform var(--dur-2) var(--ease-out);
+}
+
+.cmd-palette-backdrop.open .cmd-palette-dialog {
+  transform: translateY(0);
+}
+
+@media (min-width: 640px) {
+  .cmd-palette-backdrop {
+    align-items: flex-start;
+    padding: 12vh 16px 24px;
+  }
+  .cmd-palette-dialog {
+    border-radius: var(--r-lg);
+  }
+  .cmd-palette-dialog .ui-sheet-handle {
+    display: none;
+  }
+}
+
+.cmd-palette-search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--c-separator);
+}
+
+.cmd-search-icon {
+  width: 18px;
+  height: 18px;
+  color: var(--c-accent);
+  flex-shrink: 0;
+}
+
+.cmd-palette-input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  color: var(--c-label);
+  font-family: var(--font-sans);
+  font-size: 15.5px;
+  outline: none;
+}
+
+.cmd-palette-input::placeholder {
+  color: var(--c-label-3);
+}
+
+.cmd-palette-esc {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--c-separator);
+  background: var(--c-bg);
+  color: var(--c-label-2);
+  cursor: pointer;
+}
+
+.cmd-palette-list {
+  overflow-y: auto;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  max-height: 360px;
+}
+
+.cmd-palette-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: var(--r-sm);
+  border: none;
+  background: transparent;
+  color: var(--c-label);
+  text-align: left;
+  cursor: pointer;
+  transition: background-color var(--dur-1) var(--ease);
+}
+
+.cmd-palette-item.active {
+  background: var(--c-accent-soft);
+}
+
+.cmd-item-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: var(--r-xs);
+  border: 1px solid var(--c-separator);
+  background: var(--c-bg);
+  color: var(--c-label-2);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.cmd-palette-item.active .cmd-item-icon {
+  color: var(--c-accent);
+  border-color: var(--c-accent);
+}
+
+.cmd-item-icon svg {
+  width: 17px;
+  height: 17px;
+}
+
+.cmd-item-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cmd-item-title {
+  font-family: var(--font-serif);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--c-label);
+}
+
+.cmd-item-sub {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  color: var(--c-label-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cmd-item-badge {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: var(--r-pill);
+  background: var(--c-fill);
+  color: var(--c-label-2);
+  flex-shrink: 0;
+}
+
+.cmd-palette-item.active .cmd-item-badge {
+  background: var(--c-accent);
+  color: #ffffff;
+}
+
+.cmd-palette-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  border-top: 1px solid var(--c-separator);
+  background: var(--c-bg);
+  font-family: var(--font-sans);
+  font-size: 11.5px;
+  color: var(--c-label-3);
+}
+
+.cmd-palette-footer kbd {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  padding: 1px 5px;
+  border-radius: 4px;
+  border: 1px solid var(--c-separator);
+  background: var(--c-surface);
+  color: var(--c-label-2);
+}

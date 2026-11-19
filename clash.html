@@ -3,8 +3,17 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#faf9f5">
   <title>Clash Verge 智能云控终端</title>
   <link rel="icon" href="./OIP-C.jpg" type="image/jpeg">
+  <script>
+    (function(){try{var t=localStorage.getItem("cenj_theme_v1");var d=t==="dark"||(t!=="light"&&window.matchMedia("(prefers-color-scheme: dark)").matches);document.documentElement.dataset.theme=d?"dark":"light";if(d)document.documentElement.classList.add("dark");var m=document.querySelector('meta[name="theme-color"]');if(m)m.content=d?"#262624":"#faf9f5";}catch(e){}})();
+  </script>
+  <link rel="preconnect" href="https://fonts.loli.net" crossorigin>
+  <link rel="stylesheet" href="https://fonts.loli.net/css2?family=Noto+Serif+SC:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="./src/styles/base.css">
+  <link rel="stylesheet" href="./src/styles/shell.css">
+  <link rel="stylesheet" href="./src/styles/clash.css">
 </head>
 <body>
 
@@ -65,7 +74,6 @@
     <div style="display:flex; gap:0.4rem; align-items:center;">
       <button type="button" class="header-action-btn" id="btnOpenChangePwd" title="修改访问密码">🔑 密码</button>
       <button type="button" class="header-action-btn" id="btnLogoutClash" title="退出锁定">🚪 锁定</button>
-      <a href="./index.html" class="back-home-btn">← 主页</a>
     </div>
   </header>
 

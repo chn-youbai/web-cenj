@@ -1,3 +1,5 @@
+import "@/core/fonts";
+import { initAppShell } from "@/core/shell";
 import "@/styles/clash.css";
 import {
   refreshStatus,
@@ -59,6 +61,7 @@ function checkAccessGate(): void {
 setOnAuthLost(checkAccessGate);
 
 function initClashPage(): void {
+  initAppShell({ activePage: "clash" });
   for (const btn of document.querySelectorAll<HTMLElement>(".tab-btn[data-tab]")) {
     btn.addEventListener("click", () => {
       const tab = btn.dataset.tab;

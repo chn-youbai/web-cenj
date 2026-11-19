@@ -38,25 +38,38 @@ export function clearAuthToken(): void {
   }
 }
 
-export function checkAuth(): boolean {
-  const token = readAuthToken();
-  if (!token) {
-    window.location.replace("./index.html?need_auth=1");
-    return false;
+export function grantAuthToken(): void {
+  const token = JSON.stringify({ ok: true, time: Date.now() });
+  setStorageItem(AUTH_KEY, token);
+  try {
+    window.sessionStorage.setItem(AUTH_KEY, token);
+  } catch {
+    // ignore
   }
+}
+
+export function isAuthenticated(): boolean {
+  const token = readAuthToken();
+  if (!token) return false;
   try {
     const data = JSON.parse(token) as { time?: number };
     if (typeof data.time !== "number" || Date.now() - data.time > AUTH_EXPIRE_MS) {
       clearAuthToken();
-      window.location.replace("./index.html?need_auth=1");
       return false;
     }
     return true;
   } catch {
     clearAuthToken();
+    return false;
+  }
+}
+
+export function checkAuth(): boolean {
+  if (!isAuthenticated()) {
     window.location.replace("./index.html?need_auth=1");
     return false;
   }
+  return true;
 }
 
 export function getCustomPassword(): string | null {

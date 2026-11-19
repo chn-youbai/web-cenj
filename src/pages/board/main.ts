@@ -1,3 +1,5 @@
+import "@/core/fonts";
+import { initAppShell } from "@/core/shell";
 import "@/styles/board.css";
 import {
   changeRandomIdentity,
@@ -17,6 +19,7 @@ import {
 } from "./messages";
 
 document.addEventListener("DOMContentLoaded", () => {
+  initAppShell({ activePage: "board" });
   initUserIdentity();
   void fetchMessages(false);
 
