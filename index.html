@@ -87,79 +87,22 @@
         <div class="omnibox-results" id="omniboxResults" aria-live="polite"></div>
       </div>
 
-      <!-- 高频工作台胶囊卡片矩阵 -->
-      <div class="quick-capsules-section">
-        <div class="capsules-header">
-          <span class="capsules-eyebrow">QUICK ACCESS · 快捷工作台</span>
+      <!-- Claude 纸感休闲游乐场（替代与侧边栏重合的导航卡片） -->
+      <section class="playground-section" id="playgroundSection" aria-label="休闲小游戏工作台">
+        <div class="playground-header">
+          <span class="capsules-eyebrow">PLAYGROUND · 摸鱼游乐场</span>
+          <div class="playground-tabs" role="tablist" aria-label="切换休闲小游戏">
+            <button type="button" class="pg-tab active" role="tab" aria-selected="true" data-game-tab="2048">2048</button>
+            <button type="button" class="pg-tab" role="tab" aria-selected="false" data-game-tab="puzzle">航拍拼图</button>
+            <button type="button" class="pg-tab" role="tab" aria-selected="false" data-game-tab="memory">记忆翻卡</button>
+          </div>
         </div>
-        <div class="quick-grid">
-          <a href="./vocab.html" class="quick-card" id="vocabLink">
-            <span class="quick-card-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4h6a4 4 0 0 1 4 4v13a3 3 0 0 0-3-3H2z"/><path d="M22 4h-6a4 4 0 0 0-4 4v13a3 3 0 0 1 3-3h7z"/></svg>
-            </span>
-            <span class="quick-card-body">
-              <span class="quick-card-title">英语查词</span>
-              <span class="quick-card-sub">高中 7 册 · 四六级 · 词根衍生</span>
-            </span>
-          </a>
-
-          <a href="./recite.html" class="quick-card" id="reciteLink">
-            <span class="quick-card-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2.5"/><path d="M8 9h8M8 13h6M8 17h4"/></svg>
-            </span>
-            <span class="quick-card-body">
-              <span class="quick-card-title">智能过词</span>
-              <span class="quick-card-sub">高考 2050 核心词 · 跨端漫游</span>
-            </span>
-          </a>
-
-          <a href="./gallery.html" class="quick-card" id="galleryLink">
-            <span class="quick-card-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
-            </span>
-            <span class="quick-card-body">
-              <span class="quick-card-title">视界画廊</span>
-              <span class="quick-card-sub">121 张航拍精选 · 4K 视频秒播</span>
-            </span>
-          </a>
-
-          <a href="./pan.html" class="quick-card" id="panLink">
-            <span class="quick-card-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
-            </span>
-            <span class="quick-card-body">
-              <span class="quick-card-title">资源网盘</span>
-              <span class="quick-card-sub">客户端直连分发 · 节点订阅中枢</span>
-            </span>
-          </a>
-
-          <button type="button" class="quick-card" id="takeoutBtn">
-            <span class="quick-card-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 3h16v18l-2.5-1.5L15 21l-3-1.5L9 21l-2.5-1.5L4 21V3z"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>
-            </span>
-            <span class="quick-card-body">
-              <span class="quick-card-title">外卖记账</span>
-              <span class="quick-card-sub">点餐日历 · 账单分摊统计</span>
-            </span>
-          </button>
-
-          <a href="./board.html" class="quick-card" id="boardLink">
-            <span class="quick-card-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-            </span>
-            <span class="quick-card-body">
-              <span class="quick-card-title">秘密留言板</span>
-              <span class="quick-card-sub">匿名互动树洞 · 楼中楼回复</span>
-            </span>
-          </a>
+        <div class="playground-card">
+          <div id="panelGame2048" class="pg-panel" role="tabpanel"></div>
+          <div id="panelGamePuzzle" class="pg-panel" role="tabpanel" hidden></div>
+          <div id="panelGameMemory" class="pg-panel" role="tabpanel" hidden></div>
         </div>
-
-        <div class="secondary-links-bar">
-          <a href="./upload.html" class="sec-pill-link">投递视频 →</a>
-          <a href="./clash.html" class="sec-pill-link">Clash 云控终端 →</a>
-          <a href="./showcase.html" class="sec-pill-link" id="showcaseLink">全站技术展馆 →</a>
-        </div>
-      </div>
+      </section>
     </section>
 
     <footer class="workspace-foot">© 岑靖 · EDITION CENJ · 按 <kbd>⌘K</kbd> 随时唤起全局命令面板</footer>

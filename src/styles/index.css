@@ -840,3 +840,370 @@ body {
   background: var(--c-ink-btn);
   color: var(--c-ink-btn-text);
 }
+
+/* ---------- Claude 纸感休闲游乐场 (2048 · 航拍拼图 · 记忆翻卡) ---------- */
+.playground-section {
+  width: 100%;
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.playground-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.playground-tabs {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--c-separator);
+  background: var(--c-bg-subtle);
+}
+
+.pg-tab {
+  border: none;
+  background: transparent;
+  color: var(--c-label-2);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 500;
+  padding: 6px 14px;
+  border-radius: var(--r-pill);
+  cursor: pointer;
+  transition: background-color var(--dur-1) var(--ease), color var(--dur-1) var(--ease), box-shadow
+    var(--dur-1) var(--ease);
+}
+
+.pg-tab.active {
+  background: var(--c-surface);
+  color: var(--c-accent);
+  font-weight: 600;
+  box-shadow: var(--sh-1);
+}
+
+.playground-card {
+  width: 100%;
+  background: var(--c-surface);
+  border: 1px solid var(--c-separator);
+  border-radius: var(--r-xl);
+  box-shadow: var(--sh-2);
+  padding: 18px;
+}
+
+.pg-panel[hidden] {
+  display: none;
+}
+
+.game-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.game-stats {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.stat-pill {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 5px 11px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--c-separator);
+  background: var(--c-bg-subtle);
+  font-family: var(--font-sans);
+  font-size: 12px;
+  color: var(--c-label-2);
+}
+
+.stat-pill strong {
+  font-family: var(--font-mono);
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--c-label);
+}
+
+.game-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.game-btn {
+  min-height: 34px;
+  padding: 0 12px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--c-separator);
+  background: var(--c-bg-subtle);
+  color: var(--c-label);
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color var(--dur-1) var(--ease), border-color var(--dur-1) var(--ease);
+}
+
+.game-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.game-btn.primary {
+  background: var(--c-accent);
+  border-color: var(--c-accent);
+  color: #ffffff;
+}
+
+.game-tip {
+  margin-top: 12px;
+  text-align: center;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  color: var(--c-label-3);
+}
+
+.g2048-board-wrap,
+.puzzle-stage,
+.memory-stage {
+  position: relative;
+  width: 100%;
+  max-width: 380px;
+  margin: 0 auto;
+}
+
+.game-overlay {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--r-lg);
+  background: var(--c-material);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  z-index: 5;
+}
+
+.game-overlay[hidden] {
+  display: none;
+}
+
+.overlay-title {
+  font-family: var(--font-serif);
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--c-label);
+}
+
+.overlay-sub {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--c-label-2);
+}
+
+/* 2048 Board */
+.g2048-board {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  padding: 10px;
+  border-radius: var(--r-lg);
+  background: var(--c-bg-subtle);
+  border: 1px solid var(--c-separator);
+  touch-action: none;
+  user-select: none;
+}
+
+.g2048-cell {
+  aspect-ratio: 1 / 1;
+  border-radius: var(--r-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: clamp(18px, 4.5vw, 24px);
+  font-weight: 700;
+  background: var(--c-fill);
+  color: var(--c-label);
+  transition: transform 0.12s ease, background-color 0.12s ease;
+}
+
+.g2048-cell.tile-2 {
+  background: var(--c-surface);
+  border: 1px solid var(--c-separator);
+}
+.g2048-cell.tile-4 {
+  background: #f3e9dc;
+  color: #3d342a;
+}
+[data-theme="dark"] .g2048-cell.tile-4 {
+  background: #3d3932;
+  color: #f4efe6;
+}
+.g2048-cell.tile-8 {
+  background: #f1b693;
+  color: #2b1a10;
+}
+.g2048-cell.tile-16 {
+  background: #e6946b;
+  color: #ffffff;
+}
+.g2048-cell.tile-32 {
+  background: #d97757;
+  color: #ffffff;
+}
+.g2048-cell.tile-64 {
+  background: #c45b3b;
+  color: #ffffff;
+}
+.g2048-cell.tile-128,
+.g2048-cell.tile-256,
+.g2048-cell.tile-512 {
+  background: #a8482b;
+  color: #ffffff;
+  font-size: clamp(16px, 4vw, 20px);
+}
+.g2048-cell.tile-1024,
+.g2048-cell.tile-2048,
+.g2048-cell.tile-super {
+  background: var(--c-ink-btn);
+  color: var(--c-ink-btn-text);
+  font-size: clamp(14px, 3.6vw, 18px);
+}
+
+/* Aerial Puzzle */
+.puzzle-board {
+  display: grid;
+  gap: 4px;
+  padding: 6px;
+  aspect-ratio: 1 / 1;
+  border-radius: var(--r-lg);
+  background: var(--c-bg-subtle);
+  border: 1px solid var(--c-separator);
+}
+
+.puzzle-tile {
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: var(--r-xs);
+  background-repeat: no-repeat;
+  cursor: pointer;
+  padding: 0;
+  transition: transform 0.12s ease;
+}
+
+.puzzle-tile:active {
+  transform: scale(0.96);
+}
+
+.puzzle-tile.empty {
+  border: 1px dashed var(--c-border-strong);
+  background: transparent;
+  cursor: default;
+}
+
+.puzzle-preview-box {
+  position: absolute;
+  inset: 6px;
+  border-radius: var(--r-md);
+  overflow: hidden;
+  background: var(--c-surface);
+  z-index: 4;
+}
+
+.puzzle-preview-box[hidden] {
+  display: none;
+}
+
+.puzzle-preview-box img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Memory Match */
+.memory-grid {
+  display: grid;
+  gap: 8px;
+}
+
+.mem-card {
+  aspect-ratio: 1 / 1;
+  border: none;
+  background: transparent;
+  padding: 0;
+  perspective: 700px;
+  cursor: pointer;
+}
+
+.mem-card-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: block;
+  transform-style: preserve-3d;
+  transition: transform 0.32s var(--ease-out);
+}
+
+.mem-card.flipped .mem-card-inner {
+  transform: rotateY(180deg);
+}
+
+.mem-card-front,
+.mem-card-back {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  border-radius: var(--r-md);
+  border: 1px solid var(--c-separator);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+}
+
+.mem-card-front {
+  background: var(--c-bg-subtle);
+  color: var(--c-accent);
+  font-size: 18px;
+}
+
+.mem-card-back {
+  background: var(--c-surface-2);
+  color: var(--c-label);
+  transform: rotateY(180deg);
+}
+
+.mem-card.matched .mem-card-back {
+  background: var(--c-accent-soft);
+  border-color: var(--c-focus);
+  color: var(--c-accent);
+}
+
+.mem-symbol {
+  font-size: 20px;
+  line-height: 1.1;
+}
+
+.mem-label {
+  font-family: var(--font-sans);
+  font-size: 10.5px;
+  color: var(--c-label-2);
+}
