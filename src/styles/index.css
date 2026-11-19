@@ -43,6 +43,16 @@ body {
   border-bottom: 1px solid var(--c-separator);
 }
 
+@media (max-width: 919px) {
+  .workspace-topbar {
+    padding-top: 8px;
+    padding-bottom: 10px;
+  }
+  .workspace-topbar .edition-tag {
+    display: none;
+  }
+}
+
 .avatar-cluster {
   display: flex;
   align-items: center;

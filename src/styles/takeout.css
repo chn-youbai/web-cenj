@@ -1340,15 +1340,16 @@ body {
 @media (max-width: 919px) {
   .tab-bar {
     position: fixed;
-    bottom: calc(var(--shell-mobile-bar-h, 64px) + var(--safe-bottom));
+    bottom: 0;
     left: 50%;
     transform: translateX(-50%);
     width: 100%;
     max-width: 500px;
+    padding-bottom: calc(8px + var(--safe-bottom));
     z-index: 850;
   }
   .app-main {
-    padding-bottom: 136px !important;
+    padding-bottom: 84px !important;
   }
 }
 

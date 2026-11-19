@@ -6,18 +6,19 @@
 :root {
   --shell-sidebar-w: 244px;
   --shell-sidebar-collapsed-w: 68px;
-  --shell-mobile-bar-h: 64px;
+  --shell-mobile-topbar-h: 50px;
 }
 
 /* ---------- 接入外壳后的全局页面布局偏移 ---------- */
 body.has-app-shell {
-  padding-bottom: calc(var(--shell-mobile-bar-h) + var(--safe-bottom) + 24px) !important;
+  padding-top: calc(var(--shell-mobile-topbar-h) + var(--safe-top)) !important;
   transition: padding-left var(--dur-2) var(--ease), background-color var(--dur-2) var(--ease),
     color var(--dur-2) var(--ease);
 }
 
 @media (min-width: 920px) {
   body.has-app-shell {
+    padding-top: calc(16px + var(--safe-top)) !important;
     padding-left: calc(var(--shell-sidebar-w) + 24px) !important;
     padding-bottom: calc(36px + var(--safe-bottom)) !important;
   }
@@ -375,77 +376,116 @@ body.sidebar-collapsed .app-sidebar-footer {
   justify-content: center;
 }
 
-/* ---------- 手机端底部悬浮 TabBar ---------- */
-.mobile-tabbar {
+/* ---------- 手机端顶部极简导航条 (Claude.ai Style) ---------- */
+.mobile-topbar {
   position: fixed;
-  left: 12px;
-  right: 12px;
-  bottom: calc(10px + var(--safe-bottom));
-  height: var(--shell-mobile-bar-h);
+  top: 0;
+  left: 0;
+  right: 0;
+  height: calc(var(--shell-mobile-topbar-h) + var(--safe-top));
+  padding: var(--safe-top) 10px 0;
   background: var(--c-material);
   -webkit-backdrop-filter: saturate(180%) blur(20px);
   backdrop-filter: saturate(180%) blur(20px);
-  border: 1px solid var(--c-separator);
-  border-radius: 20px;
-  box-shadow: var(--sh-2);
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  border-bottom: 1px solid var(--c-separator);
+  display: flex;
   align-items: center;
-  padding: 4px 6px;
-  z-index: 950;
+  justify-content: space-between;
+  gap: 8px;
+  z-index: 940;
 }
 
 @media (min-width: 920px) {
-  .mobile-tabbar {
+  .mobile-topbar {
     display: none;
   }
 }
 
-.mobile-tab-item {
+.mobile-topbar-left {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 3px;
-  height: 100%;
-  min-height: var(--tap);
-  border-radius: 14px;
-  border: none;
+  gap: 6px;
+  min-width: 0;
+}
+
+.mobile-menu-btn,
+.mobile-icon-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--r-sm);
+  border: 1px solid transparent;
   background: transparent;
-  color: var(--c-label-2);
-  text-decoration: none;
-  font-family: var(--font-sans);
-  font-size: 11px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: color var(--dur-1) var(--ease), background-color var(--dur-1) var(--ease), transform
-    var(--dur-1) var(--ease);
-}
-
-.mobile-tab-item:active {
-  transform: scale(0.95);
-}
-
-.mobile-tab-icon {
-  width: 21px;
-  height: 21px;
+  color: var(--c-label);
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background-color var(--dur-1) var(--ease);
 }
 
-.mobile-tab-icon svg {
+.mobile-menu-btn:active,
+.mobile-icon-btn:active {
+  background: var(--c-fill);
+}
+
+.mobile-menu-btn svg,
+.mobile-icon-btn svg {
   width: 20px;
   height: 20px;
 }
 
-.mobile-tab-item.active {
-  color: var(--c-accent);
-  font-weight: 600;
-  background: var(--c-accent-soft);
+.mobile-topbar-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  color: var(--c-label);
+  min-width: 0;
 }
 
-/* ---------- 手机端「更多」Bottom Sheet 抽屉 ---------- */
+.mobile-topbar-mark {
+  width: 24px;
+  height: 24px;
+  border-radius: 7px;
+  background: var(--c-accent-soft);
+  color: var(--c-accent);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.mobile-topbar-mark svg {
+  width: 13px;
+  height: 13px;
+}
+
+.mobile-topbar-title {
+  font-family: var(--font-serif);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--c-label);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mobile-topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.mobile-theme-btn {
+  width: 38px;
+  height: 38px;
+  border-color: transparent;
+  background: transparent;
+}
+
+/* ---------- 手机端左侧滑出抽屉 ---------- */
 .ui-sheet-handle {
   width: 36px;
   height: 4px;
@@ -455,203 +495,81 @@ body.sidebar-collapsed .app-sidebar-footer {
   flex-shrink: 0;
 }
 
-.more-sheet-backdrop {
+.mobile-drawer-backdrop {
   position: fixed;
   inset: 0;
   background: var(--c-modal-backdrop);
-  -webkit-backdrop-filter: blur(8px);
-  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
   z-index: 1200;
   display: flex;
-  align-items: flex-end;
-  justify-content: center;
+  justify-content: flex-start;
   opacity: 0;
   pointer-events: none;
   transition: opacity var(--dur-2) var(--ease);
 }
 
-.more-sheet-backdrop.open {
+.mobile-drawer-backdrop.open {
   opacity: 1;
   pointer-events: auto;
 }
 
-.more-sheet-panel {
-  width: 100%;
-  max-width: 560px;
-  max-height: 84dvh;
-  background: var(--c-surface);
-  border-top: 1px solid var(--c-separator);
-  border-radius: 24px 24px 0 0;
+@media (min-width: 920px) {
+  .mobile-drawer-backdrop {
+    display: none;
+  }
+}
+
+.mobile-drawer-panel {
+  width: min(292px, 82vw);
+  height: 100%;
+  background: var(--c-bg-subtle);
+  border-right: 1px solid var(--c-separator);
   box-shadow: var(--sh-3);
-  padding: 4px 16px calc(20px + var(--safe-bottom));
+  padding: calc(14px + var(--safe-top)) 12px calc(14px + var(--safe-bottom));
   display: flex;
   flex-direction: column;
-  transform: translateY(100%);
+  transform: translateX(-100%);
   transition: transform var(--dur-2) var(--ease-out);
 }
 
-.more-sheet-backdrop.open .more-sheet-panel {
-  transform: translateY(0);
+.mobile-drawer-backdrop.open .mobile-drawer-panel {
+  transform: translateX(0);
 }
 
-.more-sheet-header {
+.mobile-drawer-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  padding: 10px 4px 14px;
-  border-bottom: 1px solid var(--c-separator);
-}
-
-.more-sheet-title-wrap {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.more-sheet-eyebrow {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: 0.14em;
-  color: var(--c-accent);
-}
-
-.more-sheet-title {
-  font-family: var(--font-serif);
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--c-label);
-}
-
-.more-sheet-actions {
-  display: flex;
-  align-items: center;
   gap: 8px;
+  padding: 2px 4px 12px;
 }
 
-.more-sheet-cmd-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  min-height: 38px;
-  padding: 0 12px;
-  border-radius: var(--r-pill);
-  border: 1px solid var(--c-separator);
-  background: var(--c-bg);
-  color: var(--c-label-2);
-  font-family: var(--font-sans);
-  font-size: 12.5px;
-  font-weight: 500;
-  cursor: pointer;
-}
-
-.more-sheet-cmd-btn svg {
-  width: 14px;
-  height: 14px;
-}
-
-.more-sheet-close-btn {
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
-  border: 1px solid var(--c-separator);
-  background: var(--c-bg);
-  color: var(--c-label-2);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-}
-
-.more-sheet-close-btn svg {
-  width: 16px;
-  height: 16px;
-}
-
-.more-sheet-body {
-  overflow-y: auto;
-  padding-top: 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.more-sheet-group {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.more-sheet-group-header {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.1em;
-  color: var(--c-label-3);
-  padding: 0 4px;
-}
-
-.more-sheet-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
-}
-
-.more-sheet-card {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  padding: 12px;
-  border-radius: var(--r-md);
-  border: 1px solid var(--c-separator);
-  background: var(--c-bg);
-  color: var(--c-label);
-  text-decoration: none;
-  transition: border-color var(--dur-1) var(--ease), background-color var(--dur-1) var(--ease);
-}
-
-.more-sheet-card.active {
-  border-color: var(--c-accent);
-  background: var(--c-accent-soft);
-}
-
-.more-card-icon {
-  width: 32px;
-  height: 32px;
+.mobile-drawer-close {
+  width: 36px;
+  height: 36px;
   border-radius: var(--r-xs);
-  background: var(--c-surface);
   border: 1px solid var(--c-separator);
-  color: var(--c-accent);
+  background: var(--c-surface);
+  color: var(--c-label-2);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0;
+  cursor: pointer;
 }
 
-.more-card-icon svg {
+.mobile-drawer-close svg {
   width: 16px;
   height: 16px;
 }
 
-.more-card-body {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
+.mobile-drawer-search {
+  padding: 0 2px 12px;
 }
 
-.more-card-title {
-  font-family: var(--font-serif);
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--c-label);
-}
-
-.more-card-sub {
-  font-family: var(--font-sans);
-  font-size: 11.5px;
-  color: var(--c-label-2);
-  line-height: 1.35;
+.mobile-drawer-nav {
+  flex: 1;
+  overflow-y: auto;
 }
 
 /* ---------- 全局 ⌘K 命令面板 ---------- */

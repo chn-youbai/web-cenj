@@ -31,15 +31,20 @@ describe("Claude App Shell & Global Command Palette", () => {
     expect(window.localStorage.getItem("cenj_sidebar_collapsed")).toBe("1");
   });
 
-  it("opens and closes mobile More Bottom Sheet", () => {
+  it("renders mobile topbar and opens/closes left slide-out drawer", () => {
     const shell = initAppShell({ activePage: "index" });
-    const backdrop = document.getElementById("mobileMoreSheetBackdrop");
+    expect(document.getElementById("mobileTopBar")).not.toBeNull();
+
+    const backdrop = document.getElementById("mobileDrawerBackdrop");
     expect(backdrop?.classList.contains("open")).toBe(false);
 
-    shell.openMoreSheet();
+    shell.openDrawer();
     expect(backdrop?.classList.contains("open")).toBe(true);
 
-    shell.closeMoreSheet();
+    const drawerLinks = document.querySelectorAll("#mobileDrawerBackdrop .app-nav-link");
+    expect(drawerLinks.length).toBe(10);
+
+    shell.closeDrawer();
     expect(backdrop?.classList.contains("open")).toBe(false);
   });
 

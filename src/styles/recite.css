@@ -1169,7 +1169,7 @@ body {
 
 @media (max-width: 919px) {
   body.has-app-shell {
-    padding-bottom: calc(var(--shell-mobile-bar-h, 64px) + var(--safe-bottom)) !important;
+    padding-bottom: 0 !important;
   }
   .workspace-shell,
   .device-frame {

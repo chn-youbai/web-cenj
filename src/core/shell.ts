@@ -14,8 +14,8 @@ export interface AppShellController {
   activePage: PageId;
   commandPalette: CommandPaletteController;
   toggleSidebar: () => boolean;
-  openMoreSheet: () => void;
-  closeMoreSheet: () => void;
+  openDrawer: () => void;
+  closeDrawer: () => void;
 }
 
 const THEME_SUN_MOON_SVG = `
@@ -63,81 +63,6 @@ function renderSidebarNavGroups(activePage: PageId): string {
   }).join("");
 }
 
-function renderMobileTabBar(activePage: PageId): string {
-  const primaryItems = NAV_ITEMS.filter((item) => item.mobilePrimary);
-  const isSecondaryActive = !primaryItems.some((item) => item.id === activePage);
-
-  const tabsHtml = primaryItems
-    .map((item) => {
-      const isCurrent = item.id === activePage;
-      return `
-        <a
-          href="${item.href}"
-          class="mobile-tab-item${isCurrent ? " active" : ""}"
-          data-mobile-tab="${item.id}"
-          ${isCurrent ? 'aria-current="page"' : ""}
-        >
-          <span class="mobile-tab-icon">${item.iconSvg}</span>
-          <span class="mobile-tab-label">${escapeHtml(item.shortLabel)}</span>
-        </a>
-      `;
-    })
-    .join("");
-
-  return `
-    ${tabsHtml}
-    <button
-      type="button"
-      class="mobile-tab-item${isSecondaryActive ? " active" : ""}"
-      id="mobileMoreTabBtn"
-      aria-expanded="false"
-      aria-controls="mobileMoreSheetBackdrop"
-    >
-      <span class="mobile-tab-icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <circle cx="5" cy="12" r="1.5"/>
-          <circle cx="12" cy="12" r="1.5"/>
-          <circle cx="19" cy="12" r="1.5"/>
-        </svg>
-      </span>
-      <span class="mobile-tab-label">更多</span>
-    </button>
-  `;
-}
-
-function renderMoreSheetGroups(activePage: PageId): string {
-  return NAV_GROUPS.map((group) => {
-    const groupItems = NAV_ITEMS.filter((item) => item.group === group.id);
-    if (groupItems.length === 0) return "";
-    return `
-      <div class="more-sheet-group">
-        <div class="more-sheet-group-header">${group.code} · ${escapeHtml(group.label)}</div>
-        <div class="more-sheet-grid">
-          ${groupItems
-            .map((item) => {
-              const isCurrent = item.id === activePage;
-              return `
-                <a
-                  href="${item.href}"
-                  class="more-sheet-card${isCurrent ? " active" : ""}"
-                  data-sheet-nav="${item.id}"
-                  ${isCurrent ? 'aria-current="page"' : ""}
-                >
-                  <span class="more-card-icon">${item.iconSvg}</span>
-                  <span class="more-card-body">
-                    <span class="more-card-title">${escapeHtml(item.label)}</span>
-                    <span class="more-card-sub">${escapeHtml(item.subtitle)}</span>
-                  </span>
-                </a>
-              `;
-            })
-            .join("")}
-        </div>
-      </div>
-    `;
-  }).join("");
-}
-
 export function initAppShell(options: AppShellOptions): AppShellController {
   const { activePage } = options;
   const activeMeta = getNavItem(activePage);
@@ -149,8 +74,8 @@ export function initAppShell(options: AppShellOptions): AppShellController {
   document.body.classList.toggle("sidebar-collapsed", isCollapsed);
 
   document.getElementById("appSidebar")?.remove();
-  document.getElementById("mobileTabBar")?.remove();
-  document.getElementById("mobileMoreSheetBackdrop")?.remove();
+  document.getElementById("mobileTopBar")?.remove();
+  document.getElementById("mobileDrawerBackdrop")?.remove();
 
   // 1. Desktop collapsible sidebar
   const sidebar = document.createElement("aside");
@@ -210,56 +135,104 @@ export function initAppShell(options: AppShellOptions): AppShellController {
     </div>
   `;
 
-  // 2. Mobile bottom TabBar
-  const mobileTabBar = document.createElement("nav");
-  mobileTabBar.id = "mobileTabBar";
-  mobileTabBar.className = "mobile-tabbar";
-  mobileTabBar.setAttribute("aria-label", "底部快捷导航");
-  mobileTabBar.innerHTML = renderMobileTabBar(activePage);
-
-  // 3. Mobile "More" Bottom Sheet
-  const moreSheetBackdrop = document.createElement("div");
-  moreSheetBackdrop.id = "mobileMoreSheetBackdrop";
-  moreSheetBackdrop.className = "more-sheet-backdrop";
-  moreSheetBackdrop.setAttribute("role", "dialog");
-  moreSheetBackdrop.setAttribute("aria-modal", "true");
-  moreSheetBackdrop.setAttribute("aria-label", "全站功能导航抽屉");
-  moreSheetBackdrop.setAttribute("aria-hidden", "true");
-  moreSheetBackdrop.innerHTML = `
-    <div class="more-sheet-panel">
-      <div class="ui-sheet-handle" aria-hidden="true"></div>
-      <div class="more-sheet-header">
-        <div class="more-sheet-title-wrap">
-          <span class="more-sheet-eyebrow">EDITION · CENJ</span>
-          <strong class="more-sheet-title">全站工作台导航</strong>
-        </div>
-        <div class="more-sheet-actions">
-          <button type="button" class="more-sheet-cmd-btn" data-cmd-open aria-label="全局搜索或查词">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <circle cx="11" cy="11" r="7"/>
-              <path d="M21 21l-4.35-4.35"/>
-            </svg>
-            <span>搜索 / 查词</span>
-          </button>
-          <button type="button" class="theme-toggle-btn" data-theme-toggle aria-label="切换深浅色主题">
-            ${THEME_SUN_MOON_SVG}
-          </button>
-          <button type="button" class="more-sheet-close-btn" id="moreSheetCloseBtn" aria-label="关闭导航抽屉">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
-              <path d="M18 6L6 18M6 6l12 12"/>
-            </svg>
-          </button>
-        </div>
-      </div>
-      <div class="more-sheet-body">
-        ${renderMoreSheetGroups(activePage)}
-      </div>
+  // 2. Mobile minimalist top navigation bar (Claude.ai style)
+  const mobileTopBar = document.createElement("header");
+  mobileTopBar.id = "mobileTopBar";
+  mobileTopBar.className = "mobile-topbar";
+  mobileTopBar.innerHTML = `
+    <div class="mobile-topbar-left">
+      <button
+        type="button"
+        class="mobile-menu-btn"
+        id="mobileMenuBtn"
+        aria-label="打开全站导航菜单"
+        aria-expanded="false"
+        aria-controls="mobileDrawerBackdrop"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+          <path d="M4 7h16M4 12h16M4 17h12"/>
+        </svg>
+      </button>
+      <a href="./index.html" class="mobile-topbar-brand" title="返回工作台">
+        <span class="mobile-topbar-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2L13.6 9.1L19.9 5.6L15.1 11.1L22 12L15.1 12.9L19.9 18.4L13.6 14.9L12 22L10.4 14.9L4.1 18.4L8.9 12.9L2 12L8.9 11.1L4.1 5.6L10.4 9.1Z"/>
+          </svg>
+        </span>
+        <span class="mobile-topbar-title">${escapeHtml(activeMeta.label)}</span>
+      </a>
+    </div>
+    <div class="mobile-topbar-right">
+      <button type="button" class="mobile-icon-btn" data-cmd-open aria-label="快捷搜索或查词" title="搜索或查词">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="11" cy="11" r="7"/>
+          <path d="M21 21l-4.35-4.35"/>
+        </svg>
+      </button>
+      <button type="button" class="theme-toggle-btn mobile-theme-btn" data-theme-toggle aria-label="切换深浅色主题">
+        ${THEME_SUN_MOON_SVG}
+      </button>
     </div>
   `;
 
+  // 3. Mobile left slide-out navigation drawer
+  const mobileDrawerBackdrop = document.createElement("div");
+  mobileDrawerBackdrop.id = "mobileDrawerBackdrop";
+  mobileDrawerBackdrop.className = "mobile-drawer-backdrop";
+  mobileDrawerBackdrop.setAttribute("role", "dialog");
+  mobileDrawerBackdrop.setAttribute("aria-modal", "true");
+  mobileDrawerBackdrop.setAttribute("aria-label", "全站导航抽屉");
+  mobileDrawerBackdrop.setAttribute("aria-hidden", "true");
+  mobileDrawerBackdrop.innerHTML = `
+    <aside class="mobile-drawer-panel">
+      <div class="mobile-drawer-header">
+        <a href="./index.html" class="app-brand">
+          <span class="app-brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2L13.6 9.1L19.9 5.6L15.1 11.1L22 12L15.1 12.9L19.9 18.4L13.6 14.9L12 22L10.4 14.9L4.1 18.4L8.9 12.9L2 12L8.9 11.1L4.1 5.6L10.4 9.1Z"/>
+            </svg>
+          </span>
+          <span class="app-brand-text">
+            <span class="app-brand-name">Cenj</span>
+            <span class="app-brand-edition">EDITION</span>
+          </span>
+        </a>
+        <button type="button" class="mobile-drawer-close" id="mobileDrawerCloseBtn" aria-label="关闭导航菜单">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+            <path d="M18 6L6 18M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="mobile-drawer-search">
+        <button type="button" class="sidebar-cmd-btn" data-cmd-open aria-label="打开快捷搜索或查词">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="11" cy="11" r="7"/>
+            <path d="M21 21l-4.35-4.35"/>
+          </svg>
+          <span class="sidebar-cmd-label">搜索页面或英文查词...</span>
+        </button>
+      </div>
+
+      <nav class="app-sidebar-nav mobile-drawer-nav" aria-label="移动端全站导航">
+        ${renderSidebarNavGroups(activePage)}
+      </nav>
+
+      <div class="app-sidebar-footer">
+        <div class="sidebar-current-pill">
+          <span class="current-dot" aria-hidden="true"></span>
+          <span class="current-name">${escapeHtml(activeMeta.shortLabel)}</span>
+        </div>
+        <button type="button" class="theme-toggle-btn" data-theme-toggle aria-label="切换深浅色主题">
+          ${THEME_SUN_MOON_SVG}
+        </button>
+      </div>
+    </aside>
+  `;
+
   document.body.prepend(sidebar);
-  document.body.appendChild(mobileTabBar);
-  document.body.appendChild(moreSheetBackdrop);
+  document.body.prepend(mobileTopBar);
+  document.body.appendChild(mobileDrawerBackdrop);
 
   function toggleSidebar(): boolean {
     const next = !document.body.classList.contains("sidebar-collapsed");
@@ -268,42 +241,48 @@ export function initAppShell(options: AppShellOptions): AppShellController {
     return next;
   }
 
-  function openMoreSheet(): void {
-    moreSheetBackdrop.classList.add("open");
-    moreSheetBackdrop.setAttribute("aria-hidden", "false");
-    document.getElementById("mobileMoreTabBtn")?.setAttribute("aria-expanded", "true");
+  function openDrawer(): void {
+    mobileDrawerBackdrop.classList.add("open");
+    mobileDrawerBackdrop.setAttribute("aria-hidden", "false");
+    document.getElementById("mobileMenuBtn")?.setAttribute("aria-expanded", "true");
   }
 
-  function closeMoreSheet(): void {
-    moreSheetBackdrop.classList.remove("open");
-    moreSheetBackdrop.setAttribute("aria-hidden", "true");
-    document.getElementById("mobileMoreTabBtn")?.setAttribute("aria-expanded", "false");
+  function closeDrawer(): void {
+    mobileDrawerBackdrop.classList.remove("open");
+    mobileDrawerBackdrop.setAttribute("aria-hidden", "true");
+    document.getElementById("mobileMenuBtn")?.setAttribute("aria-expanded", "false");
   }
 
   document.getElementById("sidebarCollapseBtn")?.addEventListener("click", () => {
     toggleSidebar();
   });
 
-  document.getElementById("mobileMoreTabBtn")?.addEventListener("click", () => {
-    if (moreSheetBackdrop.classList.contains("open")) {
-      closeMoreSheet();
+  document.getElementById("mobileMenuBtn")?.addEventListener("click", () => {
+    if (mobileDrawerBackdrop.classList.contains("open")) {
+      closeDrawer();
     } else {
-      openMoreSheet();
+      openDrawer();
     }
   });
 
-  document.getElementById("moreSheetCloseBtn")?.addEventListener("click", closeMoreSheet);
-  moreSheetBackdrop.addEventListener("click", (e) => {
-    if (e.target === moreSheetBackdrop) {
-      closeMoreSheet();
+  document.getElementById("mobileDrawerCloseBtn")?.addEventListener("click", closeDrawer);
+  mobileDrawerBackdrop.addEventListener("click", (e) => {
+    if (e.target === mobileDrawerBackdrop) {
+      closeDrawer();
     }
   });
 
-  for (const cmdTrigger of moreSheetBackdrop.querySelectorAll<HTMLElement>("[data-cmd-open]")) {
+  for (const cmdTrigger of mobileDrawerBackdrop.querySelectorAll<HTMLElement>("[data-cmd-open]")) {
     cmdTrigger.addEventListener("click", () => {
-      closeMoreSheet();
+      closeDrawer();
     });
   }
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && mobileDrawerBackdrop.classList.contains("open")) {
+      closeDrawer();
+    }
+  });
 
   initThemeToggle();
   const commandPalette = initCommandPalette();
@@ -312,7 +291,7 @@ export function initAppShell(options: AppShellOptions): AppShellController {
     activePage,
     commandPalette,
     toggleSidebar,
-    openMoreSheet,
-    closeMoreSheet,
+    openDrawer,
+    closeDrawer,
   };
 }

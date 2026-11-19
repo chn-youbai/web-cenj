@@ -697,10 +697,5 @@ body {
   border-color: var(--c-separator);
   box-shadow: var(--sh-3);
   z-index: 1600;
-  bottom: calc(var(--shell-mobile-bar-h, 64px) + 20px);
-}
-@media (min-width: 920px) {
-  .toast {
-    bottom: 2rem;
-  }
+  bottom: 1.5rem;
 }
