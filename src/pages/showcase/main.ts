@@ -1,6 +1,5 @@
 import "@/core/fonts";
 import { initAppShell } from "@/core/shell";
-import "@/styles/showcase.css";
 import {
   probeClashBeacon,
   probeDjjcRelay,

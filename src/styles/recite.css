@@ -1150,22 +1150,31 @@ body {
   color: var(--c-label) !important;
 }
 
-@media (min-width: 861px) {
+@media (min-width: 920px) {
   body.has-app-shell {
     background-color: var(--c-bg-subtle) !important;
+    padding-bottom: 16px !important;
+  }
+  .workspace-shell {
+    height: 100% !important;
   }
   .device-frame {
     max-width: 460px;
+    height: calc(100dvh - 32px);
     border-radius: var(--r-xl);
     border: 1px solid var(--c-separator);
     box-shadow: var(--sh-2);
   }
 }
 
-@media (max-width: 860px) {
+@media (max-width: 919px) {
+  body.has-app-shell {
+    padding-bottom: calc(var(--shell-mobile-bar-h, 64px) + var(--safe-bottom)) !important;
+  }
   .workspace-shell,
   .device-frame {
-    height: calc(100dvh - 64px - env(safe-area-inset-bottom, 0px)) !important;
+    height: 100% !important;
+    max-height: none !important;
   }
 }
 

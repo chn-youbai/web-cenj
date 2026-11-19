@@ -2,7 +2,6 @@ import "@/core/fonts";
 import { copyToClipboard, escapeHtml, optById } from "@/core/dom";
 import { initAppShell } from "@/core/shell";
 import { getPreferredTheme, toggleTheme } from "@/core/theme";
-import "@/styles/recite.css";
 import {
   buildFilteredDeck,
   cleanWordForSpeech,

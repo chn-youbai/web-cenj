@@ -1,7 +1,6 @@
 import "@/core/fonts";
 import { postJson } from "@/core/api";
 import { initAppShell } from "@/core/shell";
-import "@/styles/takeout.css";
 import { fetchFromCloud, registerSyncToast, saveData, syncToCloud } from "./cloud-sync";
 import { getTodayDateString } from "./menu-data";
 import {

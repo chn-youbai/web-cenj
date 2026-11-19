@@ -391,7 +391,7 @@ body {
 }
 
 /* ==========================================================================
-   Claude Editorial Dual-Mode Theme Overrides
+   Claude Editorial Dual-Mode Theme Overrides (Light & Dark Full Parity)
    ========================================================================== */
 :root,
 [data-theme="dark"] {
@@ -419,18 +419,89 @@ body {
 
 .header-title {
   font-family: var(--font-serif);
+  color: var(--c-label);
 }
 
+.auth-modal-backdrop {
+  background: var(--c-modal-backdrop);
+  z-index: 1500;
+}
+
+.auth-modal-card {
+  background: var(--c-surface);
+  border: 1px solid var(--c-separator);
+  color: var(--c-label);
+  box-shadow: var(--sh-3);
+}
+
+.auth-title {
+  font-family: var(--font-serif);
+  color: var(--c-label);
+}
+
+.auth-desc,
+.auth-remember-row,
+.clash-field-label {
+  color: var(--c-label-2);
+}
+
+.auth-input,
+.pwd-input,
+.clash-url-input {
+  background: var(--c-bg-subtle);
+  border: 1px solid var(--c-separator);
+  color: var(--c-label);
+}
+
+.auth-input:focus,
+.pwd-input:focus,
+.clash-url-input:focus {
+  background: var(--c-surface);
+  border-color: var(--c-accent);
+  box-shadow: 0 0 0 3px var(--c-focus);
+}
+
+.auth-submit-btn,
+.clash-primary-btn {
+  background: var(--c-accent);
+  color: #ffffff;
+  box-shadow: var(--sh-1);
+}
+.auth-submit-btn:hover,
+.clash-primary-btn:hover {
+  background: var(--c-accent-hover);
+  box-shadow: var(--sh-2);
+}
+
+.auth-cancel-btn,
 .header-action-btn,
+.clash-secondary-btn {
+  background: var(--c-bg-subtle);
+  border: 1px solid var(--c-separator);
+  color: var(--c-label);
+}
+.auth-cancel-btn:hover,
+.header-action-btn:hover,
+.clash-secondary-btn:hover {
+  background: var(--c-fill-strong);
+  color: var(--c-label);
+}
+
+.clash-accent-btn {
+  background: var(--c-accent-soft);
+  border: 1px solid var(--c-focus);
+  color: var(--c-accent);
+}
+
 .tab-bar,
 .status-strip,
 .card,
 .speed-card,
-.node-card,
-.auth-modal-card {
+.item-card {
   background: var(--c-surface);
-  border-color: var(--c-separator);
+  border: 1px solid var(--c-separator);
   color: var(--c-label);
+  box-shadow: var(--sh-1);
 }
 
 .tab-btn {
@@ -439,14 +510,20 @@ body {
 
 .tab-btn.active {
   background: var(--c-accent);
-  color: #fff;
+  color: #ffffff;
+  box-shadow: var(--sh-1);
 }
 
-.auth-input,
-.input-field {
-  background: var(--c-bg-subtle);
-  border-color: var(--c-separator);
+.card-title,
+.clash-auth-label {
   color: var(--c-label);
+}
+
+.pc-hb-bar,
+.latest-feedback {
+  background: var(--c-bg-subtle);
+  color: var(--c-label-2);
+  border-color: var(--c-separator);
 }
 
 .speed-badge,

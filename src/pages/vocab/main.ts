@@ -1,5 +1,4 @@
 import "@/core/fonts";
-import "@/styles/vocab.css";
 import { byId, copyToClipboard, escapeHtml, optById } from "@/core/dom";
 import { initAppShell } from "@/core/shell";
 import { getStorageItem, removeStorageItem, setStorageItem } from "@/core/storage";

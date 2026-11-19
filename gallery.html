@@ -7,7 +7,7 @@
   <title>视界画廊与视频专区 - Photo Gallery</title>
   <link rel="icon" href="./OIP-C.jpg" type="image/jpeg">
   <script>
-    (function(){try{var t=localStorage.getItem("cenj_theme_v1");var d=t==="dark"||(t!=="light"&&window.matchMedia("(prefers-color-scheme: dark)").matches);document.documentElement.dataset.theme=d?"dark":"light";var m=document.querySelector('meta[name="theme-color"]');if(m)m.content=d?"#262624":"#faf9f5";}catch(e){}})();
+    (function(){try{var t=localStorage.getItem("cenj_theme_v1");var d=t==="dark"||(t!=="light"&&window.matchMedia("(prefers-color-scheme: dark)").matches);document.documentElement.dataset.theme=d?"dark":"light";document.documentElement.classList.toggle("dark",d);var m=document.querySelector('meta[name="theme-color"]');if(m)m.content=d?"#262624":"#faf9f5";}catch(e){}})();
   </script>
   <link rel="preconnect" href="https://fonts.loli.net" crossorigin>
   <link rel="stylesheet" href="https://fonts.loli.net/css2?family=Noto+Serif+SC:wght@400;500;600;700&display=swap">

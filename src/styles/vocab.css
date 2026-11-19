@@ -1027,9 +1027,6 @@ button {
   .mobile-tab-nav {
     display: none !important;
   }
-  body {
-    padding-bottom: 2.5rem !important;
-  }
   #lookupBookFilterBar {
     scrollbar-width: thin;
   }
@@ -1062,6 +1059,14 @@ body {
   font-family: var(--font-sans);
   background-color: var(--c-bg);
   color: var(--c-label);
+}
+
+#wordDetailModal {
+  z-index: 1050 !important;
+}
+
+#toastBanner {
+  z-index: 1600 !important;
 }
 
 .vocab-brand-icon {
@@ -1121,8 +1126,32 @@ body {
 }
 [data-theme="dark"] .bg-gray-100,
 [data-theme="dark"] .bg-gray-100\/90,
-[data-theme="dark"] .bg-gray-50 {
+[data-theme="dark"] .bg-gray-50,
+[data-theme="dark"] .bg-gray-50\/90 {
   background-color: var(--c-bg-subtle) !important;
+}
+[data-theme="dark"] .bg-emerald-50,
+[data-theme="dark"] .bg-emerald-50\/60 {
+  background-color: rgba(46, 125, 82, 0.16) !important;
+  border-color: rgba(46, 125, 82, 0.35) !important;
+}
+[data-theme="dark"] .text-emerald-700,
+[data-theme="dark"] .text-emerald-900 {
+  color: #6ee7b7 !important;
+}
+[data-theme="dark"] .bg-indigo-50,
+[data-theme="dark"] .bg-purple-50,
+[data-theme="dark"] .bg-amber-50,
+[data-theme="dark"] .bg-red-50 {
+  background-color: var(--c-surface-2) !important;
+  border-color: var(--c-separator) !important;
+}
+[data-theme="dark"] .text-indigo-600,
+[data-theme="dark"] .text-indigo-700,
+[data-theme="dark"] .text-purple-700,
+[data-theme="dark"] .text-amber-700,
+[data-theme="dark"] .text-amber-800 {
+  color: var(--c-accent) !important;
 }
 [data-theme="dark"] .text-gray-900,
 [data-theme="dark"] .text-gray-800,

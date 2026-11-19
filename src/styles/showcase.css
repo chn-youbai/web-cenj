@@ -720,7 +720,7 @@ body {
 }
 
 /* ==========================================================================
-   Claude Editorial Whitepaper Dual-Mode Theme Overrides
+   Claude Editorial Whitepaper Dual-Mode Theme Overrides (Light & Dark Parity)
    ========================================================================== */
 :root,
 [data-theme="dark"] {
@@ -748,39 +748,187 @@ body {
   border-bottom-color: var(--c-separator);
 }
 
-.header-title-group h1,
-.hall-title h2 {
+.header-title-group h1 {
   font-family: var(--font-serif);
+  background: none;
+  -webkit-background-clip: initial;
+  -webkit-text-fill-color: var(--c-label);
+  color: var(--c-label);
 }
 
-.header-icon {
+.header-icon,
+.hall-header-icon {
   background: var(--c-accent-soft);
   border-color: var(--c-focus);
 }
 
 .stat-badge,
-.hall-nav-card,
-.hall-card,
-.principle-card,
-.flow-box,
-.probe-box {
+.hall-sidebar,
+.hall-card {
   background: var(--c-surface);
   border-color: var(--c-separator);
   color: var(--c-label);
   box-shadow: var(--sh-1);
+  backdrop-filter: none;
+}
+
+.stat-badge-content p {
+  color: var(--c-accent);
+  font-family: var(--font-mono);
 }
 
 .hall-nav-item {
   color: var(--c-label-2);
 }
-.hall-nav-item.active,
 .hall-nav-item:hover {
+  background: var(--c-fill);
+  color: var(--c-label);
+}
+.hall-nav-item.active {
   background: var(--c-accent-soft);
+  border-color: var(--c-focus);
   color: var(--c-accent);
 }
 
-code,
-pre,
-.probe-output {
+.hall-card:hover {
+  border-color: var(--c-border-strong);
+}
+
+.hall-header {
+  border-bottom-color: var(--c-separator);
+}
+
+.hall-header-left h2 {
+  font-family: var(--font-serif);
+  color: var(--c-label);
+}
+
+.hall-tag {
+  background: var(--c-accent-soft);
+  color: var(--c-accent);
+  border-color: var(--c-focus);
+}
+
+.info-box.mechanism,
+.info-box.topology {
+  background: var(--c-bg-subtle);
+  border-color: var(--c-separator);
+}
+.info-box.mechanism h3,
+.info-box.topology h3 {
+  color: var(--c-accent);
+}
+.info-box p,
+.info-box ul {
+  color: var(--c-label-2);
+}
+.info-box li strong {
+  color: var(--c-label);
+}
+
+.flowchart-wrapper {
+  background: var(--c-bg-subtle);
+  background-image: radial-gradient(var(--c-separator) 1px, transparent 1px);
+  background-size: 18px 18px;
+  border-color: var(--c-separator);
+}
+.flowchart-header {
+  border-bottom-color: var(--c-separator);
+}
+.flowchart-title {
+  color: var(--c-accent);
+}
+
+.topology-row {
+  background: var(--c-surface);
+  border-color: var(--c-separator);
+}
+
+.topology-node {
+  border-color: var(--c-separator);
+  backdrop-filter: none;
+}
+.topology-node.client {
+  background: var(--c-accent-soft);
+  border-color: var(--c-focus);
+}
+.topology-node.edge {
+  background: var(--c-bg-subtle);
+  border-color: var(--c-border-strong);
+}
+.topology-node.upstream {
+  background: var(--c-success-soft);
+  border-color: var(--c-success);
+}
+.topology-node.client .node-role,
+.topology-node.edge .node-role {
+  color: var(--c-accent);
+}
+.topology-node.upstream .node-role {
+  color: var(--c-success);
+}
+.node-name {
+  color: var(--c-label);
+}
+
+.flow-pipe-label {
+  color: var(--c-label);
+  background: var(--c-bg-subtle);
+  border-color: var(--c-separator);
+}
+.flow-pipe-arrow,
+.flow-pipe-arrow.reverse {
+  color: var(--c-accent);
+}
+.flow-pipe-arrow.bidirectional {
+  color: var(--c-success);
+}
+
+.branch-item {
+  background: var(--c-surface);
+  border-color: var(--c-separator);
+}
+.branch-title {
+  color: var(--c-label);
+}
+.branch-desc {
+  color: var(--c-label-2);
+}
+.branch-desc code {
+  background: var(--c-bg-subtle);
+  color: var(--c-accent);
   font-family: var(--font-mono);
+}
+
+.testbed-card {
+  background: var(--c-bg-subtle);
+  border-color: var(--c-separator);
+}
+.testbed-title {
+  color: var(--c-label);
+}
+.probe-btn {
+  background: var(--c-accent) !important;
+  border-color: transparent;
+  color: #ffffff;
+}
+.probe-btn:hover {
+  background: var(--c-accent-hover) !important;
+  box-shadow: var(--sh-2);
+}
+
+.probe-console {
+  background: var(--c-surface-2);
+  border-color: var(--c-separator);
+  color: var(--c-label);
+  font-family: var(--font-mono);
+}
+.probe-console.idle {
+  color: var(--c-label-3);
+}
+.probe-console.success {
+  color: var(--c-success);
+}
+.probe-console.error {
+  color: var(--c-danger);
 }

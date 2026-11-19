@@ -1261,10 +1261,42 @@ body {
 
 .card,
 .person-selector,
-.bottom-sheet {
+.bottom-sheet,
+.dish-card,
+.order-item-row,
+.setting-item,
+.history-card {
   background: var(--c-surface);
   border-color: var(--c-separator);
   color: var(--c-label);
+}
+
+.icon-btn,
+.date-input-wrap,
+.quick-date-btn,
+.person-pill,
+.cat-pill,
+.sync-badge {
+  background: var(--c-bg-subtle);
+  border-color: var(--c-separator);
+  color: var(--c-label);
+}
+
+.person-pill.active,
+.cat-pill.active {
+  background: var(--c-accent-soft);
+  border-color: var(--c-focus);
+  color: var(--c-accent);
+}
+
+.date-bar {
+  background: var(--c-surface);
+  border: 1px solid var(--c-separator);
+}
+
+.weekday-badge {
+  background: var(--c-accent);
+  color: #ffffff;
 }
 
 .input-field,
@@ -1281,14 +1313,51 @@ body {
   border-color: var(--c-accent);
 }
 
-@media (max-width: 860px) {
+.modal-backdrop {
+  background: var(--c-modal-backdrop);
+  z-index: 1050;
+}
+
+.toast {
+  z-index: 1600;
+}
+
+/* Sticky tab-bar aligned cleanly inside .app-shell on all screen widths */
+.tab-bar {
+  position: sticky;
+  bottom: 0;
+  left: auto;
+  transform: none;
+  width: 100%;
+  max-width: none;
+  background: var(--c-material);
+  backdrop-filter: blur(14px);
+  border-top: 1px solid var(--c-separator);
+  padding: 8px 10px;
+  z-index: 60;
+}
+
+@media (max-width: 919px) {
   .tab-bar {
-    bottom: calc(64px + env(safe-area-inset-bottom, 0px)) !important;
-    background: var(--c-material) !important;
-    backdrop-filter: blur(14px);
-    border-top: 1px solid var(--c-separator) !important;
+    position: fixed;
+    bottom: calc(var(--shell-mobile-bar-h, 64px) + var(--safe-bottom));
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    max-width: 500px;
+    z-index: 850;
   }
   .app-main {
-    padding-bottom: 140px !important;
+    padding-bottom: 136px !important;
   }
+}
+
+[data-theme="dark"] .dish-price,
+[data-theme="dark"] .order-item-price {
+  color: var(--c-accent);
+}
+[data-theme="dark"] .btn-secondary {
+  background: var(--c-bg-subtle);
+  color: var(--c-label);
+  border: 1px solid var(--c-separator);
 }
