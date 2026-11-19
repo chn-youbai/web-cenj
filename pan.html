@@ -5,909 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#f5f5f7">
   <title>资源网盘 - 高速下载</title>
-  <link rel="stylesheet" href="./css/base.css">
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-    body {
-      min-height: 100vh;
-      min-height: 100dvh;
-      background: var(--c-bg);
-      font-family: var(--font-sans);
-      color: var(--c-label);
-      font-size: 15px;
-      line-height: 1.47;
-      padding:
-        calc(var(--sp-6) + var(--safe-top))
-        calc(var(--sp-4) + var(--safe-right))
-        calc(var(--sp-10) + var(--safe-bottom))
-        calc(var(--sp-4) + var(--safe-left));
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-    button,
-    input {
-      font-family: inherit;
-    }
-    h1, h2, h3, p, span, strong, li {
-      overflow-wrap: anywhere;
-    }
-
-    /* ---------- 页头 ---------- */
-    .header {
-      width: 100%;
-      max-width: 760px;
-      margin-bottom: var(--sp-6);
-      display: flex;
-      flex-direction: column-reverse;
-      align-items: flex-start;
-      gap: var(--sp-4);
-    }
-    .title-group {
-      min-width: 0;
-    }
-    .title-group h1 {
-      font-size: clamp(28px, 7vw, 40px);
-      font-weight: 700;
-      letter-spacing: -0.02em;
-      line-height: 1.12;
-      color: var(--c-label);
-      margin-bottom: var(--sp-2);
-    }
-    .title-group p {
-      color: var(--c-label-2);
-      font-size: 15px;
-    }
-    .nav-actions {
-      display: flex;
-      gap: var(--sp-2);
-    }
-    .nav-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: var(--sp-1);
-      min-height: var(--tap);
-      padding: 0 var(--sp-4) 0 var(--sp-3);
-      margin-left: calc(-1 * var(--sp-3));
-      border-radius: var(--r-pill);
-      color: var(--c-accent);
-      text-decoration: none;
-      font-weight: 500;
-      font-size: 16px;
-      transition: background-color var(--dur-1) var(--ease), transform var(--dur-1) var(--ease);
-    }
-    .nav-btn:active {
-      transform: scale(0.97);
-      background: var(--c-fill);
-    }
-    @media (hover: hover) {
-      .nav-btn:hover {
-        background: var(--c-fill);
-      }
-    }
-    @media (min-width: 640px) {
-      .header {
-        flex-direction: row;
-        justify-content: space-between;
-        align-items: flex-end;
-      }
-      .nav-btn {
-        margin-left: 0;
-        background: var(--c-fill);
-      }
-      @media (hover: hover) {
-        .nav-btn:hover {
-          background: var(--c-fill-strong);
-        }
-      }
-    }
-    .container {
-      width: 100%;
-      max-width: 760px;
-      display: flex;
-      flex-direction: column;
-      gap: var(--sp-3);
-    }
-
-    /* ---------- 通用按钮 ---------- */
-    .copy-btn,
-    .download-action,
-    .unlock-btn,
-    .mini-copy-btn,
-    .airport-tab-btn {
-      -webkit-appearance: none;
-      appearance: none;
-      cursor: pointer;
-      transition:
-        background-color var(--dur-1) var(--ease),
-        color var(--dur-1) var(--ease),
-        transform var(--dur-1) var(--ease),
-        opacity var(--dur-1) var(--ease);
-    }
-    .copy-btn:active,
-    .download-action:active,
-    .unlock-btn:active,
-    .mini-copy-btn:active,
-    .airport-tab-btn:active {
-      transform: scale(0.97);
-    }
-    .copy-btn:disabled {
-      opacity: 0.5;
-      cursor: default;
-      transform: none;
-    }
-
-    /* 次级按钮（默认 copy-btn） */
-    .copy-btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: var(--sp-2);
-      min-height: var(--tap);
-      padding: var(--sp-2) var(--sp-5);
-      background: var(--c-fill);
-      color: var(--c-accent);
-      border: none;
-      border-radius: var(--r-pill);
-      font-size: 15px;
-      font-weight: 600;
-      line-height: 1.25;
-      text-align: center;
-    }
-    .copy-btn:active {
-      background: var(--c-fill-strong);
-    }
-    @media (hover: hover) {
-      .copy-btn:hover {
-        background: var(--c-fill-strong);
-      }
-    }
-
-    /* ---------- 下载提示 ---------- */
-    .password-banner {
-      display: flex;
-      flex-direction: column;
-      align-items: stretch;
-      gap: var(--sp-4);
-      background: var(--c-surface);
-      border-radius: var(--r-lg);
-      padding: var(--sp-4);
-      box-shadow: var(--sh-1);
-    }
-    .password-info {
-      display: flex;
-      align-items: flex-start;
-      gap: var(--sp-3);
-      min-width: 0;
-    }
-    .password-icon {
-      width: 36px;
-      height: 36px;
-      flex-shrink: 0;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 18px;
-      border-radius: var(--r-sm);
-      background: var(--c-accent-soft);
-    }
-    .password-text {
-      min-width: 0;
-    }
-    .password-text h3 {
-      font-size: 16px;
-      font-weight: 600;
-      letter-spacing: -0.01em;
-      line-height: 1.35;
-      color: var(--c-label);
-      margin-bottom: var(--sp-1);
-    }
-    .password-text p {
-      color: var(--c-label-2);
-      font-size: 14px;
-    }
-    @media (min-width: 640px) {
-      .password-banner {
-        flex-direction: row;
-        align-items: center;
-        justify-content: space-between;
-        padding: var(--sp-5) var(--sp-6);
-      }
-      .password-banner .copy-btn {
-        flex-shrink: 0;
-      }
-    }
-
-    /* ---------- 文件行（App Store 下载行风格） ---------- */
-    .file-card {
-      display: flex;
-      flex-direction: column;
-      align-items: stretch;
-      gap: var(--sp-4);
-      background: var(--c-surface);
-      border-radius: var(--r-lg);
-      padding: var(--sp-4);
-      box-shadow: var(--sh-1);
-      min-width: 0;
-    }
-    .file-meta {
-      display: flex;
-      align-items: center;
-      gap: var(--sp-3);
-      flex: 1;
-      min-width: 0;
-    }
-    .file-icon {
-      width: 52px;
-      height: 52px;
-      border-radius: var(--r-md);
-      background: var(--c-bg);
-      border: 1px solid var(--c-separator);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 26px;
-      flex-shrink: 0;
-    }
-    .file-details {
-      min-width: 0;
-      flex: 1;
-    }
-    .file-details h2,
-    .sub-header h2 {
-      font-size: 17px;
-      font-weight: 600;
-      letter-spacing: -0.01em;
-      line-height: 1.3;
-      color: var(--c-label);
-      margin-bottom: var(--sp-2);
-      overflow-wrap: anywhere;
-    }
-    .file-tags {
-      display: flex;
-      align-items: center;
-      gap: var(--sp-1) var(--sp-2);
-      flex-wrap: wrap;
-    }
-    .tag {
-      font-size: 12px;
-      font-weight: 500;
-      line-height: 1.4;
-      padding: 2px var(--sp-2);
-      border-radius: 6px;
-      background: var(--c-fill);
-      color: var(--c-label-2);
-    }
-    .tag.speed {
-      background: rgba(36, 138, 61, 0.1);
-      color: var(--c-success);
-    }
-    .tag.accent {
-      background: var(--c-accent-soft);
-      color: var(--c-accent);
-    }
-    .download-group {
-      display: flex;
-      flex-direction: column;
-      gap: var(--sp-2);
-      padding-top: var(--sp-4);
-      border-top: 1px solid var(--c-separator);
-    }
-
-    /* 主操作：实心蓝色胶囊（GET 风格） */
-    .download-action {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: var(--sp-2);
-      min-height: var(--tap);
-      padding: var(--sp-2) var(--sp-5);
-      background: var(--c-accent);
-      color: #ffffff;
-      text-decoration: none;
-      font-weight: 600;
-      font-size: 15px;
-      line-height: 1.25;
-      text-align: center;
-      border: none;
-      border-radius: var(--r-pill);
-      flex-shrink: 0;
-    }
-    .download-action:active {
-      background: var(--c-accent-press);
-    }
-    .download-action.sub-line {
-      background: var(--c-fill);
-      color: var(--c-accent);
-      font-weight: 500;
-    }
-    .download-action.sub-line:active {
-      background: var(--c-fill-strong);
-    }
-    @media (hover: hover) {
-      .download-action:hover {
-        background: var(--c-accent-hover);
-        color: #ffffff;
-      }
-      .download-action.sub-line:hover {
-        background: var(--c-fill-strong);
-        color: var(--c-accent);
-      }
-    }
-    @media (min-width: 640px) {
-      .file-card {
-        flex-direction: row;
-        align-items: center;
-        justify-content: space-between;
-        padding: var(--sp-5) var(--sp-6);
-      }
-      .download-group {
-        flex-direction: row;
-        flex-wrap: wrap;
-        justify-content: flex-end;
-        padding-top: 0;
-        border-top: none;
-        flex-shrink: 0;
-        max-width: 50%;
-      }
-      .file-card.sub-card {
-        flex-direction: column;
-        align-items: stretch;
-      }
-    }
-
-    /* ---------- 订阅卡片 ---------- */
-    .sub-card {
-      flex-direction: column;
-      align-items: stretch;
-      gap: var(--sp-4);
-    }
-    .sub-header {
-      display: flex;
-      align-items: center;
-      gap: var(--sp-3);
-      min-width: 0;
-    }
-    .sub-header > div:last-child {
-      min-width: 0;
-    }
-
-    /* 解锁前的验证区 */
-    .sub-locked-section {
-      display: flex;
-      flex-direction: column;
-      gap: var(--sp-3);
-      background: var(--c-bg);
-      border-radius: var(--r-md);
-      padding: var(--sp-3);
-    }
-    .sub-locked-form {
-      display: flex;
-      align-items: stretch;
-      gap: var(--sp-2);
-      flex-wrap: wrap;
-    }
-    .unlock-input {
-      flex: 1 1 180px;
-      min-width: 0;
-      min-height: var(--tap);
-      padding: var(--sp-2) var(--sp-4);
-      border-radius: var(--r-sm);
-      border: 1px solid var(--c-separator);
-      background: var(--c-surface);
-      color: var(--c-label);
-      font-size: 16px; /* ≥16px 防止 iOS 聚焦缩放 */
-      outline: none;
-      transition: border-color var(--dur-1) var(--ease), box-shadow var(--dur-1) var(--ease);
-    }
-    .unlock-input::placeholder {
-      color: var(--c-label-3);
-    }
-    .unlock-input:focus {
-      border-color: var(--c-accent);
-      box-shadow: 0 0 0 3px var(--c-accent-soft);
-    }
-    .unlock-btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      min-height: var(--tap);
-      padding: var(--sp-2) var(--sp-5);
-      border-radius: var(--r-pill);
-      border: none;
-      background: var(--c-accent);
-      color: #ffffff;
-      font-weight: 600;
-      font-size: 15px;
-      flex-shrink: 0;
-    }
-    .unlock-btn:active {
-      background: var(--c-accent-press);
-    }
-    @media (hover: hover) {
-      .unlock-btn:hover {
-        background: var(--c-accent-hover);
-      }
-    }
-    @media (max-width: 420px) {
-      .sub-locked-form .unlock-btn {
-        flex: 1 1 100%;
-      }
-    }
-
-    /* 解锁后的内容区 */
-    .sub-unlocked-section {
-      display: flex;
-      flex-direction: column;
-      gap: var(--sp-4);
-      width: 100%;
-      min-width: 0;
-    }
-
-    /* 分段控件 */
-    .airport-tabs {
-      display: flex;
-      gap: 2px;
-      padding: 2px;
-      background: var(--c-fill);
-      border-radius: var(--r-sm);
-    }
-    .airport-tab-btn {
-      flex: 1 1 0;
-      min-width: 0;
-      min-height: var(--tap);
-      padding: var(--sp-1) var(--sp-2);
-      border-radius: var(--r-xs);
-      font-size: 13px;
-      font-weight: 500;
-      line-height: 1.3;
-      color: var(--c-label);
-      background: transparent;
-      border: none;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      gap: var(--sp-1);
-    }
-    .airport-tab-btn.active {
-      background: var(--c-surface);
-      font-weight: 600;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 1px rgba(0, 0, 0, 0.04);
-    }
-    @media (hover: hover) {
-      .airport-tab-btn:not(.active):hover {
-        background: rgba(255, 255, 255, 0.5);
-      }
-    }
-
-    /* 推荐/中继按钮 = 主操作 */
-    .copy-btn.btn-relay {
-      background: var(--c-accent);
-      color: #ffffff;
-    }
-    .copy-btn.btn-relay:active {
-      background: var(--c-accent-press);
-    }
-    @media (hover: hover) {
-      .copy-btn.btn-relay:hover {
-        background: var(--c-accent-hover);
-      }
-    }
-
-    /* 指标看板 */
-    .sub-metrics-grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: var(--sp-2);
-      width: 100%;
-    }
-    @media (min-width: 640px) {
-      .sub-metrics-grid {
-        grid-template-columns: repeat(4, minmax(0, 1fr));
-      }
-    }
-    .metric-item {
-      background: var(--c-bg);
-      border-radius: var(--r-sm);
-      padding: var(--sp-3);
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-      min-width: 0;
-    }
-    .metric-label {
-      font-size: 12px;
-      color: var(--c-label-2);
-      font-weight: 500;
-    }
-    .metric-val {
-      font-size: 15px;
-      color: var(--c-label);
-      font-weight: 600;
-      font-variant-numeric: tabular-nums;
-      overflow-wrap: anywhere;
-    }
-    .metric-val.highlight {
-      color: var(--c-accent);
-    }
-    .metric-val.success {
-      color: var(--c-success);
-    }
-    .metric-val.warning {
-      color: var(--c-warning);
-    }
-
-    .btn-refresh {
-      color: var(--c-label);
-    }
-
-    .sub-actions {
-      display: flex;
-      flex-direction: column;
-      gap: var(--sp-2);
-    }
-    @media (min-width: 640px) {
-      .sub-actions {
-        flex-direction: row;
-        flex-wrap: wrap;
-        align-items: center;
-      }
-    }
-
-    .sub-hint-text {
-      font-size: 13px;
-      color: var(--c-label-2);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 0 var(--sp-3);
-    }
-    .sub-hint-text #subTip {
-      width: 100%;
-      color: var(--c-label-3);
-      line-height: 1.45;
-    }
-    .text-link {
-      display: inline-flex;
-      align-items: center;
-      min-height: var(--tap);
-      color: var(--c-accent);
-      text-decoration: none;
-      font-size: 13px;
-      font-weight: 500;
-      cursor: pointer;
-      border-radius: var(--r-xs);
-    }
-    .text-link:active {
-      opacity: 0.6;
-    }
-    @media (hover: hover) {
-      .text-link:hover {
-        text-decoration: underline;
-      }
-    }
-    .subscribe-box {
-      width: 100%;
-      background: var(--c-bg);
-      border: 1px solid var(--c-separator);
-      border-radius: var(--r-sm);
-      padding: var(--sp-3) var(--sp-4);
-      overflow-wrap: anywhere;
-      word-break: break-all;
-      font-family: var(--font-mono);
-      font-size: 13px;
-      color: var(--c-label);
-      line-height: 1.5;
-      user-select: all;
-      -webkit-user-select: all;
-    }
-    .subscribe-box:empty {
-      display: none;
-    }
-
-    /* ---------- Toast ---------- */
-    .toast {
-      position: fixed;
-      bottom: calc(var(--sp-6) + var(--safe-bottom));
-      left: 50%;
-      transform: translateX(-50%) translateY(16px);
-      width: max-content;
-      max-width: calc(100% - var(--sp-8));
-      background: rgba(29, 29, 31, 0.92);
-      -webkit-backdrop-filter: saturate(180%) blur(20px);
-      backdrop-filter: saturate(180%) blur(20px);
-      color: #ffffff;
-      font-size: 14px;
-      font-weight: 500;
-      line-height: 1.4;
-      text-align: center;
-      padding: var(--sp-3) var(--sp-5);
-      border-radius: var(--r-pill);
-      box-shadow: var(--sh-3);
-      opacity: 0;
-      transition: opacity var(--dur-2) var(--ease-out), transform var(--dur-2) var(--ease-out);
-      z-index: 1100;
-      pointer-events: none;
-    }
-    .toast.show {
-      transform: translateX(-50%) translateY(0);
-      opacity: 1;
-    }
-
-    /* ---------- iOS 共享 Apple ID 与客户端 ---------- */
-    .apple-id-card {
-      background: var(--c-surface-2);
-      border: 1px solid var(--c-separator);
-      border-radius: var(--r-md);
-      padding: var(--sp-4);
-      display: flex;
-      flex-direction: column;
-      gap: var(--sp-4);
-    }
-    .apple-id-header {
-      display: flex;
-      align-items: flex-start;
-      gap: var(--sp-3);
-    }
-    .apple-id-icon {
-      width: 40px;
-      height: 40px;
-      border-radius: var(--r-sm);
-      background: var(--c-surface);
-      border: 1px solid var(--c-separator);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 20px;
-      flex-shrink: 0;
-    }
-    .apple-id-body {
-      flex: 1;
-      min-width: 0;
-    }
-    .apple-id-title-row {
-      display: flex;
-      align-items: center;
-      gap: var(--sp-1) var(--sp-2);
-      flex-wrap: wrap;
-    }
-    .apple-id-title-row h3 {
-      color: var(--c-label);
-      font-size: 16px;
-      font-weight: 600;
-      letter-spacing: -0.01em;
-    }
-    .apple-id-desc {
-      color: var(--c-label-2);
-      font-size: 13px;
-      margin-top: var(--sp-1);
-      line-height: 1.45;
-    }
-    .apple-warning-box {
-      background: rgba(215, 0, 21, 0.05);
-      border-radius: var(--r-sm);
-      padding: var(--sp-3) var(--sp-4);
-      font-size: 13px;
-    }
-    .warning-title {
-      color: var(--c-danger);
-      font-weight: 600;
-      margin-bottom: var(--sp-1);
-      display: flex;
-      align-items: center;
-      gap: var(--sp-1);
-    }
-    .warning-list {
-      margin: 0;
-      padding-left: 1.2em;
-      color: var(--c-label);
-      line-height: 1.55;
-    }
-    .warning-list li + li {
-      margin-top: 2px;
-    }
-    .warning-list strong {
-      font-weight: 600;
-    }
-
-    /* 凭据：iOS 分组列表 */
-    .apple-creds-grid {
-      display: flex;
-      flex-direction: column;
-      background: var(--c-surface);
-      border: 1px solid var(--c-separator);
-      border-radius: var(--r-sm);
-      overflow: hidden;
-    }
-    .cred-item {
-      padding: var(--sp-2) var(--sp-2) var(--sp-2) var(--sp-4);
-      display: flex;
-      flex-direction: column;
-      gap: 0;
-      min-width: 0;
-    }
-    .cred-item + .cred-item {
-      border-top: 1px solid var(--c-separator);
-    }
-    .cred-label {
-      font-size: 12px;
-      color: var(--c-label-2);
-      font-weight: 500;
-    }
-    .cred-val-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: var(--sp-2);
-      min-width: 0;
-    }
-    .cred-text {
-      font-family: var(--font-mono);
-      font-size: 14px;
-      font-weight: 500;
-      color: var(--c-label);
-      min-width: 0;
-      overflow-wrap: anywhere;
-      word-break: break-all;
-    }
-    .mini-copy-btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      min-height: var(--tap);
-      min-width: var(--tap);
-      padding: 0 var(--sp-3);
-      border-radius: var(--r-pill);
-      border: none;
-      background: transparent;
-      color: var(--c-accent);
-      font-size: 14px;
-      font-weight: 500;
-      flex-shrink: 0;
-    }
-    .mini-copy-btn:active {
-      background: var(--c-fill);
-    }
-    @media (hover: hover) {
-      .mini-copy-btn:hover {
-        background: var(--c-accent-soft);
-      }
-    }
-
-    .apps-section-title {
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--c-label-2);
-      margin-bottom: var(--sp-2);
-    }
-    .apps-grid {
-      display: flex;
-      flex-direction: column;
-      background: var(--c-surface);
-      border: 1px solid var(--c-separator);
-      border-radius: var(--r-sm);
-      overflow: hidden;
-    }
-    .app-item {
-      padding: var(--sp-3) var(--sp-4);
-      display: flex;
-      flex-direction: column;
-      gap: var(--sp-1);
-      min-width: 0;
-    }
-    .app-item + .app-item {
-      border-top: 1px solid var(--c-separator);
-    }
-    .app-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-direction: row-reverse;
-      gap: var(--sp-2);
-      flex-wrap: wrap;
-    }
-    .app-name {
-      color: var(--c-label);
-      font-size: 15px;
-      font-weight: 600;
-    }
-    .app-badge {
-      font-size: 11px;
-      padding: 2px var(--sp-2);
-      border-radius: var(--r-pill);
-      font-weight: 500;
-    }
-    .app-badge.clash {
-      background: var(--c-accent-soft);
-      color: var(--c-accent);
-    }
-    .app-badge.singbox {
-      background: rgba(36, 138, 61, 0.1);
-      color: var(--c-success);
-    }
-    .app-desc {
-      color: var(--c-label-2);
-      font-size: 13px;
-      margin: 0;
-      line-height: 1.45;
-    }
-    .apple-guide-step {
-      font-size: 13px;
-      color: var(--c-label);
-      background: var(--c-accent-soft);
-      border-radius: var(--r-sm);
-      padding: var(--sp-3) var(--sp-4);
-      line-height: 1.55;
-    }
-    .apple-guide-step strong {
-      font-weight: 600;
-    }
-
-    /* ---------- 绑定账号模态窗（移动端底部弹出） ---------- */
-    #bindModal {
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.32);
-      z-index: 1000;
-      align-items: flex-end;
-      justify-content: center;
-      padding: var(--sp-2) calc(var(--sp-2) + var(--safe-right)) calc(var(--sp-2) + var(--safe-bottom)) calc(var(--sp-2) + var(--safe-left));
-    }
-    .modal-sheet {
-      background: var(--c-surface);
-      border-radius: var(--r-lg);
-      padding: var(--sp-6) var(--sp-5) var(--sp-5);
-      max-width: 420px;
-      width: 100%;
-      max-height: 100%;
-      overflow-y: auto;
-      box-shadow: var(--sh-3);
-    }
-    .modal-sheet h3 {
-      color: var(--c-label);
-      margin-bottom: var(--sp-2);
-      font-size: 20px;
-      font-weight: 700;
-      letter-spacing: -0.01em;
-    }
-    .modal-desc {
-      color: var(--c-label-2);
-      font-size: 14px;
-      margin-bottom: var(--sp-5);
-      line-height: 1.45;
-    }
-    .modal-sheet .unlock-input {
-      width: 100%;
-      display: block;
-      margin-bottom: var(--sp-3);
-    }
-    .modal-actions {
-      display: flex;
-      gap: var(--sp-2);
-      margin-top: var(--sp-2);
-    }
-    .modal-actions > button {
-      flex: 1 1 0;
-    }
-    @media (min-width: 640px) {
-      #bindModal {
-        align-items: center;
-        padding: var(--sp-4);
-      }
-      .modal-actions {
-        justify-content: flex-end;
-      }
-      .modal-actions > button {
-        flex: 0 0 auto;
-      }
-    }
-  </style>
+  <link rel="stylesheet" href="./src/styles/base.css">
+  <link rel="stylesheet" href="./src/styles/pan.css">
 </head>
 <body>
   <div class="header">
@@ -930,7 +29,7 @@
           <p>主通道直连中继秒下，免跳转、免输入密码；如遇网络波动，可使用备用蓝奏云（密码：pass）</p>
         </div>
       </div>
-      <button class="copy-btn" onclick="copyText('pass', '备用网盘密码 pass')">
+      <button type="button" class="copy-btn" id="copyLanzouPassBtn">
         📋 复制备用密码 (pass)
       </button>
     </div>
@@ -982,7 +81,7 @@
       </div>
     </div>
 
-    <!-- 资源 2: clashverge (Windows 电脑) -->
+    <!-- 资源 3: clashverge (Windows 电脑) -->
     <div class="file-card">
       <div class="file-meta">
         <div class="file-icon">💻</div>
@@ -1017,27 +116,25 @@
         </div>
       </div>
 
-      <!-- 状态 A：未解锁时（仅显示验证框，隐藏真实链接与复制按钮） -->
+      <!-- 状态 A：未解锁时 -->
       <div class="sub-locked-section" id="subLockedSection">
-        <form class="sub-locked-form" onsubmit="unlockSubscribe(event)">
+        <form class="sub-locked-form" id="subUnlockForm">
           <input type="password" id="unlockInput" class="unlock-input" placeholder="请输入访问密码解锁" autocomplete="off">
-          <button type="submit" class="unlock-btn">🔓 解锁访问</button>
+          <button type="submit" id="unlockSubmitBtn" class="unlock-btn">🔓 解锁访问</button>
         </form>
       </div>
 
-      <!-- 状态 B：解锁后（展示完整链接与一键复制按钮） -->
+      <!-- 状态 B：解锁后 -->
       <div class="sub-unlocked-section" id="subUnlockedSection" style="display: none;">
-        <!-- 双机场 Tab 选项卡 -->
         <div class="airport-tabs">
-          <button class="airport-tab-btn active" id="tabDjjc" onclick="switchAirportTab('djjc')">
+          <button type="button" class="airport-tab-btn active" id="tabDjjc">
             ✈️ 顶级机场 (200GB 长期有效)
           </button>
-          <button class="airport-tab-btn" id="tabVpn07" onclick="switchAirportTab('vpn07')">
+          <button type="button" class="airport-tab-btn" id="tabVpn07">
             🚀 VPN07 (250GB 月付)
           </button>
         </div>
 
-        <!-- 套餐微看板 -->
         <div class="sub-metrics-grid" id="subMetricsGrid">
           <div class="metric-item">
             <span class="metric-label">当前套餐</span>
@@ -1060,24 +157,24 @@
         <div class="subscribe-box" id="subscribeText">加载中...</div>
 
         <div class="sub-actions">
-          <button class="copy-btn btn-relay" onclick="copyRelaySubscribe()">
+          <button type="button" class="copy-btn btn-relay" id="copyRelayBtn">
             🌟 📋 复制私人永久直链 (推荐)
           </button>
-          <button class="copy-btn" onclick="copyRawSubscribe()">
+          <button type="button" class="copy-btn" id="copyRawBtn">
             🌐 复制官方原生直链
           </button>
-          <button class="copy-btn btn-refresh" id="btnRefreshSub" onclick="fetchSubscription(currentAirport, true)">
+          <button type="button" class="copy-btn btn-refresh" id="btnRefreshSub">
             🔄 强制刷新最新订阅
           </button>
         </div>
 
         <div class="sub-hint-text">
           <span id="subSyncTime">⏱️ 最近拉取：刚刚</span>
-          <a href="javascript:void(0)" id="bindAccountLink" class="text-link" onclick="openBindModal()">⚙️ 绑定/修改账号凭据</a>
+          <button type="button" id="bindAccountLink" class="text-link">⚙️ 绑定/修改账号凭据</button>
           <span id="subTip">💡 提示：私人永久直链支持多域名自动探活自愈，导入 Clash / 手机客户端后终身免改链接</span>
         </div>
 
-        <!-- iOS 共享美区 Apple ID 与免翻墙下载指南 (仅密码解锁后可见) -->
+        <!-- iOS 共享美区 Apple ID 与客户端（由云端 /api/subscription 动态下发） -->
         <div class="apple-id-card">
           <div class="apple-id-header">
             <div class="apple-id-icon">🍎</div>
@@ -1092,7 +189,6 @@
             </div>
           </div>
 
-          <!-- 安全防锁机红字警告 -->
           <div class="apple-warning-box">
             <div class="warning-title">⚠️ 防锁机安全警告（必读）：</div>
             <ul class="warning-list">
@@ -1102,13 +198,12 @@
             </ul>
           </div>
 
-          <!-- 账号密码与一键复制 -->
           <div class="apple-creds-grid">
             <div class="cred-item">
               <span class="cred-label">👤 美区 Apple ID 账号</span>
               <div class="cred-val-row">
-                <span class="cred-text" id="appleIdUserText">JohnStephenson4172@hotmail.com</span>
-                <button type="button" class="mini-copy-btn" onclick="copyText('JohnStephenson4172@hotmail.com', '美区 Apple ID 账号')">
+                <span class="cred-text" id="appleIdUserText">云端拉取中...</span>
+                <button type="button" class="mini-copy-btn" id="copyAppleIdUserBtn">
                   📋 复制
                 </button>
               </div>
@@ -1116,15 +211,14 @@
             <div class="cred-item">
               <span class="cred-label">🔑 登录密码</span>
               <div class="cred-val-row">
-                <span class="cred-text" id="appleIdPwdText">Snww#0918</span>
-                <button type="button" class="mini-copy-btn" onclick="copyText('Snww#0918', 'Apple ID 密码')">
+                <span class="cred-text" id="appleIdPwdText">云端拉取中...</span>
+                <button type="button" class="mini-copy-btn" id="copyAppleIdPwdBtn">
                   📋 复制
                 </button>
               </div>
             </div>
           </div>
 
-          <!-- 推荐免费客户端（Clash 内核 + Sing-box 内核各推荐一款） -->
           <div class="apple-apps-section">
             <div class="apps-section-title">
               📦 推荐免费客户端（登录美区 App Store 后直接搜索下载）：
@@ -1147,7 +241,6 @@
             </div>
           </div>
 
-          <!-- 极简使用流程 -->
           <div class="apple-guide-step">
             💡 <strong>配置三步法</strong>：① App Store 登录下载 Karing 或 sing-box ➔ ② 退出美区账号换回自己 ID ➔ ③ 返回本页复制上方的「🌟 复制私人永久直链」，在软件中导入即可！
           </div>
@@ -1157,282 +250,29 @@
   </div>
 
   <!-- 绑定/修改账号与 Token 模态窗 -->
-  <div id="bindModal" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="bindModalTitle" onclick="if(event.target===this)closeBindModal()">
+  <div id="bindModal" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="bindModalTitle">
     <div class="modal-sheet">
       <h3 id="bindModalTitle">⚙️ 配置账号凭据</h3>
       <p id="bindModalDesc" class="modal-desc">凭证将安全保存在 Cloudflare D1 边缘数据库中，用于自动化同步与监控。</p>
-      
-      <!-- VPN07 表单 -->
+
       <div id="formVpn07">
         <input type="text" id="bindEmail" class="unlock-input" placeholder="输入 VPN07 官网登录邮箱" autocomplete="off">
         <input type="password" id="bindPassword" class="unlock-input" placeholder="输入 VPN07 官网登录密码" autocomplete="off">
       </div>
 
-      <!-- 顶级机场 表单 -->
       <div id="formDjjc" style="display: none;">
         <input type="text" id="bindDjjcToken" class="unlock-input" placeholder="粘贴顶级机场完整订阅直链 或 32位Token" autocomplete="off">
       </div>
 
       <div class="modal-actions">
-        <button type="button" onclick="closeBindModal()" class="download-action sub-line">取消</button>
-        <button type="button" onclick="submitBindAccount()" class="unlock-btn">保存并立即拉取</button>
+        <button type="button" id="bindCancelBtn" class="download-action sub-line">取消</button>
+        <button type="button" id="bindSubmitBtn" class="unlock-btn">保存并立即拉取</button>
       </div>
     </div>
   </div>
 
   <div class="toast" id="toast">✅ 已复制到剪贴板！</div>
 
-  <script>
-    // 真实订阅地址与访问密码保护
-    const ACCESS_PASSWORD = "227929";
-    const MEMORY_MS = 5 * 60 * 1000; // 5分钟记忆时间 (300,000 毫秒)
-
-    let currentAirport = localStorage.getItem('selected_airport') || 'djjc';
-    let airportCache = {
-      djjc: { rawUrl: "https://dash.djjc.cfd/api/v1/client/subscribe?token=4bc2e53e3df5a9a50e1cd626e72f0c06", relayUrl: "/api/sub?type=djjc" },
-      vpn07: { rawUrl: "", relayUrl: "/api/sub?type=vpn07" }
-    };
-    let isFetchingSub = false;
-
-    // 检查 5 分钟会话记忆
-    checkSessionMemory();
-
-    function checkSessionMemory() {
-      const expireTime = localStorage.getItem('sub_unlock_expire');
-      if (expireTime && Date.now() < parseInt(expireTime, 10)) {
-        showUnlockedUI();
-      } else {
-        localStorage.removeItem('sub_unlock_expire');
-        showLockedUI();
-      }
-    }
-
-    function unlockSubscribe(e) {
-      if (e) e.preventDefault();
-      const pwd = document.getElementById('unlockInput').value.trim();
-      if (pwd === ACCESS_PASSWORD) {
-        localStorage.setItem('sub_unlock_expire', (Date.now() + MEMORY_MS).toString());
-        showUnlockedUI();
-        showToast("🎉 密码正确！已解锁双机场订阅中枢（5分钟内免输）");
-      } else {
-        showToast("❌ 密码错误，请重新输入");
-        const input = document.getElementById('unlockInput');
-        input.value = '';
-        input.focus();
-      }
-    }
-
-    function switchAirportTab(type) {
-      currentAirport = type;
-      localStorage.setItem('selected_airport', type);
-
-      const tabDjjc = document.getElementById('tabDjjc');
-      const tabVpn07 = document.getElementById('tabVpn07');
-      if (type === 'djjc') {
-        tabDjjc.classList.add('active');
-        tabVpn07.classList.remove('active');
-      } else {
-        tabDjjc.classList.remove('active');
-        tabVpn07.classList.add('active');
-      }
-
-      // 呈现已记录的直链
-      const activeData = airportCache[type];
-      const relayFullUrl = `${window.location.origin}${activeData.relayUrl}`;
-      document.getElementById('subscribeText').textContent = relayFullUrl;
-
-      fetchSubscription(type, false);
-    }
-
-    async function fetchSubscription(type, forceRefresh = false) {
-      if (isFetchingSub) return;
-      isFetchingSub = true;
-      const refreshBtn = document.getElementById('btnRefreshSub');
-      if (refreshBtn) {
-        refreshBtn.disabled = true;
-        refreshBtn.textContent = "⏳ 同步中...";
-      }
-
-      try {
-        const url = `/api/subscription?type=${type}&pwd=${encodeURIComponent(ACCESS_PASSWORD)}${forceRefresh ? '&refresh=true' : ''}`;
-        const res = await fetch(url);
-        if (res.ok) {
-          const data = await res.json();
-          if (data.subscribe_url) {
-            airportCache[type].rawUrl = data.subscribe_url;
-          }
-          if (data.relay_url) {
-            airportCache[type].relayUrl = data.relay_url;
-          }
-          
-          if (currentAirport === type) {
-            const relayFullUrl = `${window.location.origin}${airportCache[type].relayUrl}`;
-            document.getElementById('subscribeText').textContent = relayFullUrl;
-
-            if (data.plan_name) document.getElementById('metricPlan').textContent = data.plan_name;
-            if (data.traffic) {
-              document.getElementById('metricRemaining').textContent = data.traffic.remaining || "--";
-              document.getElementById('metricUsedTotal').textContent = `${data.traffic.used || "0.00 GB"} / ${data.traffic.total || "--"}`;
-            }
-            if (data.expired_date_str) document.getElementById('metricExpire').textContent = data.expired_date_str;
-
-            const now = new Date();
-            const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
-            document.getElementById('subSyncTime').textContent = `⏱️ 同步时间：${timeStr} (${data.from_cache ? '云端缓存' : '实时探活'})`;
-          }
-
-          if (forceRefresh) {
-            showToast(data.warning || `🎉 已成功同步 ${data.airport_name || ''} 最新配置与流量！`);
-          }
-        }
-      } catch (e) {
-        console.warn("拉取云端订阅失败:", e);
-        if (forceRefresh) {
-          showToast("⚠️ 网络轻微波动，已为您保留当前可用订阅");
-        }
-      } finally {
-        isFetchingSub = false;
-        if (refreshBtn) {
-          refreshBtn.disabled = false;
-          refreshBtn.textContent = "🔄 强制刷新最新订阅";
-        }
-      }
-    }
-
-    function showUnlockedUI() {
-      document.getElementById('subLockedSection').style.display = 'none';
-      document.getElementById('subUnlockedSection').style.display = 'flex';
-      switchAirportTab(currentAirport);
-    }
-
-    function showLockedUI() {
-      document.getElementById('subLockedSection').style.display = 'flex';
-      document.getElementById('subUnlockedSection').style.display = 'none';
-      document.getElementById('subscribeText').textContent = '';
-    }
-
-    function copyRelaySubscribe() {
-      const activeData = airportCache[currentAirport];
-      const relayFullUrl = `${window.location.origin}${activeData.relayUrl}`;
-      copyText(relayFullUrl, '私人永久固定直链');
-    }
-
-    function copyRawSubscribe() {
-      const activeData = airportCache[currentAirport];
-      copyText(activeData.rawUrl, '官方原生订阅直链');
-    }
-
-    function copyText(text, label) {
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(text).then(() => showToast(`✅ ${label} 已复制到剪贴板！`));
-      } else {
-        const input = document.createElement('input');
-        input.value = text;
-        document.body.appendChild(input);
-        input.select();
-        document.execCommand('copy');
-        document.body.removeChild(input);
-        showToast(`✅ ${label} 已复制到剪贴板！`);
-      }
-    }
-
-    function openBindModal() {
-      const isVpn07 = currentAirport === 'vpn07';
-      document.getElementById('bindModalTitle').textContent = isVpn07 ? "⚙️ 绑定 VPN07 官网账号" : "⚙️ 绑定/修改顶级机场 Token";
-      document.getElementById('bindModalDesc').textContent = isVpn07 
-        ? "凭据将安全保存在 Cloudflare D1 边缘数据库中，云端自动登录并抓取专属节点。" 
-        : "可直接粘贴完整订阅直链或 32 位 Token，云端中继将自动以此 Token 进行多域名探活自愈。";
-      document.getElementById('formVpn07').style.display = isVpn07 ? "block" : "none";
-      document.getElementById('formDjjc').style.display = isVpn07 ? "none" : "block";
-      document.getElementById('bindModal').style.display = 'flex';
-    }
-
-    function closeBindModal() {
-      document.getElementById('bindModal').style.display = 'none';
-    }
-
-    async function submitBindAccount() {
-      if (currentAirport === 'vpn07') {
-        const email = document.getElementById('bindEmail').value.trim();
-        const password = document.getElementById('bindPassword').value.trim();
-        if (!email || !password) {
-          showToast("⚠️ 请输入官网邮箱和密码");
-          return;
-        }
-        showToast("⏳ 正在保存并向云端验证...");
-        try {
-          const res = await fetch('/api/subscription', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              pwd: ACCESS_PASSWORD,
-              type: 'vpn07',
-              action: 'set_credentials',
-              email: email,
-              vpn_password: password
-            })
-          });
-          const json = await res.json();
-          if (json.success) {
-            closeBindModal();
-            showToast("🎉 VPN07 凭证保存成功！正在拉取最新订阅...");
-            fetchSubscription('vpn07', true);
-          } else {
-            showToast("❌ " + (json.message || "保存失败"));
-          }
-        } catch (e) {
-          showToast("❌ 请求异常: " + e.message);
-        }
-      } else {
-        // 顶级机场 token 绑定
-        let rawInput = document.getElementById('bindDjjcToken').value.trim();
-        if (!rawInput) {
-          showToast("⚠️ 请输入订阅直链或 Token");
-          return;
-        }
-        let token = rawInput;
-        if (rawInput.includes("token=")) {
-          const m = rawInput.match(/token=([a-zA-Z0-9_-]+)/);
-          if (m && m[1]) token = m[1];
-        }
-        showToast("⏳ 正在更新顶级机场 Token...");
-        try {
-          const res = await fetch('/api/subscription', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              pwd: ACCESS_PASSWORD,
-              type: 'djjc',
-              action: 'set_djjc_token',
-              token: token
-            })
-          });
-          const json = await res.json();
-          if (json.success) {
-            closeBindModal();
-            showToast("🎉 顶级机场 Token 更新成功！正在探活最新节点...");
-            fetchSubscription('djjc', true);
-          } else {
-            showToast("❌ " + (json.message || "保存失败"));
-          }
-        } catch (e) {
-          showToast("❌ 请求异常: " + e.message);
-        }
-      }
-    }
-
-    function showToast(msg) {
-      const toast = document.getElementById('toast');
-      toast.textContent = msg;
-      toast.classList.add('show');
-      setTimeout(() => {
-        toast.classList.remove('show');
-      }, 2500);
-    }
-
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') closeBindModal();
-    });
-  </script>
+  <script type="module" src="./src/pages/pan/main.ts"></script>
 </body>
 </html>

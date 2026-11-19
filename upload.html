@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#f5f5f7">
+  <title>投递视频 - 视界画廊</title>
+  <link rel="stylesheet" href="./src/styles/base.css">
+  <link rel="stylesheet" href="./src/styles/upload.css">
+</head>
+<body>
+  <header class="header">
+    <div class="title-group">
+      <h1>投递视频</h1>
+      <p>通过 Cloudflare 边缘节点中继直传 GitHub Releases，并自动登记至 D1 画廊数据库</p>
+    </div>
+    <a href="./gallery.html" class="back-btn">← 返回图库</a>
+  </header>
+
+  <main class="upload-shell">
+    <section class="panel-card">
+      <div class="drop-zone" id="dropZone">
+        <input type="file" id="videoFileInput" class="file-input-hidden" accept="video/*">
+        <div class="drop-icon">🎬</div>
+        <div class="drop-title">点击从手机相册选取视频，或拖拽到此处</div>
+        <div class="drop-sub">支持 MP4 / MOV / WebM 原画直传</div>
+      </div>
+
+      <div class="preview-box" id="previewBox">
+        <video id="previewVideo" controls playsinline muted></video>
+        <div class="file-meta-bar">
+          <span id="metaName">--</span>
+          <span id="metaSize">--</span>
+          <span id="metaDuration">--</span>
+        </div>
+      </div>
+
+      <div class="field-group">
+        <label for="videoTitleInput">视频标题</label>
+        <input type="text" id="videoTitleInput" class="field-input" placeholder="例如：海边日落航拍 4K" maxlength="80">
+      </div>
+
+      <div class="field-group">
+        <label for="ghTokenInput">GitHub Releases Token（可选）</label>
+        <input type="password" id="ghTokenInput" class="field-input" placeholder="若已在 Cloudflare 配置 GITHUB_MEDIA_TOKEN 可留空" autocomplete="off">
+        <span class="field-hint">仅保存在当前浏览器本地，留空时将自动使用服务端环境变量中的 GITHUB_MEDIA_TOKEN。</span>
+      </div>
+
+      <div class="progress-wrap" id="progressWrap">
+        <div class="progress-track">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+        <div class="progress-text">
+          <span id="progressLabel">准备上传...</span>
+          <span id="progressPct">0%</span>
+        </div>
+      </div>
+
+      <button type="button" id="uploadSubmitBtn" class="submit-btn" disabled>🚀 开始直传上架</button>
+
+      <div class="result-card" id="resultCard" role="status" aria-live="polite">
+        <div class="result-title" id="resultTitle"></div>
+        <p id="resultDesc" style="font-size: 13px; color: var(--c-label-2);"></p>
+        <a href="./gallery.html" id="resultGalleryLink" class="result-link">前往画廊视频专区查看 →</a>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="./src/pages/upload/main.ts"></script>
+</body>
+</html>

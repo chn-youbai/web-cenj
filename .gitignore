@@ -10,9 +10,13 @@ __pycache__/
 
 
 .vercel
-.env*
 data/seed_*.sql
 data/cet*.json
+
+# Node & Vite build
+node_modules/
+dist/
+coverage/
 
 # Photo assets migrated to web-cenj-photos CDN
 p/
