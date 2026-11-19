@@ -1,0 +1,153 @@
+/* ==========================================================================
+   web-cenj · 全站基础设计系统 (Design Tokens + 安全的全局细节优化)
+   设计方向：Apple 式克制、清晰层级、系统字体、柔和材质、44px 触控规范
+   注意：本文件只提供变量与无侵入的全局细节，不改变任何业务结构。
+   ========================================================================== */
+
+:root {
+  /* 字体 */
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display",
+    "PingFang SC", "Hiragino Sans GB", "Helvetica Neue", "Microsoft YaHei", Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+
+  /* 颜色 · 浅色 */
+  --c-bg: #f5f5f7;
+  --c-surface: #ffffff;
+  --c-surface-2: #fbfbfd;
+  --c-fill: rgba(118, 118, 128, 0.12);
+  --c-fill-strong: rgba(118, 118, 128, 0.2);
+  --c-separator: rgba(60, 60, 67, 0.12);
+  --c-label: #1d1d1f;
+  --c-label-2: #6e6e73;
+  --c-label-3: #86868b;
+  --c-accent: #0071e3;
+  --c-accent-hover: #0077ed;
+  --c-accent-press: #0062c4;
+  --c-accent-soft: rgba(0, 113, 227, 0.1);
+  --c-success: #248a3d;
+  --c-warning: #c93400;
+  --c-danger: #d70015;
+  --c-focus: rgba(0, 113, 227, 0.45);
+  --c-material: rgba(255, 255, 255, 0.72);
+
+  /* 圆角 */
+  --r-xs: 8px;
+  --r-sm: 10px;
+  --r-md: 14px;
+  --r-lg: 20px;
+  --r-xl: 28px;
+  --r-pill: 980px;
+
+  /* 阴影：只用于层级，不用于装饰 */
+  --sh-1: 0 1px 2px rgba(0, 0, 0, 0.04), 0 1px 1px rgba(0, 0, 0, 0.02);
+  --sh-2: 0 2px 8px rgba(0, 0, 0, 0.04), 0 8px 24px rgba(0, 0, 0, 0.06);
+  --sh-3: 0 12px 40px rgba(0, 0, 0, 0.12);
+
+  /* 间距 (4pt 栅格) */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+  --sp-8: 32px;
+  --sp-10: 40px;
+
+  /* 动效 */
+  --ease: cubic-bezier(0.25, 0.1, 0.25, 1);
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --dur-1: 0.15s;
+  --dur-2: 0.25s;
+
+  /* 触控 */
+  --tap: 44px;
+
+  /* 安全区 */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+}
+
+/* ---------- 无侵入的全局细节 ---------- */
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* 杜绝移动端横向滚动（使用 clip 避免破坏 position: sticky） */
+html,
+body {
+  max-width: 100%;
+  overflow-x: clip;
+}
+
+img,
+video {
+  max-width: 100%;
+}
+
+a,
+button,
+[role="button"],
+summary,
+label {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* 统一键盘焦点环（鼠标点击不显示） */
+:focus-visible {
+  outline: 3px solid var(--c-focus);
+  outline-offset: 2px;
+}
+
+::selection {
+  background: rgba(0, 113, 227, 0.2);
+}
+
+/* 尊重系统“减少动态效果”设置 */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ---------- 可复用的小组件 ---------- */
+
+/* 加载骨架闪烁 */
+@keyframes ui-shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.ui-skeleton {
+  background: linear-gradient(90deg, var(--c-fill) 25%, var(--c-fill-strong) 37%, var(--c-fill) 63%);
+  background-size: 400% 100%;
+  animation: ui-shimmer 1.4s ease infinite;
+  border-radius: var(--r-xs);
+  color: transparent !important;
+}
+
+/* 加载转圈 */
+@keyframes ui-spin {
+  to { transform: rotate(360deg); }
+}
+.ui-spinner {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid var(--c-fill-strong);
+  border-top-color: var(--c-label-2);
+  animation: ui-spin 0.8s linear infinite;
+  display: inline-block;
+}
