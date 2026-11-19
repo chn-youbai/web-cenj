@@ -3,7 +3,7 @@ import type { ClickStatsResponse } from "@shared/types";
 const LOCAL_API = "/api/click";
 const FALLBACK_API_BASE = "https://countapi.mileshilliard.com/api/v1";
 const FALLBACK_KEY = "web_cenj_shared_clicks_v1";
-const PARTICLE_ICONS = ["💖", "🎉", "✨", "🔥", "👏", "🌟", "🚀", "💯"];
+const PARTICLE_ICONS = ["✦", "✧", "♥", "✶", "·"];
 
 export function initLikesWidget(): void {
   const countEl = document.getElementById("likeCount");

@@ -76,11 +76,11 @@ export function clearVerifiedSession(): void {
 
 export async function copyWithToast(text: string, label: string): Promise<void> {
   if (!text) {
-    showToast(`⚠️ 暂无可复制的 ${label}`);
+    showToast(`暂无可复制的 ${label}`);
     return;
   }
   const ok = await copyToClipboard(text);
-  showToast(ok ? `✅ ${label} 已复制到剪贴板！` : "❌ 复制失败，请手动长按复制");
+  showToast(ok ? `${label} 已复制到剪贴板` : "复制失败，请手动长按复制");
 }
 
 function renderAppleId(appleId: AppleIdGuideCredentials | null | undefined): void {
@@ -109,7 +109,7 @@ export async function fetchSubscriptionData(
   const refreshBtn = document.getElementById("btnRefreshSub") as HTMLButtonElement | null;
   if (refreshBtn) {
     refreshBtn.disabled = true;
-    refreshBtn.textContent = "⏳ 同步中...";
+    refreshBtn.textContent = "同步中...";
   }
 
   try {
@@ -150,12 +150,12 @@ export async function fetchSubscriptionData(
       if (syncTimeEl) {
         const now = new Date();
         const timeStr = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`;
-        syncTimeEl.textContent = `⏱️ 同步时间：${timeStr} (${data.from_cache ? "云端缓存" : "实时探活"})`;
+        syncTimeEl.textContent = `同步时间：${timeStr} (${data.from_cache ? "云端缓存" : "实时探活"})`;
       }
     }
 
     if (forceRefresh) {
-      showToast(data.warning || `🎉 已成功同步 ${data.airport_name || ""} 最新配置与流量！`);
+      showToast(data.warning || `已成功同步 ${data.airport_name || ""} 最新配置与流量`);
     }
     return true;
   } catch (err) {
@@ -164,21 +164,21 @@ export async function fetchSubscriptionData(
       clearVerifiedSession();
       state.verifiedPassword = "";
       onUnauthorized?.();
-      showToast("❌ 访问密码错误，请重新输入");
+      showToast("访问密码错误，请重新输入");
       return false;
     }
     const message = err instanceof Error ? err.message : "网络波动";
     if (status === 503) {
-      showToast(`⚠️ ${message}`);
+      showToast(message);
     } else if (forceRefresh) {
-      showToast("⚠️ 网络轻微波动，已为您保留当前可用订阅");
+      showToast("网络轻微波动，已为您保留当前可用订阅");
     }
     return false;
   } finally {
     state.isFetchingSub = false;
     if (refreshBtn) {
       refreshBtn.disabled = false;
-      refreshBtn.textContent = "🔄 强制刷新最新订阅";
+      refreshBtn.textContent = "强制刷新最新订阅";
     }
   }
 }

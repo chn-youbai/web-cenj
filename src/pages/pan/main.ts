@@ -1,3 +1,5 @@
+import "@/core/fonts";
+import { initThemeToggle } from "@/core/theme";
 import { showToast } from "@/core/toast";
 import type { AirportType } from "@shared/types";
 import { initBindModal } from "./bind-modal";
@@ -7,6 +9,8 @@ import {
   fetchSubscriptionData,
   persistVerifiedSession,
 } from "./subscription";
+
+initThemeToggle();
 
 const state = createPanState();
 
@@ -60,7 +64,7 @@ unlockForm?.addEventListener("submit", async (e) => {
   e.preventDefault();
   const pwd = unlockInput?.value.trim() || "";
   if (!pwd) {
-    showToast("⚠️ 请输入访问密码");
+    showToast("请输入访问密码");
     unlockInput?.focus();
     return;
   }
@@ -81,13 +85,13 @@ unlockForm?.addEventListener("submit", async (e) => {
 
   if (unlockSubmitBtn) {
     unlockSubmitBtn.disabled = false;
-    unlockSubmitBtn.textContent = "🔓 解锁访问";
+    unlockSubmitBtn.textContent = "解锁访问";
   }
 
   if (ok) {
     persistVerifiedSession(pwd);
     showUnlockedUI();
-    showToast("🎉 密码正确！已解锁双机场订阅中枢（5分钟内免输）");
+    showToast("密码正确，已解锁双机场订阅中枢（5 分钟内免输）");
   }
 });
 

@@ -1,6 +1,10 @@
+import "@/core/fonts";
+import { initThemeToggle } from "@/core/theme";
 import { createLightbox } from "./lightbox";
 import { EMBEDDED_IMAGES, IMAGE_CDN_BASE, getImageUrl } from "./photos";
 import { createVideosController } from "./videos";
+
+initThemeToggle();
 
 type GalleryCategory = "photo" | "video";
 
@@ -35,10 +39,11 @@ function renderGallery(): void {
       }
     });
 
+    const numStr = String(index + 1).padStart(2, "0");
     item.innerHTML = `
       <img src="${getImageUrl(imgName)}" alt="照片 ${index + 1}" loading="lazy">
       <div class="overlay">
-        <span>作品 #${index + 1}</span>
+        <span>No. ${numStr}</span>
       </div>
     `;
     grid.appendChild(item);

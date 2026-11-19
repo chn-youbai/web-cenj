@@ -1,5 +1,9 @@
+import "@/core/fonts";
 import { getStorageItem, setStorageItem } from "@/core/storage";
+import { initThemeToggle } from "@/core/theme";
 import type { UploadAssetResponse } from "@shared/types";
+
+initThemeToggle();
 
 const TOKEN_STORAGE_KEY = "cenj_upload_gh_token";
 
@@ -158,28 +162,24 @@ uploadBtn?.addEventListener("click", () => {
       if (progressLabel) progressLabel.textContent = "上传完成";
       showResult(
         true,
-        "✅ 视频已成功上架画廊！",
+        "视频已成功上架画廊",
         `标题「${data.title || title}」已保存至 D1，现在即可在图库视频专区原画播放与下载。`,
       );
     } else {
-      showResult(
-        false,
-        "❌ 上传失败",
-        data.error || data.message || `服务器返回状态码 ${xhr.status}`,
-      );
+      showResult(false, "上传失败", data.error || data.message || `服务器返回状态码 ${xhr.status}`);
     }
 
     if (uploadBtn) {
       uploadBtn.disabled = false;
-      uploadBtn.textContent = "🚀 开始直传上架";
+      uploadBtn.textContent = "开始直传上架";
     }
   };
 
   xhr.onerror = () => {
-    showResult(false, "❌ 网络中断", "请检查网络连接后重试。");
+    showResult(false, "网络中断", "请检查网络连接后重试。");
     if (uploadBtn) {
       uploadBtn.disabled = false;
-      uploadBtn.textContent = "🚀 开始直传上架";
+      uploadBtn.textContent = "开始直传上架";
     }
   };
 

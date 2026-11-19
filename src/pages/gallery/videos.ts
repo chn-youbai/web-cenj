@@ -68,10 +68,12 @@ export function createVideosController(isVideoCategoryActive: () => boolean): Vi
     if (loadedVideos.length === 0) {
       vGrid.innerHTML = `
         <div class="video-state">
-          <div style="font-size: 2.5rem; line-height: 1;">🎬</div>
-          <p style="font-size: 17px; font-weight: 600; color: var(--c-label);">暂无已上架的视频</p>
-          <p style="font-size: 14px; color: var(--c-label-2); max-width: 320px;">点击右上角「+ 投递视频」直接从手机相册上传 500MB~2GB 航拍大作</p>
-          <a href="./upload.html" class="upload-link-btn" style="margin-top: 4px;">去手机相册上传视频 &rarr;</a>
+          <div class="video-state-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2.5"/><path d="M10 9l5 3-5 3V9z"/></svg>
+          </div>
+          <p style="font-size: 18px; font-weight: 600; color: var(--c-label);">暂无已上架的视频</p>
+          <p style="font-size: 14px; color: var(--c-label-2); max-width: 340px;">点击右上角「投递视频」直接从手机相册上传高清大作</p>
+          <a href="./upload.html" class="upload-link-btn" style="margin-top: 6px;">前往相册上传视频 &rarr;</a>
         </div>
       `;
       return;
