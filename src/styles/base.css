@@ -1,47 +1,60 @@
 /* ==========================================================================
-   web-cenj · 全站基础设计系统 (Design Tokens + 安全的全局细节优化)
-   设计方向：Apple 式克制、清晰层级、系统字体、柔和材质、44px 触控规范
-   注意：本文件只提供变量与无侵入的全局细节，不改变任何业务结构。
+   web-cenj · Claude Editorial Design System (暖米白纸感 + 暖炭黑双模式)
+   设计方向：Anthropic / Claude 简约艺术出版物美学、全衬线画册排印、单色细线图标、44px 触控规范
+   适用范围：核心 4 页（index / gallery / pan / upload），与其余 6 个工具页零侵入隔离
    ========================================================================== */
 
 :root {
-  /* 字体 */
-  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "PingFang SC",
-    "Hiragino Sans GB", "Helvetica Neue", "Microsoft YaHei", Arial, sans-serif;
-  --font-mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+  /* 排印体系（方案 2：极致文艺全衬线风） */
+  --font-serif: "Newsreader Variable", "Newsreader", "Noto Serif SC", "Songti SC", "STSong",
+    "Source Han Serif SC", "Source Han Serif CN", Georgia, serif;
+  --font-sans: "Plus Jakarta Sans Variable", "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont,
+    "PingFang SC", "Hiragino Sans GB", "Helvetica Neue", "Microsoft YaHei", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
 
-  /* 颜色 · 浅色 */
-  --c-bg: #f5f5f7;
+  /* 颜色 · 暖米白纸感（Warm Parchment Light） */
+  --c-bg: #faf9f5;
+  --c-bg-subtle: #f3f1ea;
   --c-surface: #ffffff;
-  --c-surface-2: #fbfbfd;
-  --c-fill: rgba(118, 118, 128, 0.12);
-  --c-fill-strong: rgba(118, 118, 128, 0.2);
-  --c-separator: rgba(60, 60, 67, 0.12);
-  --c-label: #1d1d1f;
-  --c-label-2: #6e6e73;
-  --c-label-3: #86868b;
-  --c-accent: #0071e3;
-  --c-accent-hover: #0077ed;
-  --c-accent-press: #0062c4;
-  --c-accent-soft: rgba(0, 113, 227, 0.1);
-  --c-success: #248a3d;
-  --c-warning: #c93400;
-  --c-danger: #d70015;
-  --c-focus: rgba(0, 113, 227, 0.45);
-  --c-material: rgba(255, 255, 255, 0.72);
+  --c-surface-2: #fcfbf8;
+  --c-fill: rgba(25, 24, 23, 0.055);
+  --c-fill-strong: rgba(25, 24, 23, 0.105);
+  --c-separator: rgba(25, 24, 23, 0.1);
+  --c-border-strong: rgba(25, 24, 23, 0.18);
+  --c-label: #191817;
+  --c-label-2: #5e5c56;
+  --c-label-3: #8a867e;
 
-  /* 圆角 */
-  --r-xs: 8px;
+  /* 点缀与语义色 */
+  --c-accent: #d97757;
+  --c-accent-hover: #c46141;
+  --c-accent-press: #ad5133;
+  --c-accent-soft: rgba(217, 119, 87, 0.12);
+  --c-ink-btn: #191817;
+  --c-ink-btn-hover: #2d2b28;
+  --c-ink-btn-text: #faf9f5;
+  --c-success: #2e7d52;
+  --c-success-soft: rgba(46, 125, 82, 0.1);
+  --c-warning: #b8621b;
+  --c-danger: #b83b2e;
+  --c-danger-soft: rgba(184, 59, 46, 0.08);
+  --c-focus: rgba(217, 119, 87, 0.45);
+  --c-material: rgba(250, 249, 245, 0.84);
+  --c-modal-backdrop: rgba(25, 24, 23, 0.36);
+  --c-paper-opacity: 0.022;
+
+  /* 圆角（克制的出版物圆角） */
+  --r-xs: 6px;
   --r-sm: 10px;
   --r-md: 14px;
-  --r-lg: 20px;
-  --r-xl: 28px;
+  --r-lg: 18px;
+  --r-xl: 24px;
   --r-pill: 980px;
 
-  /* 阴影：只用于层级，不用于装饰 */
-  --sh-1: 0 1px 2px rgba(0, 0, 0, 0.04), 0 1px 1px rgba(0, 0, 0, 0.02);
-  --sh-2: 0 2px 8px rgba(0, 0, 0, 0.04), 0 8px 24px rgba(0, 0, 0, 0.06);
-  --sh-3: 0 12px 40px rgba(0, 0, 0, 0.12);
+  /* 阴影：轻如纸张投影，不喧宾夺主 */
+  --sh-1: 0 1px 2px rgba(25, 24, 23, 0.03), 0 1px 1px rgba(25, 24, 23, 0.02);
+  --sh-2: 0 4px 16px rgba(25, 24, 23, 0.05), 0 1px 3px rgba(25, 24, 23, 0.03);
+  --sh-3: 0 18px 48px rgba(25, 24, 23, 0.14);
 
   /* 间距 (4pt 栅格) */
   --sp-1: 4px;
@@ -56,8 +69,8 @@
   /* 动效 */
   --ease: cubic-bezier(0.25, 0.1, 0.25, 1);
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
-  --dur-1: 0.15s;
-  --dur-2: 0.25s;
+  --dur-1: 0.16s;
+  --dur-2: 0.28s;
 
   /* 触控 */
   --tap: 44px;
@@ -69,16 +82,76 @@
   --safe-right: env(safe-area-inset-right, 0px);
 }
 
-/* ---------- 无侵入的全局细节 ---------- */
+/* 颜色 · Claude 暖炭黑（Warm Charcoal Dark） */
+[data-theme="dark"] {
+  --c-bg: #262624;
+  --c-bg-subtle: #1f1e1c;
+  --c-surface: #2f2e2b;
+  --c-surface-2: #363532;
+  --c-fill: rgba(244, 242, 236, 0.07);
+  --c-fill-strong: rgba(244, 242, 236, 0.13);
+  --c-separator: rgba(244, 242, 236, 0.11);
+  --c-border-strong: rgba(244, 242, 236, 0.22);
+  --c-label: #eceae3;
+  --c-label-2: #aba79d;
+  --c-label-3: #7d7a72;
+
+  --c-accent: #e08667;
+  --c-accent-hover: #eb9678;
+  --c-accent-press: #cf7252;
+  --c-accent-soft: rgba(224, 134, 103, 0.16);
+  --c-ink-btn: #eceae3;
+  --c-ink-btn-hover: #ffffff;
+  --c-ink-btn-text: #1f1e1c;
+  --c-success: #6cc091;
+  --c-success-soft: rgba(108, 192, 145, 0.14);
+  --c-warning: #e59b5c;
+  --c-danger: #e87a6e;
+  --c-danger-soft: rgba(232, 122, 110, 0.14);
+  --c-focus: rgba(224, 134, 103, 0.5);
+  --c-material: rgba(38, 38, 36, 0.84);
+  --c-modal-backdrop: rgba(12, 12, 11, 0.62);
+  --c-paper-opacity: 0.03;
+
+  --sh-1: 0 1px 2px rgba(0, 0, 0, 0.2);
+  --sh-2: 0 6px 20px rgba(0, 0, 0, 0.28);
+  --sh-3: 0 20px 52px rgba(0, 0, 0, 0.48);
+}
+
+/* ---------- 全局排印与纸感肌理 ---------- */
 html {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
+  background: var(--c-bg);
 }
 
 body {
+  position: relative;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
+  font-family: var(--font-serif);
+  background: var(--c-bg);
+  color: var(--c-label);
+  transition: background-color var(--dur-2) var(--ease), color var(--dur-2) var(--ease);
+}
+
+/* 极淡出版物暖纸肌理（约 2% 透明度，不干扰阅读与点击） */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: var(--c-paper-opacity);
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 160 160' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 160px 160px;
+}
+
+body > * {
+  position: relative;
+  z-index: 1;
 }
 
 /* 杜绝移动端横向滚动（使用 clip 避免破坏 position: sticky） */
@@ -101,14 +174,15 @@ label {
   -webkit-tap-highlight-color: transparent;
 }
 
-/* 统一键盘焦点环（鼠标点击不显示） */
+/* 统一键盘焦点环（陶土橘） */
 :focus-visible {
-  outline: 3px solid var(--c-focus);
+  outline: 2.5px solid var(--c-focus);
   outline-offset: 2px;
 }
 
 ::selection {
-  background: rgba(0, 113, 227, 0.2);
+  background: rgba(217, 119, 87, 0.22);
+  color: var(--c-label);
 }
 
 /* 尊重系统“减少动态效果”设置 */
@@ -123,7 +197,73 @@ label {
   }
 }
 
-/* ---------- 可复用的小组件 ---------- */
+/* ---------- 出版物共享微组件 ---------- */
+
+/* 极简日/夜主题切换按钮 */
+.theme-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--tap);
+  height: var(--tap);
+  border-radius: 50%;
+  border: 1px solid var(--c-separator);
+  background: var(--c-surface);
+  color: var(--c-label-2);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: border-color var(--dur-1) var(--ease), color var(--dur-1) var(--ease),
+    background-color var(--dur-1) var(--ease), transform var(--dur-1) var(--ease);
+}
+.theme-toggle-btn svg {
+  width: 18px;
+  height: 18px;
+}
+.theme-toggle-btn .icon-sun {
+  display: none;
+}
+.theme-toggle-btn .icon-moon {
+  display: block;
+}
+[data-theme="dark"] .theme-toggle-btn .icon-sun {
+  display: block;
+}
+[data-theme="dark"] .theme-toggle-btn .icon-moon {
+  display: none;
+}
+@media (hover: hover) {
+  .theme-toggle-btn:hover {
+    border-color: var(--c-border-strong);
+    color: var(--c-accent);
+    background: var(--c-surface-2);
+  }
+}
+.theme-toggle-btn:active {
+  transform: scale(0.94);
+}
+
+/* Anthropic 风格几何星芒分隔线 */
+.editorial-divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-3);
+  width: 100%;
+  color: var(--c-accent);
+  opacity: 0.85;
+}
+.editorial-divider::before,
+.editorial-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--c-separator);
+}
+.editorial-divider svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
 
 /* 加载骨架闪烁 */
 @keyframes ui-shimmer {
@@ -153,7 +293,7 @@ label {
   height: 20px;
   border-radius: 50%;
   border: 2px solid var(--c-fill-strong);
-  border-top-color: var(--c-label-2);
+  border-top-color: var(--c-accent);
   animation: ui-spin 0.8s linear infinite;
   display: inline-block;
 }

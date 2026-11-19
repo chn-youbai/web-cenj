@@ -22,7 +22,7 @@ export function initBindModal(
   function openBindModal(): void {
     const isVpn07 = state.currentAirport === "vpn07";
     if (titleEl) {
-      titleEl.textContent = isVpn07 ? "⚙️ 绑定 VPN07 官网账号" : "⚙️ 绑定/修改顶级机场 Token";
+      titleEl.textContent = isVpn07 ? "绑定 VPN07 官网账号" : "绑定 / 修改顶级机场 Token";
     }
     if (descEl) {
       descEl.textContent = isVpn07
@@ -48,10 +48,10 @@ export function initBindModal(
       const email = bindEmail?.value.trim() || "";
       const password = bindPassword?.value.trim() || "";
       if (!email || !password) {
-        showToast("⚠️ 请输入官网邮箱和密码");
+        showToast("请输入官网邮箱和密码");
         return;
       }
-      showToast("⏳ 正在保存并向云端验证...");
+      showToast("正在保存并向云端验证...");
       try {
         const json = await postJson<{ success?: boolean; message?: string }>("/api/subscription", {
           pwd: state.verifiedPassword,
@@ -62,20 +62,20 @@ export function initBindModal(
         });
         if (json.success) {
           closeBindModal();
-          showToast("🎉 VPN07 凭证保存成功！正在拉取最新订阅...");
+          showToast("VPN07 凭证保存成功，正在拉取最新订阅...");
           await fetchSubscriptionData(state, "vpn07", true, onUnauthorized);
         } else {
-          showToast(`❌ ${json.message || "保存失败"}`);
+          showToast(json.message || "保存失败");
         }
       } catch (err) {
-        showToast(`❌ 请求异常: ${err instanceof Error ? err.message : "未知错误"}`);
+        showToast(`请求异常：${err instanceof Error ? err.message : "未知错误"}`);
       }
       return;
     }
 
     const rawInput = bindDjjcToken?.value.trim() || "";
     if (!rawInput) {
-      showToast("⚠️ 请输入订阅直链或 Token");
+      showToast("请输入订阅直链或 Token");
       return;
     }
 
@@ -85,7 +85,7 @@ export function initBindModal(
       if (match?.[1]) token = match[1];
     }
 
-    showToast("⏳ 正在更新顶级机场 Token...");
+    showToast("正在更新顶级机场 Token...");
     try {
       const json = await postJson<{ success?: boolean; message?: string }>("/api/subscription", {
         pwd: state.verifiedPassword,
@@ -95,13 +95,13 @@ export function initBindModal(
       });
       if (json.success) {
         closeBindModal();
-        showToast("🎉 顶级机场 Token 更新成功！正在探活最新节点...");
+        showToast("顶级机场 Token 更新成功，正在探活最新节点...");
         await fetchSubscriptionData(state, "djjc", true, onUnauthorized);
       } else {
-        showToast(`❌ ${json.message || "保存失败"}`);
+        showToast(json.message || "保存失败");
       }
     } catch (err) {
-      showToast(`❌ 请求异常: ${err instanceof Error ? err.message : "未知错误"}`);
+      showToast(`请求异常：${err instanceof Error ? err.message : "未知错误"}`);
     }
   }
 

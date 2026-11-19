@@ -3,25 +3,48 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <meta name="theme-color" content="#f5f5f7">
+  <meta name="theme-color" content="#faf9f5">
   <title>投递视频 - 视界画廊</title>
+  <link rel="icon" href="./OIP-C.jpg" type="image/jpeg">
+  <script>
+    (function(){try{var t=localStorage.getItem("cenj_theme_v1");var d=t==="dark"||(t!=="light"&&window.matchMedia("(prefers-color-scheme: dark)").matches);document.documentElement.dataset.theme=d?"dark":"light";var m=document.querySelector('meta[name="theme-color"]');if(m)m.content=d?"#262624":"#faf9f5";}catch(e){}})();
+  </script>
+  <link rel="preconnect" href="https://fonts.loli.net" crossorigin>
+  <link rel="stylesheet" href="https://fonts.loli.net/css2?family=Noto+Serif+SC:wght@400;500;600;700&display=swap">
   <link rel="stylesheet" href="./src/styles/base.css">
   <link rel="stylesheet" href="./src/styles/upload.css">
 </head>
 <body>
   <header class="header">
     <div class="title-group">
+      <div class="eyebrow">STUDIO · UPLOAD</div>
       <h1>投递视频</h1>
       <p>通过 Cloudflare 边缘节点中继直传 GitHub Releases，并自动登记至 D1 画廊数据库</p>
     </div>
-    <a href="./gallery.html" class="back-btn">← 返回图库</a>
+    <div class="header-actions">
+      <a href="./gallery.html" class="back-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        <span>返回图库</span>
+      </a>
+      <button type="button" class="theme-toggle-btn" data-theme-toggle aria-label="切换深浅色主题">
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="4"/>
+          <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>
+        </svg>
+      </button>
+    </div>
   </header>
 
   <main class="upload-shell">
     <section class="panel-card">
       <div class="drop-zone" id="dropZone">
         <input type="file" id="videoFileInput" class="file-input-hidden" accept="video/*">
-        <div class="drop-icon">🎬</div>
+        <div class="drop-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2.5"/><path d="M10 9l5 3-5 3V9z"/></svg>
+        </div>
         <div class="drop-title">点击从手机相册选取视频，或拖拽到此处</div>
         <div class="drop-sub">支持 MP4 / MOV / WebM 原画直传</div>
       </div>
@@ -56,11 +79,11 @@
         </div>
       </div>
 
-      <button type="button" id="uploadSubmitBtn" class="submit-btn" disabled>🚀 开始直传上架</button>
+      <button type="button" id="uploadSubmitBtn" class="submit-btn" disabled>开始直传上架</button>
 
       <div class="result-card" id="resultCard" role="status" aria-live="polite">
         <div class="result-title" id="resultTitle"></div>
-        <p id="resultDesc" style="font-size: 13px; color: var(--c-label-2);"></p>
+        <p id="resultDesc" class="result-desc"></p>
         <a href="./gallery.html" id="resultGalleryLink" class="result-link">前往画廊视频专区查看 →</a>
       </div>
     </section>
