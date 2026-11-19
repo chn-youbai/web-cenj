@@ -1,0 +1,281 @@
+/**
+ * Web-Cenj 前后端共享类型定义
+ * 统一规范 Cloudflare Pages Functions 与 Vite MPA 前端的接口契约与数据模型
+ */
+
+export interface ApiErrorResponse {
+  status?: "error";
+  error?: string;
+  message?: string;
+  detail?: string;
+  path?: string;
+}
+
+/* ---------- 点赞统计 (/api/click) ---------- */
+export interface ClickStatsResponse {
+  value: number;
+  error?: string;
+}
+
+/* ---------- 秘密留言板 (/api/board) ---------- */
+export interface GuestbookReply {
+  id: number;
+  parent_id: number | null;
+  nickname: string;
+  avatar: string;
+  content: string;
+  likes: number;
+  created_at: number;
+}
+
+export interface GuestbookThread extends GuestbookReply {
+  replies: GuestbookReply[];
+}
+
+export interface BoardListResponse {
+  status: "ok" | "error";
+  total: number;
+  threads: GuestbookThread[];
+  fallback?: boolean;
+  message?: string;
+}
+
+export interface BoardPostResponse {
+  status: "ok" | "error";
+  message?: string;
+  id?: number | null;
+  parent_id?: number | null;
+  nickname?: string;
+  content?: string;
+  avatar?: string;
+  likes?: number;
+  created_at?: number;
+  message_id?: number;
+}
+
+/* ---------- 图库与视频 (/api/videos, /api/video, /api/upload-asset) ---------- */
+export interface VideoItem {
+  id: string;
+  title: string;
+  description?: string;
+  duration: number;
+  file_size: number;
+  poster_url: string;
+  asset_url: string;
+  download_count?: number;
+  created_at?: string;
+}
+
+export interface VideosListResponse {
+  status: "ok" | "error";
+  total?: number;
+  videos: VideoItem[];
+  message?: string;
+}
+
+export interface UploadAssetResponse {
+  status?: "ok" | "error";
+  id?: string;
+  title?: string;
+  browser_download_url?: string;
+  asset_id?: number;
+  size?: number;
+  error?: string;
+  message?: string;
+}
+
+/* ---------- 资源网盘与订阅 (/api/subscription, /api/sub) ---------- */
+export type AirportType = "djjc" | "vpn07";
+
+export interface SubscriptionTraffic {
+  used: string;
+  total: string;
+  remaining: string;
+  percent?: number;
+}
+
+export interface AppleIdGuideCredentials {
+  email: string;
+  password: string;
+}
+
+export interface SubscriptionResponse {
+  success: boolean;
+  airport_type?: AirportType;
+  airport_name?: string;
+  plan_name?: string;
+  subscribe_url?: string;
+  relay_url?: string;
+  traffic?: SubscriptionTraffic;
+  expired_at?: number;
+  expired_date_str?: string;
+  from_cache?: boolean;
+  cached_at?: string;
+  need_credentials?: boolean;
+  reset_day?: number | null;
+  account_email?: string;
+  warning?: string;
+  message?: string;
+  apple_id?: AppleIdGuideCredentials | null;
+  synced_at?: number;
+}
+
+/* ---------- Clash Verge 远程云控 (/api/clash) ---------- */
+export interface ClashHeartbeat {
+  status: "online" | "offline";
+  result: string;
+  updated_at: string;
+  diff_sec: number;
+}
+
+export interface ClashCommandRecord {
+  command: string;
+  payload: string;
+  status: "pending" | "done" | "error" | string;
+  result: string;
+  dispatched_at?: string | null;
+  responded_at?: string | null;
+  updated_at?: string;
+}
+
+export interface ClashRegionSpeedSummary {
+  label?: string;
+  region?: string;
+  flag?: string;
+  node_count?: number;
+  total_nodes?: number;
+  alive_count?: number;
+  best_delay: string | number;
+  best_node?: string;
+  active?: boolean;
+  status?: string;
+}
+
+export interface ClashSpeedData {
+  updated_at?: string;
+  regions_summary?: ClashRegionSpeedSummary[];
+  [key: string]: unknown;
+}
+
+export interface ClashProfileItem {
+  uid?: string;
+  name: string;
+  is_active?: boolean;
+  selected?: boolean;
+  used_gb?: number;
+  total_gb?: number;
+  expire?: string;
+  url?: string;
+  [key: string]: unknown;
+}
+
+export interface ClashProfilesData {
+  items?: ClashProfileItem[];
+  profiles?: ClashProfileItem[];
+  [key: string]: unknown;
+}
+
+export interface ClashNodeItem {
+  name: string;
+  delay: string | number;
+  delay_num?: number;
+  type?: string;
+}
+
+export interface ClashNodesData {
+  now?: string;
+  current?: string;
+  regions?: Record<string, ClashNodeItem[]>;
+  groups?: Record<string, ClashNodeItem[]>;
+  [key: string]: unknown;
+}
+
+export interface ClashStatusResponse {
+  status: "ok" | "error";
+  server_time?: string;
+  message?: string;
+  heartbeat?: ClashHeartbeat | null;
+  latest_command?: ClashCommandRecord | null;
+  speed_data?: ClashSpeedData | null;
+  profiles_data?: ClashProfilesData | null;
+  nodes_data?: ClashNodesData | null;
+}
+
+/* ---------- 英语词库与背词 (/api/vocab, /api/derivatives, /api/recite-*) ---------- */
+export interface VocabCompactWord {
+  b: string;
+  u: string;
+  w: string;
+  p: string;
+  m: string;
+  f: string;
+  n: string;
+}
+
+export interface VocabApiResponse {
+  status?: "ok" | "error";
+  version?: string;
+  source?: string;
+  updatedAt?: string;
+  book?: string;
+  total?: number;
+  words: VocabCompactWord[];
+  message?: string;
+}
+
+export interface DerivativeItem {
+  word: string;
+  pos: string;
+  meaning: string;
+  level: string;
+}
+
+export interface DerivativesApiResponse {
+  status: "ok" | "error";
+  query?: string;
+  rootGroup?: string;
+  total?: number;
+  derivatives: DerivativeItem[];
+  message?: string;
+}
+
+export interface GaokaoWord {
+  id: number;
+  word: string;
+  pos?: string;
+  meaning: string;
+  phonetic?: string;
+  example?: string;
+  unit?: string;
+  group?: string;
+  [key: string]: unknown;
+}
+
+export interface ReciteSyncPayload {
+  key?: string;
+  updatedAt: number;
+  marksCount?: number;
+  memosCount?: number;
+  marks: Record<string, unknown>;
+  memos: Record<string, unknown>;
+  settings: Record<string, unknown>;
+}
+
+export interface ReciteSyncResponse {
+  status: "ok" | "empty" | "fallback" | "local_only" | "conflict" | "error";
+  key?: string;
+  updatedAt?: number;
+  marksCount?: number;
+  memosCount?: number;
+  data?: ReciteSyncPayload | null;
+  cloudData?: ReciteSyncPayload | null;
+  message?: string;
+}
+
+/* ---------- 外卖记账 (/api/takeout) ---------- */
+export interface TakeoutBackupResponse {
+  status?: "ok" | "empty" | "local_only" | "error";
+  data?: unknown;
+  updateTime?: string;
+  message?: string;
+}

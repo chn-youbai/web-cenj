@@ -1,0 +1,299 @@
+/* ==========================================================================
+   web-cenj · Claude Editorial Design System (暖米白纸感 + 暖炭黑双模式)
+   设计方向：Anthropic / Claude 简约艺术出版物美学、全衬线画册排印、单色细线图标、44px 触控规范
+   适用范围：核心 4 页（index / gallery / pan / upload），与其余 6 个工具页零侵入隔离
+   ========================================================================== */
+
+:root {
+  /* 排印体系（方案 2：极致文艺全衬线风） */
+  --font-serif: "Newsreader Variable", "Newsreader", "Noto Serif SC", "Songti SC", "STSong",
+    "Source Han Serif SC", "Source Han Serif CN", Georgia, serif;
+  --font-sans: "Plus Jakarta Sans Variable", "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont,
+    "PingFang SC", "Hiragino Sans GB", "Helvetica Neue", "Microsoft YaHei", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+
+  /* 颜色 · 暖米白纸感（Warm Parchment Light） */
+  --c-bg: #faf9f5;
+  --c-bg-subtle: #f3f1ea;
+  --c-surface: #ffffff;
+  --c-surface-2: #fcfbf8;
+  --c-fill: rgba(25, 24, 23, 0.055);
+  --c-fill-strong: rgba(25, 24, 23, 0.105);
+  --c-separator: rgba(25, 24, 23, 0.1);
+  --c-border-strong: rgba(25, 24, 23, 0.18);
+  --c-label: #191817;
+  --c-label-2: #5e5c56;
+  --c-label-3: #8a867e;
+
+  /* 点缀与语义色 */
+  --c-accent: #d97757;
+  --c-accent-hover: #c46141;
+  --c-accent-press: #ad5133;
+  --c-accent-soft: rgba(217, 119, 87, 0.12);
+  --c-ink-btn: #191817;
+  --c-ink-btn-hover: #2d2b28;
+  --c-ink-btn-text: #faf9f5;
+  --c-success: #2e7d52;
+  --c-success-soft: rgba(46, 125, 82, 0.1);
+  --c-warning: #b8621b;
+  --c-danger: #b83b2e;
+  --c-danger-soft: rgba(184, 59, 46, 0.08);
+  --c-focus: rgba(217, 119, 87, 0.45);
+  --c-material: rgba(250, 249, 245, 0.84);
+  --c-modal-backdrop: rgba(25, 24, 23, 0.36);
+  --c-paper-opacity: 0.022;
+
+  /* 圆角（克制的出版物圆角） */
+  --r-xs: 6px;
+  --r-sm: 10px;
+  --r-md: 14px;
+  --r-lg: 18px;
+  --r-xl: 24px;
+  --r-pill: 980px;
+
+  /* 阴影：轻如纸张投影，不喧宾夺主 */
+  --sh-1: 0 1px 2px rgba(25, 24, 23, 0.03), 0 1px 1px rgba(25, 24, 23, 0.02);
+  --sh-2: 0 4px 16px rgba(25, 24, 23, 0.05), 0 1px 3px rgba(25, 24, 23, 0.03);
+  --sh-3: 0 18px 48px rgba(25, 24, 23, 0.14);
+
+  /* 间距 (4pt 栅格) */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+  --sp-8: 32px;
+  --sp-10: 40px;
+
+  /* 动效 */
+  --ease: cubic-bezier(0.25, 0.1, 0.25, 1);
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --dur-1: 0.16s;
+  --dur-2: 0.28s;
+
+  /* 触控 */
+  --tap: 44px;
+
+  /* 安全区 */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+}
+
+/* 颜色 · Claude 暖炭黑（Warm Charcoal Dark） */
+[data-theme="dark"] {
+  --c-bg: #262624;
+  --c-bg-subtle: #1f1e1c;
+  --c-surface: #2f2e2b;
+  --c-surface-2: #363532;
+  --c-fill: rgba(244, 242, 236, 0.07);
+  --c-fill-strong: rgba(244, 242, 236, 0.13);
+  --c-separator: rgba(244, 242, 236, 0.11);
+  --c-border-strong: rgba(244, 242, 236, 0.22);
+  --c-label: #eceae3;
+  --c-label-2: #aba79d;
+  --c-label-3: #7d7a72;
+
+  --c-accent: #e08667;
+  --c-accent-hover: #eb9678;
+  --c-accent-press: #cf7252;
+  --c-accent-soft: rgba(224, 134, 103, 0.16);
+  --c-ink-btn: #eceae3;
+  --c-ink-btn-hover: #ffffff;
+  --c-ink-btn-text: #1f1e1c;
+  --c-success: #6cc091;
+  --c-success-soft: rgba(108, 192, 145, 0.14);
+  --c-warning: #e59b5c;
+  --c-danger: #e87a6e;
+  --c-danger-soft: rgba(232, 122, 110, 0.14);
+  --c-focus: rgba(224, 134, 103, 0.5);
+  --c-material: rgba(38, 38, 36, 0.84);
+  --c-modal-backdrop: rgba(12, 12, 11, 0.62);
+  --c-paper-opacity: 0.03;
+
+  --sh-1: 0 1px 2px rgba(0, 0, 0, 0.2);
+  --sh-2: 0 6px 20px rgba(0, 0, 0, 0.28);
+  --sh-3: 0 20px 52px rgba(0, 0, 0, 0.48);
+}
+
+/* ---------- 全局排印与纸感肌理 ---------- */
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  background: var(--c-bg);
+}
+
+body {
+  position: relative;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-family: var(--font-serif);
+  background: var(--c-bg);
+  color: var(--c-label);
+  transition: background-color var(--dur-2) var(--ease), color var(--dur-2) var(--ease);
+}
+
+/* 极淡出版物暖纸肌理（约 2% 透明度，不干扰阅读与点击） */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: var(--c-paper-opacity);
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 160 160' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 160px 160px;
+}
+
+body > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* 杜绝移动端横向滚动（使用 clip 避免破坏 position: sticky） */
+html,
+body {
+  max-width: 100%;
+  overflow-x: clip;
+}
+
+img,
+video {
+  max-width: 100%;
+}
+
+a,
+button,
+[role="button"],
+summary,
+label {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* 统一键盘焦点环（陶土橘） */
+:focus-visible {
+  outline: 2.5px solid var(--c-focus);
+  outline-offset: 2px;
+}
+
+::selection {
+  background: rgba(217, 119, 87, 0.22);
+  color: var(--c-label);
+}
+
+/* 尊重系统“减少动态效果”设置 */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ---------- 出版物共享微组件 ---------- */
+
+/* 极简日/夜主题切换按钮 */
+.theme-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--tap);
+  height: var(--tap);
+  border-radius: 50%;
+  border: 1px solid var(--c-separator);
+  background: var(--c-surface);
+  color: var(--c-label-2);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: border-color var(--dur-1) var(--ease), color var(--dur-1) var(--ease),
+    background-color var(--dur-1) var(--ease), transform var(--dur-1) var(--ease);
+}
+.theme-toggle-btn svg {
+  width: 18px;
+  height: 18px;
+}
+.theme-toggle-btn .icon-sun {
+  display: none;
+}
+.theme-toggle-btn .icon-moon {
+  display: block;
+}
+[data-theme="dark"] .theme-toggle-btn .icon-sun {
+  display: block;
+}
+[data-theme="dark"] .theme-toggle-btn .icon-moon {
+  display: none;
+}
+@media (hover: hover) {
+  .theme-toggle-btn:hover {
+    border-color: var(--c-border-strong);
+    color: var(--c-accent);
+    background: var(--c-surface-2);
+  }
+}
+.theme-toggle-btn:active {
+  transform: scale(0.94);
+}
+
+/* Anthropic 风格几何星芒分隔线 */
+.editorial-divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-3);
+  width: 100%;
+  color: var(--c-accent);
+  opacity: 0.85;
+}
+.editorial-divider::before,
+.editorial-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--c-separator);
+}
+.editorial-divider svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+/* 加载骨架闪烁 */
+@keyframes ui-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+.ui-skeleton {
+  background: linear-gradient(90deg, var(--c-fill) 25%, var(--c-fill-strong) 37%, var(--c-fill) 63%);
+  background-size: 400% 100%;
+  animation: ui-shimmer 1.4s ease infinite;
+  border-radius: var(--r-xs);
+  color: transparent !important;
+}
+
+/* 加载转圈 */
+@keyframes ui-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.ui-spinner {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid var(--c-fill-strong);
+  border-top-color: var(--c-accent);
+  animation: ui-spin 0.8s linear infinite;
+  display: inline-block;
+}
