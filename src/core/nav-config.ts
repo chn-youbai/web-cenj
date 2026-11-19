@@ -1,6 +1,6 @@
 /**
- * 全站 10 页统一导航元数据配置
- * 供桌面端可折叠侧边栏、手机端底部 TabBar、手机「更多」抽屉、首页快捷胶囊与全局 ⌘K 命令面板共同复用
+ * 全站 9 页统一导航元数据配置
+ * 供桌面端可折叠侧边栏、手机端滑出抽屉、与全局 ⌘K 命令面板共同复用
  */
 
 export type PageId =
@@ -12,8 +12,7 @@ export type PageId =
   | "pan"
   | "takeout"
   | "board"
-  | "clash"
-  | "showcase";
+  | "clash";
 
 export type NavGroupId = "workspace" | "learn" | "media" | "resource" | "tools";
 
@@ -174,19 +173,6 @@ export const NAV_ITEMS: readonly NavItemMeta[] = [
     iconSvg:
       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 9l3 3-3 3M13 15h4"/></svg>',
     requiresAuth: true,
-    mobilePrimary: false,
-    homeQuick: false,
-  },
-  {
-    id: "showcase",
-    label: "技术展馆",
-    shortLabel: "展馆",
-    subtitle: "全站架构白皮书 · 在线协议实测",
-    href: "./showcase.html",
-    group: "tools",
-    keywords: ["showcase", "architecture", "tech", "doc", "展馆", "技术", "架构", "原理"],
-    iconSvg:
-      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>',
     mobilePrimary: false,
     homeQuick: false,
   },

@@ -53,7 +53,6 @@ export default defineConfig({
         pan: resolve(__dirname, "pan.html"),
         board: resolve(__dirname, "board.html"),
         clash: resolve(__dirname, "clash.html"),
-        showcase: resolve(__dirname, "showcase.html"),
         takeout: resolve(__dirname, "takeout.html"),
         recite: resolve(__dirname, "recite.html"),
         vocab: resolve(__dirname, "vocab.html"),
