@@ -2,7 +2,7 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "web-cenj",
   "compatibility_date": "2026-09-30",
-  "pages_build_output_dir": ".",
+  "pages_build_output_dir": "dist",
   "observability": {
     "enabled": true
   },
