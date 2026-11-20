@@ -71,14 +71,17 @@ export function initAppShell(options: AppShellOptions): AppShellController {
   document.body.classList.add("has-app-shell");
   document.body.dataset.activePage = activePage;
 
-  const isExpanded = getStorageItem(SIDEBAR_EXPANDED_KEY) === "1";
-  document.body.classList.toggle("sidebar-collapsed", !isExpanded);
+  const isHomePage = activePage === "index";
+  const isCollapsed = isHomePage
+    ? getStorageItem(SIDEBAR_EXPANDED_KEY) !== "1"
+    : getStorageItem(SIDEBAR_COLLAPSED_KEY) === "1";
+  document.body.classList.toggle("sidebar-collapsed", isCollapsed);
 
   document.getElementById("appSidebar")?.remove();
   document.getElementById("mobileTopBar")?.remove();
   document.getElementById("mobileDrawerBackdrop")?.remove();
 
-  // 1. Unified left rail / collapsible sidebar (desktop & mobile)
+  // 1. Unified left rail / collapsible sidebar (slim rail on mobile only for homepage)
   const sidebar = document.createElement("aside");
   sidebar.id = "appSidebar";
   sidebar.className = "app-sidebar";
@@ -138,12 +141,28 @@ export function initAppShell(options: AppShellOptions): AppShellController {
     </div>
   `;
 
-  // 2. Mobile minimalist top bar (starts to the right of the left icon rail)
+  // 2. Mobile minimalist top bar
   const mobileTopBar = document.createElement("header");
   mobileTopBar.id = "mobileTopBar";
   mobileTopBar.className = "mobile-topbar";
   mobileTopBar.innerHTML = `
     <div class="mobile-topbar-left">
+      ${
+        isHomePage
+          ? ""
+          : `<button
+        type="button"
+        class="mobile-menu-btn"
+        id="mobileMenuBtn"
+        aria-label="打开全站导航菜单"
+        aria-expanded="false"
+        aria-controls="mobileDrawerBackdrop"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+          <path d="M4 7h16M4 12h16M4 17h12"/>
+        </svg>
+      </button>`
+      }
       <a href="./index.html" class="mobile-topbar-brand" title="返回工作台">
         <span class="mobile-topbar-mark" aria-hidden="true">
           <svg viewBox="0 0 24 24" fill="currentColor">
@@ -249,6 +268,14 @@ export function initAppShell(options: AppShellOptions): AppShellController {
       return;
     }
     toggleSidebar();
+  });
+
+  document.getElementById("mobileMenuBtn")?.addEventListener("click", () => {
+    if (mobileDrawerBackdrop.classList.contains("open")) {
+      closeDrawer();
+    } else {
+      openDrawer();
+    }
   });
 
   document.getElementById("mobileDrawerCloseBtn")?.addEventListener("click", closeDrawer);

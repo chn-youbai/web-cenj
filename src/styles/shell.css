@@ -12,10 +12,16 @@
 
 /* ---------- 接入外壳后的全局页面布局偏移 ---------- */
 body.has-app-shell {
-  padding-top: calc(var(--shell-mobile-topbar-h) + var(--safe-top) + 6px) !important;
-  padding-left: calc(var(--shell-mobile-rail-w) + var(--safe-left) + 12px) !important;
+  padding-top: calc(var(--shell-mobile-topbar-h) + var(--safe-top)) !important;
   transition: padding-left var(--dur-2) var(--ease), background-color var(--dur-2) var(--ease),
     color var(--dur-2) var(--ease);
+}
+
+@media (max-width: 919px) {
+  body.has-app-shell[data-active-page="index"] {
+    padding-top: calc(var(--shell-mobile-topbar-h) + var(--safe-top) + 6px) !important;
+    padding-left: calc(var(--shell-mobile-rail-w) + var(--safe-left) + 12px) !important;
+  }
 }
 
 @media (min-width: 920px) {
@@ -29,7 +35,7 @@ body.has-app-shell {
   }
 }
 
-/* ---------- 左侧统一导航栏（桌面端可展开 / 手机端常驻细长图标窄栏） ---------- */
+/* ---------- 左侧统一导航栏（桌面端可展开 / 仅首页手机端常驻细长图标窄栏） ---------- */
 .app-sidebar {
   position: fixed;
   top: 0;
@@ -38,7 +44,7 @@ body.has-app-shell {
   width: calc(var(--shell-mobile-rail-w) + var(--safe-left));
   background: var(--c-bg-subtle);
   border-right: 1px solid var(--c-separator);
-  display: flex;
+  display: none;
   flex-direction: column;
   padding: calc(8px + var(--safe-top)) 6px calc(12px + var(--safe-bottom))
     calc(6px + var(--safe-left));
@@ -47,8 +53,13 @@ body.has-app-shell {
   transition: width var(--dur-2) var(--ease), background-color var(--dur-2) var(--ease);
 }
 
+body[data-active-page="index"] .app-sidebar {
+  display: flex;
+}
+
 @media (min-width: 920px) {
   .app-sidebar {
+    display: flex;
     width: var(--shell-sidebar-w);
     padding: 14px 10px;
     z-index: 900;
@@ -417,14 +428,14 @@ body.sidebar-collapsed .app-sidebar .app-nav-link {
   text-overflow: ellipsis;
 }
 
-/* ---------- 手机端顶部极简导航条（从左侧窄栏右侧开始铺开） ---------- */
+/* ---------- 手机端顶部极简导航条（首页从左侧窄栏右侧开始铺开） ---------- */
 .mobile-topbar {
   position: fixed;
   top: 0;
-  left: calc(var(--shell-mobile-rail-w) + var(--safe-left));
+  left: 0;
   right: 0;
   height: calc(var(--shell-mobile-topbar-h) + var(--safe-top));
-  padding: var(--safe-top) 10px 0 12px;
+  padding: var(--safe-top) 10px 0;
   background: var(--c-material);
   -webkit-backdrop-filter: saturate(180%) blur(20px);
   backdrop-filter: saturate(180%) blur(20px);
@@ -434,6 +445,11 @@ body.sidebar-collapsed .app-sidebar .app-nav-link {
   justify-content: space-between;
   gap: 8px;
   z-index: 940;
+}
+
+body[data-active-page="index"] .mobile-topbar {
+  left: calc(var(--shell-mobile-rail-w) + var(--safe-left));
+  padding-left: 12px;
 }
 
 @media (min-width: 920px) {
