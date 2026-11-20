@@ -1,6 +1,6 @@
 /**
- * 全站 9 页统一导航元数据配置
- * 供桌面端可折叠侧边栏、手机端滑出抽屉、与全局 ⌘K 命令面板共同复用
+ * 全站 10 页统一导航元数据配置
+ * 供桌面端可折叠侧边栏、手机端滑出抽屉与全局 ⌘K 命令面板共同复用
  */
 
 export type PageId =
@@ -10,6 +10,7 @@ export type PageId =
   | "gallery"
   | "upload"
   | "pan"
+  | "games"
   | "takeout"
   | "board"
   | "clash";
@@ -37,7 +38,7 @@ export interface NavItemMeta {
 }
 
 export const NAV_GROUPS: readonly NavGroupMeta[] = [
-  { id: "workspace", code: "00", label: "工作台" },
+  { id: "workspace", code: "00", label: "今日" },
   { id: "learn", code: "01", label: "学习" },
   { id: "media", code: "02", label: "媒体" },
   { id: "resource", code: "03", label: "资源" },
@@ -47,12 +48,12 @@ export const NAV_GROUPS: readonly NavGroupMeta[] = [
 export const NAV_ITEMS: readonly NavItemMeta[] = [
   {
     id: "index",
-    label: "首页工作台",
-    shortLabel: "工作台",
-    subtitle: "即输即查英语 · 全局直达中枢",
+    label: "每日一页",
+    shortLabel: "日历",
+    subtitle: "单向历 · 每日节律与宜忌",
     href: "./index.html",
     group: "workspace",
-    keywords: ["home", "index", "workspace", "首页", "主页", "工作台"],
+    keywords: ["home", "index", "calendar", "almanac", "首页", "日历", "单向历", "今日"],
     iconSvg:
       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2.5L13.7 9.1L19.5 6.8L15.4 12L19.5 17.2L13.7 14.9L12 21.5L10.3 14.9L4.5 17.2L8.6 12L4.5 6.8L10.3 9.1Z"/></svg>',
     mobilePrimary: true,
@@ -134,6 +135,19 @@ export const NAV_ITEMS: readonly NavItemMeta[] = [
     requiresAuth: true,
     mobilePrimary: false,
     homeQuick: true,
+  },
+  {
+    id: "games",
+    label: "摸鱼游乐场",
+    shortLabel: "游乐场",
+    subtitle: "2048 · 航拍拼图 · 记忆翻卡",
+    href: "./games.html",
+    group: "tools",
+    keywords: ["games", "2048", "puzzle", "memory", "游戏", "摸鱼", "游乐场", "拼图", "翻卡"],
+    iconSvg:
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6" width="18" height="12" rx="4"/><path d="M8 10v4M6 12h4M15.5 11h.01M18 13h.01"/></svg>',
+    mobilePrimary: false,
+    homeQuick: false,
   },
   {
     id: "takeout",

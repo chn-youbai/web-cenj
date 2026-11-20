@@ -11,7 +11,7 @@ export function initPlayground(): void {
   const root = document.getElementById("playgroundSection");
   if (!root) return;
 
-  const tabs = Array.from(root.querySelectorAll<HTMLButtonElement>("[data-game-tab]"));
+  const tabs = Array.from(document.querySelectorAll<HTMLButtonElement>("[data-game-tab]"));
   const panels: Record<PlaygroundGameId, HTMLElement | null> = {
     "2048": document.getElementById("panelGame2048"),
     puzzle: document.getElementById("panelGamePuzzle"),

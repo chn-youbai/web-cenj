@@ -1,16 +1,11 @@
 import "@/core/fonts";
 import { initAppShell } from "@/core/shell";
-import { initTakeoutAuthModal } from "./auth-modal";
-import { initPlayground } from "./games";
+import { initAlmanacPage } from "./almanac";
 import { initLikesWidget } from "./likes";
-import { initGreetingTitle, initHomeOmnibox } from "./omnibox";
 
 initAppShell({ activePage: "index" });
-initGreetingTitle();
-initHomeOmnibox();
-initPlayground();
+initAlmanacPage();
 initLikesWidget();
-initTakeoutAuthModal();
 
 function syncLikeButtonSlot(): void {
   const likeBtn = document.getElementById("likeBtn");

@@ -1,11 +1,10 @@
-import { createEmptyGrid, hasAvailableMoves, moveGrid } from "@/pages/index/game-2048";
-import { createMemoryDeck } from "@/pages/index/game-memory";
+import { createEmptyGrid, hasAvailableMoves, moveGrid } from "@/pages/games/game-2048";
+import { createMemoryDeck } from "@/pages/games/game-memory";
 import {
   createShuffledPuzzle,
   createSolvedPuzzle,
   isPuzzleSolved,
-} from "@/pages/index/game-puzzle";
-import { getTimeGreeting } from "@/pages/index/omnibox";
+} from "@/pages/games/game-puzzle";
 import { describe, expect, it } from "vitest";
 
 describe("playground games logic", () => {
@@ -42,16 +41,5 @@ describe("playground games logic", () => {
     for (const count of counts.values()) {
       expect(count).toBe(2);
     }
-  });
-
-  it("returns 6-period sunrise/sunset greetings without personal name", () => {
-    const at = (h: number, m = 0) => new Date(2026, 3, 15, h, m, 0); // April 15 (~05:35 sunrise, ~18:25 sunset)
-    expect(getTimeGreeting(at(7, 0))).toBe("早安");
-    expect(getTimeGreeting(at(9, 30))).toBe("早上好");
-    expect(getTimeGreeting(at(12, 45))).toBe("中午好");
-    expect(getTimeGreeting(at(15, 30))).toBe("下午好");
-    expect(getTimeGreeting(at(20, 0))).toBe("晚上好");
-    expect(getTimeGreeting(at(22, 30))).toBe("晚安");
-    expect(getTimeGreeting(at(3, 0))).toBe("晚安");
   });
 });

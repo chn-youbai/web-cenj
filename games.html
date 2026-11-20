@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#faf9f5">
+  <meta name="description" content="纸感休闲游乐场：2048、121 张航拍拼图与航拍记忆翻卡。">
+  <title>摸鱼游乐场 · Cenj</title>
+  <link rel="icon" href="./OIP-C.jpg" type="image/jpeg">
+  <script>
+    (function(){try{var t=localStorage.getItem("cenj_theme_v1");var d=t==="dark"||(t!=="light"&&window.matchMedia("(prefers-color-scheme: dark)").matches);document.documentElement.dataset.theme=d?"dark":"light";document.documentElement.classList.toggle("dark",d);var m=document.querySelector('meta[name="theme-color"]');if(m)m.content=d?"#262624":"#faf9f5";}catch(e){}})();
+  </script>
+  <link rel="preconnect" href="https://fonts.loli.net" crossorigin>
+  <link rel="stylesheet" href="https://fonts.loli.net/css2?family=Noto+Serif+SC:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="./src/styles/base.css">
+  <link rel="stylesheet" href="./src/styles/shell.css">
+  <link rel="stylesheet" href="./src/styles/games.css">
+</head>
+<body>
+  <main class="games-stage">
+    <header class="games-page-header">
+      <div>
+        <div class="games-eyebrow">PLAYGROUND · 休闲一刻</div>
+        <h1 class="games-page-title">摸鱼游乐场</h1>
+      </div>
+      <div class="playground-tabs" role="tablist" aria-label="切换休闲小游戏">
+        <button type="button" class="pg-tab active" role="tab" aria-selected="true" data-game-tab="2048">2048</button>
+        <button type="button" class="pg-tab" role="tab" aria-selected="false" data-game-tab="puzzle">航拍拼图</button>
+        <button type="button" class="pg-tab" role="tab" aria-selected="false" data-game-tab="memory">记忆翻卡</button>
+      </div>
+    </header>
+
+    <section class="playground-section" id="playgroundSection" aria-label="休闲小游戏">
+      <div class="playground-card">
+        <div id="panelGame2048" class="pg-panel" role="tabpanel"></div>
+        <div id="panelGamePuzzle" class="pg-panel" role="tabpanel" hidden></div>
+        <div id="panelGameMemory" class="pg-panel" role="tabpanel" hidden></div>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="./src/pages/games/main.ts"></script>
+</body>
+</html>
