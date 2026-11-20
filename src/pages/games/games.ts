@@ -51,11 +51,32 @@ export function initPlayground(): void {
     tab.addEventListener("click", () => {
       const id = (tab.dataset.gameTab as PlaygroundGameId | undefined) ?? "2048";
       activateGame(id);
+      const nextNavId = `game-${id}`;
+      for (const link of document.querySelectorAll<HTMLElement>(".app-nav-link[data-nav-id]")) {
+        const isCurrent = link.dataset.navId === nextNavId;
+        link.classList.toggle("active", isCurrent);
+        if (isCurrent) link.setAttribute("aria-current", "page");
+        else link.removeAttribute("aria-current");
+      }
+      try {
+        const url = new URL(window.location.href);
+        url.searchParams.set("tab", id);
+        window.history.replaceState(null, "", url.toString());
+      } catch {
+        // ignore history error
+      }
     });
   }
 
+  const queryTab = new URLSearchParams(window.location.search).get(
+    "tab",
+  ) as PlaygroundGameId | null;
   const saved = getStorageItem(GAME_TAB_KEY) as PlaygroundGameId | null;
   const initial: PlaygroundGameId =
-    saved === "2048" || saved === "puzzle" || saved === "memory" ? saved : "2048";
+    queryTab === "2048" || queryTab === "puzzle" || queryTab === "memory"
+      ? queryTab
+      : saved === "2048" || saved === "puzzle" || saved === "memory"
+        ? saved
+        : "2048";
   activateGame(initial);
 }

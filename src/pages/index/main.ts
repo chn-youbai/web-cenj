@@ -1,10 +1,11 @@
 import "@/core/fonts";
 import { initAppShell } from "@/core/shell";
-import { initAlmanacPage } from "./almanac";
 import { initLikesWidget } from "./likes";
+import { initGreetingTitle, initHomeOmnibox } from "./omnibox";
 
 initAppShell({ activePage: "index" });
-initAlmanacPage();
+initGreetingTitle();
+initHomeOmnibox();
 initLikesWidget();
 
 function syncLikeButtonSlot(): void {

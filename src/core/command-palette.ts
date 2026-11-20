@@ -1,5 +1,5 @@
 import { escapeHtml } from "./dom";
-import { NAV_ITEMS, type NavItemMeta, filterNavItems } from "./nav-config";
+import { NAV_ITEMS, type NavItemMeta, filterNavItems, matchSlashCommands } from "./nav-config";
 import { toggleTheme } from "./theme";
 
 export interface CommandItem {
@@ -27,6 +27,20 @@ function isEnglishWordQuery(q: string): boolean {
 function buildCommandItems(query: string, closePalette: () => void): CommandItem[] {
   const clean = query.trim();
   const items: CommandItem[] = [];
+
+  for (const cmd of matchSlashCommands(clean)) {
+    items.push({
+      id: `slash-${cmd.command}`,
+      title: `${cmd.command} · ${cmd.label}`,
+      subtitle: cmd.subtitle,
+      badge: cmd.requiresAuth ? "指令 · 需密码" : "指令直达",
+      iconSvg: cmd.iconSvg,
+      action: () => {
+        closePalette();
+        window.location.href = cmd.href;
+      },
+    });
+  }
 
   if (isEnglishWordQuery(clean)) {
     items.push({
