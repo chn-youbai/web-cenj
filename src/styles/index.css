@@ -45,11 +45,24 @@ body {
 
 @media (max-width: 919px) {
   .workspace-topbar {
-    padding-top: 8px;
-    padding-bottom: 10px;
+    padding: 0;
+    border-bottom: none;
+    height: 0;
+    overflow: visible;
   }
+  .workspace-topbar .avatar-cluster,
   .workspace-topbar .edition-tag {
     display: none;
+  }
+  .workspace-topbar .like-btn {
+    position: fixed;
+    top: calc(6px + var(--safe-top));
+    right: 54px;
+    z-index: 945;
+    min-height: 36px;
+    height: 38px;
+    padding: 0 11px;
+    background: var(--c-surface);
   }
 }
 

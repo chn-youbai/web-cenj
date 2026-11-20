@@ -163,12 +163,6 @@ export function initAppShell(options: AppShellOptions): AppShellController {
       </a>
     </div>
     <div class="mobile-topbar-right">
-      <button type="button" class="mobile-icon-btn" data-cmd-open aria-label="快捷搜索或查词" title="搜索或查词">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <circle cx="11" cy="11" r="7"/>
-          <path d="M21 21l-4.35-4.35"/>
-        </svg>
-      </button>
       <button type="button" class="theme-toggle-btn mobile-theme-btn" data-theme-toggle aria-label="切换深浅色主题">
         ${THEME_SUN_MOON_SVG}
       </button>
