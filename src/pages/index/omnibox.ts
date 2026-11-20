@@ -52,21 +52,39 @@ async function queryVocabWords(query: string): Promise<VocabCompactWord[]> {
   return [...exact, ...partial].slice(0, 6);
 }
 
-export function getTimeGreeting(hour = new Date().getHours()): string {
-  if (hour >= 0 && hour < 5) return "夜深了，注意休息 · 岑靖";
-  if (hour >= 5 && hour < 8) return "清晨好，岑靖";
-  if (hour >= 8 && hour < 11) return "早安，岑靖";
-  if (hour >= 11 && hour < 13) return "午安，岑靖";
-  if (hour >= 13 && hour < 17) return "下午好，岑靖";
-  if (hour >= 17 && hour < 19) return "傍晚好，岑靖";
-  if (hour >= 19 && hour < 23) return "晚上好，岑靖";
-  return "夜色渐深，岑靖";
+export function getApproxSunTimes(
+  date = new Date(),
+  latDeg = 30,
+): { sunrise: number; sunset: number } {
+  const start = new Date(date.getFullYear(), 0, 0);
+  const dayOfYear = Math.floor((date.getTime() - start.getTime()) / 86_400_000);
+  // Solar declination approximation (radians)
+  const decl = 0.4093 * Math.sin(((2 * Math.PI) / 365) * (dayOfYear - 81));
+  const latRad = (latDeg * Math.PI) / 180;
+  const cosH = Math.max(-0.99, Math.min(0.99, -Math.tan(latRad) * Math.tan(decl)));
+  const halfDayHours = (Math.acos(cosH) * 180) / Math.PI / 15;
+  return {
+    sunrise: 12 - halfDayHours,
+    sunset: 12 + halfDayHours,
+  };
+}
+
+export function getTimeGreeting(date = new Date()): string {
+  const hour = date.getHours() + date.getMinutes() / 60;
+  const { sunrise, sunset } = getApproxSunTimes(date);
+
+  if (hour >= sunrise && hour < 8) return "早安";
+  if (hour >= 8 && hour < 12) return "早上好";
+  if (hour >= 12 && hour < 14) return "中午好";
+  if (hour >= 14 && hour < sunset) return "下午好";
+  if (hour >= sunset && hour < 22) return "晚上好";
+  return "晚安";
 }
 
 export function initGreetingTitle(): void {
   const greetingEl = document.getElementById("greetingTitle");
   if (!greetingEl) return;
-  greetingEl.textContent = getTimeGreeting(new Date().getHours());
+  greetingEl.textContent = getTimeGreeting(new Date());
 }
 
 export function initHomeOmnibox(): void {

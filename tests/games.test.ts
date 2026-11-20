@@ -44,14 +44,14 @@ describe("playground games logic", () => {
     }
   });
 
-  it("returns fine-grained time greetings across 24 hours", () => {
-    expect(getTimeGreeting(2)).toContain("夜深了");
-    expect(getTimeGreeting(6)).toContain("清晨好");
-    expect(getTimeGreeting(9)).toContain("早安");
-    expect(getTimeGreeting(12)).toContain("午安");
-    expect(getTimeGreeting(15)).toContain("下午好");
-    expect(getTimeGreeting(18)).toContain("傍晚好");
-    expect(getTimeGreeting(20)).toContain("晚上好");
-    expect(getTimeGreeting(23)).toContain("夜色渐深");
+  it("returns 6-period sunrise/sunset greetings without personal name", () => {
+    const at = (h: number, m = 0) => new Date(2026, 3, 15, h, m, 0); // April 15 (~05:35 sunrise, ~18:25 sunset)
+    expect(getTimeGreeting(at(7, 0))).toBe("早安");
+    expect(getTimeGreeting(at(9, 30))).toBe("早上好");
+    expect(getTimeGreeting(at(12, 45))).toBe("中午好");
+    expect(getTimeGreeting(at(15, 30))).toBe("下午好");
+    expect(getTimeGreeting(at(20, 0))).toBe("晚上好");
+    expect(getTimeGreeting(at(22, 30))).toBe("晚安");
+    expect(getTimeGreeting(at(3, 0))).toBe("晚安");
   });
 });
