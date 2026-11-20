@@ -48,5 +48,18 @@ describe("command palette (⌘K)", () => {
     themeBtn?.click();
     expect(document.documentElement.dataset.theme).toBe("dark");
     expect(palette.isOpen()).toBe(false);
+    expect(window.localStorage.getItem("cenj_cmd_recent_v1")).toContain("cmd-toggle-theme");
+  });
+
+  it("supports > command mode with fuzzy highlight and keeps hidden slash commands out", () => {
+    const palette = initCommandPalette();
+    palette.open("> 侧边栏");
+
+    const listText = document.getElementById("cmdPaletteList")?.textContent ?? "";
+    expect(listText).toContain("展开 / 收起侧边栏");
+    expect(listText).not.toContain("/bill");
+    expect(listText).not.toContain("/msg");
+    expect(listText).not.toContain("/clash");
+    expect(document.querySelector(".cmd-match")?.textContent).toBe("侧边栏");
   });
 });
