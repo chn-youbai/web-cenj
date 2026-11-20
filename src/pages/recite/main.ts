@@ -1,5 +1,7 @@
+import "@/core/fonts";
 import { copyToClipboard, escapeHtml, optById } from "@/core/dom";
-import "@/styles/recite.css";
+import { initAppShell } from "@/core/shell";
+import { getPreferredTheme, toggleTheme } from "@/core/theme";
 import {
   buildFilteredDeck,
   cleanWordForSpeech,
@@ -677,8 +679,10 @@ async function initVocabDataset(): Promise<void> {
 }
 
 function setupApp(): void {
+  initAppShell({ activePage: "recite" });
   try {
     loadReciteState(state);
+    state.darkMode = getPreferredTheme() === "dark";
     populateGroupSelector(state.currentGroup);
     updateSyncUI();
     void initVocabDataset();
@@ -686,6 +690,18 @@ function setupApp(): void {
   } catch (err) {
     console.warn("InitReciteApp error:", err);
   }
+
+  const themeObserver = new MutationObserver(() => {
+    const isDark = getPreferredTheme() === "dark";
+    if (state.darkMode !== isDark) {
+      state.darkMode = isDark;
+      renderAllViews(state, vocabList, filteredDeck);
+    }
+  });
+  themeObserver.observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ["data-theme"],
+  });
 
   optById("displaySyncKey")?.addEventListener("click", copyCurrentKey);
   optById("btnCopySyncKey")?.addEventListener("click", copyCurrentKey);
@@ -757,7 +773,7 @@ function setupApp(): void {
   });
 
   optById("btnThemeToggle")?.addEventListener("click", () => {
-    state.darkMode = !state.darkMode;
+    state.darkMode = toggleTheme() === "dark";
     saveState();
     renderAllViews(state, vocabList, filteredDeck);
   });

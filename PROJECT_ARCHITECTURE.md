@@ -94,10 +94,9 @@ web-cenj/
 ├── pan.html                      # 4. 资源网盘与订阅下载中心
 ├── board.html                    # 5. 秘密留言板
 ├── clash.html                    # 6. Clash Verge PC 远程控台
-├── showcase.html                 # 7. 在线资源与边缘探针展示馆
-├── takeout.html                  # 8. 沙县外卖多人记账助手
-├── recite.html                   # 9. 高考 2050 高频核心词速记卡
-├── vocab.html                    # 10. 英语综合查词与词根词族系统 (11,160+ 词)
+├── takeout.html                  # 7. 沙县外卖多人记账助手
+├── recite.html                   # 8. 高考 2050 高频核心词速记卡
+├── vocab.html                    # 9. 英语综合查词与词根词族系统 (11,160+ 词)
 │
 ├── shared/
 │   └── types.ts                  # 前后端共享 TypeScript 类型契约
@@ -108,7 +107,7 @@ web-cenj/
 │   │   ├── modal.ts              # 通用弹窗控制器
 │   │   ├── storage.ts            # localStorage / sessionStorage 安全封装
 │   │   └── toast.ts              # 全局轻量提示条
-│   ├── styles/                   # 各页面独立 CSS 样式 (base.css + 10 个页面样式)
+│   ├── styles/                   # 各页面独立 CSS 样式 (base.css + 9 个页面样式)
 │   └── pages/                    # 按页面拆分的 TypeScript 业务模块
 │       ├── index/                # auth-modal, easter-eggs, likes, main
 │       ├── gallery/              # lightbox, photos, videos, main
@@ -116,7 +115,6 @@ web-cenj/
 │       ├── pan/                  # bind-modal, subscription, main
 │       ├── board/                # identity, messages, main
 │       ├── clash/                # api, auth, renderers, main
-│       ├── showcase/             # probes, main
 │       ├── takeout/              # cloud-sync, menu-data, modals, render, settlement, store, types, main
 │       ├── recite/               # engine, idb, phrases-dict, raw-words, render, sync, types, main
 │       └── vocab/                # csv, derivatives, idb, render, search, types, word-knowledge, main
@@ -175,17 +173,16 @@ web-cenj/
 
 ---
 
-## 4. 10 大前端页面与模块化架构
+## 4. 9 大前端页面与模块化架构
 
 | 页面路由 | 模块目录 | 核心职责 |
 | :--- | :--- | :--- |
-| [`index.html`](file:///home/antigravity/chn-youbai/web-cenj/index.html) | `src/pages/index/*` | Apple 极简风个人门户；全站导航、乐观更新点赞（`/api/click`）、头像连点呼出 Clash 中控、敏感入口前置鉴权弹窗（调用 `/api/auth`） |
+| [`index.html`](file:///home/antigravity/chn-youbai/web-cenj/index.html) | `src/pages/index/*` | Claude 纸感个人工作台；即输即查 Omnibox + 休闲小游戏游乐场（2048/航拍拼图/记忆翻卡） |
 | [`gallery.html`](file:///home/antigravity/chn-youbai/web-cenj/gallery.html) | `src/pages/gallery/*` | 精选图库（WebP 独立 CDN + 灯箱大图浏览）与流媒体视频天地（HTTP Range 206 秒开点播 + 原画下载） |
 | [`upload.html`](file:///home/antigravity/chn-youbai/web-cenj/upload.html) | `src/pages/upload/*` | 移动端免翻直传视频页面，支持密码或 Token 模式流式推送到 `/api/upload-asset` |
 | [`pan.html`](file:///home/antigravity/chn-youbai/web-cenj/pan.html) | `src/pages/pan/*` | 资源网盘直链下载（`/api/download`）与机场/Apple ID 订阅解锁面板（`/api/subscription`） |
 | [`board.html`](file:///home/antigravity/chn-youbai/web-cenj/board.html) | `src/pages/board/*` | 秘密留言板；支持匿名/昵称头像身份记忆、楼中楼回复、点赞与管理员密码删帖（`/api/board`） |
 | [`clash.html`](file:///home/antigravity/chn-youbai/web-cenj/clash.html) | `src/pages/clash/*` | Clash Verge 远程中控台；75 秒心跳窗口在线判定、地区节点测速、节点切换、系统密码修改 |
-| [`showcase.html`](file:///home/antigravity/chn-youbai/web-cenj/showcase.html) | `src/pages/showcase/*` | 在线资源底层架构交互式展示馆，提供 Range 206、D1 词库、网盘、Clash 信令等实时线上探针 |
 | [`takeout.html`](file:///home/antigravity/chn-youbai/web-cenj/takeout.html) | `src/pages/takeout/*` | 沙县外卖多人点餐记账；个人/日期账单聚合、催收文案生成、CSV 导入导出与 KV 云同步 |
 | [`recite.html`](file:///home/antigravity/chn-youbai/web-cenj/recite.html) | `src/pages/recite/*` | 高考 2050 核心词速记卡；考频分组、Web Speech 发音、拼写/选择测验、IndexedDB 离线缓存、`/api/recite-sync` 云同步 |
 | [`vocab.html`](file:///home/antigravity/chn-youbai/web-cenj/vocab.html) | `src/pages/vocab/*` | 英语综合查词系统；11,160+ 词实时检索、词形还原、编辑距离拼写纠错、同根词图谱、批量 CSV 课标判定 |

@@ -1,9 +1,9 @@
 import "@/core/fonts";
+import { initAppShell } from "@/core/shell";
 import { getStorageItem, setStorageItem } from "@/core/storage";
-import { initThemeToggle } from "@/core/theme";
 import type { UploadAssetResponse } from "@shared/types";
 
-initThemeToggle();
+initAppShell({ activePage: "upload" });
 
 const TOKEN_STORAGE_KEY = "cenj_upload_gh_token";
 

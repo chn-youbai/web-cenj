@@ -1215,3 +1215,150 @@ body {
   padding: 4px 8px;
   cursor: pointer;
 }
+
+/* ==========================================================================
+   Claude Editorial Dual-Mode Theme & App Shell Compatibility
+   ========================================================================== */
+:root,
+[data-theme="dark"] {
+  --primary: var(--c-accent);
+  --primary-light: var(--c-accent-hover);
+  --primary-subtle: var(--c-accent-soft);
+  --primary-dark: var(--c-accent-press);
+  --bg-page: var(--c-bg);
+  --bg-card: var(--c-surface);
+  --text-main: var(--c-label);
+  --text-muted: var(--c-label-2);
+  --text-sub: var(--c-label-3);
+  --border: var(--c-separator);
+  --border-dark: var(--c-border-strong);
+  --success: var(--c-success);
+  --success-subtle: var(--c-success-soft);
+  --danger: var(--c-danger);
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--c-bg-subtle);
+  color: var(--c-label);
+}
+
+.app-shell {
+  background: var(--c-bg);
+  border-left: 1px solid var(--c-separator);
+  border-right: 1px solid var(--c-separator);
+}
+
+.app-header {
+  background: var(--c-material);
+  backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--c-separator);
+}
+
+.app-logo {
+  background: linear-gradient(135deg, var(--c-accent) 0%, var(--c-accent-hover) 100%);
+}
+
+.card,
+.person-selector,
+.bottom-sheet,
+.dish-card,
+.order-item-row,
+.setting-item,
+.history-card {
+  background: var(--c-surface);
+  border-color: var(--c-separator);
+  color: var(--c-label);
+}
+
+.icon-btn,
+.date-input-wrap,
+.quick-date-btn,
+.person-pill,
+.cat-pill,
+.sync-badge {
+  background: var(--c-bg-subtle);
+  border-color: var(--c-separator);
+  color: var(--c-label);
+}
+
+.person-pill.active,
+.cat-pill.active {
+  background: var(--c-accent-soft);
+  border-color: var(--c-focus);
+  color: var(--c-accent);
+}
+
+.date-bar {
+  background: var(--c-surface);
+  border: 1px solid var(--c-separator);
+}
+
+.weekday-badge {
+  background: var(--c-accent);
+  color: #ffffff;
+}
+
+.input-field,
+.backup-textarea,
+.search-box input {
+  background: var(--c-bg-subtle);
+  color: var(--c-label);
+  border-color: var(--c-separator);
+}
+
+.input-field:focus,
+.backup-textarea:focus {
+  background: var(--c-surface);
+  border-color: var(--c-accent);
+}
+
+.modal-backdrop {
+  background: var(--c-modal-backdrop);
+  z-index: 1050;
+}
+
+.toast {
+  z-index: 1600;
+}
+
+/* Sticky tab-bar aligned cleanly inside .app-shell on all screen widths */
+.tab-bar {
+  position: sticky;
+  bottom: 0;
+  left: auto;
+  transform: none;
+  width: 100%;
+  max-width: none;
+  background: var(--c-material);
+  backdrop-filter: blur(14px);
+  border-top: 1px solid var(--c-separator);
+  padding: 8px 10px;
+  z-index: 60;
+}
+
+@media (max-width: 919px) {
+  .tab-bar {
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    max-width: 500px;
+    padding-bottom: calc(8px + var(--safe-bottom));
+    z-index: 850;
+  }
+  .app-main {
+    padding-bottom: 84px !important;
+  }
+}
+
+[data-theme="dark"] .dish-price,
+[data-theme="dark"] .order-item-price {
+  color: var(--c-accent);
+}
+[data-theme="dark"] .btn-secondary {
+  background: var(--c-bg-subtle);
+  color: var(--c-label);
+  border: 1px solid var(--c-separator);
+}

@@ -3,8 +3,17 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#faf9f5">
   <title>Clash Verge 智能云控终端</title>
   <link rel="icon" href="./OIP-C.jpg" type="image/jpeg">
+  <script>
+    (function(){try{var t=localStorage.getItem("cenj_theme_v1");var d=t==="dark"||(t!=="light"&&window.matchMedia("(prefers-color-scheme: dark)").matches);document.documentElement.dataset.theme=d?"dark":"light";if(d)document.documentElement.classList.add("dark");var m=document.querySelector('meta[name="theme-color"]');if(m)m.content=d?"#262624":"#faf9f5";}catch(e){}})();
+  </script>
+  <link rel="preconnect" href="https://fonts.loli.net" crossorigin>
+  <link rel="stylesheet" href="https://fonts.loli.net/css2?family=Noto+Serif+SC:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="./src/styles/base.css">
+  <link rel="stylesheet" href="./src/styles/shell.css">
+  <link rel="stylesheet" href="./src/styles/clash.css">
 </head>
 <body>
 
@@ -40,11 +49,11 @@
     </div>
     <div class="auth-desc" style="margin-bottom:1rem;">修改后所有设备均需使用新密码访问</div>
     <div style="text-align:left; margin-bottom:0.8rem;">
-      <label style="font-size:0.8rem; color:#cbd5e1; display:block; margin-bottom:0.3rem;">原访问密码：</label>
+      <label class="clash-field-label" style="font-size:0.8rem; display:block; margin-bottom:0.3rem;">原访问密码：</label>
       <input type="password" id="pwdCurrentInput" class="auth-input" style="font-size:0.95rem; padding:0.6rem; letter-spacing:normal;" placeholder="输入当前访问密码">
     </div>
     <div style="text-align:left; margin-bottom:1rem;">
-      <label style="font-size:0.8rem; color:#cbd5e1; display:block; margin-bottom:0.3rem;">新密码 (至少4位)：</label>
+      <label class="clash-field-label" style="font-size:0.8rem; display:block; margin-bottom:0.3rem;">新密码 (至少4位)：</label>
       <input type="password" id="pwdNewInput" class="auth-input" style="font-size:0.95rem; padding:0.6rem; letter-spacing:normal;" placeholder="输入新的访问密码">
     </div>
     <div class="auth-error" id="changePwdErrorMsg"></div>
@@ -65,7 +74,6 @@
     <div style="display:flex; gap:0.4rem; align-items:center;">
       <button type="button" class="header-action-btn" id="btnOpenChangePwd" title="修改访问密码">🔑 密码</button>
       <button type="button" class="header-action-btn" id="btnLogoutClash" title="退出锁定">🚪 锁定</button>
-      <a href="./index.html" class="back-home-btn">← 主页</a>
     </div>
   </header>
 
@@ -80,12 +88,12 @@
   <!-- Auth & Status Strip -->
   <section class="status-strip">
     <div class="auth-row" style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.6rem;">
-      <div style="display:flex; align-items:center; gap:0.4rem; color:#cbd5e1; font-weight:700; font-size:0.85rem;">
-        <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#10b981; box-shadow:0 0 8px #10b981;"></span>
+      <div class="clash-auth-label" style="display:flex; align-items:center; gap:0.4rem; font-weight:700; font-size:0.85rem;">
+        <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--c-success); box-shadow:0 0 8px var(--c-success);"></span>
         <span>已鉴权 (30天免密中)</span>
       </div>
       <div style="display:flex; gap:0.5rem;">
-        <button type="button" class="btn" id="btnRefreshStatus" style="background:#1e293b; border:1px solid #334155; padding:0.4rem 0.8rem;">🔄 刷新状态</button>
+        <button type="button" class="btn clash-secondary-btn" id="btnRefreshStatus" style="padding:0.4rem 0.8rem;">🔄 刷新状态</button>
         <button type="button" class="btn btn-speed" data-cmd="check_delay" style="padding:0.4rem 0.8rem;">⚡ 测速刷新</button>
       </div>
     </div>
@@ -97,24 +105,24 @@
   <main id="tabHub" class="tab-content">
     <div class="card">
       <div class="card-title">🔗 远程添加/更新订阅链接</div>
-      <input type="text" id="newSubUrlInput" placeholder="粘贴新机场订阅链接 (https://...)" style="width:100%; background:#0b1120; border:1px solid #334155; border-radius:8px; padding:0.65rem 0.8rem; color:#fff; font-size:0.85rem; margin-bottom:0.75rem; outline:none;">
-      <button type="button" id="btnSubmitSub1" style="width:100%; background:linear-gradient(135deg, #0284c7, #06b6d4); border:none; color:#fff; border-radius:8px; padding:0.7rem; font-weight:700; font-size:0.9rem; cursor:pointer;">🚀 极速下发电脑生效</button>
+      <input type="text" id="newSubUrlInput" class="clash-url-input" placeholder="粘贴新机场订阅链接 (https://...)" style="width:100%; border-radius:8px; padding:0.65rem 0.8rem; font-size:0.85rem; margin-bottom:0.75rem; outline:none;">
+      <button type="button" id="btnSubmitSub1" class="clash-primary-btn" style="width:100%; border:none; border-radius:8px; padding:0.7rem; font-weight:700; font-size:0.9rem; cursor:pointer;">🚀 极速下发电脑生效</button>
     </div>
 
     <div class="card">
       <div class="card-title">🌍 常用地区一键切换</div>
       <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.6rem;">
-        <button type="button" class="btn" style="background:#1e293b; border:1px solid #334155; padding:0.7rem;" data-cmd="switch_node" data-payload="Singapore">🇸🇬 新加坡节点</button>
-        <button type="button" class="btn" style="background:#1e293b; border:1px solid #334155; padding:0.7rem;" data-cmd="switch_node" data-payload="Hong Kong">🇭🇰 香港节点</button>
-        <button type="button" class="btn" style="background:#1e293b; border:1px solid #334155; padding:0.7rem;" data-cmd="switch_node" data-payload="Japan">🇯🇵 日本节点</button>
-        <button type="button" class="btn" style="background:#1e293b; border:1px solid var(--primary); color:var(--accent); padding:0.7rem;" data-cmd="switch_node" data-payload="auto_lowest">⚡ 自动选最低延迟</button>
+        <button type="button" class="btn clash-secondary-btn" style="padding:0.7rem;" data-cmd="switch_node" data-payload="Singapore">🇸🇬 新加坡节点</button>
+        <button type="button" class="btn clash-secondary-btn" style="padding:0.7rem;" data-cmd="switch_node" data-payload="Hong Kong">🇭🇰 香港节点</button>
+        <button type="button" class="btn clash-secondary-btn" style="padding:0.7rem;" data-cmd="switch_node" data-payload="Japan">🇯🇵 日本节点</button>
+        <button type="button" class="btn clash-accent-btn" style="padding:0.7rem;" data-cmd="switch_node" data-payload="auto_lowest">⚡ 自动选最低延迟</button>
       </div>
     </div>
 
     <div style="display:flex; gap:0.6rem;">
-      <button type="button" class="btn" style="flex:1; background:#334155; padding:0.65rem;" data-cmd="check_delay">📡 快速测速</button>
-      <button type="button" class="btn" style="flex:1; background:#0369a1; padding:0.65rem;" data-cmd="sync_all">🔄 同步配置</button>
-      <button type="button" class="btn" style="flex:1; background:#475569; padding:0.65rem;" data-cmd="restart">⚙️ 重启内核</button>
+      <button type="button" class="btn clash-secondary-btn" style="flex:1; padding:0.65rem;" data-cmd="check_delay">📡 快速测速</button>
+      <button type="button" class="btn clash-primary-btn" style="flex:1; padding:0.65rem;" data-cmd="sync_all">🔄 同步配置</button>
+      <button type="button" class="btn clash-secondary-btn" style="flex:1; padding:0.65rem;" data-cmd="restart">⚙️ 重启内核</button>
     </div>
   </main>
 
@@ -135,14 +143,14 @@
   <main id="tabSubs" class="tab-content" style="display:none;">
     <div class="card">
       <div class="card-title">🔗 在线导入新机场订阅</div>
-      <input type="text" id="newSubUrlInput2" placeholder="粘贴新机场订阅链接 (https://...)" style="width:100%; background:#0b1120; border:1px solid #334155; border-radius:8px; padding:0.65rem 0.8rem; color:#fff; font-size:0.85rem; margin-bottom:0.75rem; outline:none;">
-      <button type="button" id="btnSubmitSub2" style="width:100%; background:linear-gradient(135deg, #0284c7, #06b6d4); border:none; color:#fff; border-radius:8px; padding:0.7rem; font-weight:700; font-size:0.9rem; cursor:pointer;">🚀 导入并立即切换生效</button>
+      <input type="text" id="newSubUrlInput2" class="clash-url-input" placeholder="粘贴新机场订阅链接 (https://...)" style="width:100%; border-radius:8px; padding:0.65rem 0.8rem; font-size:0.85rem; margin-bottom:0.75rem; outline:none;">
+      <button type="button" id="btnSubmitSub2" class="clash-primary-btn" style="width:100%; border:none; border-radius:8px; padding:0.7rem; font-weight:700; font-size:0.9rem; cursor:pointer;">🚀 导入并立即切换生效</button>
     </div>
 
     <div class="card">
       <div class="card-title">
         <span>📋 电脑已配置的所有订阅</span>
-        <button type="button" class="btn" style="padding:0.35rem 0.75rem; font-size:0.78rem; background:#334155;" data-cmd="sync_all">🔄 刷新列表</button>
+        <button type="button" class="btn clash-secondary-btn" style="padding:0.35rem 0.75rem; font-size:0.78rem;" data-cmd="sync_all">🔄 刷新列表</button>
       </div>
       <div id="subsListContainer">
         <div style="color:var(--text-muted); font-size:0.85rem; padding:2rem 0; text-align:center;">暂无订阅数据，正在获取...</div>

@@ -1121,16 +1121,80 @@ svg {
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .nav-tab-btn.tab-active {
-  background-color: rgba(13, 148, 136, 0.14);
-  border-color: rgba(13, 148, 136, 0.35);
-  color: #0d9488 !important;
+  background-color: var(--c-accent-soft);
+  border-color: var(--c-focus);
+  color: var(--c-accent) !important;
   font-weight: 800 !important;
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px -2px rgba(13, 148, 136, 0.18);
+  box-shadow: 0 4px 12px -2px var(--c-accent-soft);
 }
-.dark .nav-tab-btn.tab-active {
-  background-color: rgba(20, 184, 166, 0.22);
-  border-color: rgba(45, 212, 191, 0.45);
-  color: #2dd4bf !important;
-  box-shadow: 0 4px 12px -2px rgba(20, 184, 166, 0.28);
+
+/* ==========================================================================
+   Claude Editorial Dual-Mode Theme & App Shell Compatibility
+   ========================================================================== */
+:root,
+.dark-theme,
+[data-theme="dark"] {
+  --app-bg: var(--c-bg);
+  --card-bg: var(--c-surface);
+  --text-main: var(--c-label);
+  --text-sub: var(--c-label-2);
+  --border-color: var(--c-separator);
+  --accent: var(--c-accent);
+  --accent-soft: var(--c-accent-soft);
+}
+
+body {
+  font-family: var(--font-sans);
+  background: var(--c-bg) !important;
+  color: var(--c-label) !important;
+}
+
+@media (min-width: 920px) {
+  body.has-app-shell {
+    background-color: var(--c-bg-subtle) !important;
+    padding-bottom: 16px !important;
+  }
+  .workspace-shell {
+    height: 100% !important;
+  }
+  .device-frame {
+    max-width: 460px;
+    height: calc(100dvh - 32px);
+    border-radius: var(--r-xl);
+    border: 1px solid var(--c-separator);
+    box-shadow: var(--sh-2);
+  }
+}
+
+@media (max-width: 919px) {
+  body.has-app-shell {
+    padding-bottom: 0 !important;
+  }
+  .workspace-shell,
+  .device-frame {
+    height: 100% !important;
+    max-height: none !important;
+  }
+}
+
+.text-teal-600,
+.dark .text-teal-400,
+.dark .text-teal-300,
+.text-teal-700 {
+  color: var(--c-accent) !important;
+}
+
+.bg-teal-600 {
+  background-color: var(--c-accent) !important;
+}
+.hover\:bg-teal-700:hover {
+  background-color: var(--c-accent-hover) !important;
+}
+.bg-teal-500\/10,
+.bg-teal-500\/15 {
+  background-color: var(--c-accent-soft) !important;
+}
+.border-teal-500\/20 {
+  border-color: var(--c-focus) !important;
 }

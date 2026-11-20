@@ -3,8 +3,17 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#faf9f5" />
   <title>高考英语2050核心词汇 · 智能过词系统</title>
   <link rel="icon" href="./OIP-C.jpg" type="image/jpeg" />
+  <script>
+    (function(){try{var t=localStorage.getItem("cenj_theme_v1");var d=t==="dark"||(t!=="light"&&window.matchMedia("(prefers-color-scheme: dark)").matches);document.documentElement.dataset.theme=d?"dark":"light";if(d)document.documentElement.classList.add("dark");var m=document.querySelector('meta[name="theme-color"]');if(m)m.content=d?"#262624":"#faf9f5";}catch(e){}})();
+  </script>
+  <link rel="preconnect" href="https://fonts.loli.net" crossorigin>
+  <link rel="stylesheet" href="https://fonts.loli.net/css2?family=Noto+Serif+SC:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="./src/styles/base.css" />
+  <link rel="stylesheet" href="./src/styles/shell.css" />
+  <link rel="stylesheet" href="./src/styles/recite.css" />
 </head>
 <body>
   <div id="workspaceShell" class="workspace-shell">
@@ -28,11 +37,6 @@
         </div>
 
         <div class="flex items-center gap-1 flex-shrink-0">
-          <!-- Back to Homepage -->
-          <a href="./" class="btn-press w-7 h-7 rounded-lg card-surface border flex items-center justify-center text-xs" title="返回站点首页">
-            <span>🏠</span>
-          </a>
-          
           <!-- Accent Toggle -->
           <button id="btnAccentToggle" type="button" class="btn-press px-1.5 h-7 rounded-lg text-[10px] font-semibold card-surface border flex items-center gap-0.5" title="切换美音/英音">
             <span>🔊</span>

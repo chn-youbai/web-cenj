@@ -6,26 +6,25 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="英语查词" />
-  <meta name="theme-color" content="#F2F2F7" />
+  <meta name="theme-color" content="#faf9f5" />
   <title>英语综合查词系统 (人教版高中7册 · 大学四六级全量 · 词根衍生 · 批量检测)</title>
   <link rel="icon" href="./OIP-C.jpg" type="image/jpeg" />
+  <script>
+    (function(){try{var t=localStorage.getItem("cenj_theme_v1");var d=t==="dark"||(t!=="light"&&window.matchMedia("(prefers-color-scheme: dark)").matches);document.documentElement.dataset.theme=d?"dark":"light";if(d)document.documentElement.classList.add("dark");var m=document.querySelector('meta[name="theme-color"]');if(m)m.content=d?"#262624":"#faf9f5";}catch(e){}})();
+  </script>
+  <link rel="preconnect" href="https://fonts.loli.net" crossorigin>
+  <link rel="stylesheet" href="https://fonts.loli.net/css2?family=Noto+Serif+SC:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="./src/styles/base.css" />
+  <link rel="stylesheet" href="./src/styles/shell.css" />
+  <link rel="stylesheet" href="./src/styles/vocab.css" />
 </head>
-<body class=" antialiased selection:bg-blue-100 selection:text-blue-900">
+<body class="antialiased selection:bg-blue-100 selection:text-blue-900">
 
   <!-- Top Sticky Header -->
   <header class="sticky top-0 z-30 ios-blur border-b border-black/5 px-4 pt-3 pb-2.5">
     <div class="header-wrap max-w-md mx-auto flex items-center justify-between gap-3">
       <div class="flex items-center gap-2.5">
-        <a
-          href="./index.html"
-          id="backToHomeBtn"
-          class="ios-btn-active inline-flex items-center gap-1 text-xs font-bold text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 active:bg-blue-200 border border-blue-200/80 px-3 py-1.5 rounded-full transition-all shrink-0 cursor-pointer shadow-xs select-none"
-          title="返回网站首页"
-        >
-          <svg class="w-3.5 h-3.5 pointer-events-none" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
-          <span class="pointer-events-none">返回首页</span>
-        </a>
-        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white shadow-sm shrink-0">
+        <div class="vocab-brand-icon w-9 h-9 rounded-xl flex items-center justify-center text-white shadow-sm shrink-0">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24" width="20" height="20">
             <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
           </svg>
@@ -55,8 +54,30 @@
     </div>
   </header>
 
-  <!-- Main Content Container (iPhone-width centered on larger screens) -->
+  <!-- Main Content Container -->
   <main class="app-container max-w-md mx-auto px-4 pt-3 pb-8">
+  <nav class="mobile-tab-nav mb-3 ios-card p-1" aria-label="查词功能切换">
+    <div class="grid grid-cols-3 gap-1">
+      <button type="button" data-tab="lookup" class="nav-tab-btn flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-semibold text-[#007AFF]">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24" width="16" height="16">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+        </svg>
+        <span>课本查词</span>
+      </button>
+      <button type="button" data-tab="browse" class="nav-tab-btn flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-medium text-gray-400">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="16" height="16">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 010 3.75H5.625a1.875 1.875 0 010-3.75z" />
+        </svg>
+        <span>词表浏览</span>
+      </button>
+      <button type="button" data-tab="import" class="nav-tab-btn flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-medium text-gray-400">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="16" height="16">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+        </svg>
+        <span>CSV词库</span>
+      </button>
+    </div>
+  </nav>
   <div class="app-layout-grid">
     <!-- Left Column: Search / Browse / Import -->
     <div class="app-left-column space-y-4 min-w-0">
@@ -440,30 +461,6 @@
       <span id="toastText">操作成功</span>
     </div>
   </div>
-
-  <!-- iOS Bottom Tab Bar -->
-  <nav class="mobile-tab-nav fixed bottom-0 inset-x-0 z-40 ios-tab-blur" style="padding-bottom: env(safe-area-inset-bottom, 0px);">
-    <div class="max-w-md mx-auto grid grid-cols-3 h-14">
-      <button type="button" data-tab="lookup" class="nav-tab-btn flex flex-col items-center justify-center gap-0.5 text-[#007AFF]">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24" width="20" height="20">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
-        </svg>
-        <span class="text-[11px] font-semibold">课本查词</span>
-      </button>
-      <button type="button" data-tab="browse" class="nav-tab-btn flex flex-col items-center justify-center gap-0.5 text-gray-400">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="20" height="20">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 010 3.75H5.625a1.875 1.875 0 010-3.75z" />
-        </svg>
-        <span class="text-[11px] font-medium">词表浏览</span>
-      </button>
-      <button type="button" data-tab="import" class="nav-tab-btn flex flex-col items-center justify-center gap-0.5 text-gray-400">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="20" height="20">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
-        </svg>
-        <span class="text-[11px] font-medium">CSV词库</span>
-      </button>
-    </div>
-  </nav>
 
   <script type="module" src="/src/pages/vocab/main.ts"></script>
 </body>

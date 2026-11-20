@@ -1,4 +1,6 @@
-import "@/styles/takeout.css";
+import "@/core/fonts";
+import { postJson } from "@/core/api";
+import { initAppShell } from "@/core/shell";
 import { fetchFromCloud, registerSyncToast, saveData, syncToCloud } from "./cloud-sync";
 import { getTodayDateString } from "./menu-data";
 import {
@@ -54,7 +56,7 @@ import {
   buildTodaySummaryText,
   buildTotalUnpaidBillText,
 } from "./settlement";
-import { checkAuth, loadData, state } from "./store";
+import { getCustomPassword, grantAuthToken, isAuthenticated, loadData, state } from "./store";
 
 function setTodayDate(): void {
   const todayStr = getTodayDateString();
@@ -325,10 +327,7 @@ function bindEvents(): void {
   });
 }
 
-function init(): void {
-  registerSyncToast(showTakeoutToast);
-  if (!checkAuth()) return;
-
+function bootAuthenticatedApp(): void {
   loadData();
   bindEvents();
   setTodayDate();
@@ -337,6 +336,95 @@ function init(): void {
   void fetchFromCloud(() => {
     renderAllViews();
   });
+}
+
+function openInPageAuthGate(): void {
+  const backdrop = document.getElementById("takeoutAuthBackdrop");
+  const input = document.getElementById("takeoutAuthInput") as HTMLInputElement | null;
+  const errEl = document.getElementById("takeoutAuthError");
+  const submitBtn = document.getElementById("takeoutAuthSubmit") as HTMLButtonElement | null;
+  if (!backdrop) return;
+
+  backdrop.classList.add("show");
+  setTimeout(() => input?.focus(), 80);
+
+  const attemptUnlock = async () => {
+    const pwd = input?.value.trim() || "";
+    if (!pwd) {
+      if (errEl) {
+        errEl.style.color = "var(--c-danger)";
+        errEl.textContent = "请输入访问密码";
+      }
+      input?.focus();
+      return;
+    }
+
+    const customPwd = getCustomPassword();
+    if (customPwd) {
+      if (pwd === customPwd) {
+        grantAuthToken();
+        backdrop.classList.remove("show");
+        bootAuthenticatedApp();
+      } else {
+        if (errEl) {
+          errEl.style.color = "var(--c-danger)";
+          errEl.textContent = "密码错误，请重新输入";
+        }
+        input?.select();
+      }
+      return;
+    }
+
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.textContent = "验证中...";
+    }
+    try {
+      const resp = await postJson<{ ok?: boolean }>("/api/auth", { password: pwd });
+      if (resp.ok) {
+        grantAuthToken();
+        backdrop.classList.remove("show");
+        bootAuthenticatedApp();
+      } else {
+        if (errEl) {
+          errEl.style.color = "var(--c-danger)";
+          errEl.textContent = "密码错误，请重新输入";
+        }
+        input?.select();
+      }
+    } catch (err) {
+      if (errEl) {
+        errEl.style.color = "var(--c-danger)";
+        errEl.textContent = err instanceof Error ? err.message : "密码错误或网络异常";
+      }
+      input?.select();
+    } finally {
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = "解锁进入";
+      }
+    }
+  };
+
+  submitBtn?.addEventListener("click", () => {
+    void attemptUnlock();
+  });
+  input?.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      void attemptUnlock();
+    }
+  });
+}
+
+function init(): void {
+  initAppShell({ activePage: "takeout" });
+  registerSyncToast(showTakeoutToast);
+  if (!isAuthenticated()) {
+    openInPageAuthGate();
+    return;
+  }
+  bootAuthenticatedApp();
 }
 
 document.addEventListener("DOMContentLoaded", init);

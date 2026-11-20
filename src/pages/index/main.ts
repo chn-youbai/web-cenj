@@ -1,10 +1,27 @@
 import "@/core/fonts";
-import { initThemeToggle } from "@/core/theme";
-import { initTakeoutAuthModal } from "./auth-modal";
-import { initSecretTriggers } from "./easter-eggs";
+import { initAppShell } from "@/core/shell";
 import { initLikesWidget } from "./likes";
+import { initGreetingTitle, initHomeOmnibox } from "./omnibox";
 
-initThemeToggle();
+initAppShell({ activePage: "index" });
+initGreetingTitle();
+initHomeOmnibox();
 initLikesWidget();
-initTakeoutAuthModal();
-initSecretTriggers();
+
+function syncLikeButtonSlot(): void {
+  const likeBtn = document.getElementById("likeBtn");
+  const mobileRight = document.querySelector("#mobileTopBar .mobile-topbar-right");
+  const desktopActions = document.querySelector(".workspace-topbar .topbar-actions");
+  if (!likeBtn || !mobileRight || !desktopActions) return;
+
+  if (window.matchMedia("(max-width: 919px)").matches) {
+    if (likeBtn.parentElement !== mobileRight) {
+      mobileRight.prepend(likeBtn);
+    }
+  } else if (likeBtn.parentElement !== desktopActions) {
+    desktopActions.append(likeBtn);
+  }
+}
+
+syncLikeButtonSlot();
+window.matchMedia("(max-width: 919px)").addEventListener("change", syncLikeButtonSlot);

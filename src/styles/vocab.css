@@ -1027,9 +1027,6 @@ button {
   .mobile-tab-nav {
     display: none !important;
   }
-  body {
-    padding-bottom: 2.5rem !important;
-  }
   #lookupBookFilterBar {
     scrollbar-width: thin;
   }
@@ -1043,7 +1040,152 @@ button {
   }
 }
 .card-selected {
-  border-color: #007aff !important;
-  background-color: rgba(239, 246, 255, 0.85) !important;
-  box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.28) !important;
+  border-color: var(--c-accent) !important;
+  background-color: var(--c-accent-soft) !important;
+  box-shadow: 0 0 0 2px var(--c-focus) !important;
+}
+
+/* ==========================================================================
+   Claude Editorial Dual-Mode Theme Overrides
+   ========================================================================== */
+:root {
+  --ios-bg: var(--c-bg);
+  --ios-card: var(--c-surface);
+  --ios-blue: var(--c-accent);
+  --ios-separator: var(--c-separator);
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--c-bg);
+  color: var(--c-label);
+}
+
+#wordDetailModal {
+  z-index: 1050 !important;
+}
+
+#toastBanner {
+  z-index: 1600 !important;
+}
+
+.vocab-brand-icon {
+  background: linear-gradient(135deg, var(--c-accent) 0%, var(--c-accent-hover) 100%);
+}
+
+.ios-blur {
+  background: var(--c-material);
+  border-color: var(--c-separator);
+}
+
+.ios-card {
+  background: var(--c-surface);
+  border: 1px solid var(--c-separator);
+  box-shadow: var(--sh-1);
+}
+
+.ios-search-box {
+  background: var(--c-bg-subtle);
+  border: 1px solid var(--c-separator);
+}
+
+.ios-search-box:focus-within {
+  background: var(--c-surface);
+  border-color: var(--c-accent);
+  box-shadow: 0 0 0 3px var(--c-focus);
+}
+
+#submitSearchBtn {
+  background-color: var(--c-accent) !important;
+  color: #fff !important;
+}
+#submitSearchBtn:hover {
+  background-color: var(--c-accent-hover) !important;
+}
+
+.text-\[\#007AFF\] {
+  color: var(--c-accent) !important;
+}
+
+.bg-blue-50 {
+  background-color: var(--c-accent-soft) !important;
+}
+.text-blue-600,
+.text-blue-700 {
+  color: var(--c-accent) !important;
+}
+.border-blue-100,
+.border-blue-200,
+.border-blue-200\/80 {
+  border-color: var(--c-accent-soft) !important;
+}
+
+[data-theme="dark"] .bg-white,
+[data-theme="dark"] .bg-\[\#F2F2F7\] {
+  background-color: var(--c-surface) !important;
+}
+[data-theme="dark"] .bg-gray-100,
+[data-theme="dark"] .bg-gray-100\/90,
+[data-theme="dark"] .bg-gray-50,
+[data-theme="dark"] .bg-gray-50\/90 {
+  background-color: var(--c-bg-subtle) !important;
+}
+[data-theme="dark"] .bg-emerald-50,
+[data-theme="dark"] .bg-emerald-50\/60 {
+  background-color: rgba(46, 125, 82, 0.16) !important;
+  border-color: rgba(46, 125, 82, 0.35) !important;
+}
+[data-theme="dark"] .text-emerald-700,
+[data-theme="dark"] .text-emerald-900 {
+  color: #6ee7b7 !important;
+}
+[data-theme="dark"] .bg-indigo-50,
+[data-theme="dark"] .bg-purple-50,
+[data-theme="dark"] .bg-amber-50,
+[data-theme="dark"] .bg-red-50 {
+  background-color: var(--c-surface-2) !important;
+  border-color: var(--c-separator) !important;
+}
+[data-theme="dark"] .text-indigo-600,
+[data-theme="dark"] .text-indigo-700,
+[data-theme="dark"] .text-purple-700,
+[data-theme="dark"] .text-amber-700,
+[data-theme="dark"] .text-amber-800 {
+  color: var(--c-accent) !important;
+}
+[data-theme="dark"] .text-gray-900,
+[data-theme="dark"] .text-gray-800,
+[data-theme="dark"] .text-gray-700 {
+  color: var(--c-label) !important;
+}
+[data-theme="dark"] .text-gray-600,
+[data-theme="dark"] .text-gray-500,
+[data-theme="dark"] .text-gray-400 {
+  color: var(--c-label-2) !important;
+}
+[data-theme="dark"] .border-gray-100,
+[data-theme="dark"] .border-gray-200,
+[data-theme="dark"] .border-gray-200\/80,
+[data-theme="dark"] .border-black\/5 {
+  border-color: var(--c-separator) !important;
+}
+[data-theme="dark"] .batch-table-wrap {
+  background: var(--c-surface);
+  border-color: var(--c-separator);
+}
+[data-theme="dark"] .batch-table th {
+  background-color: var(--c-bg-subtle);
+  color: var(--c-label-2);
+  border-bottom-color: var(--c-separator);
+}
+[data-theme="dark"] .batch-table td {
+  color: var(--c-label);
+  border-bottom-color: var(--c-separator);
+}
+[data-theme="dark"] .batch-table tbody tr:hover {
+  background-color: var(--c-surface-2);
+}
+[data-theme="dark"] .desktop-nav-tab.bg-white {
+  background-color: var(--c-surface-2) !important;
+  color: var(--c-accent) !important;
 }
