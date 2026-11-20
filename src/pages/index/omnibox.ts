@@ -219,7 +219,7 @@ export function initHomeOmnibox(): void {
         resultsEl.innerHTML = combined;
         resultsEl.classList.add("open");
       } else if (isSlashCommand) {
-        resultsEl.innerHTML = `<div class="omni-section"><div class="omni-empty">未匹配到指令，可用指令：<code>/bill</code> · <code>/msg</code> · <code>/clash</code></div></div>`;
+        resultsEl.innerHTML = `<div class="omni-section"><div class="omni-empty">未匹配到对应指令或页面</div></div>`;
         resultsEl.classList.add("open");
       } else {
         const seq = ++requestSeq;

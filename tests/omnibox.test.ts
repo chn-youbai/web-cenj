@@ -30,7 +30,11 @@ describe("slash jump commands and hidden tools", () => {
     expect(ids).toContain("game-memory");
   });
 
-  it("matches /bill, /msg, and /clash via matchSlashCommands", () => {
+  it("matches only exact /bill, /msg, and /clash via matchSlashCommands", () => {
+    expect(matchSlashCommands("/")).toEqual([]);
+    expect(matchSlashCommands("/b")).toEqual([]);
+    expect(matchSlashCommands("/m")).toEqual([]);
+    expect(matchSlashCommands("/c")).toEqual([]);
     expect(matchSlashCommands("/bill").map((c) => c.href)).toEqual(["./takeout.html"]);
     expect(matchSlashCommands("/msg").map((c) => c.href)).toEqual(["./board.html"]);
     expect(matchSlashCommands("/clash").map((c) => c.href)).toEqual(["./clash.html"]);
