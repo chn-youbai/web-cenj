@@ -32,19 +32,16 @@ export interface ReciteSyncSettings {
 export interface ReciteCloudData {
   key?: string;
   marks?: Record<number, WordMarkStatus>;
-  memos?: Record<number, string>;
   settings?: ReciteSyncSettings;
   updatedAt?: number;
 }
 
 export interface ReciteState {
   marks: Record<number, WordMarkStatus>;
-  memos: Record<number, string>;
   currentGroup: string;
   statusFilter: StatusFilter;
   maskMode: MaskMode;
   zenMode: boolean;
-  editingMemo: boolean;
   isShuffled: boolean;
   autoSpeak: boolean;
   accent: AccentType;
@@ -89,12 +86,10 @@ export const SYSTEM_DEFAULTS = {
 export function createInitialReciteState(): ReciteState {
   return {
     marks: {},
-    memos: {},
     currentGroup: SYSTEM_DEFAULTS.currentGroup,
     statusFilter: SYSTEM_DEFAULTS.statusFilter,
     maskMode: SYSTEM_DEFAULTS.maskMode,
     zenMode: false,
-    editingMemo: false,
     isShuffled: false,
     autoSpeak: SYSTEM_DEFAULTS.autoSpeak,
     accent: SYSTEM_DEFAULTS.accent,

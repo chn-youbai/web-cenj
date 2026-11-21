@@ -255,9 +255,7 @@ export interface ReciteSyncPayload {
   key?: string;
   updatedAt: number;
   marksCount?: number;
-  memosCount?: number;
   marks: Record<string, unknown>;
-  memos: Record<string, unknown>;
   settings: Record<string, unknown>;
 }
 
@@ -266,7 +264,6 @@ export interface ReciteSyncResponse {
   key?: string;
   updatedAt?: number;
   marksCount?: number;
-  memosCount?: number;
   data?: ReciteSyncPayload | null;
   cloudData?: ReciteSyncPayload | null;
   message?: string;

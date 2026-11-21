@@ -114,13 +114,6 @@
               </svg>
               <span>发音</span>
             </button>
-            <button type="button" class="rc-icon-btn" id="btnToggleMemoEditor" title="添加或修改助记笔记">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M12 20h9"/>
-                <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/>
-              </svg>
-              <span>笔记</span>
-            </button>
             <a href="./vocab.html" class="rc-icon-btn" id="btnLookupVocab" title="前往英语查词查看词根与衍生词">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <circle cx="11" cy="11" r="7"/>
@@ -132,26 +125,13 @@
         </div>
 
         <!-- 单词与释义聚焦舞台 -->
-        <div class="flashcard-stage" id="cardCenterArea" title="点击揭晓释义或朗读；极速模式下点击切下一词">
+        <div class="flashcard-stage" id="cardCenterArea" title="点击揭晓释义或朗读">
           <div class="card-word-text" id="cardWordText">for</div>
           <div class="card-meaning-wrap" id="cardMeaningWrapper">
             <div class="card-meaning-text" id="cardMeaningText">为了……、对于……、因为</div>
             <div class="card-mask-hint" id="maskHintText" hidden>点击卡片揭晓答案 · 按 Space 发音</div>
           </div>
         </div>
-
-        <!-- 内联助记笔记显示与编辑器 -->
-        <div class="memo-banner" id="memoDisplayBar" hidden>
-          <span class="memo-label">助记</span>
-          <span class="memo-text" id="memoDisplayText"></span>
-          <button type="button" class="memo-edit-link" id="btnEditMemoInline">编辑</button>
-        </div>
-
-        <form class="memo-editor" id="memoInlineForm" hidden>
-          <input type="text" id="inputInlineMemo" class="rc-input" maxlength="160" placeholder="输入词根联想、例句或记忆点（回车即存）...">
-          <button type="submit" class="rc-btn rc-btn-primary">保存</button>
-          <button type="button" class="rc-btn rc-btn-ghost" id="btnCancelInlineMemo">取消</button>
-        </form>
 
         <!-- 真题拓展区（极速专注模式下自动隐藏） -->
         <div class="flashcard-extras" id="cardExamExpandedSection">
@@ -495,6 +475,13 @@
         <button type="button" class="rc-btn rc-btn-primary" id="btnModalConfirm">确定</button>
       </div>
     </div>
+  </div>
+
+  <!-- 全屏纯享专注模式：只显示英文单词与中文释义 -->
+  <div class="zen-fullscreen" id="zenFullscreen" hidden role="region" aria-label="全屏专注背词">
+    <button type="button" class="zen-exit-btn" id="btnExitZen" aria-label="退出专注模式">退出专注</button>
+    <div class="zen-word-text" id="zenWordText">for</div>
+    <div class="zen-meaning-text" id="zenMeaningText">为了……、对于……、因为</div>
   </div>
 
   <script type="module" src="./src/pages/recite/main.ts"></script>

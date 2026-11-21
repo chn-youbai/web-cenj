@@ -65,7 +65,6 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
 interface ReciteSyncPostBody extends Record<string, unknown> {
   key?: string;
   marks?: Record<string, unknown>;
-  memos?: Record<string, unknown>;
   settings?: Record<string, unknown>;
   updatedAt?: number;
 }
@@ -84,7 +83,6 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   }
 
   const marks = body.marks && typeof body.marks === "object" ? body.marks : {};
-  const memos = body.memos && typeof body.memos === "object" ? body.memos : {};
   const settings = body.settings && typeof body.settings === "object" ? body.settings : {};
   const updatedAt = typeof body.updatedAt === "number" ? body.updatedAt : Date.now();
 
@@ -92,9 +90,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     key,
     updatedAt,
     marksCount: Object.keys(marks).length,
-    memosCount: Object.keys(memos).length,
     marks,
-    memos,
     settings,
   };
 
@@ -143,7 +139,6 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       key,
       updatedAt,
       marksCount: payload.marksCount,
-      memosCount: payload.memosCount,
     });
   } catch (err) {
     return jsonResponse({ status: "error", message: getErrorMessage(err) }, 500);

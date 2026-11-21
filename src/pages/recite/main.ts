@@ -253,7 +253,6 @@ function rebuildFilteredDeck(resetIndex = false): void {
     state.currentIndex = 0;
   }
   state.cardRevealed = false;
-  state.editingMemo = false;
 
   if (state.currentQuizWord) {
     const validQuizPool = getQuizCandidates(
@@ -283,7 +282,6 @@ function markCurrentWord(status: WordMarkStatus): void {
   if (!item) return;
 
   state.marks[item.id] = status;
-  state.editingMemo = false;
 
   const statusLabels: Record<WordMarkStatus, string> = {
     known: "🟢 很熟",
@@ -346,7 +344,6 @@ function stepWord(delta: number, wrapInZen = false): void {
   }
   state.currentIndex = nextIdx;
   state.cardRevealed = false;
-  state.editingMemo = false;
   saveState();
   renderAllViews(state, vocabList, filteredDeck);
   const word = filteredDeck[state.currentIndex]?.word;
@@ -629,12 +626,7 @@ function exportCsv(
   filePrefix: string,
   emptyMsg: string,
 ): void {
-  const { csvContent, count } = buildExportCsvContent(
-    vocabList,
-    state.marks,
-    state.memos,
-    filterFn,
-  );
+  const { csvContent, count } = buildExportCsvContent(vocabList, state.marks, filterFn);
   if (count === 0) {
     showToast(emptyMsg);
     return;
@@ -692,31 +684,63 @@ function bindEvents(): void {
     showToast(state.isShuffled ? "🔀 已开启乱序刷词" : "📋 已恢复考频顺序");
   });
 
-  // Zen mode toggle (sub-mode inside Study)
+  // Fullscreen Zen mode toggle
   optById("btnZenToggle")?.addEventListener("click", () => {
     state.zenMode = !state.zenMode;
-    state.editingMemo = false;
     renderAllViews(state, vocabList, filteredDeck);
-    showToast(
-      state.zenMode ? "⚡ 已进入极速专注模式（点击卡片切下一词）" : "📖 已切换为标准详情模式",
-    );
   });
+
+  optById("btnExitZen")?.addEventListener("click", (e) => {
+    e.stopPropagation();
+    state.zenMode = false;
+    renderAllViews(state, vocabList, filteredDeck);
+  });
+
+  const zenOverlay = optById("zenFullscreen");
+  zenOverlay?.addEventListener("click", (e) => {
+    if ((e.target as HTMLElement | null)?.closest("#btnExitZen")) return;
+    if (filteredDeck.length === 0) return;
+    if (state.maskMode !== "none" && !state.cardRevealed) {
+      state.cardRevealed = true;
+      renderStudyCard(state, filteredDeck);
+      const w = filteredDeck[state.currentIndex]?.word;
+      if (w) speakText(w);
+      return;
+    }
+    const rect = zenOverlay.getBoundingClientRect();
+    const clickRatio = rect.width > 0 ? (e.clientX - rect.left) / rect.width : 1;
+    stepWord(clickRatio < 0.35 ? -1 : 1, true);
+  });
+
+  let zenTouchStartX = 0;
+  let zenTouchStartY = 0;
+  zenOverlay?.addEventListener(
+    "touchstart",
+    (e) => {
+      const touch = e.changedTouches[0];
+      if (!touch) return;
+      zenTouchStartX = touch.screenX;
+      zenTouchStartY = touch.screenY;
+    },
+    { passive: true },
+  );
+  zenOverlay?.addEventListener(
+    "touchend",
+    (e) => {
+      const touch = e.changedTouches[0];
+      if (!touch) return;
+      const dx = touch.screenX - zenTouchStartX;
+      const dy = touch.screenY - zenTouchStartY;
+      if (Math.abs(dx) > 56 && Math.abs(dy) < 55) {
+        stepWord(dx > 0 ? -1 : 1, true);
+      }
+    },
+    { passive: true },
+  );
 
   // Card center area interaction
   optById("cardCenterArea")?.addEventListener("click", () => {
     if (filteredDeck.length === 0) return;
-    if (state.zenMode) {
-      if (state.maskMode !== "none" && !state.cardRevealed) {
-        state.cardRevealed = true;
-        renderStudyCard(state, filteredDeck);
-        const w = filteredDeck[state.currentIndex]?.word;
-        if (w) speakText(w);
-        return;
-      }
-      stepWord(1, true);
-      return;
-    }
-
     if (state.maskMode !== "none" && !state.cardRevealed) {
       state.cardRevealed = true;
       renderStudyCard(state, filteredDeck);
@@ -769,44 +793,6 @@ function bindEvents(): void {
   optById("btnMarkKnown")?.addEventListener("click", () => markCurrentWord("known"));
   optById("btnMarkFuzzy")?.addEventListener("click", () => markCurrentWord("fuzzy"));
   optById("btnMarkUnknown")?.addEventListener("click", () => markCurrentWord("unknown"));
-
-  // Inline memo editor
-  const openMemoEditor = () => {
-    const item = filteredDeck[state.currentIndex];
-    if (!item) return;
-    state.editingMemo = true;
-    renderStudyCard(state, filteredDeck);
-    const inp = optById<HTMLInputElement>("inputInlineMemo");
-    if (inp) {
-      inp.value = state.memos[item.id] ?? "";
-      inp.focus();
-    }
-  };
-  optById("btnToggleMemoEditor")?.addEventListener("click", () => {
-    if (state.editingMemo) {
-      state.editingMemo = false;
-      renderStudyCard(state, filteredDeck);
-    } else {
-      openMemoEditor();
-    }
-  });
-  optById("btnEditMemoInline")?.addEventListener("click", openMemoEditor);
-  optById("btnCancelInlineMemo")?.addEventListener("click", () => {
-    state.editingMemo = false;
-    renderStudyCard(state, filteredDeck);
-  });
-  optById<HTMLFormElement>("memoInlineForm")?.addEventListener("submit", (e) => {
-    e.preventDefault();
-    const item = filteredDeck[state.currentIndex];
-    if (!item) return;
-    const val = (optById<HTMLInputElement>("inputInlineMemo")?.value || "").trim();
-    if (val) state.memos[item.id] = val;
-    else delete state.memos[item.id];
-    state.editingMemo = false;
-    saveState();
-    renderAllViews(state, vocabList, filteredDeck);
-    showToast(val ? "📝 助记笔记已保存" : "已清除该词助记笔记");
-  });
 
   // Header controls
   optById("btnHeaderSync")?.addEventListener("click", openSyncKeyModal);
@@ -1033,7 +1019,6 @@ function bindEvents(): void {
       filteredDeck = jumped.deck;
       state.currentIndex = jumped.index;
       state.cardRevealed = false;
-      state.editingMemo = false;
       switchTab("study");
       renderAllViews(state, vocabList, filteredDeck);
       showToast("🎯 已定位到对应记忆闪卡");
@@ -1091,7 +1076,7 @@ function bindEvents(): void {
           showToast("CSV 文件内容为空或格式不对");
           return;
         }
-        const summary = applyImportedCsvRows(rows, vocabList, state.marks, state.memos);
+        const summary = applyImportedCsvRows(rows, vocabList, state.marks);
         saveState();
         rebuildFilteredDeck(false);
         showToast(
@@ -1108,10 +1093,9 @@ function bindEvents(): void {
   optById("btnResetProgress")?.addEventListener("click", () => {
     openModal({
       title: "⚠️ 确认清空全部进度？",
-      body: "此操作将清空你本地所有词汇熟练度标记与助记笔记，且不可撤销。",
+      body: "此操作将清空你本地所有词汇熟练度标记，且不可撤销。",
       onConfirm: () => {
         state.marks = {};
-        state.memos = {};
         state.currentIndex = 0;
         saveState();
         rebuildFilteredDeck(true);
@@ -1133,10 +1117,6 @@ function bindEvents(): void {
   document.addEventListener("keydown", (e) => {
     const target = e.target as HTMLElement | null;
     if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA")) {
-      if (e.key === "Escape" && state.editingMemo) {
-        state.editingMemo = false;
-        renderStudyCard(state, filteredDeck);
-      }
       return;
     }
     if (isModalOpen()) {
@@ -1150,7 +1130,11 @@ function bindEvents(): void {
     }
 
     if (state.activeTab === "study") {
-      if (e.key === "1") {
+      if (e.key === "Escape" && state.zenMode) {
+        e.preventDefault();
+        state.zenMode = false;
+        renderAllViews(state, vocabList, filteredDeck);
+      } else if (e.key === "1") {
         e.preventDefault();
         markCurrentWord("known");
       } else if (e.key === "2") {

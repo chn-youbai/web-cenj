@@ -179,19 +179,16 @@ export function renderStudyCard(state: ReciteState, filteredDeck: ReciteWord[]):
   const total = filteredDeck.length;
 
   const extrasSection = optById("cardExamExpandedSection");
-  const stageEl = optById("cardCenterArea");
   const wordText = optById("cardWordText");
   const meaningText = optById("cardMeaningText");
   const maskHint = optById("maskHintText");
-  const memoBar = optById("memoDisplayBar");
-  const memoInlineForm = optById("memoInlineForm");
   const lookupLink = optById<HTMLAnchorElement>("btnLookupVocab");
 
-  if (stageEl) {
-    stageEl.classList.toggle("is-zen", state.zenMode);
-  }
-  if (extrasSection) {
-    extrasSection.hidden = state.zenMode;
+  const zenOverlay = optById("zenFullscreen");
+  const zenWordText = optById("zenWordText");
+  const zenMeaningText = optById("zenMeaningText");
+  if (zenOverlay) {
+    zenOverlay.hidden = !state.zenMode;
   }
 
   if (total === 0) {
@@ -201,8 +198,8 @@ export function renderStudyCard(state: ReciteState, filteredDeck: ReciteWord[]):
     if (meaningText)
       meaningText.textContent = "当前分组与筛选条件下暂无待刷单词，可切换顶部筛选或分组";
     if (maskHint) maskHint.hidden = true;
-    if (memoBar) memoBar.hidden = true;
-    if (memoInlineForm) memoInlineForm.hidden = true;
+    if (zenWordText) zenWordText.textContent = "🎉 已完成当前筛选";
+    if (zenMeaningText) zenMeaningText.textContent = "点击右上角退出专注模式";
     return;
   }
 
@@ -232,35 +229,39 @@ export function renderStudyCard(state: ReciteState, filteredDeck: ReciteWord[]):
     lookupLink.href = `./vocab.html?q=${encodeURIComponent(cleanHead)}`;
   }
 
+  const maskEn = state.maskMode === "hide_en" && !state.cardRevealed;
+  const maskCn = state.maskMode === "hide_cn" && !state.cardRevealed;
+
   if (wordText) {
     wordText.textContent = item.word;
     wordText.style.fontSize = `${state.enFontSize}px`;
     wordText.style.fontWeight = String(state.enFontWeight);
-    wordText.classList.toggle("is-masked", state.maskMode === "hide_en" && !state.cardRevealed);
+    wordText.classList.toggle("is-masked", maskEn);
   }
 
   if (meaningText) {
     meaningText.textContent = item.meaning;
     meaningText.style.fontSize = `${state.cnFontSize}px`;
     meaningText.style.fontWeight = String(state.cnFontWeight);
-    meaningText.classList.toggle("is-masked", state.maskMode === "hide_cn" && !state.cardRevealed);
+    meaningText.classList.toggle("is-masked", maskCn);
+  }
+
+  if (zenWordText) {
+    zenWordText.textContent = item.word;
+    zenWordText.style.fontSize = `${state.enFontSize}px`;
+    zenWordText.style.fontWeight = String(state.enFontWeight);
+    zenWordText.classList.toggle("is-masked", maskEn);
+  }
+
+  if (zenMeaningText) {
+    zenMeaningText.textContent = item.meaning;
+    zenMeaningText.style.fontSize = `${state.cnFontSize}px`;
+    zenMeaningText.style.fontWeight = String(state.cnFontWeight);
+    zenMeaningText.classList.toggle("is-masked", maskCn);
   }
 
   if (maskHint) {
     maskHint.hidden = state.maskMode === "none" || state.cardRevealed;
-  }
-
-  // Inline memo display & editor
-  const memo = state.memos[item.id] ?? "";
-  if (memoBar) {
-    memoBar.hidden = state.zenMode || state.editingMemo || !memo;
-  }
-  const memoTextEl = optById("memoDisplayText");
-  if (memoTextEl && memo) {
-    memoTextEl.textContent = memo;
-  }
-  if (memoInlineForm) {
-    memoInlineForm.hidden = !state.editingMemo;
   }
 
   // Forms & Phrases
@@ -339,7 +340,6 @@ export function renderWordList(state: ReciteState, vocabList: ReciteWord[]): voi
   container.innerHTML = pageItems
     .map((w) => {
       const m = state.marks[w.id];
-      const memo = state.memos[w.id];
       return `
         <div class="word-list-row" data-list-word="${w.id}">
           <div class="word-row-main">
@@ -349,7 +349,6 @@ export function renderWordList(state: ReciteState, vocabList: ReciteWord[]): voi
               ${w.freq > 0 ? `<span class="word-row-freq">考频 ${w.freq}</span>` : ""}
             </div>
             <div class="word-row-cn">${escapeHtml(w.meaning)}</div>
-            ${memo ? `<div class="word-row-memo">📝 ${escapeHtml(memo)}</div>` : ""}
           </div>
           <div class="word-row-actions">
             <button type="button" class="row-mini-btn" data-list-speak="${w.id}" title="朗读单词">🔊</button>

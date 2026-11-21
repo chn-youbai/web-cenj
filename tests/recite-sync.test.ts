@@ -80,12 +80,11 @@ describe("recite study engine", () => {
 });
 
 describe("recite cloud merge & CSV sync", () => {
-  it("merges cloud marks, memos, and clamped settings into local state", () => {
+  it("merges cloud marks and clamped settings into local state", () => {
     const state = createInitialReciteState();
     state.marks[1] = "fuzzy";
     mergeCloudDataIntoState(state, {
       marks: { 1: "known", 2: "unknown" },
-      memos: { 2: "多复习几次" },
       settings: {
         enFontSize: 150,
         cnFontSize: 10,
@@ -97,7 +96,6 @@ describe("recite cloud merge & CSV sync", () => {
 
     expect(state.marks[1]).toBe("known");
     expect(state.marks[2]).toBe("unknown");
-    expect(state.memos[2]).toBe("多复习几次");
     expect(state.enFontSize).toBe(100);
     expect(state.cnFontSize).toBe(16);
     expect(state.accent).toBe("en-GB");
@@ -112,20 +110,16 @@ describe("recite cloud merge & CSV sync", () => {
     expect(classifyStatusCell("未标记")).toBe("unmarked");
 
     const marks: Record<number, WordMarkStatus> = { 1: "known", 3: "unknown" };
-    const memos: Record<number, string> = { 3: "容易拼错" };
-    const { csvContent, count } = buildExportCsvContent(sampleWords, marks, memos, () => true);
+    const { csvContent, count } = buildExportCsvContent(sampleWords, marks, () => true);
     expect(count).toBe(4);
 
     const rows = parseCsvRows(csvContent);
     const nextMarks: Record<number, WordMarkStatus> = {};
-    const nextMemos: Record<number, string> = {};
-    const summary = applyImportedCsvRows(rows, sampleWords, nextMarks, nextMemos);
+    const summary = applyImportedCsvRows(rows, sampleWords, nextMarks);
 
     expect(summary.importedKnown).toBe(1);
     expect(summary.importedUnknown).toBe(1);
-    expect(summary.memoCount).toBe(1);
     expect(nextMarks[1]).toBe("known");
     expect(nextMarks[3]).toBe("unknown");
-    expect(nextMemos[3]).toBe("容易拼错");
   });
 });

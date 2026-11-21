@@ -1497,3 +1497,65 @@ body {
   color: var(--c-label-3);
   font-size: 13.5px;
 }
+
+/* ---------- 全屏纯享专注模式（只显示单词与中文） ---------- */
+.zen-fullscreen {
+  position: fixed;
+  inset: 0;
+  z-index: 1250;
+  background: var(--c-bg);
+  color: var(--c-label);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  padding: calc(28px + var(--safe-top)) calc(24px + var(--safe-right))
+    calc(28px + var(--safe-bottom)) calc(24px + var(--safe-left));
+  text-align: center;
+  cursor: pointer;
+  user-select: none;
+}
+
+.zen-fullscreen[hidden] {
+  display: none !important;
+}
+
+.zen-exit-btn {
+  position: fixed;
+  top: calc(16px + var(--safe-top));
+  right: calc(18px + var(--safe-right));
+  min-height: 34px;
+  padding: 0 14px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--c-separator);
+  background: var(--c-surface);
+  color: var(--c-label-2);
+  font-size: 12.5px;
+  font-weight: 500;
+  cursor: pointer;
+  z-index: 1260;
+  transition: border-color var(--dur-1) var(--ease), color var(--dur-1) var(--ease);
+}
+
+@media (hover: hover) {
+  .zen-exit-btn:hover {
+    border-color: var(--c-border-strong);
+    color: var(--c-label);
+  }
+}
+
+.zen-word-text {
+  font-family: var(--font-serif);
+  line-height: 1.15;
+  color: var(--c-label);
+  max-width: min(860px, 92vw);
+  word-break: break-word;
+}
+
+.zen-meaning-text {
+  line-height: 1.35;
+  color: var(--c-label);
+  max-width: min(760px, 90vw);
+  word-break: break-word;
+}

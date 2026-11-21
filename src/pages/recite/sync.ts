@@ -42,7 +42,6 @@ export function loadReciteState(state: ReciteState, targetSyncKey?: string): voi
     if (saved) {
       const parsed = JSON.parse(saved) as Partial<ReciteState>;
       state.marks = parsed.marks ?? {};
-      state.memos = parsed.memos ?? {};
       state.currentGroup = parsed.currentGroup ?? SYSTEM_DEFAULTS.currentGroup;
       state.accent = parsed.accent ?? SYSTEM_DEFAULTS.accent;
       state.speechRate = parsed.speechRate ?? SYSTEM_DEFAULTS.speechRate;
@@ -63,7 +62,6 @@ export function loadReciteState(state: ReciteState, targetSyncKey?: string): voi
           : 0;
     } else {
       state.marks = {};
-      state.memos = {};
       state.enFontSize = SYSTEM_DEFAULTS.enFontSize;
       state.cnFontSize = SYSTEM_DEFAULTS.cnFontSize;
       state.enFontWeight = SYSTEM_DEFAULTS.enFontWeight;
@@ -86,7 +84,6 @@ export function persistReciteState(state: ReciteState): void {
     const userKey = getUserStorageKey();
     const data = {
       marks: state.marks,
-      memos: state.memos,
       currentGroup: state.currentGroup,
       statusFilter: state.statusFilter,
       maskMode: state.maskMode,
@@ -116,9 +113,6 @@ export function mergeCloudDataIntoState(
   if (!cloudData) return;
   if (cloudData.marks) {
     state.marks = { ...state.marks, ...cloudData.marks };
-  }
-  if (cloudData.memos) {
-    state.memos = { ...state.memos, ...cloudData.memos };
   }
   if (cloudData.settings) {
     const s = cloudData.settings;
@@ -157,7 +151,6 @@ export async function pushCloudSyncRequest(
   const payload = {
     key,
     marks: state.marks,
-    memos: state.memos,
     settings: {
       enFontSize: state.enFontSize,
       cnFontSize: state.cnFontSize,
@@ -242,28 +235,23 @@ export interface CsvImportSummary {
   importedKnown: number;
   importedFuzzy: number;
   importedUnknown: number;
-  memoCount: number;
 }
 
 export function applyImportedCsvRows(
   rows: string[][],
   vocabList: ReciteWord[],
   marks: Record<number, WordMarkStatus>,
-  memos: Record<number, string>,
 ): CsvImportSummary {
   const header = (rows[0] ?? []).map((h) => h.replace(/^\uFEFF/, "").trim());
   let idCol = 0;
   let wordCol = 2;
   let statusCol = 5;
-  let memoCol = 6;
 
   header.forEach((h, idx) => {
     if (h.includes("序号") || h.toLowerCase() === "id") idCol = idx;
     else if (h === "单词" || h.toLowerCase() === "word") wordCol = idx;
     else if (h.includes("标记") || h.includes("状态") || h.toLowerCase() === "status") {
       statusCol = idx;
-    } else if (h.includes("笔记") || h.includes("备注") || h.toLowerCase() === "memo") {
-      memoCol = idx;
     }
   });
 
@@ -277,7 +265,6 @@ export function applyImportedCsvRows(
   let importedKnown = 0;
   let importedFuzzy = 0;
   let importedUnknown = 0;
-  let memoCount = 0;
 
   for (let i = 1; i < rows.length; i += 1) {
     const cols = rows[i];
@@ -299,14 +286,12 @@ export function applyImportedCsvRows(
     if (!id || id < 1 || id > 2050) continue;
 
     let detectedStatus = classifyStatusCell(cols[statusCol]);
-    let detectedColIdx = statusCol;
 
     if (!detectedStatus) {
       for (let c = cols.length - 1; c >= 3; c -= 1) {
         const st = classifyStatusCell(cols[c]);
         if (st) {
           detectedStatus = st;
-          detectedColIdx = c;
           break;
         }
       }
@@ -324,28 +309,14 @@ export function applyImportedCsvRows(
     } else if (detectedStatus === "unmarked" && isFullExport) {
       delete marks[id];
     }
-
-    const actualMemoIdx = Math.max(memoCol, detectedColIdx + 1);
-    if (cols.length > actualMemoIdx) {
-      const memoVal = cols
-        .slice(actualMemoIdx)
-        .join(", ")
-        .replace(/^["']|["']$/g, "")
-        .trim();
-      if (memoVal) {
-        memos[id] = memoVal;
-        memoCount += 1;
-      }
-    }
   }
 
-  return { importedKnown, importedFuzzy, importedUnknown, memoCount };
+  return { importedKnown, importedFuzzy, importedUnknown };
 }
 
 export function buildExportCsvContent(
   vocabList: ReciteWord[],
   marks: Record<number, WordMarkStatus>,
-  memos: Record<number, string>,
   filterFn: (w: ReciteWord) => boolean,
 ): { csvContent: string; count: number } {
   const statusMap: Record<WordMarkStatus, string> = {
@@ -354,7 +325,7 @@ export function buildExportCsvContent(
     unknown: "完全不会",
   };
   const rows: (string | number)[][] = [
-    ["序号", "高考词频", "单词", "中文释义", "考查形式", "熟练度标记", "个人助记笔记"],
+    ["序号", "高考词频", "单词", "中文释义", "考查形式", "熟练度标记"],
   ];
 
   const list = vocabList.filter(filterFn);
@@ -365,8 +336,7 @@ export function buildExportCsvContent(
   for (const w of list) {
     const m = marks[w.id];
     const statusCn = m ? statusMap[m] : "未标记";
-    const memo = memos[w.id] ?? "";
-    rows.push([w.id, w.freq, w.word, w.meaning, w.forms.join(", "), statusCn, memo]);
+    rows.push([w.id, w.freq, w.word, w.meaning, w.forms.join(", "), statusCn]);
   }
 
   let k = 0;
@@ -385,7 +355,6 @@ export function buildExportCsvContent(
     `有点模糊: ${f}`,
     `完全不会: ${u}`,
     `未标记: ${list.length - k - f - u}`,
-    "",
   ]);
 
   const csvContent = `\uFEFF${rows
