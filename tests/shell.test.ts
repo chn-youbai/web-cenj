@@ -21,30 +21,36 @@ describe("Claude App Shell & Global Command Palette", () => {
     expect(activeLink?.getAttribute("aria-current")).toBe("page");
   });
 
-  it("toggles sidebar collapse state and persists to localStorage", () => {
+  it("defaults to collapsed slim icon rail and persists expanded state to localStorage", () => {
     const shell = initAppShell({ activePage: "index" });
-    expect(document.body.classList.contains("sidebar-collapsed")).toBe(false);
+    expect(document.body.classList.contains("sidebar-collapsed")).toBe(true);
 
     const collapsed = shell.toggleSidebar();
-    expect(collapsed).toBe(true);
-    expect(document.body.classList.contains("sidebar-collapsed")).toBe(true);
-    expect(window.localStorage.getItem("cenj_sidebar_collapsed")).toBe("1");
+    expect(collapsed).toBe(false);
+    expect(document.body.classList.contains("sidebar-collapsed")).toBe(false);
+    expect(window.localStorage.getItem("cenj_sidebar_expanded")).toBe("1");
   });
 
   it("renders mobile topbar and opens/closes left slide-out drawer", () => {
-    const shell = initAppShell({ activePage: "index" });
+    const indexShell = initAppShell({ activePage: "index" });
     expect(document.getElementById("mobileTopBar")).not.toBeNull();
+    expect(document.getElementById("mobileMenuBtn")).toBeNull();
+
+    const subShell = initAppShell({ activePage: "gallery" });
+    expect(document.body.classList.contains("sidebar-collapsed")).toBe(false);
+    expect(document.getElementById("mobileMenuBtn")).not.toBeNull();
 
     const backdrop = document.getElementById("mobileDrawerBackdrop");
     expect(backdrop?.classList.contains("open")).toBe(false);
 
-    shell.openDrawer();
+    subShell.openDrawer();
     expect(backdrop?.classList.contains("open")).toBe(true);
 
     const drawerLinks = document.querySelectorAll("#mobileDrawerBackdrop .app-nav-link");
     expect(drawerLinks.length).toBe(9);
 
-    shell.closeDrawer();
+    indexShell.closeDrawer();
+    subShell.closeDrawer();
     expect(backdrop?.classList.contains("open")).toBe(false);
   });
 

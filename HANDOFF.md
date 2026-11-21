@@ -1,0 +1,221 @@
+# Web-Cenj 项目交接文档 (`HANDOFF.md`)
+
+> **生成时间**：2026-11-20  
+> **当前分支**：`feat/claude-app-shell`（与 `main` 的差异处于 **PR #7** 待合并状态，最近代码提交 `b960123`）  
+> **文档性质**：基于源码与文档交叉核验后重新撰写的零上下文交接手册。凡旧文档 [`PROJECT_ARCHITECTURE.md`](./PROJECT_ARCHITECTURE.md) 与真实代码不一致之处，均以当前代码状态为准并在下文中明确标注。
+>
+> **⚠️ 强制同步规范（所有 AI / Agent 必须遵守）**：见 [`AGENTS.md`](./AGENTS.md)。任何接手或修改本仓库的 AI，在动手前必须先通读本文档；每次完成功能改动、结构调整、分支合并或状态变更后，**必须同步更新本 `HANDOFF.md`**（包括分支/提交状态、文件地图、进度审计与避坑指南），严禁只改代码不更新交接文档。
+
+---
+
+## 1. 项目一句话定位与核心架构
+
+`web-cenj` 是一个部署在 **Cloudflare Pages 全球边缘网络** 上的个人数字空间与工具集（10 个独立页面、暖纸感/暖炭黑双色设计），集成了 **英语词典与高亮速记卡、航拍图库与流媒体点播、资源网盘与代理订阅中心、休闲游乐场，以及仅通过暗号指令进入的记账/留言/Clash 云控工具**。
+
+### 核心技术栈
+- **前端多页应用（Vite 6 MPA）**：纯原生 TypeScript（`strict: true` + `noUncheckedIndexedAccess: true`）+ 模块化 CSS + `@fontsource` 本地打包字体（`Newsreader`、`Plus Jakarta Sans`、`IBM Plex Mono`）。无 React/Vue 运行时框架。
+- **全站统一外壳（App Shell & Quick Pick）**：所有 10 个页面均通过 `initAppShell({ activePage })` 注入左侧导航栏、移动端顶栏/抽屉、明暗主题自动同步、以及 **VS Code 风格 Quick Pick 全局命令面板（`⌘K` / `⌘⇧P`）**。
+- **边缘后端（Cloudflare Pages Functions）**：位于 [`functions/`](./functions/)，包含全局中间件 `_middleware.ts`、公共库 `_lib/*` 和 16 个 TypeScript `/api/*` 路由（含 `[[catchall]].ts` 兜底）。
+- **前后端共享契约**：[`shared/types.ts`](./shared/types.ts) 定义前后端共用数据结构，前后端分别使用 [`tsconfig.json`](./tsconfig.json) 与 [`tsconfig.functions.json`](./tsconfig.functions.json) 校验。
+- **持久化与离线缓存**：
+  - **Cloudflare D1 (`DB` / `web-vocab-db`)**：7 张核心业务表（词库、词根衍生、站点点击、视频元数据、Clash 与订阅配置、2050 过词同步、秘密留言板）。
+  - **Cloudflare KV (`TAKEOUT_KV` / `CLICKS_KV`)**：存储外卖账单快照与点赞计数降级存储。
+  - **浏览器 IndexedDB / localStorage**：[`vocab.html`](./vocab.html) 与 [`recite.html`](./recite.html) 将万词库与 2050 词库缓存在 IndexedDB 中，规避 iOS Safari `localStorage` 容量限制。
+- **质量与构建工具链**：Biome 1.9.4（格式与静态检查）+ TypeScript 5.7 + Vitest 3（`happy-dom` 环境）+ Vite 6。
+
+### 核心数据流与状态流
+1. **页面初始化流**：每个 `*.html` 在 `<head>` 先通过一段内联脚本读取 `localStorage["cenj_theme_v1"]` 与 `prefers-color-scheme` 预设 `data-theme="light|dark"` 防白屏闪烁；随后加载页面入口 `src/pages/<page>/main.ts` → 调用 `initAppShell({ activePage })` → 挂载侧边栏 / 移动顶栏 / 主题监听（[`src/core/theme.ts`](./src/core/theme.ts)）/ 命令面板（[`src/core/command-palette.ts`](./src/core/command-palette.ts)）。
+2. **认证鉴权流（Fail-Closed）**：所有受保护接口（`/api/auth`、`/api/subscription`、`/api/videos` 写操作、`/api/board` 删除、`/api/takeout` 与 `/api/clash`）均通过 [`functions/_lib/auth.ts`](./functions/_lib/auth.ts) 执行常量时间字符串比对（`safeEqual`）。若 Cloudflare Pages 环境变量未注入对应密钥，服务端直接返回 `503` 拒绝访问，前端无任何默认兜底密码。
+3. **搜索与隐藏入口流**：
+   - 可见导航（[`NAV_ITEMS`](./src/core/nav-config.ts)）仅包含 **5 组 9 项**：首页、英语查词、智能过词、视界画廊、投递视频、资源网盘、2048、航拍拼图、记忆翻卡。
+   - **3 个隐藏工具**（[`takeout.html`](./takeout.html)、[`board.html`](./board.html)、[`clash.html`](./clash.html)）不在任何菜单或提示文案中暴露，仅当用户在首页 Omnibox 或全局命令面板**精确完整输入** `/bill`、`/msg`、`/clash` 时，由 `matchSlashCommands()` 匹配触发跳转。
+
+---
+
+## 2. 关键目录与核心文件地图
+
+```text
+web-cenj/
+├── index.html                    # 1. 首页工作台（太阳时段问候 + 点赞计数 + Omnibox 搜索/隐藏指令入口）
+├── vocab.html                    # 2. 英语查词与词根词族系统（11,160+ 词）
+├── recite.html                   # 3. 高考 2050 核心词速记卡（云同步 + 测验）
+├── gallery.html                  # 4. 精选航拍图库 + GitHub Releases Range 视频点播
+├── upload.html                   # 5. 移动端视频直传 GitHub Releases 工具页
+├── pan.html                      # 6. 资源网盘直链下载 + 双机场流量/订阅 & Apple ID 解锁
+├── games.html                    # 7. 独立摸鱼游乐场（2048 / 航拍拼图 / 记忆翻卡，支持 ?tab=）
+├── takeout.html                  # 8. [隐藏] 沙县外卖多人记账助手（/bill）
+├── board.html                    # 9. [隐藏] 秘密留言板（/msg）
+├── clash.html                    # 10. [隐藏] Windows PC Clash Verge 远程控台（/clash）
+│
+├── shared/
+│   └── types.ts                  # 前后端共享接口与数据契约
+│
+├── src/
+│   ├── core/                     # 全站基础设施（改外壳/导航/主题/命令面板去这里）
+│   │   ├── nav-config.ts         # 导航元数据 NAV_GROUPS/NAV_ITEMS 与隐藏指令 SLASH_COMMANDS
+│   │   ├── shell.ts              # 桌面可折叠侧边栏、仅首页启用的手机细长窄栏、移动顶栏与抽屉
+│   │   ├── command-palette.ts    # VS Code Quick Pick 全局命令面板（⌘K / ⌘⇧P / > 命令模式）
+│   │   ├── theme.ts              # 明暗主题切换 + 回到系统主题自动同步（pageshow/focus/visibilitychange）
+│   │   ├── api.ts                # fetchJson / requestJson 统一封装
+│   │   ├── dom.ts                # escapeHtml / byId 等 DOM 辅助
+│   │   ├── storage.ts            # localStorage JSON 安全读写
+│   │   ├── fonts.ts              # @fontsource 本地字体打包入口
+│   │   ├── modal.ts              # 通用弹窗控制器
+│   │   └── toast.ts              # 全局提示条
+│   │
+│   ├── pages/                    # 各页面独立状态机与交互模块（每页均有 main.ts）
+│   │   ├── index/                # main.ts, omnibox.ts（6 时段日出日落问候+即时查词）, likes.ts
+│   │   ├── games/                # main.ts, games.ts（Tab 与侧栏同步）, game-2048.ts, game-puzzle.ts, game-memory.ts
+│   │   ├── vocab/                # main.ts, search.ts, derivatives.ts, word-knowledge.ts, idb.ts, csv.ts, render.ts
+│   │   ├── recite/               # main.ts, engine.ts, raw-words.ts, phrases-dict.ts, idb.ts, sync.ts, render.ts
+│   │   ├── gallery/              # main.ts, photos.ts（121 张图库清单）, videos.ts, lightbox.ts
+│   │   ├── upload/               # main.ts
+│   │   ├── pan/                  # main.ts, subscription.ts, bind-modal.ts
+│   │   ├── takeout/              # main.ts, settlement.ts, cloud-sync.ts, menu-data.ts, modals.ts, store.ts, render.ts
+│   │   ├── board/                # main.ts, identity.ts, messages.ts
+│   │   └── clash/                # main.ts, api.ts, auth.ts, renderers.ts
+│   │
+│   └── styles/                   # base.css + shell.css + 10 个页面独立 CSS
+│
+├── functions/                    # Cloudflare Pages Functions 边缘后端
+│   ├── _middleware.ts            # CORS 预检与 /api/* 异常统一 JSON 兜底
+│   ├── _lib/                     # auth.ts, db.ts, env.ts, http.ts
+│   └── api/                      # auth, board, clash, click, derivatives, download, recite-sync, recite-vocab,
+│                                 # sub, subscription, takeout, upload-asset, video, videos, vocab, [[catchall]]
+│
+├── data/
+│   ├── schema.sql                # D1 7 张表建表 SQL
+│   ├── vocab.json                # 1.1 万词离线词库（Vite dev/build 自动复制到 /data/）
+│   ├── gaokao_2050.json          # 高考 2050 词库 JSON
+│   ├── root_families.json        # 同根词族映射
+│   └── csv/                      # 原始课本 CSV 与说明（data/csv/README.md）
+│
+├── scripts/                      # Python 词库处理、照片清单与 D1 同步工具
+├── tests/                        # Vitest 单元测试（共 9 个文件，44 条用例）
+├── vite.config.ts                # 10 入口 MPA 配置 + data/*.json 静态注入插件 + /api 代理(8788)
+├── wrangler.jsonc                # Pages 构建目录 dist + D1 (web-vocab-db) 绑定配置
+├── biome.json                    # Biome 规则（注意忽略了 *.html、scripts、data、public）
+└── .env.example                  # Cloudflare 环境变量清单模板
+```
+
+---
+
+## 3. 环境依赖与本地启动/验证命令
+
+### 运行环境要求
+- **Node.js**：`20+` 或 `24 LTS`（生产构建由 Cloudflare Pages 执行 `npm run build`）
+- **Python 3**（可选）：仅运行 `scripts/*.py` 处理词库或部署脚本时需要
+- **Wrangler CLI**（可选）：本地模拟 Cloudflare Pages Functions + D1/KV 联调时需要
+
+### 常用命令
+```bash
+# 1. 安装依赖
+npm install
+
+# 2. 仅启动前端 Vite 开发服务器（注意：/api/* 会反向代理到 http://127.0.0.1:8788）
+npm run dev
+
+# 3. 前后端完整本地联调（先构建或监听 dist，再启动 wrangler pages dev）
+npm run build
+npx wrangler pages dev dist --port 8788
+
+# 4. 代码格式化 + 全量质量门禁（提交前必跑）
+npm run format && npm run check
+# check 依次执行: biome check . -> tsc 前端 & Functions 双校验 -> vitest run -> vite build
+```
+
+### 环境变量与绑定配置（Cloudflare Pages）
+所有密钥**不能写进代码或配置文件**，必须在 **Cloudflare Dashboard → `web-cenj` → Settings → Variables and secrets**（本地用 `.dev.vars`，已被 `.gitignore` 忽略）中注入后，执行 **Retry deployment** 生效：
+
+| 变量 / 绑定名 | 类型 | 用途说明 |
+| :--- | :--- | :--- |
+| `DB` | D1 Binding | 绑定 `web-vocab-db`（ID 见 [`wrangler.jsonc`](./wrangler.jsonc)），7 张表 SQL 见 [`data/schema.sql`](./data/schema.sql) |
+| `TAKEOUT_KV` / `CLICKS_KV` | KV Binding | 外卖云备份与点赞降级存储 |
+| `ADMIN_PASSWORD` | Secret | 管理员密码（`/api/auth`、视频管理、留言删帖、外卖接口、`clash` 默认回退） |
+| `ACCESS_PASSWORD` | Secret | 网盘解锁密码（`/api/subscription`） |
+| `CLASH_DAEMON_SECRET` | Secret | Windows PC 守护进程 `X-Clash-Daemon-Secret` 请求头校验密钥 |
+| `DJJC_TOKEN` | Secret | 顶级机场订阅 Token（D1 未存储 `djjc_config` 时使用） |
+| `VPN07_EMAIL` / `VPN07_PASSWORD` | Secret | VPN07 登录凭据（优先环境变量，否则回退读取 D1 `vpn07_credentials`） |
+| `APPLE_ID_EMAIL` / `APPLE_ID_PASSWORD` | Secret | 网盘解锁后下发的共享美区 Apple ID 账号密码 |
+| `GITHUB_MEDIA_TOKEN` | Secret（可选） | 配置后视频上传页支持凭管理员密码免填 GitHub Token 直传 Releases |
+
+---
+
+## 4. 当前开发进度审计（已完成 vs 未完成）
+
+### 4.1 相对旧文档 [`PROJECT_ARCHITECTURE.md`](./PROJECT_ARCHITECTURE.md) 的关键纠偏
+旧文档仍停留在 v4.0.0 初期重构状态，与当前仓库实际代码存在以下明显偏差：
+1. **页面数量与导航结构变化**：旧文档目录树与表格缺失 [`games.html`](./games.html)（表格标题写着 9 页、目录写着 10 页）；真实仓库共 **10 个 HTML 入口**（见 [`vite.config.ts`](./vite.config.ts#L48-L61)）。
+2. **首页功能重写**：旧文档写首页包含 `auth-modal.ts`、`easter-eggs.ts` 与内嵌游乐场游戏。真实代码已删除上述文件（`showcase.*`、`almanac.*` 也已彻底删除），首页模块现为 [`omnibox.ts`](./src/pages/index/omnibox.ts)、[`likes.ts`](./src/pages/index/likes.ts)、[`main.ts`](./src/pages/index/main.ts)；3 个游戏已迁移到独立页 [`games.html`](./games.html) 并在左侧导航列为 `04 游乐场`。
+3. **新增全站 App Shell & VS Code Quick Pick**：旧文档完全未记录 [`src/core/shell.ts`](./src/core/shell.ts)、[`src/core/nav-config.ts`](./src/core/nav-config.ts)、[`src/core/command-palette.ts`](./src/core/command-palette.ts)、[`src/core/theme.ts`](./src/core/theme.ts) 等核心交互层，以及测试套已从 4 个扩展至 9 个（44 条测试用例）。
+4. **隐藏工具入口收紧**：`takeout`、`board`、`clash` 已从一切可见菜单和提示中剔除，只能精确输入 `/bill`、`/msg`、`/clash` 进入（严格全等匹配，不再做前缀提示）。
+
+### 4.2 当前进度状态拆分
+- **已完成并已验证通过的功能**：
+  - 全站 10 个 MPA 页面迁移与全栈 TypeScript 强类型改造（`npm run check` 44/44 单测与构建全绿）。
+  - 首页 Claude 纸感布局：6 时段日出日落精细问候（无个人姓名）、Omnibox 即输即查（支持 `/api/vocab` 失败时降级读 `./data/vocab.json`）、心形点赞胶囊、桌面与手机顶部主题切换按钮。
+  - **首页专属可折叠细长图标窄栏** + 非首页保留标准桌面可折叠侧边栏与手机端顶栏抽屉。
+  - **VS Code 风格 Quick Pick 全局命令面板**（`⌘K` 搜索页面/单词/主题、最近使用置顶、`⌘⇧P` 或输入 `>` 进入命令模式并高亮模糊匹配）。
+  - **系统主题自动同步修复**：手切回到与系统一致的主题时自动清除 `localStorage` 覆盖，并监听 `pageshow` / `focus` / `visibilitychange` / `storage`。
+  - **独立游乐场 [`games.html`](./games.html)**：支持 `?tab=2048|puzzle|memory` 与侧边栏高亮同步，航拍拼图与记忆翻卡复用画廊图库清单（[`photos.ts`](./src/pages/gallery/photos.ts)）。
+  - **隐藏工具严格隐身**（[`matchSlashCommands`](./src/core/nav-config.ts#L257-L261) 全等匹配 + 移除所有页面提示）。
+  - **PR #7 已合入 `main`**：包含首页窄栏限定、系统主题同步修复、严格隐藏斜杠指令、VS Code Quick Pick 命令面板以及 [`AGENTS.md`](./AGENTS.md) / [`HANDOFF.md`](./HANDOFF.md) 同步规范。
+- **待收尾 / 可选清理事项**：
+  1. **仓库内历史遗留冗余资产（非功能阻塞，但可择机清理）**：
+     - [`src/styles/index.css`](./src/styles/index.css#L974-L1229) 末尾仍残留约 250 行旧版游乐场（`.g2048-*`、`.puzzle-*`、`.memory-*`）CSS 样式；游乐场已独立使用 [`src/styles/games.css`](./src/styles/games.css)。
+     - [`public/left_avatar.png`](./public/left_avatar.png) 与 [`public/right_avatar.jpg`](./public/right_avatar.jpg) 在移除首页左上角头像后已无任何引用（[`OIP-C.jpg`](./public/OIP-C.jpg) 仍作为全站 favicon 使用，不可删除）。
+     - [`PROJECT_ARCHITECTURE.md`](./PROJECT_ARCHITECTURE.md) 内容已滞后于当前代码架构。
+  2. **真实云端绑定依赖（外部控制台确认）**：如 Cloudflare Pages 生产环境 **Variables and secrets** 更新后未执行 `Retry deployment`，受保护接口会继续按 Fail-Closed 规则返回 `503`。
+
+---
+
+## 5. 核心逻辑与高风险避坑指南
+
+1. **首页专属窄栏 vs 子页标准布局的强耦合（`data-active-page="index"`）**
+   - **约束文件**：[`src/core/shell.ts`](./src/core/shell.ts#L74-L165)、[`src/styles/shell.css`](./src/styles/shell.css#L14-L68)。
+   - **机制说明**：只有当 `activePage === "index"` 时，手机端（`< 920px`）才渲染左侧 `52px` 细长图标窄栏且不渲染 `#mobileMenuBtn`，并将 `.mobile-topbar` 的 `left` 偏移到窄栏右侧；也只有首页才读取 `cenj_sidebar_expanded`（默认收起），其他 9 个子页读取 `cenj_sidebar_collapsed`（默认展开）。
+   - **避坑**：切勿在修改 [`shell.css`](./src/styles/shell.css) 时去掉 `body[data-active-page="index"]` 限定，否则会直接导致 [`takeout.html`](./takeout.html) 底部 `.tab-bar` 或 [`vocab.html`](./vocab.html) 吸顶搜索栏在手机端被左侧窄栏遮挡。
+
+2. **首页点赞按钮跨断点 DOM 物理迁移（`syncLikeButtonSlot`）**
+   - **约束文件**：[`src/pages/index/main.ts`](./src/pages/index/main.ts#L11-L27)。
+   - **机制说明**：由于 `<920px` 时 `.workspace-topbar` 被 `display: none` 隐藏，`syncLikeButtonSlot()` 会监听 `matchMedia("(max-width: 919px)")` 把真实 DOM 节点 `#likeBtn` 在 `.workspace-topbar .topbar-actions` 与 `#mobileTopBar .mobile-topbar-right` 之间物理搬移（而非克隆两份按钮导致计数器或事件失步）。
+   - **避坑**：若调整窗口大小从移动端切回桌面端，`desktopActions.append(likeBtn)` 会将 `#likeBtn` 放到主题切换按钮之后；若改动此处按钮顺序或结构，需保持 `#likeBtn` 与 `#likeCount` ID 唯一，并注意在 `initAppShell()` **之后** 调用搬移逻辑。
+
+3. **系统主题自动同步与 `<head>` 内联防闪脚本的一致性**
+   - **约束文件**：[`src/core/theme.ts`](./src/core/theme.ts#L44-L108) 及 10 个 `*.html` 头部内联 `<script>`。
+   - **机制说明**：
+     - 每次手动点击切换主题，若目标主题恰好等于当前系统主题（`getSystemTheme()`），`toggleTheme()` 会主动执行 `removeStorageItem("cenj_theme_v1")` 解除手动覆盖，之后即重新自动跟随系统切换。
+     - `initThemeToggle()` 额外监听了 `pageshow`、`focus`、`visibilitychange` 与跨标签页 `storage` 事件，专门解决 iOS Safari 锁屏/后台挂起时不触发 `MediaQueryList.change` 的问题。
+   - **避坑**：不要在 `toggleTheme()` 里无条件写入 `localStorage`；同时 10 个 HTML 头部内联脚本读取的 Key（`cenj_theme_v1`）与颜色值（`#faf9f5` / `#262624`）必须与 [`theme.ts`](./src/core/theme.ts) 保持完全一致。
+
+4. **隐藏指令的严格静默策略（`/bill`、`/msg`、`/clash`）**
+   - **约束文件**：[`src/core/nav-config.ts`](./src/core/nav-config.ts#L161-L261)、[`src/core/command-palette.ts`](./src/core/command-palette.ts#L345-L360)。
+   - **机制说明**：`matchSlashCommands(query)` 使用精确全等 `cmd.command.toLowerCase() === raw`；同时 `command-palette.ts` 标记了 `isHiddenSlash: true` 的条目，**禁止写入 `cenj_cmd_recent_v1` 最近使用历史**，也禁止在 `>` 命令模式列表中出现。
+   - **避坑**：不要把 `matchSlashCommands` 改回 `startsWith` 或在 `raw === "/"` 时返回全部指令，也不要在首页提示、placeholder、空状态或 `recentIds` 中泄露这三个路径或命令。
+
+5. **Vite MPA 与 Biome 检查边界**
+   - **约束文件**：[`vite.config.ts`](./vite.config.ts)、[`biome.json`](./biome.json)。
+   - **机制说明**：
+     - Vite 只打包 HTML 引用的模块及 `public/` 下静态文件；`data/*.json` 通过 `vite.config.ts` 内 `dataAssetsPlugin()` 在 dev 中拦截提供并在 build 后拷贝至 `dist/data/`。
+     - [`biome.json`](./biome.json#L22) 开启了 `recommended` 规则（禁止 `.forEach()`，需使用 `for...of`；禁止无插值模板字符串），且明确忽略了 `*.html`、`scripts`、`data`、`public`。
+     - 若新增测试文件涉及 Cloudflare Workers 全局类型（如 `functions/` 后端逻辑），命名必须匹配 [`tsconfig.functions.json`](./tsconfig.functions.json#L19) 的 `tests/functions-*.test.ts`，否则前端 [`tsconfig.json`](./tsconfig.json) 会报类型缺失错误。
+
+6. **游乐场多入口与侧栏高亮联动**
+   - **约束文件**：[`src/core/nav-config.ts`](./src/core/nav-config.ts#L127-L158)、[`src/pages/games/games.ts`](./src/pages/games/games.ts#L50-L82)、[`src/pages/games/main.ts`](./src/pages/games/main.ts#L7-L17)。
+   - **机制说明**：侧边栏 `04 游乐场` 下三个子项指向同一个 HTML（`./games.html?tab=2048|puzzle|memory`），页面内切换 Tab 时通过 `history.replaceState` 同步 URL 并手动更新 `.app-nav-link[data-nav-id]` 的 `.active` 类名。
+
+---
+
+## 6. 给下一个 Agent 的首步行动指令
+
+### 建议推进路线
+1. **第一阶段：先拉取并核验 `main` 最新状态** → 确认工作区与 `npm run check` 全绿，核对 `HANDOFF.md` 与 [`AGENTS.md`](./AGENTS.md)。
+2. **第二阶段（可选清理与文档对齐）**：清理 `index.css` 残留游乐场样式、`public/` 中未引用的双头像图，并同步更新或精简 `PROJECT_ARCHITECTURE.md`。
+3. **第三阶段：按用户新需求迭代**（优先修改对应 `src/pages/<page>/*` 或 `functions/api/*`，每次改动必须运行 `npm run format && npm run check` 并同步更新本 `HANDOFF.md`）。
+
+### 接手后第一条应执行的检查命令
+```bash
+git status && git log -n 5 --oneline && npm run check
+```
+- 期望结果：`working tree clean`，处于 `main` 最新合并提交，且 `npm run check`（Biome lint、前后端 `tsc`、Vitest 9 文件 44 用例、Vite MPA 打包）全部退出码 `0`。
+- 若准备验证受保护服务端接口（如 `/api/subscription`、`/api/auth`、`/api/takeout`），请先确认运行环境中是否已准备好 `.dev.vars` 或 Cloudflare Pages Secrets 与 D1/KV 绑定。

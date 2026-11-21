@@ -4,6 +4,7 @@ import { NAV_GROUPS, NAV_ITEMS, type PageId, getNavItem } from "./nav-config";
 import { getStorageItem, setStorageItem } from "./storage";
 import { initThemeToggle } from "./theme";
 
+export const SIDEBAR_EXPANDED_KEY = "cenj_sidebar_expanded";
 export const SIDEBAR_COLLAPSED_KEY = "cenj_sidebar_collapsed";
 
 export interface AppShellOptions {
@@ -70,14 +71,17 @@ export function initAppShell(options: AppShellOptions): AppShellController {
   document.body.classList.add("has-app-shell");
   document.body.dataset.activePage = activePage;
 
-  const isCollapsed = getStorageItem(SIDEBAR_COLLAPSED_KEY) === "1";
+  const isHomePage = activePage === "index";
+  const isCollapsed = isHomePage
+    ? getStorageItem(SIDEBAR_EXPANDED_KEY) !== "1"
+    : getStorageItem(SIDEBAR_COLLAPSED_KEY) === "1";
   document.body.classList.toggle("sidebar-collapsed", isCollapsed);
 
   document.getElementById("appSidebar")?.remove();
   document.getElementById("mobileTopBar")?.remove();
   document.getElementById("mobileDrawerBackdrop")?.remove();
 
-  // 1. Desktop collapsible sidebar
+  // 1. Unified left rail / collapsible sidebar (slim rail on mobile only for homepage)
   const sidebar = document.createElement("aside");
   sidebar.id = "appSidebar";
   sidebar.className = "app-sidebar";
@@ -99,8 +103,10 @@ export function initAppShell(options: AppShellOptions): AppShellController {
         type="button"
         class="sidebar-collapse-btn"
         id="sidebarCollapseBtn"
-        aria-label="折叠或展开侧边栏"
-        title="折叠 / 展开侧边栏"
+        aria-label="展开或收起侧边导航"
+        aria-controls="mobileDrawerBackdrop"
+        aria-expanded="false"
+        title="展开 / 收起侧边导航"
       >
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <rect x="3" y="4" width="18" height="16" rx="2.5"/>
@@ -135,13 +141,16 @@ export function initAppShell(options: AppShellOptions): AppShellController {
     </div>
   `;
 
-  // 2. Mobile minimalist top navigation bar (Claude.ai style)
+  // 2. Mobile minimalist top bar
   const mobileTopBar = document.createElement("header");
   mobileTopBar.id = "mobileTopBar";
   mobileTopBar.className = "mobile-topbar";
   mobileTopBar.innerHTML = `
     <div class="mobile-topbar-left">
-      <button
+      ${
+        isHomePage
+          ? ""
+          : `<button
         type="button"
         class="mobile-menu-btn"
         id="mobileMenuBtn"
@@ -152,7 +161,8 @@ export function initAppShell(options: AppShellOptions): AppShellController {
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
           <path d="M4 7h16M4 12h16M4 17h12"/>
         </svg>
-      </button>
+      </button>`
+      }
       <a href="./index.html" class="mobile-topbar-brand" title="返回工作台">
         <span class="mobile-topbar-mark" aria-hidden="true">
           <svg viewBox="0 0 24 24" fill="currentColor">
@@ -229,25 +239,34 @@ export function initAppShell(options: AppShellOptions): AppShellController {
   document.body.appendChild(mobileDrawerBackdrop);
 
   function toggleSidebar(): boolean {
-    const next = !document.body.classList.contains("sidebar-collapsed");
-    document.body.classList.toggle("sidebar-collapsed", next);
-    setStorageItem(SIDEBAR_COLLAPSED_KEY, next ? "1" : "0");
-    return next;
+    const collapsed = !document.body.classList.contains("sidebar-collapsed");
+    document.body.classList.toggle("sidebar-collapsed", collapsed);
+    setStorageItem(SIDEBAR_EXPANDED_KEY, collapsed ? "0" : "1");
+    setStorageItem(SIDEBAR_COLLAPSED_KEY, collapsed ? "1" : "0");
+    return collapsed;
   }
 
   function openDrawer(): void {
     mobileDrawerBackdrop.classList.add("open");
     mobileDrawerBackdrop.setAttribute("aria-hidden", "false");
-    document.getElementById("mobileMenuBtn")?.setAttribute("aria-expanded", "true");
+    document.getElementById("sidebarCollapseBtn")?.setAttribute("aria-expanded", "true");
   }
 
   function closeDrawer(): void {
     mobileDrawerBackdrop.classList.remove("open");
     mobileDrawerBackdrop.setAttribute("aria-hidden", "true");
-    document.getElementById("mobileMenuBtn")?.setAttribute("aria-expanded", "false");
+    document.getElementById("sidebarCollapseBtn")?.setAttribute("aria-expanded", "false");
   }
 
   document.getElementById("sidebarCollapseBtn")?.addEventListener("click", () => {
+    if (window.matchMedia("(max-width: 919px)").matches) {
+      if (mobileDrawerBackdrop.classList.contains("open")) {
+        closeDrawer();
+      } else {
+        openDrawer();
+      }
+      return;
+    }
     toggleSidebar();
   });
 

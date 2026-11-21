@@ -257,6 +257,5 @@ export function filterNavItems(query: string): NavItemMeta[] {
 export function matchSlashCommands(query: string): SlashCommandRoute[] {
   const raw = query.trim().toLowerCase();
   if (!raw.startsWith("/")) return [];
-  if (raw === "/") return [...SLASH_COMMANDS];
-  return SLASH_COMMANDS.filter((cmd) => cmd.command.startsWith(raw));
+  return SLASH_COMMANDS.filter((cmd) => cmd.command.toLowerCase() === raw);
 }

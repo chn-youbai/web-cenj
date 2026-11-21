@@ -1,4 +1,4 @@
-import { getStorageItem, setStorageItem } from "./storage";
+import { getStorageItem, removeStorageItem, setStorageItem } from "./storage";
 
 export type ThemeMode = "light" | "dark";
 
@@ -9,6 +9,13 @@ export const THEME_COLORS: Record<ThemeMode, string> = {
   dark: "#262624",
 };
 
+export function getSystemTheme(): ThemeMode {
+  if (typeof window !== "undefined" && typeof window.matchMedia === "function") {
+    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  }
+  return "light";
+}
+
 export function getSavedTheme(): ThemeMode | null {
   const saved = getStorageItem(THEME_STORAGE_KEY);
   return saved === "light" || saved === "dark" ? saved : null;
@@ -17,10 +24,7 @@ export function getSavedTheme(): ThemeMode | null {
 export function getPreferredTheme(): ThemeMode {
   const saved = getSavedTheme();
   if (saved) return saved;
-  if (typeof window !== "undefined" && typeof window.matchMedia === "function") {
-    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-  }
-  return "light";
+  return getSystemTheme();
 }
 
 export function applyTheme(theme: ThemeMode): void {
@@ -44,7 +48,12 @@ export function applyTheme(theme: ThemeMode): void {
 export function toggleTheme(): ThemeMode {
   const current = document.documentElement.dataset.theme === "dark" ? "dark" : "light";
   const next: ThemeMode = current === "dark" ? "light" : "dark";
-  setStorageItem(THEME_STORAGE_KEY, next);
+  // If toggling back to match current system theme, clear manual override so system auto-sync resumes
+  if (next === getSystemTheme()) {
+    removeStorageItem(THEME_STORAGE_KEY);
+  } else {
+    setStorageItem(THEME_STORAGE_KEY, next);
+  }
   applyTheme(next);
   return next;
 }
@@ -59,16 +68,40 @@ export function initThemeToggle(): ThemeMode {
     });
   }
 
-  if (typeof window !== "undefined" && typeof window.matchMedia === "function") {
-    const mq = window.matchMedia("(prefers-color-scheme: dark)");
-    const onChange = (e: MediaQueryListEvent): void => {
-      if (!getSavedTheme()) {
-        applyTheme(e.matches ? "dark" : "light");
-      }
-    };
-    if (typeof mq.addEventListener === "function") {
-      mq.addEventListener("change", onChange);
+  const syncIfAuto = (): void => {
+    if (!getSavedTheme()) {
+      applyTheme(getSystemTheme());
     }
+  };
+
+  if (typeof window !== "undefined") {
+    if (typeof window.matchMedia === "function") {
+      const mq = window.matchMedia("(prefers-color-scheme: dark)");
+      const onChange = (e: MediaQueryListEvent): void => {
+        if (!getSavedTheme()) {
+          applyTheme(e.matches ? "dark" : "light");
+        }
+      };
+      if (typeof mq.addEventListener === "function") {
+        mq.addEventListener("change", onChange);
+      } else if (typeof mq.addListener === "function") {
+        mq.addListener(onChange);
+      }
+    }
+
+    // iOS Safari / mobile browsers often suspend matchMedia events while backgrounded or in bfcache
+    window.addEventListener("pageshow", syncIfAuto);
+    window.addEventListener("focus", syncIfAuto);
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible") {
+        syncIfAuto();
+      }
+    });
+    window.addEventListener("storage", (e) => {
+      if (e.key === THEME_STORAGE_KEY) {
+        applyTheme(getPreferredTheme());
+      }
+    });
   }
 
   return initial;
