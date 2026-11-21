@@ -146,6 +146,7 @@ body {
 .game-actions {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 6px;
 }
 
@@ -160,7 +161,19 @@ body {
   font-size: 12.5px;
   font-weight: 500;
   cursor: pointer;
-  transition: background-color var(--dur-1) var(--ease), border-color var(--dur-1) var(--ease);
+  transition: background-color var(--dur-1) var(--ease), border-color var(--dur-1) var(--ease),
+    color var(--dur-1) var(--ease);
+}
+
+.game-btn:hover:not(:disabled) {
+  border-color: var(--c-border-strong);
+  background: var(--c-surface-2);
+}
+
+.game-btn.active {
+  border-color: var(--c-accent);
+  color: var(--c-accent);
+  background: color-mix(in srgb, var(--c-accent) 10%, var(--c-bg-subtle));
 }
 
 .game-btn:disabled {
@@ -305,6 +318,7 @@ body {
 }
 
 .puzzle-tile {
+  position: relative;
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: var(--r-xs);
   background-repeat: no-repeat;
@@ -315,6 +329,43 @@ body {
 
 .puzzle-tile:active {
   transform: scale(0.96);
+}
+
+.puzzle-tile.hint {
+  z-index: 2;
+  border-color: #ffffff;
+  box-shadow: inset 0 0 0 2.5px var(--c-accent), 0 0 0 2px rgba(255, 255, 255, 0.9), 0 0 14px
+    color-mix(in srgb, var(--c-accent) 75%, transparent);
+  animation: puzzle-hint-pulse 1.1s ease-in-out infinite;
+}
+
+@keyframes puzzle-hint-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(0.95);
+  }
+}
+
+.puzzle-tile-num {
+  position: absolute;
+  top: 5px;
+  left: 5px;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: rgba(20, 20, 19, 0.68);
+  color: #ffffff;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 20px;
+  text-align: center;
+  backdrop-filter: blur(4px);
+  pointer-events: none;
 }
 
 .puzzle-tile.empty {

@@ -178,7 +178,7 @@ python scripts/verify_vocab.py
   - **首页专属可折叠细长图标窄栏** + 非首页保留标准桌面可折叠侧边栏与手机端顶栏抽屉。
   - **VS Code 风格 Quick Pick 全局命令面板**（`⌘K` 搜索页面/单词/主题、最近使用置顶、`⌘⇧P` 或输入 `>` 进入命令模式并高亮模糊匹配）。
   - **系统主题自动同步修复**：手切回到与系统一致的主题时自动清除 `localStorage` 覆盖，并监听 `pageshow` / `focus` / `visibilitychange` / `storage`。
-  - **独立游乐场 [`games.html`](./games.html)**：支持 `?tab=2048|puzzle|memory` 与侧边栏高亮同步，航拍拼图与记忆翻卡复用画廊图库清单（[`photos.ts`](./src/pages/gallery/photos.ts)）；记忆翻卡（[`game-memory.ts`](./src/pages/games/game-memory.ts)）已实现开局 100% 并发预加载与进度遮罩（`#memPreloadOverlay`），移除 `loading="lazy"` 并改为原地 DOM class 切换翻转，避免翻牌时现下图片或重建节点打断动画。
+  - **独立游乐场 [`games.html`](./games.html)**：支持 `?tab=2048|puzzle|memory` 与侧边栏高亮同步，航拍拼图与记忆翻卡复用画廊图库清单（[`photos.ts`](./src/pages/gallery/photos.ts)）；记忆翻卡（[`game-memory.ts`](./src/pages/games/game-memory.ts)）已实现开局 100% 并发预加载与进度遮罩（`#memPreloadOverlay`），移除 `loading="lazy"` 并改为原地 DOM class 切换翻转；航拍拼图（[`game-puzzle.ts`](./src/pages/games/game-puzzle.ts)）基于曼哈顿距离+线性冲突的 A*/加权 A* 求解器（[`solvePuzzle`](./src/pages/games/game-puzzle.ts#L207)）支持 3×3 与 4×4 的「提示一步」高亮闪动、70ms/步「自动求解」快速演示（不弹结算遮罩），以及可选「显示编号」角标开关。
   - **隐藏工具严格隐身**（[`matchSlashCommands`](./src/core/nav-config.ts#L257-L261) 全等匹配 + 移除所有页面提示）。
   - **智能过词彻底重构（[`recite.html`](./recite.html) / [`src/pages/recite/*`](./src/pages/recite/main.ts)）**：移除 390px 模拟手机壳、底部 TabBar、卡片盒外框、真题变形/短语块与前后端助记笔记字段（`memos` 已从 `/api/recite-sync`、[`shared/types.ts`](./shared/types.ts) 与 6 列 CSV 中彻底移除）；主过词界面采用无卡片开阔画布 + 底部 `position: fixed` 锚定三态熟练度栏（`.mark-dock`，按钮位置恒定丝毫不动，支持左右滑动/拖拽与 `←/→` 切词），并支持全屏纯享专注模式（`#zenFullscreen`，仅显示单词与中文）。
   - **已合入 `main` 并清理旧文档**：已合并 PR #7，删除过期冗余的 `PROJECT_ARCHITECTURE.md`，全部内容整合至本 `HANDOFF.md`。

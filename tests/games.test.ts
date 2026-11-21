@@ -3,9 +3,26 @@ import { createMemoryDeck, mountMemoryGame } from "@/pages/games/game-memory";
 import {
   createShuffledPuzzle,
   createSolvedPuzzle,
+  getAdjacentIndices,
+  isPuzzleSolvable,
   isPuzzleSolved,
+  mountAerialPuzzleGame,
+  solvePuzzle,
 } from "@/pages/games/game-puzzle";
 import { describe, expect, it, vi } from "vitest";
+
+function verifySolutionPath(board: number[], size: number, path: number[]): boolean {
+  const cur = [...board];
+  for (const tileIdx of path) {
+    const emptyIdx = cur.indexOf(0);
+    if (emptyIdx < 0 || !getAdjacentIndices(emptyIdx, size).includes(tileIdx)) {
+      return false;
+    }
+    cur[emptyIdx] = cur[tileIdx] ?? 0;
+    cur[tileIdx] = 0;
+  }
+  return isPuzzleSolved(cur);
+}
 
 describe("playground games logic", () => {
   it("merges 2048 tiles cleanly and calculates gained score", () => {
@@ -29,6 +46,56 @@ describe("playground games logic", () => {
     expect(shuffled.length).toBe(9);
     expect(isPuzzleSolved(shuffled)).toBe(false);
     expect([...shuffled].sort((a, b) => a - b)).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8]);
+  });
+
+  it("solves 3x3 and 4x4 shuffled puzzles cleanly and rejects unsolvable boards", () => {
+    expect(isPuzzleSolvable([1, 2, 3, 4, 5, 6, 8, 7, 0], 3)).toBe(false);
+    expect(solvePuzzle([1, 2, 3, 4, 5, 6, 8, 7, 0], 3)).toBeNull();
+
+    for (let i = 0; i < 5; i++) {
+      const board3 = createShuffledPuzzle(3);
+      const path3 = solvePuzzle(board3, 3);
+      expect(path3).not.toBeNull();
+      expect(verifySolutionPath(board3, 3, path3 ?? [])).toBe(true);
+    }
+
+    for (let i = 0; i < 5; i++) {
+      const board4 = createShuffledPuzzle(4);
+      const path4 = solvePuzzle(board4, 4);
+      expect(path4).not.toBeNull();
+      expect(verifySolutionPath(board4, 4, path4 ?? [])).toBe(true);
+    }
+  });
+
+  it("supports puzzle hint highlight, tile numbers toggle, and 70ms auto-solve demo without win overlay", () => {
+    vi.useFakeTimers();
+    try {
+      const container = document.createElement("div");
+      mountAerialPuzzleGame(container);
+
+      const numBtn = container.querySelector<HTMLButtonElement>("#puzzleNumBtn");
+      const hintBtn = container.querySelector<HTMLButtonElement>("#puzzleHintBtn");
+      const solveBtn = container.querySelector<HTMLButtonElement>("#puzzleSolveBtn");
+      const winOverlay = container.querySelector<HTMLElement>("#puzzleWinOverlay");
+
+      expect(container.querySelector(".puzzle-tile-num")).toBeNull();
+      numBtn?.click();
+      expect(container.querySelector(".puzzle-tile-num")).not.toBeNull();
+
+      hintBtn?.click();
+      expect(container.querySelector(".puzzle-tile.hint")).not.toBeNull();
+
+      solveBtn?.click();
+      expect(solveBtn?.textContent).toBe("停止演示");
+      vi.advanceTimersByTime(70 * 100);
+
+      expect(winOverlay?.hidden).toBe(true);
+      expect(solveBtn?.disabled).toBe(true);
+      const tiles = Array.from(container.querySelectorAll(".puzzle-tile"));
+      expect(tiles[tiles.length - 1]?.classList.contains("empty")).toBe(true);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("creates exact photo pairs from gallery for memory match deck", () => {
