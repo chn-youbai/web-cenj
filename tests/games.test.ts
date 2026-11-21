@@ -1,11 +1,11 @@
 import { createEmptyGrid, hasAvailableMoves, moveGrid } from "@/pages/games/game-2048";
-import { createMemoryDeck } from "@/pages/games/game-memory";
+import { createMemoryDeck, mountMemoryGame } from "@/pages/games/game-memory";
 import {
   createShuffledPuzzle,
   createSolvedPuzzle,
   isPuzzleSolved,
 } from "@/pages/games/game-puzzle";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 describe("playground games logic", () => {
   it("merges 2048 tiles cleanly and calculates gained score", () => {
@@ -40,6 +40,56 @@ describe("playground games logic", () => {
     }
     for (const count of counts.values()) {
       expect(count).toBe(2);
+    }
+  });
+
+  it("preloads round images before unlocking memory board and flips cards in-place", async () => {
+    const pendingImages: Array<{ onload: (() => void) | null }> = [];
+    class MockImage {
+      decoding = "";
+      onload: (() => void) | null = null;
+      onerror: (() => void) | null = null;
+      private _src = "";
+      set src(val: string) {
+        this._src = val;
+        pendingImages.push(this);
+      }
+      get src() {
+        return this._src;
+      }
+    }
+    vi.stubGlobal("Image", MockImage);
+
+    try {
+      const container = document.createElement("div");
+      mountMemoryGame(container);
+
+      const overlay = container.querySelector<HTMLElement>("#memPreloadOverlay");
+      const firstCard = container.querySelector<HTMLButtonElement>(".mem-card");
+      const firstImg = firstCard?.querySelector<HTMLImageElement>("img");
+      expect(overlay?.hidden).toBe(false);
+      expect(firstImg?.getAttribute("loading")).toBeNull();
+      expect(firstImg?.getAttribute("decoding")).toBe("async");
+
+      // Board is locked during preload
+      firstCard?.click();
+      expect(firstCard?.classList.contains("flipped")).toBe(false);
+      expect(pendingImages.length).toBe(8);
+
+      // Complete all preloads
+      for (const img of pendingImages) {
+        img.onload?.();
+      }
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
+      expect(overlay?.hidden).toBe(true);
+
+      // Click flips card in-place without recreating DOM node
+      firstCard?.click();
+      expect(firstCard?.classList.contains("flipped")).toBe(true);
+      expect(container.querySelector(".mem-card")).toBe(firstCard);
+    } finally {
+      vi.unstubAllGlobals();
     }
   });
 });
