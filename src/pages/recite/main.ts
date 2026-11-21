@@ -738,8 +738,61 @@ function bindEvents(): void {
     { passive: true },
   );
 
+  // Card swipe / drag on mobile & desktop
+  let startX = 0;
+  let startY = 0;
+  let suppressNextClick = false;
+  const cardEl = optById("wordCardContainer");
+
+  cardEl?.addEventListener(
+    "touchstart",
+    (e) => {
+      const touch = e.changedTouches[0];
+      if (!touch) return;
+      startX = touch.screenX;
+      startY = touch.screenY;
+    },
+    { passive: true },
+  );
+  cardEl?.addEventListener(
+    "touchend",
+    (e) => {
+      if (state.activeTab !== "study") return;
+      const touch = e.changedTouches[0];
+      if (!touch) return;
+      const dx = touch.screenX - startX;
+      const dy = touch.screenY - startY;
+      if (Math.abs(dx) > 48 && Math.abs(dy) < 60) {
+        stepWord(dx > 0 ? -1 : 1, state.zenMode);
+      }
+    },
+    { passive: true },
+  );
+
+  let pointerDown = false;
+  cardEl?.addEventListener("pointerdown", (e) => {
+    if (e.pointerType === "touch" || e.button !== 0) return;
+    pointerDown = true;
+    startX = e.clientX;
+    startY = e.clientY;
+  });
+  cardEl?.addEventListener("pointerup", (e) => {
+    if (!pointerDown || e.pointerType === "touch") return;
+    pointerDown = false;
+    const dx = e.clientX - startX;
+    const dy = e.clientY - startY;
+    if (Math.abs(dx) > 48 && Math.abs(dy) < 60) {
+      suppressNextClick = true;
+      stepWord(dx > 0 ? -1 : 1, state.zenMode);
+    }
+  });
+
   // Card center area interaction
   optById("cardCenterArea")?.addEventListener("click", () => {
+    if (suppressNextClick) {
+      suppressNextClick = false;
+      return;
+    }
     if (filteredDeck.length === 0) return;
     if (state.maskMode !== "none" && !state.cardRevealed) {
       state.cardRevealed = true;
@@ -752,38 +805,7 @@ function bindEvents(): void {
     }
   });
 
-  // Card swipe on mobile
-  let touchStartX = 0;
-  let touchStartY = 0;
-  const cardEl = optById("wordCardContainer");
-  cardEl?.addEventListener(
-    "touchstart",
-    (e) => {
-      const touch = e.changedTouches[0];
-      if (!touch) return;
-      touchStartX = touch.screenX;
-      touchStartY = touch.screenY;
-    },
-    { passive: true },
-  );
-  cardEl?.addEventListener(
-    "touchend",
-    (e) => {
-      if (state.activeTab !== "study") return;
-      const touch = e.changedTouches[0];
-      if (!touch) return;
-      const dx = touch.screenX - touchStartX;
-      const dy = touch.screenY - touchStartY;
-      if (Math.abs(dx) > 56 && Math.abs(dy) < 55) {
-        stepWord(dx > 0 ? -1 : 1, state.zenMode);
-      }
-    },
-    { passive: true },
-  );
-
   // Study controls
-  optById("btnPrevCard")?.addEventListener("click", () => stepWord(-1, state.zenMode));
-  optById("btnNextCard")?.addEventListener("click", () => stepWord(1, state.zenMode));
   optById("btnSpeakWord")?.addEventListener("click", () => {
     const w = filteredDeck[state.currentIndex]?.word;
     if (w) speakText(w);

@@ -63,9 +63,9 @@
       <button type="button" class="recite-tab" role="tab" aria-selected="false" data-nav="stats">数据与同步</button>
     </nav>
 
-    <!-- ==================== VIEW 1: 记忆闪卡 ==================== -->
-    <section id="viewStudy" class="recite-panel">
-      <!-- 卡片上方直出快捷控制条 -->
+    <!-- ==================== VIEW 1: 记忆过词（无卡片开阔画布 + 底部固定熟练度栏） ==================== -->
+    <section id="viewStudy" class="recite-panel study-viewport">
+      <!-- 顶部直出快捷控制条（无卡片外框） -->
       <div class="study-toolbar">
         <div class="study-toolbar-row">
           <select id="selectGroup" aria-label="选择分组" class="rc-select"></select>
@@ -77,8 +77,8 @@
             <button type="button" class="rc-chip-btn" id="btnShuffleDeck" title="切换顺序 / 乱序">
               <span id="shuffleLabel">顺序</span>
             </button>
-            <button type="button" class="rc-chip-btn" id="btnZenToggle" title="极速专注模式（隐藏细节，点击卡片切词）">
-              <span>⚡ 极速专注</span>
+            <button type="button" class="rc-chip-btn" id="btnZenToggle" title="全屏专注模式（只显示单词与中文）">
+              <span>⚡ 专注</span>
             </button>
           </div>
         </div>
@@ -97,9 +97,9 @@
         </div>
       </div>
 
-      <!-- 主闪卡卡片 -->
-      <article class="flashcard" id="wordCardContainer">
-        <div class="flashcard-head">
+      <!-- 无卡片开阔过词画布（左右滑动切词，点击发音/揭晓） -->
+      <div class="study-canvas" id="wordCardContainer">
+        <div class="canvas-meta-bar">
           <div class="flashcard-meta">
             <span class="meta-badge" id="cardWordId">#1</span>
             <span class="meta-badge meta-freq" id="cardFreqBadge">考频 73 次</span>
@@ -124,49 +124,31 @@
           </div>
         </div>
 
-        <!-- 单词与释义聚焦舞台 -->
-        <div class="flashcard-stage" id="cardCenterArea" title="点击揭晓释义或朗读">
+        <div class="canvas-word-stage" id="cardCenterArea" title="左右滑动切词 · 点击揭晓释义或朗读">
           <div class="card-word-text" id="cardWordText">for</div>
           <div class="card-meaning-wrap" id="cardMeaningWrapper">
             <div class="card-meaning-text" id="cardMeaningText">为了……、对于……、因为</div>
-            <div class="card-mask-hint" id="maskHintText" hidden>点击卡片揭晓答案 · 按 Space 发音</div>
+            <div class="card-mask-hint" id="maskHintText" hidden>点击揭晓答案 · 左右滑动切词</div>
           </div>
         </div>
+      </div>
 
-        <!-- 真题拓展区（极速专注模式下自动隐藏） -->
-        <div class="flashcard-extras" id="cardExamExpandedSection">
-          <div class="extra-block" id="cardFormsContainer">
-            <div class="extra-title">真题考查变形</div>
-            <div class="extra-forms-list" id="cardFormsList"></div>
-          </div>
-          <div class="extra-block" id="cardPhrasesContainer">
-            <div class="extra-title">高考高频短语 &amp; 搭配</div>
-            <div class="extra-phrases-list" id="cardPhrasesList"></div>
-          </div>
+      <!-- 底部固定位置三态熟练度栏（坐标恒定不动） -->
+      <div class="mark-dock" id="studyMarkBar">
+        <div class="mark-bar">
+          <button type="button" class="mark-pill mark-known" id="btnMarkKnown">
+            <span class="mark-pill-title">🟢 很熟 <kbd>1</kbd></span>
+            <span class="mark-pill-sub">秒认无需想</span>
+          </button>
+          <button type="button" class="mark-pill mark-fuzzy" id="btnMarkFuzzy">
+            <span class="mark-pill-title">🟡 有点模糊 <kbd>2</kbd></span>
+            <span class="mark-pill-sub">待巩固复习</span>
+          </button>
+          <button type="button" class="mark-pill mark-unknown" id="btnMarkUnknown">
+            <span class="mark-pill-title">🔴 完全不会 <kbd>3</kbd></span>
+            <span class="mark-pill-sub">重点反复刷</span>
+          </button>
         </div>
-
-        <!-- 卡片底栏：上一词 / 快捷键提示 / 下一词 -->
-        <div class="flashcard-nav-row">
-          <button type="button" class="rc-btn rc-btn-ghost" id="btnPrevCard">← 上一词</button>
-          <span class="shortcut-hint" id="cardShortcutHint">快捷键：1 熟 · 2 模糊 · 3 不会 · Space 揭晓/发音 · ←/→ 切词</span>
-          <button type="button" class="rc-btn rc-btn-ghost" id="btnNextCard">下一词 →</button>
-        </div>
-      </article>
-
-      <!-- 底部温润纸感三态标记栏 -->
-      <div class="mark-bar" id="studyMarkBar">
-        <button type="button" class="mark-pill mark-known" id="btnMarkKnown">
-          <span class="mark-pill-title">🟢 很熟 <kbd>1</kbd></span>
-          <span class="mark-pill-sub">秒认无需想</span>
-        </button>
-        <button type="button" class="mark-pill mark-fuzzy" id="btnMarkFuzzy">
-          <span class="mark-pill-title">🟡 有点模糊 <kbd>2</kbd></span>
-          <span class="mark-pill-sub">待巩固复习</span>
-        </button>
-        <button type="button" class="mark-pill mark-unknown" id="btnMarkUnknown">
-          <span class="mark-pill-title">🔴 完全不会 <kbd>3</kbd></span>
-          <span class="mark-pill-sub">重点反复刷</span>
-        </button>
       </div>
     </section>
 

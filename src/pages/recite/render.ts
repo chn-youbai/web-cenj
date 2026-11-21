@@ -178,7 +178,6 @@ export function renderStudyCard(state: ReciteState, filteredDeck: ReciteWord[]):
   const bar = optById("deckProgressBar");
   const total = filteredDeck.length;
 
-  const extrasSection = optById("cardExamExpandedSection");
   const wordText = optById("cardWordText");
   const meaningText = optById("cardMeaningText");
   const maskHint = optById("maskHintText");
@@ -262,39 +261,6 @@ export function renderStudyCard(state: ReciteState, filteredDeck: ReciteWord[]):
 
   if (maskHint) {
     maskHint.hidden = state.maskMode === "none" || state.cardRevealed;
-  }
-
-  // Forms & Phrases
-  const formsList = optById("cardFormsList");
-  const formsContainer = optById("cardFormsContainer");
-  if (formsContainer && formsList) {
-    if (item.forms.length > 0) {
-      formsContainer.hidden = false;
-      formsList.innerHTML = item.forms
-        .map((f) => `<span class="form-pill">${escapeHtml(f)}</span>`)
-        .join("");
-    } else {
-      formsContainer.hidden = true;
-    }
-  }
-
-  const phrasesContainer = optById("cardPhrasesContainer");
-  const phrasesList = optById("cardPhrasesList");
-  if (phrasesContainer && phrasesList) {
-    const cleanKey = cleanHead.toLowerCase();
-    const matchedPhrases = GAOKAO_PHRASES_DICT[cleanKey];
-    if (matchedPhrases && matchedPhrases.length > 0) {
-      phrasesContainer.hidden = false;
-      phrasesList.innerHTML = matchedPhrases.map((p) => `<div>• ${escapeHtml(p)}</div>`).join("");
-    } else {
-      phrasesContainer.hidden = true;
-    }
-  }
-
-  if (extrasSection && !state.zenMode) {
-    const hasForms = item.forms.length > 0;
-    const hasPhrases = Boolean(GAOKAO_PHRASES_DICT[cleanHead.toLowerCase()]?.length);
-    extrasSection.hidden = !hasForms && !hasPhrases;
   }
 }
 
