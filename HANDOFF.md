@@ -1,8 +1,8 @@
 # Web-Cenj 项目交接文档 (`HANDOFF.md`)
 
 > **生成时间**：2026-11-20  
-> **当前分支**：`feat/claude-app-shell`（与 `main` 的差异处于 **PR #7** 待合并状态，最近代码提交 `b960123`）  
-> **文档性质**：基于源码与文档交叉核验后重新撰写的零上下文交接手册。凡旧文档 [`PROJECT_ARCHITECTURE.md`](./PROJECT_ARCHITECTURE.md) 与真实代码不一致之处，均以当前代码状态为准并在下文中明确标注。
+> **当前分支**：`main`（已合并 PR #7 并清理冗余旧架构文档，包含 `AGENTS.md` / `HANDOFF.md` 协作规范）  
+> **文档性质**：全站唯一权威架构与交接手册，所有描述均与当前真实代码状态严格对齐。
 >
 > **⚠️ 强制同步规范（所有 AI / Agent 必须遵守）**：见 [`AGENTS.md`](./AGENTS.md)。任何接手或修改本仓库的 AI，在动手前必须先通读本文档；每次完成功能改动、结构调整、分支合并或状态变更后，**必须同步更新本 `HANDOFF.md`**（包括分支/提交状态、文件地图、进度审计与避坑指南），严禁只改代码不更新交接文档。
 
@@ -139,18 +139,39 @@ npm run format && npm run check
 | `APPLE_ID_EMAIL` / `APPLE_ID_PASSWORD` | Secret | 网盘解锁后下发的共享美区 Apple ID 账号密码 |
 | `GITHUB_MEDIA_TOKEN` | Secret（可选） | 配置后视频上传页支持凭管理员密码免填 GitHub Token 直传 Releases |
 
+### Cloudflare Pages Functions 接口清单（`functions/api/`）
+| 端点 | 方法 | 鉴权要求 | 说明 |
+| :--- | :--- | :--- | :--- |
+| `/api/auth` | `POST` | `ADMIN_PASSWORD` | 统一管理员密码验证入口，未配置返回 `503` |
+| `/api/click` | `GET`, `POST` | 公开 | 首页点赞计数读写（`site_stats` / KV 降级） |
+| `/api/board` | `GET`, `POST`, `DELETE` | 删除需 `ADMIN_PASSWORD` | 秘密留言板读取、发布回复点赞、管理删除 |
+| `/api/clash` | `GET`, `POST` | `CLASH_DAEMON_SECRET` 或 D1 `auth_pwd` / `ADMIN_PASSWORD` | PC 守护进程心跳/状态上报与手机指令下发 |
+| `/api/vocab` | `GET`, `POST`, `DELETE` | 写入/删除需 `ADMIN_PASSWORD` | 1.1 万词库在线检索、快照同步与词条维护 |
+| `/api/derivatives` | `GET` | 公开 | 同根派生词群检索（`word_derivatives`） |
+| `/api/recite-vocab` | `GET` | 公开 | 读取 2050 词库静态或补充结构 |
+| `/api/recite-sync` | `GET`, `POST` | Sync Key 校验 | 跨设备记忆标记、助记笔记与个性化设置云同步 |
+| `/api/takeout` | `GET`, `POST` | `ADMIN_PASSWORD` | 外卖账单 KV 读写备份与时间戳冲突保护 |
+| `/api/videos` | `GET`, `PATCH`, `DELETE` | 写入/删除需 `ADMIN_PASSWORD` | 云端视频列表、重命名与 GitHub Release 资产清理 |
+| `/api/video` | `GET`, `HEAD` | 公开 | HTTP Range 206 视频流式透传（适配 iOS Safari） |
+| `/api/upload-asset` | `POST` | `ADMIN_PASSWORD` 或请求携带 GitHub Token | 边缘中继流式上传视频至 GitHub Releases 并入库 D1 |
+| `/api/download` | `GET`, `HEAD` | 公开 | 网盘安装包边缘流式直链下载（支持多线程） |
+| `/api/subscription` | `GET`, `POST` | `ACCESS_PASSWORD` | 机场流量查询、VPN07 刷新、美区 Apple ID 凭证下发 |
+| `/api/sub` | `GET`, `HEAD` | 固定私人中继 | 自动协议伪装与多域名容灾探活的 Clash YAML 订阅下发 |
+| `/api/*` | `*` | - | `[[catchall]].ts` 返回规范 404 JSON |
+
+### D1 数据库初始化与词库脚本（[`data/schema.sql`](./data/schema.sql)）
+D1 共 7 张表：`textbook_words`、`word_derivatives`、`site_stats`、`videos`、`clash_control`、`recite_sync`、`guestbook_messages`。初始化与词库维护命令：
+```bash
+npx wrangler d1 execute web-vocab-db --remote --file=data/schema.sql
+python scripts/seed_d1.py
+python scripts/seed_cet.py
+python scripts/verify_vocab.py
+```
+
 ---
 
-## 4. 当前开发进度审计（已完成 vs 未完成）
+## 4. 当前开发进度审计（已完成 vs 待收尾）
 
-### 4.1 相对旧文档 [`PROJECT_ARCHITECTURE.md`](./PROJECT_ARCHITECTURE.md) 的关键纠偏
-旧文档仍停留在 v4.0.0 初期重构状态，与当前仓库实际代码存在以下明显偏差：
-1. **页面数量与导航结构变化**：旧文档目录树与表格缺失 [`games.html`](./games.html)（表格标题写着 9 页、目录写着 10 页）；真实仓库共 **10 个 HTML 入口**（见 [`vite.config.ts`](./vite.config.ts#L48-L61)）。
-2. **首页功能重写**：旧文档写首页包含 `auth-modal.ts`、`easter-eggs.ts` 与内嵌游乐场游戏。真实代码已删除上述文件（`showcase.*`、`almanac.*` 也已彻底删除），首页模块现为 [`omnibox.ts`](./src/pages/index/omnibox.ts)、[`likes.ts`](./src/pages/index/likes.ts)、[`main.ts`](./src/pages/index/main.ts)；3 个游戏已迁移到独立页 [`games.html`](./games.html) 并在左侧导航列为 `04 游乐场`。
-3. **新增全站 App Shell & VS Code Quick Pick**：旧文档完全未记录 [`src/core/shell.ts`](./src/core/shell.ts)、[`src/core/nav-config.ts`](./src/core/nav-config.ts)、[`src/core/command-palette.ts`](./src/core/command-palette.ts)、[`src/core/theme.ts`](./src/core/theme.ts) 等核心交互层，以及测试套已从 4 个扩展至 9 个（44 条测试用例）。
-4. **隐藏工具入口收紧**：`takeout`、`board`、`clash` 已从一切可见菜单和提示中剔除，只能精确输入 `/bill`、`/msg`、`/clash` 进入（严格全等匹配，不再做前缀提示）。
-
-### 4.2 当前进度状态拆分
 - **已完成并已验证通过的功能**：
   - 全站 10 个 MPA 页面迁移与全栈 TypeScript 强类型改造（`npm run check` 44/44 单测与构建全绿）。
   - 首页 Claude 纸感布局：6 时段日出日落精细问候（无个人姓名）、Omnibox 即输即查（支持 `/api/vocab` 失败时降级读 `./data/vocab.json`）、心形点赞胶囊、桌面与手机顶部主题切换按钮。
@@ -159,13 +180,16 @@ npm run format && npm run check
   - **系统主题自动同步修复**：手切回到与系统一致的主题时自动清除 `localStorage` 覆盖，并监听 `pageshow` / `focus` / `visibilitychange` / `storage`。
   - **独立游乐场 [`games.html`](./games.html)**：支持 `?tab=2048|puzzle|memory` 与侧边栏高亮同步，航拍拼图与记忆翻卡复用画廊图库清单（[`photos.ts`](./src/pages/gallery/photos.ts)）。
   - **隐藏工具严格隐身**（[`matchSlashCommands`](./src/core/nav-config.ts#L257-L261) 全等匹配 + 移除所有页面提示）。
-  - **PR #7 已合入 `main`**：包含首页窄栏限定、系统主题同步修复、严格隐藏斜杠指令、VS Code Quick Pick 命令面板以及 [`AGENTS.md`](./AGENTS.md) / [`HANDOFF.md`](./HANDOFF.md) 同步规范。
+  - **已合入 `main` 并清理旧文档**：已合并 PR #7，删除过期冗余的 `PROJECT_ARCHITECTURE.md`，全部内容整合至本 `HANDOFF.md`。
 - **待收尾 / 可选清理事项**：
   1. **仓库内历史遗留冗余资产（非功能阻塞，但可择机清理）**：
      - [`src/styles/index.css`](./src/styles/index.css#L974-L1229) 末尾仍残留约 250 行旧版游乐场（`.g2048-*`、`.puzzle-*`、`.memory-*`）CSS 样式；游乐场已独立使用 [`src/styles/games.css`](./src/styles/games.css)。
      - [`public/left_avatar.png`](./public/left_avatar.png) 与 [`public/right_avatar.jpg`](./public/right_avatar.jpg) 在移除首页左上角头像后已无任何引用（[`OIP-C.jpg`](./public/OIP-C.jpg) 仍作为全站 favicon 使用，不可删除）。
-     - [`PROJECT_ARCHITECTURE.md`](./PROJECT_ARCHITECTURE.md) 内容已滞后于当前代码架构。
-  2. **真实云端绑定依赖（外部控制台确认）**：如 Cloudflare Pages 生产环境 **Variables and secrets** 更新后未执行 `Retry deployment`，受保护接口会继续按 Fail-Closed 规则返回 `503`。
+  2. **运维排障速查**：
+     - **接口返回 503**：Cloudflare Pages 环境变量（`ADMIN_PASSWORD`/`ACCESS_PASSWORD`）未配置或配置后未执行 `Retry deployment`。
+     - **构建后静态图或 JSON 404**：静态图片须置于 `public/`；JSON 数据须列入 [`vite.config.ts`](./vite.config.ts#L5) 的 `DATA_ASSETS`。
+     - **iPhone 视频无画面或无法拖拽**：检查 `/api/video` 是否返回 `206 Partial Content` 与 `Cache-Control: no-store`。
+     - **Clash 状态长期离线**：检查 PC 端 `clash_daemon.pyw` 运行状态及 `X-Clash-Daemon-Secret` 是否与 Pages Secret 一致。
 
 ---
 
