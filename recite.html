@@ -1,684 +1,502 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <meta name="theme-color" content="#faf9f5" />
-  <title>高考英语2050核心词汇 · 智能过词系统</title>
-  <link rel="icon" href="./OIP-C.jpg" type="image/jpeg" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#faf9f5">
+  <title>智能过词 · 高考 2050 核心词</title>
+  <link rel="icon" href="./OIP-C.jpg" type="image/jpeg">
   <script>
-    (function(){try{var t=localStorage.getItem("cenj_theme_v1");var d=t==="dark"||(t!=="light"&&window.matchMedia("(prefers-color-scheme: dark)").matches);document.documentElement.dataset.theme=d?"dark":"light";if(d)document.documentElement.classList.add("dark");var m=document.querySelector('meta[name="theme-color"]');if(m)m.content=d?"#262624":"#faf9f5";}catch(e){}})();
+    (function(){try{var t=localStorage.getItem("cenj_theme_v1");var d=t==="dark"||(t!=="light"&&window.matchMedia("(prefers-color-scheme: dark)").matches);document.documentElement.dataset.theme=d?"dark":"light";document.documentElement.classList.toggle("dark",d);var m=document.querySelector('meta[name="theme-color"]');if(m)m.content=d?"#262624":"#faf9f5";}catch(e){}})();
   </script>
   <link rel="preconnect" href="https://fonts.loli.net" crossorigin>
   <link rel="stylesheet" href="https://fonts.loli.net/css2?family=Noto+Serif+SC:wght@400;500;600;700&display=swap">
-  <link rel="stylesheet" href="./src/styles/base.css" />
-  <link rel="stylesheet" href="./src/styles/shell.css" />
-  <link rel="stylesheet" href="./src/styles/recite.css" />
+  <link rel="stylesheet" href="./src/styles/base.css">
+  <link rel="stylesheet" href="./src/styles/shell.css">
+  <link rel="stylesheet" href="./src/styles/recite.css">
 </head>
 <body>
-  <div id="workspaceShell" class="workspace-shell">
-    <div id="deviceFrame" class="device-frame app-surface">
-      <!-- Top App Header -->
-      <header id="appTopHeader" class="px-3 pt-2 pb-1.5 border-b border-slate-200/70 dark:border-slate-700/60 flex items-center justify-between flex-shrink-0">
-        <div class="flex-1 min-w-0 pr-1.5">
-          <div class="flex items-center gap-1.5 flex-nowrap">
-            <h1 class="text-[15px] font-extrabold tracking-tight text-teal-600 dark:text-teal-400 whitespace-nowrap">高考2050核心词</h1>
-            <span id="headerGroupBadge" class="px-1.5 py-0.5 text-[10px] font-semibold rounded-full bg-teal-500/10 text-teal-600 dark:text-teal-300 border border-teal-500/20 whitespace-nowrap">
-              全词库
-            </span>
-          </div>
-          <div class="flex items-center gap-1.5 text-[10px] sub-text truncate mt-0.5">
-            <span id="headerProgressSub">已刷 0/2050 词 · 掌握率 0%</span>
-            <span>·</span>
-            <button id="btnHeaderSyncPill" type="button" class="btn-press px-1.5 py-0.2 rounded-md bg-teal-500/10 text-teal-600 dark:text-teal-400 font-mono font-bold inline-flex items-center gap-0.5 hover:bg-teal-500/20 transition cursor-pointer" title="点击设置或修改专属云端同步码">
-              <span>☁️</span><span id="headerSyncKey">GK-8823</span>
+  <div class="recite-stage">
+    <!-- 顶部出版物风格页头 -->
+    <header class="recite-header">
+      <div class="recite-brand-col">
+        <div class="recite-eyebrow">GAOKAO 2050 · SMART RECITE</div>
+        <div class="recite-title-row">
+          <h1 class="recite-title">智能过词</h1>
+          <span class="recite-progress-pill" id="headerProgressSub">已刷 0 / 2050 · 掌握 0%</span>
+        </div>
+      </div>
+
+      <div class="recite-header-actions">
+        <button type="button" class="rc-pill-btn" id="btnHeaderSync" title="管理跨端同步码">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/>
+          </svg>
+          <span id="headerSyncKey">GK-LOCAL</span>
+        </button>
+        <button type="button" class="rc-pill-btn" id="btnAccentToggle" title="切换美音 / 英音">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+            <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+          </svg>
+          <span id="accentLabel">美音</span>
+        </button>
+        <button type="button" class="rc-pill-btn" id="btnOpenPref" title="字号、语速与刷词偏好">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9c.26.6.77 1 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+          </svg>
+          <span>偏好</span>
+        </button>
+        <button type="button" class="theme-toggle-btn recite-desktop-theme" data-theme-toggle aria-label="切换深浅色主题" title="切换深浅色主题">
+          <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- 4 主模式分段切换 -->
+    <nav class="recite-tabs" role="tablist" aria-label="过词功能切换">
+      <button type="button" class="recite-tab active" role="tab" aria-selected="true" data-nav="study">记忆闪卡</button>
+      <button type="button" class="recite-tab" role="tab" aria-selected="false" data-nav="quiz">自测练习</button>
+      <button type="button" class="recite-tab" role="tab" aria-selected="false" data-nav="list">词表检索</button>
+      <button type="button" class="recite-tab" role="tab" aria-selected="false" data-nav="stats">数据与同步</button>
+    </nav>
+
+    <!-- ==================== VIEW 1: 记忆闪卡 ==================== -->
+    <section id="viewStudy" class="recite-panel">
+      <!-- 卡片上方直出快捷控制条 -->
+      <div class="study-toolbar">
+        <div class="study-toolbar-row">
+          <select id="selectGroup" aria-label="选择分组" class="rc-select"></select>
+          <div class="study-toolbar-right">
+            <span class="deck-counter" id="deckPositionText">1 / 2050</span>
+            <button type="button" class="rc-chip-btn" id="btnMaskToggle" title="切换记忆遮罩">
+              <span id="maskModeLabel">全显</span>
+            </button>
+            <button type="button" class="rc-chip-btn" id="btnShuffleDeck" title="切换顺序 / 乱序">
+              <span id="shuffleLabel">顺序</span>
+            </button>
+            <button type="button" class="rc-chip-btn" id="btnZenToggle" title="极速专注模式（隐藏细节，点击卡片切词）">
+              <span>⚡ 极速专注</span>
             </button>
           </div>
         </div>
 
-        <div class="flex items-center gap-1 flex-shrink-0">
-          <!-- Accent Toggle -->
-          <button id="btnAccentToggle" type="button" class="btn-press px-1.5 h-7 rounded-lg text-[10px] font-semibold card-surface border flex items-center gap-0.5" title="切换美音/英音">
-            <span>🔊</span>
-            <span id="accentLabel">美音</span>
-          </button>
-          <!-- Prominent Custom Sync Code Button -->
-          <button id="btnHeaderSyncIcon" type="button" class="btn-press px-2 h-7 rounded-lg text-[10px] font-bold card-surface border flex items-center gap-1 text-teal-600 dark:text-teal-400 shadow-sm" title="自定义专属同步码">
-            <span>☁️</span>
-            <span>同步码</span>
-          </button>
-          <!-- Theme Toggle -->
-          <button id="btnThemeToggle" type="button" class="btn-press w-7 h-7 rounded-lg card-surface border flex items-center justify-center text-xs" title="切换深色/浅色模式">
-            <span id="themeIcon">🌙</span>
-          </button>
+        <div class="filter-chips-row" role="group" aria-label="单词状态直出筛选">
+          <button type="button" class="filter-chip active" data-status-filter="all">全部</button>
+          <button type="button" class="filter-chip" data-status-filter="unmarked">⚪ 未标</button>
+          <button type="button" class="filter-chip" data-status-filter="review">🔥 不会+模糊</button>
+          <button type="button" class="filter-chip" data-status-filter="unknown">🔴 不会</button>
+          <button type="button" class="filter-chip" data-status-filter="fuzzy">🟡 模糊</button>
+          <button type="button" class="filter-chip" data-status-filter="known">🟢 很熟</button>
         </div>
-      </header>
 
-      <!-- Main Content Views -->
-      <main class="flex-1 overflow-hidden relative flex flex-col">
+        <div class="deck-progress-track">
+          <div class="deck-progress-fill" id="deckProgressBar" style="width: 0%"></div>
+        </div>
+      </div>
 
-        <!-- ==================== VIEW 1: FLASHCARD STUDY (过单词) ==================== -->
-        <section id="viewStudy" class="flex-1 flex flex-col pt-1.5 overflow-hidden">
-          <!-- Sleek Single-Line Focus Bar: Group Selector + Minimal Progress + Preferences Drawer Trigger -->
-          <div class="flex items-center justify-between gap-2 px-3 mb-1.5 flex-shrink-0">
-            <!-- Left: Group Selector -->
-            <div class="flex-1 min-w-0 max-w-[190px]">
-              <select id="selectGroup" aria-label="选择分组" class="w-full card-surface border rounded-xl px-2 py-1 text-[11px] font-bold text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-teal-500 truncate shadow-2xs">
-                <!-- Populated by JS -->
-              </select>
-            </div>
-
-            <!-- Center: Inline Slim Progress Text -->
-            <div class="flex items-center gap-1.5 min-w-0 flex-shrink-0">
-              <span id="deckPositionText" class="text-[11px] font-bold font-mono text-teal-700 dark:text-teal-300">1 / 2050</span>
-              <span id="activeFilterPill" class="hidden px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-teal-500/15 text-teal-600 dark:text-teal-300">筛选中</span>
-            </div>
-
-            <!-- Right: Preferences & Filters Drawer Trigger -->
-            <button id="btnOpenPrefDrawer" type="button" class="btn-press px-2.5 py-1 rounded-xl card-surface border flex items-center gap-1 text-[11px] font-bold text-slate-700 dark:text-slate-200 shadow-2xs hover:bg-slate-50 dark:hover:bg-slate-800 transition flex-shrink-0" title="打开刷词偏好设置与状态筛选">
-              <span>⚙️</span>
-              <span>设置</span>
+      <!-- 主闪卡卡片 -->
+      <article class="flashcard" id="wordCardContainer">
+        <div class="flashcard-head">
+          <div class="flashcard-meta">
+            <span class="meta-badge" id="cardWordId">#1</span>
+            <span class="meta-badge meta-freq" id="cardFreqBadge">考频 73 次</span>
+            <span class="status-pill status-unmarked" id="cardStatusBadge">⚪ 未标记</span>
+          </div>
+          <div class="flashcard-tools">
+            <button type="button" class="rc-icon-btn" id="btnSpeakWord" title="朗读单词 (Space)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+                <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+                <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+              </svg>
+              <span>发音</span>
             </button>
-          </div>
-
-          <!-- Thin smooth progress line -->
-          <div class="px-3 mb-1.5 flex-shrink-0">
-            <div class="w-full h-1 bg-slate-200/70 dark:bg-slate-700/60 rounded-full overflow-hidden">
-              <div id="deckProgressBar" class="h-full bg-gradient-to-r from-teal-500 to-emerald-400 transition-all duration-300" style="width: 0%"></div>
-            </div>
-          </div>
-
-          <!-- Main Word Flashcard (Clean Auto-Fit Hero Card) -->
-          <div id="wordCardContainer" class="flex-1 min-h-0 flex flex-col px-3 py-1 relative overflow-y-auto scroll-area">
-
-            <!-- Card Top Metadata: Unified Left-Aligned Pills with Breathing Space -->
-            <div class="flex items-center gap-2 pt-1 px-1.5 z-10 flex-shrink-0 flex-wrap">
-              <span id="cardWordId" class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 dark:bg-slate-800 sub-text shadow-2xs">
-                #1
-              </span>
-              <span id="cardFreqBadge" class="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 shadow-2xs">
-                🔥 考频 73次
-              </span>
-              <span id="cardStatusBadge" class="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 dark:bg-slate-800 sub-text shadow-2xs">
-                未标记
-              </span>
-            </div>
-
-            <!-- Card Center: Pure Focused Study Area (English Word + Chinese Meaning Perfectly Anchored) -->
-            <div id="cardCenterArea" class="flex-1 min-h-0 flex flex-col items-center justify-center py-4 text-center cursor-pointer select-text" title="点击揭晓释义或朗读单词">
-              <!-- English Headword -->
-              <div id="cardWordText" class="leading-tight font-black tracking-tight select-text break-words max-w-full px-1 hover:opacity-90 active:scale-95 transition cursor-pointer" title="点击朗读单词">
-                for
-              </div>
-
-              <!-- Chinese Meaning (Constant distance directly below English) -->
-              <div id="cardMeaningWrapper" class="w-full text-center transition mt-3 sm:mt-5">
-                <div id="cardMeaningText" class="font-black leading-tight text-slate-800 dark:text-slate-100 select-text break-words tracking-normal">
-                  为了……、对于……、因为
-                </div>
-                <div id="maskHintText" class="hidden text-[11px] text-teal-600 dark:text-teal-400 mt-2 font-semibold">
-                  👆 点击卡片揭晓释义
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- 历年真题考查卡片 (做到主卡片下方独立展示) -->
-          <div id="cardExamExpandedSection" class="mx-3 my-1 text-left px-3.5 py-2.5 rounded-2xl bg-slate-50/90 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/50 space-y-2 max-h-[125px] overflow-y-auto scroll-area transition-all flex-shrink-0">
-            <!-- Forms Sub-row (if any) -->
-            <div id="cardFormsContainer">
-              <div class="text-[10px] font-bold text-teal-700 dark:text-teal-300 mb-1 flex items-center gap-1">
-                <span>📌 历年真题考查变形</span>
-              </div>
-              <div id="cardFormsList" class="flex flex-wrap gap-1.5">
-                <!-- Populated dynamically -->
-              </div>
-            </div>
-
-            <!-- Phrases Sub-row (if any) -->
-            <div id="cardPhrasesContainer">
-              <div class="text-[10px] font-bold text-amber-700 dark:text-amber-400 mb-1 flex items-center gap-1">
-                <span>📚 高考真题常考短语 & 课本搭配</span>
-              </div>
-              <div id="cardPhrasesList" class="space-y-1 text-[11px] text-slate-700 dark:text-slate-200">
-                <!-- Populated dynamically -->
-              </div>
-            </div>
-          </div>
-          <!-- Hidden compatibility stubs -->
-          <div id="cardFormsSection" class="hidden"></div>
-          <div id="cardPhrasesSection" class="hidden"></div>
-
-          <!-- User Memo Display (if any) -->
-          <div id="memoDisplayBar" class="hidden mx-3 mt-1 px-2.5 py-1 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-700 dark:text-amber-300 flex items-center justify-between flex-shrink-0">
-            <span id="memoDisplayText" class="truncate"></span>
-            <button id="btnEditMemoInline" type="button" class="ml-2 underline text-[11px] flex-shrink-0">修改</button>
-          </div>
-
-          <!-- 3-Tier Marking Buttons: 100% True Full-Bleed Action Bar (左右彻底通栏贴边) -->
-          <div class="w-full flex items-stretch flex-shrink-0 divide-x divide-white/20 dark:divide-white/10 shadow-lg border-t border-slate-200/40 dark:border-slate-700/40 rounded-none m-0">
-            <button id="btnMarkKnown" type="button" class="btn-press flex-1 py-3 px-1 bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 text-white flex flex-col items-center justify-center transition">
-              <span class="text-sm font-extrabold flex items-center gap-1">
-                <span>🟢</span><span>很熟</span>
-              </span>
-              <span class="text-[9px] opacity-90 mt-0.5 whitespace-nowrap">秒认无需想 (1)</span>
+            <button type="button" class="rc-icon-btn" id="btnToggleMemoEditor" title="添加或修改助记笔记">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M12 20h9"/>
+                <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/>
+              </svg>
+              <span>笔记</span>
             </button>
-
-            <button id="btnMarkFuzzy" type="button" class="btn-press flex-1 py-3 px-1 bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-white flex flex-col items-center justify-center transition">
-              <span class="text-sm font-extrabold flex items-center gap-1">
-                <span>🟡</span><span>有点模糊</span>
-              </span>
-              <span class="text-[9px] opacity-90 mt-0.5 whitespace-nowrap">需巩固 (2)</span>
-            </button>
-
-            <button id="btnMarkUnknown" type="button" class="btn-press flex-1 py-3 px-1 bg-rose-500 hover:bg-rose-600 active:bg-rose-700 text-white flex flex-col items-center justify-center transition">
-              <span class="text-sm font-extrabold flex items-center gap-1">
-                <span>🔴</span><span>完全不会</span>
-              </span>
-              <span class="text-[9px] opacity-90 mt-0.5 whitespace-nowrap">反复刷 (3)</span>
-            </button>
+            <a href="./vocab.html" class="rc-icon-btn" id="btnLookupVocab" title="前往英语查词查看词根与衍生词">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="11" cy="11" r="7"/>
+                <path d="M21 21l-4.35-4.35"/>
+              </svg>
+              <span>词根</span>
+            </a>
           </div>
-        </section>
+        </div>
 
-        <!-- ==================== VIEW 1.5: ZEN TAP MODE (极速纯享过词) ==================== -->
-        <section id="viewZen" class="hidden flex-1 flex flex-col items-center justify-center px-3 text-center cursor-pointer select-none active:opacity-75 transition overflow-hidden">
-          <div id="zenWordText" class="font-extrabold tracking-tight whitespace-nowrap max-w-full" style="font-size: 58px; line-height: 1.15;">
-            for
+        <!-- 单词与释义聚焦舞台 -->
+        <div class="flashcard-stage" id="cardCenterArea" title="点击揭晓释义或朗读；极速模式下点击切下一词">
+          <div class="card-word-text" id="cardWordText">for</div>
+          <div class="card-meaning-wrap" id="cardMeaningWrapper">
+            <div class="card-meaning-text" id="cardMeaningText">为了……、对于……、因为</div>
+            <div class="card-mask-hint" id="maskHintText" hidden>点击卡片揭晓答案 · 按 Space 发音</div>
           </div>
-          <div id="zenMeaningText" class="mt-6 font-bold text-teal-600 dark:text-teal-400 whitespace-nowrap max-w-full" style="font-size: 30px; line-height: 1.3;">
-            为了……、对于……、因为
-          </div>
-        </section>
+        </div>
 
-        <!-- ==================== VIEW 2: QUIZ MODE (快测巩固) ==================== -->
-        <section id="viewQuiz" class="hidden flex-1 flex flex-col px-4 pt-3 pb-3 overflow-y-auto scroll-area">
-          <div class="flex items-center justify-between mb-2.5">
+        <!-- 内联助记笔记显示与编辑器 -->
+        <div class="memo-banner" id="memoDisplayBar" hidden>
+          <span class="memo-label">助记</span>
+          <span class="memo-text" id="memoDisplayText"></span>
+          <button type="button" class="memo-edit-link" id="btnEditMemoInline">编辑</button>
+        </div>
+
+        <form class="memo-editor" id="memoInlineForm" hidden>
+          <input type="text" id="inputInlineMemo" class="rc-input" maxlength="160" placeholder="输入词根联想、例句或记忆点（回车即存）...">
+          <button type="submit" class="rc-btn rc-btn-primary">保存</button>
+          <button type="button" class="rc-btn rc-btn-ghost" id="btnCancelInlineMemo">取消</button>
+        </form>
+
+        <!-- 真题拓展区（极速专注模式下自动隐藏） -->
+        <div class="flashcard-extras" id="cardExamExpandedSection">
+          <div class="extra-block" id="cardFormsContainer">
+            <div class="extra-title">真题考查变形</div>
+            <div class="extra-forms-list" id="cardFormsList"></div>
+          </div>
+          <div class="extra-block" id="cardPhrasesContainer">
+            <div class="extra-title">高考高频短语 &amp; 搭配</div>
+            <div class="extra-phrases-list" id="cardPhrasesList"></div>
+          </div>
+        </div>
+
+        <!-- 卡片底栏：上一词 / 快捷键提示 / 下一词 -->
+        <div class="flashcard-nav-row">
+          <button type="button" class="rc-btn rc-btn-ghost" id="btnPrevCard">← 上一词</button>
+          <span class="shortcut-hint" id="cardShortcutHint">快捷键：1 熟 · 2 模糊 · 3 不会 · Space 揭晓/发音 · ←/→ 切词</span>
+          <button type="button" class="rc-btn rc-btn-ghost" id="btnNextCard">下一词 →</button>
+        </div>
+      </article>
+
+      <!-- 底部温润纸感三态标记栏 -->
+      <div class="mark-bar" id="studyMarkBar">
+        <button type="button" class="mark-pill mark-known" id="btnMarkKnown">
+          <span class="mark-pill-title">🟢 很熟 <kbd>1</kbd></span>
+          <span class="mark-pill-sub">秒认无需想</span>
+        </button>
+        <button type="button" class="mark-pill mark-fuzzy" id="btnMarkFuzzy">
+          <span class="mark-pill-title">🟡 有点模糊 <kbd>2</kbd></span>
+          <span class="mark-pill-sub">待巩固复习</span>
+        </button>
+        <button type="button" class="mark-pill mark-unknown" id="btnMarkUnknown">
+          <span class="mark-pill-title">🔴 完全不会 <kbd>3</kbd></span>
+          <span class="mark-pill-sub">重点反复刷</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- ==================== VIEW 2: 自测练习（纯检验模式） ==================== -->
+    <section id="viewQuiz" class="recite-panel" hidden>
+      <div class="quiz-controls">
+        <div class="quiz-mode-switch" role="group" aria-label="自测题型">
+          <button type="button" class="seg-btn active" id="btnQuizTypeChoice">🎯 看英选义（四选一）</button>
+          <button type="button" class="seg-btn" id="btnQuizTypeSpell">⌨️ 听音看义拼写</button>
+        </div>
+        <select id="selectQuizPool" aria-label="测试题库范围" class="rc-select">
+          <option value="current_group">📂 当前所选分组</option>
+          <option value="review">🔥 不会 + 模糊复习池</option>
+          <option value="high_freq">🏆 高频前 300 词</option>
+          <option value="all">🌐 全部 2050 词随机</option>
+        </select>
+      </div>
+
+      <div class="quiz-kpi-grid">
+        <div class="kpi-card">
+          <span class="kpi-label">本轮已测</span>
+          <strong class="kpi-value" id="quizTotalCount">0</strong>
+        </div>
+        <div class="kpi-card">
+          <span class="kpi-label">正确率</span>
+          <strong class="kpi-value text-success" id="quizAccuracy">100%</strong>
+        </div>
+        <div class="kpi-card">
+          <span class="kpi-label">连对 Streak</span>
+          <strong class="kpi-value text-accent" id="quizStreak">🔥 0</strong>
+        </div>
+      </div>
+
+      <article class="quiz-card">
+        <div class="quiz-card-top">
+          <span class="meta-badge" id="quizWordMeta">#1 · 考频 73 次</span>
+          <div class="quiz-card-actions">
+            <button type="button" class="rc-chip-btn" id="btnQuizRefreshOptions" title="保持当前正确答案，更换另外三个干扰项">🔄 换选项</button>
+            <button type="button" class="rc-chip-btn" id="btnQuizSpeak">🔊 发音提示</button>
+          </div>
+        </div>
+
+        <div class="quiz-prompt-box">
+          <div class="quiz-prompt-main" id="quizPromptMain">promise</div>
+          <div class="quiz-prompt-sub" id="quizPromptSub">纯自测模式 · 按 1-4 选择正确中文释义</div>
+        </div>
+
+        <div class="quiz-choice-list" id="quizChoiceContainer"></div>
+
+        <div class="quiz-spell-box" id="quizSpellContainer" hidden>
+          <div class="quiz-spell-hint" id="quizSpellHint"></div>
+          <input type="text" id="inputQuizSpell" class="rc-input spell-input" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="输入对应的英文单词...">
+          <div class="quiz-spell-actions">
+            <button type="button" class="rc-btn rc-btn-ghost" id="btnQuizSpellHintTrigger">💡 首字母提示</button>
+            <button type="button" class="rc-btn rc-btn-primary" id="btnQuizSpellSubmit">确认提交</button>
+          </div>
+        </div>
+
+        <div class="quiz-feedback-bar">
+          <span class="quiz-feedback-text" id="quizFeedbackText">纯检验模式（绝不修改原有熟练度标记）</span>
+          <button type="button" class="rc-btn rc-btn-primary" id="btnQuizNext">下一题 →</button>
+        </div>
+      </article>
+    </section>
+
+    <!-- ==================== VIEW 3: 词表检索 ==================== -->
+    <section id="viewList" class="recite-panel" hidden>
+      <div class="list-toolbar">
+        <div class="list-search-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="11" cy="11" r="7"/>
+            <path d="M21 21l-4.35-4.35"/>
+          </svg>
+          <input type="text" id="inputListSearch" class="list-search-input" placeholder="搜索英文单词、中文释义、考查变形或序号...">
+          <button type="button" class="list-clear-btn" id="btnClearSearch" hidden aria-label="清空搜索">✕</button>
+        </div>
+
+        <div class="list-filter-bar">
+          <div class="filter-chips-row">
+            <button type="button" class="list-filter-tab active" data-list-tab="all">全部</button>
+            <button type="button" class="list-filter-tab" data-list-tab="unknown">🔴 不会</button>
+            <button type="button" class="list-filter-tab" data-list-tab="fuzzy">🟡 模糊</button>
+            <button type="button" class="list-filter-tab" data-list-tab="known">🟢 很熟</button>
+            <button type="button" class="list-filter-tab" data-list-tab="unmarked">⚪ 未标</button>
+          </div>
+          <span class="deck-counter" id="listResultCount">2050 词</span>
+        </div>
+      </div>
+
+      <div class="word-list-container" id="wordListScroll"></div>
+
+      <div class="list-pagination">
+        <button type="button" class="rc-btn rc-btn-ghost" id="btnListPrevPage">← 上一页</button>
+        <span class="deck-counter" id="listPageIndicator">第 1 / 41 页</span>
+        <button type="button" class="rc-btn rc-btn-ghost" id="btnListNextPage">下一页 →</button>
+      </div>
+    </section>
+
+    <!-- ==================== VIEW 4: 数据与同步 ==================== -->
+    <section id="viewStats" class="recite-panel" hidden>
+      <div class="stats-grid">
+        <!-- 掌握全景卡片 -->
+        <article class="stats-card">
+          <div class="stats-card-head">
             <div>
-              <h2 class="text-sm font-bold">⚡ 极速自测巩固</h2>
-              <p class="text-[11px] sub-text">纯自测检验模式 · 不更改原有熟练度标记</p>
+              <h2>掌握全景</h2>
+              <p id="statsSummarySubtitle">已标记 0 词 · 剩余 2050 词待过</p>
             </div>
-            <select id="selectQuizPool" aria-label="测试题库范围" class="card-surface border rounded-xl px-2.5 py-1.5 text-[11px] font-medium">
-              <option value="current_group">📂 当前所选分组</option>
-              <option value="review">🔥 当前组·不会+模糊</option>
-              <option value="high_freq">🏆 高频前300词</option>
-              <option value="all">🌐 全部2050词随机</option>
-            </select>
+            <span class="mastery-badge" id="statsMasteryBadge">0.0%</span>
           </div>
 
-          <!-- Quiz Mode Switcher (4-Choice vs Spelling) -->
-          <div class="grid grid-cols-2 gap-1.5 p-1 rounded-xl bg-slate-200/70 dark:bg-slate-800 mb-3 text-xs font-semibold">
-            <button id="btnQuizTypeChoice" type="button" class="py-1.5 rounded-lg bg-white dark:bg-slate-700 shadow-sm text-teal-600 dark:text-teal-300 transition">
-              🎯 看英选义（四选一）
-            </button>
-            <button id="btnQuizTypeSpell" type="button" class="py-1.5 rounded-lg sub-text transition">
-              ⌨️ 听音看义拼写
-            </button>
+          <div class="stacked-bar">
+            <div class="stacked-known" id="barKnown" style="width: 0%"></div>
+            <div class="stacked-fuzzy" id="barFuzzy" style="width: 0%"></div>
+            <div class="stacked-unknown" id="barUnknown" style="width: 0%"></div>
           </div>
 
-          <!-- Quiz Score Banner -->
-          <div class="grid grid-cols-3 gap-2 mb-3 text-center">
-            <div class="card-surface border rounded-2xl py-2 px-2">
-              <div class="text-[10px] sub-text">本轮已测</div>
-              <div id="quizTotalCount" class="text-sm font-extrabold">0</div>
+          <div class="stats-four-grid">
+            <div class="stat-tile tile-known">
+              <span class="stat-tile-label">🟢 很熟</span>
+              <strong class="stat-tile-num" id="statKnownNum">0</strong>
+              <span class="stat-tile-pct" id="statKnownPct">占比 0.0%</span>
             </div>
-            <div class="card-surface border rounded-2xl py-2 px-2">
-              <div class="text-[10px] sub-text">正确率</div>
-              <div id="quizAccuracy" class="text-sm font-extrabold text-emerald-500">100%</div>
+            <div class="stat-tile tile-fuzzy">
+              <span class="stat-tile-label">🟡 有点模糊</span>
+              <strong class="stat-tile-num" id="statFuzzyNum">0</strong>
+              <span class="stat-tile-pct" id="statFuzzyPct">占比 0.0%</span>
             </div>
-            <div class="card-surface border rounded-2xl py-2 px-2">
-              <div class="text-[10px] sub-text">连对 Streak</div>
-              <div id="quizStreak" class="text-sm font-extrabold text-amber-500">🔥 0</div>
+            <div class="stat-tile tile-unknown">
+              <span class="stat-tile-label">🔴 完全不会</span>
+              <strong class="stat-tile-num" id="statUnknownNum">0</strong>
+              <span class="stat-tile-pct" id="statUnknownPct">占比 0.0%</span>
             </div>
-          </div>
-
-          <!-- Quiz Question Card -->
-          <div class="card-surface border rounded-3xl p-4 flex-1 flex flex-col justify-between shadow-sm">
-            <div class="flex items-center justify-between text-[11px] sub-text">
-              <span id="quizWordMeta">#1 · 考频 73</span>
-              <div class="flex items-center gap-1.5">
-                <button id="btnQuizRefreshOptions" type="button" class="btn-press px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-300 border border-amber-500/20 font-semibold flex items-center gap-1" title="保持当前正确答案不变，更换另外三个干扰项">
-                  <span>🔄 刷新选项</span>
-                </button>
-                <button id="btnQuizSpeak" type="button" class="btn-press px-2.5 py-1 rounded-full bg-teal-500/10 text-teal-600 dark:text-teal-300 font-semibold flex items-center gap-1">
-                  <span>🔊 发音提示</span>
-                </button>
-              </div>
-            </div>
-
-            <div class="my-4 text-center">
-              <div id="quizPromptMain" class="text-3xl font-extrabold tracking-tight">promise</div>
-              <div id="quizPromptSub" class="text-xs sub-text mt-1">请选择正确的中文释义</div>
-            </div>
-
-            <!-- Multiple Choice Options Container -->
-            <div id="quizChoiceContainer" class="space-y-2 my-auto">
-              <!-- Populated by JS -->
-            </div>
-
-            <!-- Spelling Input Container -->
-            <div id="quizSpellContainer" class="hidden my-auto space-y-3">
-              <div id="quizSpellHint" class="text-center text-sm font-mono tracking-widest text-teal-600 dark:text-teal-400"></div>
-              <input id="inputQuizSpell" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="输入对应的英文单词..." class="w-full px-4 py-3 rounded-2xl card-surface border-2 border-teal-500/40 focus:border-teal-500 focus:outline-none text-center text-lg font-bold" />
-              <div class="grid grid-cols-2 gap-2">
-                <button id="btnQuizSpellHintTrigger" type="button" class="py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-semibold sub-text">
-                  💡 首字母提示
-                </button>
-                <button id="btnQuizSpellSubmit" type="button" class="py-2.5 rounded-xl bg-teal-600 text-white text-xs font-bold">
-                  确认提交
-                </button>
-              </div>
-            </div>
-
-            <!-- Quiz Feedback & Next Row -->
-            <div id="quizFeedbackBar" class="mt-3 pt-2.5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between min-h-[36px]">
-              <span id="quizFeedbackText" class="text-xs font-semibold sub-text">选择答案后自动判分</span>
-              <button id="btnQuizNext" type="button" class="px-3 py-1.5 rounded-xl bg-teal-600 text-white text-xs font-bold">
-                下一题 →
-              </button>
+            <div class="stat-tile tile-unmarked">
+              <span class="stat-tile-label">⚪ 未标记</span>
+              <strong class="stat-tile-num" id="statUnmarkedNum">2050</strong>
+              <span class="stat-tile-pct" id="statUnmarkedPct">占比 100.0%</span>
             </div>
           </div>
-        </section>
+        </article>
 
-        <!-- ==================== VIEW 3: WORD LIST & SEARCH (词表检索) ==================== -->
-        <section id="viewList" class="hidden flex-1 flex flex-col px-4 pt-3 pb-2 overflow-hidden">
-          <!-- Search & Filter Bar -->
-          <div class="space-y-2 mb-2.5 flex-shrink-0">
-            <div class="relative">
-              <input id="inputListSearch" type="text" placeholder="搜索单词、中文释义、考查变形或序号..." class="w-full pl-9 pr-8 py-2 rounded-2xl card-surface border text-xs focus:outline-none focus:ring-2 focus:ring-teal-500" />
-              <svg class="w-4 h-4 sub-text absolute left-3 top-2.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-              <button id="btnClearSearch" type="button" class="hidden absolute right-2.5 top-2 text-xs sub-text hover:text-slate-800">✕</button>
-            </div>
-
-            <div class="flex items-center justify-between gap-1.5 text-[11px]">
-              <div class="flex items-center gap-1 overflow-x-auto pb-0.5">
-                <button type="button" data-list-tab="all" class="list-filter-tab px-2.5 py-1 rounded-full bg-teal-600 text-white font-semibold whitespace-nowrap">全部</button>
-                <button type="button" data-list-tab="unknown" class="list-filter-tab px-2.5 py-1 rounded-full card-surface border whitespace-nowrap">🔴 不会</button>
-                <button type="button" data-list-tab="fuzzy" class="list-filter-tab px-2.5 py-1 rounded-full card-surface border whitespace-nowrap">🟡 模糊</button>
-                <button type="button" data-list-tab="known" class="list-filter-tab px-2.5 py-1 rounded-full card-surface border whitespace-nowrap">🟢 很熟</button>
-                <button type="button" data-list-tab="unmarked" class="list-filter-tab px-2.5 py-1 rounded-full card-surface border whitespace-nowrap">⚪ 未标</button>
-              </div>
-              <span id="listResultCount" class="sub-text whitespace-nowrap flex-shrink-0">2050 词</span>
-            </div>
-          </div>
-
-          <!-- Virtualized / Paginated Word List -->
-          <div id="wordListScroll" class="flex-1 overflow-y-auto scroll-area space-y-1.5 pr-0.5">
-            <!-- Populated by JS -->
-          </div>
-
-          <!-- Pagination Controls for Smooth Performance -->
-          <div class="pt-2 mt-1 border-t border-slate-200/60 dark:border-slate-700/60 flex items-center justify-between text-xs flex-shrink-0">
-            <button id="btnListPrevPage" type="button" class="px-3 py-1 rounded-xl card-surface border font-medium disabled:opacity-40">上一页</button>
-            <span id="listPageIndicator" class="sub-text text-[11px]">第 1 / 41 页</span>
-            <button id="btnListNextPage" type="button" class="px-3 py-1 rounded-xl card-surface border font-medium disabled:opacity-40">下一页</button>
-          </div>
-        </section>
-
-        <!-- ==================== VIEW 4: STATS & CSV EXPORT (统计与导出) ==================== -->
-        <section id="viewStats" class="hidden flex-1 flex flex-col px-4 pt-3 pb-4 overflow-y-auto scroll-area space-y-3">
-          <!-- Overall Mastery Summary Card -->
-          <div class="card-surface border rounded-3xl p-4 shadow-sm">
-            <div class="flex items-center justify-between mb-3">
-              <div>
-                <h2 class="text-sm font-extrabold">📊 2050核心词汇掌握全景</h2>
-                <p id="statsSummarySubtitle" class="text-[11px] sub-text mt-0.5">已标记 0 词 · 剩余 2050 词待过</p>
-              </div>
-              <span id="statsMasteryBadge" class="px-2.5 py-1 rounded-full text-xs font-extrabold bg-teal-500/10 text-teal-600 dark:text-teal-300">
-                0.0%
-              </span>
-            </div>
-
-            <!-- Stacked Progress Bar -->
-            <div class="w-full h-3.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden flex mb-3 border border-slate-200/60 dark:border-slate-700">
-              <div id="barKnown" class="bg-emerald-500 h-full transition-all duration-300" style="width: 0%" title="很熟"></div>
-              <div id="barFuzzy" class="bg-amber-500 h-full transition-all duration-300" style="width: 0%" title="有点模糊"></div>
-              <div id="barUnknown" class="bg-rose-500 h-full transition-all duration-300" style="width: 0%" title="完全不会"></div>
-            </div>
-
-            <!-- 4-Grid Breakdown -->
-            <div class="grid grid-cols-2 gap-2 text-xs">
-              <div class="p-2.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-between">
-                <div>
-                  <div class="text-[11px] text-emerald-700 dark:text-emerald-300 font-semibold">🟢 很熟</div>
-                  <div id="statKnownPct" class="text-[10px] sub-text">占比 0%</div>
-                </div>
-                <div id="statKnownNum" class="text-lg font-extrabold text-emerald-600 dark:text-emerald-400">0</div>
-              </div>
-
-              <div class="p-2.5 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-between">
-                <div>
-                  <div class="text-[11px] text-amber-700 dark:text-amber-300 font-semibold">🟡 有点模糊</div>
-                  <div id="statFuzzyPct" class="text-[10px] sub-text">占比 0%</div>
-                </div>
-                <div id="statFuzzyNum" class="text-lg font-extrabold text-amber-600 dark:text-amber-400">0</div>
-              </div>
-
-              <div class="p-2.5 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-between">
-                <div>
-                  <div class="text-[11px] text-rose-700 dark:text-rose-300 font-semibold">🔴 完全不会</div>
-                  <div id="statUnknownPct" class="text-[10px] sub-text">占比 0%</div>
-                </div>
-                <div id="statUnknownNum" class="text-lg font-extrabold text-rose-600 dark:text-rose-400">0</div>
-              </div>
-
-              <div class="p-2.5 rounded-2xl bg-slate-500/10 border border-slate-500/20 flex items-center justify-between">
-                <div>
-                  <div class="text-[11px] sub-text font-semibold">⚪ 未标记</div>
-                  <div id="statUnmarkedPct" class="text-[10px] sub-text">占比 100%</div>
-                </div>
-                <div id="statUnmarkedNum" class="text-lg font-extrabold sub-text">2050</div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Frequency Tier Analysis (按考频重要度分层统计) -->
-          <div class="card-surface border rounded-3xl p-4 shadow-sm">
-            <h3 class="text-xs font-extrabold mb-2.5 flex items-center justify-between">
-              <span>🎯 按高考真题考频分层掌握度</span>
-              <span class="text-[10px] font-normal sub-text">优先攻克高频核心词</span>
-            </h3>
-            <div id="freqTierStatsContainer" class="space-y-2.5 text-xs">
-              <!-- Populated by JS -->
-            </div>
-          </div>
-
-          <!-- Cloud Pairing Sync Center (跨端漫游与自定义云同步) -->
-          <div class="card-surface border rounded-3xl p-4 shadow-sm space-y-3">
-            <div class="flex items-center justify-between">
-              <div>
-                <h3 class="text-xs font-extrabold flex items-center gap-1.5">
-                  <span>☁️ 跨端漫游与自定义云同步</span>
-                  <span id="syncStatusBadge" class="px-2 py-0.5 text-[10px] rounded-full bg-teal-500/10 text-teal-600 dark:text-teal-400 font-semibold">云端在线</span>
-                </h3>
-                <p class="text-[11px] sub-text mt-0.5">支持自定义专属同步码 · 多设备输入同一同步码实时互通</p>
-              </div>
-              <button id="btnManualSync" type="button" class="btn-press px-2.5 py-1 rounded-xl bg-teal-600 text-white text-[11px] font-bold flex items-center gap-1 shadow-sm">
-                <span>🔄 立即同步</span>
-              </button>
-            </div>
-
-            <!-- Current Bound Key Display -->
-            <div class="p-3 rounded-2xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700 flex items-center justify-between">
-              <div class="flex-1 min-w-0 pr-2">
-                <div class="text-[10px] sub-text font-semibold">当前绑定的同步码 (点击可复制)</div>
-                <div id="displaySyncKey" class="text-[17px] font-extrabold font-mono tracking-wider text-teal-600 dark:text-teal-400 select-all cursor-pointer" title="点击复制同步码">GK-8823</div>
-              </div>
-              <div class="flex items-center gap-1.5 flex-shrink-0">
-                <button id="btnCopySyncKey" type="button" class="btn-press px-2.5 py-1.5 rounded-xl card-surface border text-xs font-bold flex items-center gap-1">
-                  <span>📋 复制</span>
-                </button>
-                <button id="btnRandomKey" type="button" class="btn-press px-2.5 py-1.5 rounded-xl card-surface border text-xs font-semibold sub-text hover:text-teal-600" title="生成随机短码">
-                  <span>🎲 随机</span>
-                </button>
-              </div>
-            </div>
-
-            <!-- Custom Sync Code Input & Actions -->
-            <div class="space-y-2 pt-1">
-              <div class="text-[11px] font-bold text-slate-700 dark:text-slate-300">
-                ✏️ 自定义设置 / 跨端绑定同步码
-              </div>
-              <div class="flex items-center gap-2">
-                <input id="inputCustomSyncKey" type="text" placeholder="输入专属同步码（如 cenji / 高考必胜 / mywords）..." class="flex-1 px-3 py-2 rounded-xl card-surface border text-xs font-bold focus:outline-none focus:ring-2 focus:ring-teal-500" />
-                <button id="btnApplyCustomKey" type="button" class="btn-press px-3.5 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold flex-shrink-0">
-                  绑定并同步
-                </button>
-              </div>
-              <p class="text-[10px] sub-text leading-tight">
-                💡 <strong>多端同步使用指南</strong>：在另一台手机或电脑上输入完全相同的自定义同步码，点击「绑定并同步」，即可自动拉取此设备的学习进度；后续任意设备标记单词，均可实时双向漫游！
-              </p>
-            </div>
-
-            <div class="flex items-center justify-between text-[10px] sub-text pt-1 border-t border-slate-200/50 dark:border-slate-700/50">
-              <span id="lastSyncTimeText">上次同步：尚未进行云端同步</span>
-            </div>
-          </div>
-
-          <!-- CSV Export Center (导出 CSV 报表) -->
-          <div class="card-surface border rounded-3xl p-4 shadow-sm space-y-2.5">
+        <!-- 考频分层统计 -->
+        <article class="stats-card">
+          <div class="stats-card-head">
             <div>
-              <h3 class="text-xs font-extrabold flex items-center gap-1.5">
-                <span>📥 导出 CSV 词表与统计报告</span>
-                <span class="px-2 py-0.5 text-[10px] rounded-full bg-teal-500/10 text-teal-600 font-semibold">Excel 完美兼容</span>
-              </h3>
-              <p class="text-[11px] sub-text mt-0.5">内置 UTF-8 BOM 编码，支持直接用 Excel / Numbers / WPS 打开不乱码</p>
+              <h2>高考考频分层掌握度</h2>
+              <p>优先攻克高频核心词</p>
             </div>
+          </div>
+          <div class="freq-tier-list" id="freqTierStatsContainer"></div>
+        </article>
 
-            <div class="grid grid-cols-1 gap-2">
-              <button id="btnExportAllCsv" type="button" class="btn-press w-full py-2.5 px-3.5 rounded-2xl bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold flex items-center justify-between shadow-sm">
-                <span>📄 导出全部 2050 词完整标记状态 (.csv)</span>
-                <span class="text-[11px] opacity-90">下载 →</span>
-              </button>
+        <!-- 跨端云同步中心 -->
+        <article class="stats-card">
+          <div class="stats-card-head">
+            <div>
+              <h2>跨端云端漫游</h2>
+              <p id="lastSyncTimeText">上次同步：尚未同步</p>
+            </div>
+            <button type="button" class="rc-btn rc-btn-primary" id="btnManualSync">🔄 立即同步</button>
+          </div>
 
-              <button id="btnExportReviewCsv" type="button" class="btn-press w-full py-2.5 px-3.5 rounded-2xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-300 border border-rose-500/25 text-xs font-bold flex items-center justify-between">
-                <span>🔥 仅导出「完全不会 + 有点模糊」重点攻克词表 (.csv)</span>
-                <span id="exportReviewCountBadge" class="text-[11px] font-extrabold">0 词</span>
-              </button>
-
-              <div class="grid grid-cols-2 gap-2">
-                <button id="btnExportUnknownCsv" type="button" class="btn-press py-2 px-3 rounded-xl card-surface border text-[11px] font-semibold hover:border-rose-400 transition">
-                  🔴 仅导出「完全不会」
-                </button>
-                <button id="btnExportFuzzyCsv" type="button" class="btn-press py-2 px-3 rounded-xl card-surface border text-[11px] font-semibold hover:border-amber-400 transition">
-                  🟡 仅导出「有点模糊」
-                </button>
-              </div>
+          <div class="sync-key-box">
+            <div>
+              <div class="sync-key-caption">当前绑定同步码</div>
+              <div class="sync-key-value" id="displaySyncKey">GK-LOCAL</div>
+            </div>
+            <div class="sync-key-btns">
+              <button type="button" class="rc-btn rc-btn-ghost" id="btnCopySyncKey">复制</button>
+              <button type="button" class="rc-btn rc-btn-ghost" id="btnRandomKey">随机码</button>
             </div>
           </div>
 
-          <!-- Progress Backup / Import / Reset -->
-          <div class="card-surface border rounded-3xl p-4 shadow-sm space-y-2">
-            <h3 class="text-xs font-extrabold">⚙️ 学习进度管理与导入恢复</h3>
-            <p class="text-[11px] sub-text">你的标记进度已自动保存在浏览器本地。也可导入之前导出的 CSV 恢复进度。</p>
-            <div class="grid grid-cols-2 gap-2 pt-1">
-              <label class="btn-press py-2 px-3 rounded-xl card-surface border text-[11px] font-semibold text-center cursor-pointer hover:border-teal-500 transition">
-                <span>📤 导入 CSV 恢复进度</span>
-                <input id="inputImportCsv" type="file" accept=".csv" class="hidden" />
+          <div class="sync-bind-row">
+            <input type="text" id="inputCustomSyncKey" class="rc-input" placeholder="输入自定义同步码（中英文/数字均可）...">
+            <button type="button" class="rc-btn rc-btn-primary" id="btnApplyCustomKey">绑定并拉取</button>
+          </div>
+        </article>
+
+        <!-- CSV 导入导出与重置 -->
+        <article class="stats-card">
+          <div class="stats-card-head">
+            <div>
+              <h2>CSV 报表与进度备份</h2>
+              <p>UTF-8 BOM 编码，兼容 Excel / WPS</p>
+            </div>
+          </div>
+
+          <div class="csv-actions">
+            <button type="button" class="rc-btn rc-btn-primary csv-full-btn" id="btnExportAllCsv">
+              <span>📄 导出全部 2050 词 (.csv)</span>
+            </button>
+            <button type="button" class="rc-btn rc-btn-accent csv-full-btn" id="btnExportReviewCsv">
+              <span>🔥 导出「不会 + 模糊」重点词表</span>
+              <span id="exportReviewCountBadge">0 词</span>
+            </button>
+            <div class="csv-pair-row">
+              <button type="button" class="rc-btn rc-btn-ghost" id="btnExportUnknownCsv">🔴 仅导出不会</button>
+              <button type="button" class="rc-btn rc-btn-ghost" id="btnExportFuzzyCsv">🟡 仅导出模糊</button>
+            </div>
+            <div class="csv-pair-row">
+              <label class="rc-btn rc-btn-ghost csv-upload-label">
+                <span>📤 导入 CSV 恢复</span>
+                <input type="file" id="inputImportCsv" accept=".csv" hidden>
               </label>
-              <button id="btnResetProgress" type="button" class="btn-press py-2 px-3 rounded-xl bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 text-[11px] font-semibold">
-                🗑️ 清空重置进度
-              </button>
+              <button type="button" class="rc-btn rc-btn-danger" id="btnResetProgress">🗑️ 重置进度</button>
             </div>
           </div>
-        </section>
+        </article>
+      </div>
+    </section>
+  </div>
 
-      </main>
+  <!-- 偏好设置浮层（预设 + 滑块 + 语音偏好） -->
+  <div class="rc-modal-backdrop" id="prefModalBackdrop" hidden role="dialog" aria-modal="true" aria-labelledby="prefModalTitle">
+    <div class="rc-modal-dialog">
+      <div class="rc-modal-head">
+        <h3 id="prefModalTitle">刷词偏好设置</h3>
+        <button type="button" class="rc-close-btn" id="btnClosePrefModal" aria-label="关闭设置">✕</button>
+      </div>
 
-      <!-- Bottom iOS Navigation Tab Bar -->
-      <nav class="h-[52px] pb-1 pt-1 px-2 card-surface border-t flex items-center justify-around flex-shrink-0 z-20">
-        <button type="button" data-nav="study" class="nav-tab-btn tab-active flex flex-col items-center justify-center gap-0.5 text-teal-600 dark:text-teal-400 font-bold text-[10px] w-16">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
-          <span>过单词</span>
-        </button>
+      <div class="rc-modal-body">
+        <div class="pref-section">
+          <div class="pref-section-head">
+            <span>字号预设</span>
+            <button type="button" class="link-action-btn" id="btnResetFontSizes">恢复默认</button>
+          </div>
+          <div class="preset-grid" id="fontPresetGrid">
+            <button type="button" class="preset-btn" data-typo-preset="compact">紧凑 (42 / 24)</button>
+            <button type="button" class="preset-btn active" data-typo-preset="standard">标准 (58 / 34)</button>
+            <button type="button" class="preset-btn" data-typo-preset="large">大字 (72 / 42)</button>
+          </div>
+        </div>
 
-        <button type="button" data-nav="zen" class="nav-tab-btn flex flex-col items-center justify-center gap-0.5 sub-text font-medium text-[10px] w-16">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"/></svg>
-          <span>极速刷</span>
-        </button>
-
-        <button type="button" data-nav="quiz" class="nav-tab-btn flex flex-col items-center justify-center gap-0.5 sub-text font-medium text-[10px] w-16">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-          <span>快测巩固</span>
-        </button>
-
-        <button type="button" data-nav="list" class="nav-tab-btn flex flex-col items-center justify-center gap-0.5 sub-text font-medium text-[10px] w-16">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
-          <span>词表检索</span>
-        </button>
-
-        <button type="button" data-nav="stats" class="nav-tab-btn flex flex-col items-center justify-center gap-0.5 sub-text font-medium text-[10px] w-16 relative">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
-          <span>统计导出</span>
-        </button>
-      </nav>
-
-      <!-- In-App Modal (for Memo / Reset Confirmation / Shortcuts) -->
-      <!-- Preferences & Filters Bottom Sheet Modal -->
-      <div id="prefDrawerModal" class="hidden absolute inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-end justify-center transition-all">
-        <div class="card-surface border-t border-x border-slate-200 dark:border-slate-800 rounded-t-3xl p-5 w-full shadow-2xl space-y-4 max-h-[85%] overflow-y-auto scroll-area">
-          <!-- Drawer Header -->
-          <div class="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
-            <div class="flex items-center gap-2">
-              <span class="text-base">⚙️</span>
-              <h3 class="text-sm font-extrabold">刷词偏好与状态筛选</h3>
+        <details class="pref-details">
+          <summary>精细调整字号与字重（20–100px）</summary>
+          <div class="pref-sliders">
+            <div class="slider-item">
+              <div class="slider-label-row">
+                <span>英文单词字号</span>
+                <strong id="valEnFontSize">58px</strong>
+              </div>
+              <input type="range" id="sliderEnFontSize" min="20" max="100" step="2" value="58">
             </div>
-            <button id="btnClosePrefDrawer" type="button" class="btn-press w-7 h-7 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-xs sub-text hover:text-slate-900">
-              ✕
+            <div class="slider-item">
+              <div class="slider-label-row">
+                <span>中文释义字号</span>
+                <strong id="valCnFontSize">34px</strong>
+              </div>
+              <input type="range" id="sliderCnFontSize" min="16" max="100" step="2" value="34">
+            </div>
+            <div class="slider-item">
+              <div class="slider-label-row">
+                <span>英文单词粗细</span>
+                <strong id="valEnFontWeight">粗体 (700)</strong>
+              </div>
+              <input type="range" id="sliderEnFontWeight" min="300" max="900" step="100" value="700">
+            </div>
+            <div class="slider-item">
+              <div class="slider-label-row">
+                <span>中文释义粗细</span>
+                <strong id="valCnFontWeight">粗体 (700)</strong>
+              </div>
+              <input type="range" id="sliderCnFontWeight" min="300" max="900" step="100" value="700">
+            </div>
+          </div>
+        </details>
+
+        <div class="pref-section">
+          <div class="pref-section-head">
+            <span>发音与切词控制</span>
+          </div>
+          <div class="pref-toggle-grid">
+            <button type="button" class="rc-btn rc-btn-ghost" id="btnDrawerAccentToggle">
+              <span id="drawerAccentLabel">口音: 美音 (US)</span>
             </button>
-          </div>
-
-          <!-- Filter by Mastery Status -->
-          <div class="space-y-1.5">
-            <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">🎯 单词状态筛选</label>
-            <select id="selectStatusFilter" class="w-full card-surface border rounded-xl px-3 py-2 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-teal-500">
-              <option value="all">📋 全部词汇 (不限状态)</option>
-              <option value="unmarked">⚪ 仅看 未标记</option>
-              <option value="review">🔥 仅看 不会+模糊 (重点攻克)</option>
-              <option value="unknown">🔴 仅看 完全不会</option>
-              <option value="fuzzy">🟡 仅看 有点模糊</option>
-              <option value="known">🟢 仅看 很熟</option>
-            </select>
-            <!-- Live Count Summary in Drawer -->
-            <div class="flex items-center justify-between text-[11px] px-2.5 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 font-mono">
-              <span class="text-emerald-600 dark:text-emerald-400 font-bold">🟢 很熟: <strong id="miniKnownCount">0</strong></span>
-              <span class="text-amber-500 font-bold">🟡 模糊: <strong id="miniFuzzyCount">0</strong></span>
-              <span class="text-rose-500 font-bold">🔴 不会: <strong id="miniUnknownCount">0</strong></span>
-            </div>
-          </div>
-
-          <!-- Mask Mode -->
-          <div class="space-y-1.5">
-            <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">👁️ 记忆遮罩模式</label>
-            <select id="selectMaskMode" class="w-full card-surface border rounded-xl px-3 py-2 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-teal-500">
-              <option value="none">👁️ 正常显示 (看词看义)</option>
-              <option value="hide_cn">🙈 遮挡中文 (先回忆释义，点击揭晓)</option>
-              <option value="hide_en">🎧 遮挡英文 (听音辨义，点击揭晓)</option>
-            </select>
-          </div>
-
-          <!-- Typography: Font Size (max 100px) & Weight (粗细) Sliders (默认 英文58px/粗体700, 中文34px/粗体700) -->
-          <div class="space-y-3 pt-2 border-t border-slate-100 dark:border-slate-800">
-            <div class="flex items-center justify-between">
-              <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">🔤 字号与粗细调节 (上限100px)</label>
-              <button id="btnResetFontSizes" type="button" class="text-[10px] text-teal-600 dark:text-teal-400 font-bold hover:underline">
-                🔄 恢复默认
-              </button>
-            </div>
-
-            <!-- English Font Size Slider (max 100, default 58) -->
-            <div class="space-y-1">
-              <div class="flex items-center justify-between text-xs">
-                <span class="font-semibold text-slate-700 dark:text-slate-200">🔤 英文单词字号</span>
-                <span id="valEnFontSize" class="font-mono text-teal-600 dark:text-teal-400 font-bold">58px</span>
-              </div>
-              <input id="sliderEnFontSize" type="range" min="20" max="100" value="58" step="2" class="w-full accent-teal-600 cursor-pointer h-2 bg-slate-200 dark:bg-slate-700 rounded-lg" />
-              <div class="flex justify-between text-[9px] text-slate-400 font-mono">
-                <span>20px (小)</span>
-                <span>默认 58px</span>
-                <span>100px (上限)</span>
-              </div>
-            </div>
-
-            <!-- Chinese Font Size Slider (max 100, default 34) -->
-            <div class="space-y-1">
-              <div class="flex items-center justify-between text-xs">
-                <span class="font-semibold text-slate-700 dark:text-slate-200">🇨🇳 中文释义字号</span>
-                <span id="valCnFontSize" class="font-mono text-teal-600 dark:text-teal-400 font-bold">34px</span>
-              </div>
-              <input id="sliderCnFontSize" type="range" min="16" max="100" value="34" step="2" class="w-full accent-teal-600 cursor-pointer h-2 bg-slate-200 dark:bg-slate-700 rounded-lg" />
-              <div class="flex justify-between text-[9px] text-slate-400 font-mono">
-                <span>16px (小)</span>
-                <span>默认 34px</span>
-                <span>100px (上限)</span>
-              </div>
-            </div>
-
-            <!-- English Font Weight Slider (300-900, default 700) -->
-            <div class="space-y-1">
-              <div class="flex items-center justify-between text-xs">
-                <span class="font-semibold text-slate-700 dark:text-slate-200">✏️ 英文单词粗细</span>
-                <span id="valEnFontWeight" class="font-mono text-teal-600 dark:text-teal-400 font-bold">粗体 (700)</span>
-              </div>
-              <input id="sliderEnFontWeight" type="range" min="300" max="900" value="700" step="100" class="w-full accent-teal-600 cursor-pointer h-2 bg-slate-200 dark:bg-slate-700 rounded-lg" />
-              <div class="flex justify-between text-[9px] text-slate-400 font-mono">
-                <span>300 (细)</span>
-                <span>500 (中)</span>
-                <span>默认 700 (粗)</span>
-                <span>900 (极粗)</span>
-              </div>
-            </div>
-
-            <!-- Chinese Font Weight Slider (300-900, default 700) -->
-            <div class="space-y-1">
-              <div class="flex items-center justify-between text-xs">
-                <span class="font-semibold text-slate-700 dark:text-slate-200">🖌️ 中文释义粗细</span>
-                <span id="valCnFontWeight" class="font-mono text-teal-600 dark:text-teal-400 font-bold">粗体 (700)</span>
-              </div>
-              <input id="sliderCnFontWeight" type="range" min="300" max="900" value="700" step="100" class="w-full accent-teal-600 cursor-pointer h-2 bg-slate-200 dark:bg-slate-700 rounded-lg" />
-              <div class="flex justify-between text-[9px] text-slate-400 font-mono">
-                <span>300 (细)</span>
-                <span>500 (中)</span>
-                <span>默认 700 (粗)</span>
-                <span>900 (极粗)</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Audio & Pronunciation Controls (收纳进设置面板) -->
-          <div class="space-y-1.5 pt-1 border-t border-slate-100 dark:border-slate-800">
-            <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">🔊 发音偏好与口音语速</label>
-            <div class="grid grid-cols-2 gap-2">
-              <button id="btnDrawerAccentToggle" type="button" class="btn-press flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl card-surface border text-xs font-bold transition">
-                <span>🗣️</span>
-                <span id="drawerAccentLabel">口音: 美音 (US)</span>
-              </button>
-              <button id="btnDrawerSpeedToggle" type="button" class="btn-press flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl card-surface border text-xs font-bold transition">
-                <span id="drawerSpeedIcon">⚡</span>
-                <span id="drawerSpeedLabel">语速: 正常 (1.0x)</span>
-              </button>
-            </div>
-          </div>
-
-          <!-- Shuffle & Auto-Speak Switches -->
-          <div class="grid grid-cols-2 gap-2 pt-1">
-            <button id="btnShuffleDeck" type="button" class="btn-press flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl card-surface border text-xs font-bold transition">
-              <span id="shuffleIcon">🔀</span>
-              <span id="shuffleLabel">顺序播放</span>
+            <button type="button" class="rc-btn rc-btn-ghost" id="btnDrawerSpeedToggle">
+              <span id="drawerSpeedLabel">语速: 正常 (1.0x)</span>
             </button>
-            <button id="btnAutoPlayAudio" type="button" class="btn-press flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl card-surface border text-xs font-bold transition">
-              <span id="autoAudioIcon">🔔</span>
-              <span id="autoAudioLabel">切词发音: 关</span>
-            </button>
-          </div>
-
-          <!-- Close / Confirm Button -->
-          <div class="pt-1">
-            <button id="btnSavePrefDrawer" type="button" class="w-full py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-md transition">
-              完成并开始刷词
+            <button type="button" class="rc-btn rc-btn-ghost" id="btnAutoPlayAudio">
+              <span id="autoAudioLabel">切词自动发音: 关</span>
             </button>
           </div>
         </div>
       </div>
 
-      <div id="appModal" class="hidden absolute inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-5">
-        <div class="card-surface border rounded-3xl p-5 w-full max-w-[330px] shadow-2xl space-y-3">
-          <h3 id="modalTitle" class="text-sm font-extrabold">提示</h3>
-          <div id="modalBody" class="text-xs sub-text leading-relaxed"></div>
-          <input id="modalInput" type="text" placeholder="输入助记笔记，如词根联想、例句..." class="hidden w-full px-3 py-2 rounded-xl card-surface border text-xs focus:outline-none focus:ring-2 focus:ring-teal-500" />
-          <div class="flex items-center justify-end gap-2 pt-2">
-            <button id="btnModalCancel" type="button" class="px-3.5 py-1.5 rounded-xl card-surface border text-xs font-semibold">取消</button>
-            <button id="btnModalConfirm" type="button" class="px-4 py-1.5 rounded-xl bg-teal-600 text-white text-xs font-bold">确定</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- In-App Toast Notification -->
-      <div id="appToast" class="pointer-events-none opacity-0 transition-all duration-300 absolute top-14 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-full bg-slate-900/90 text-white text-xs font-semibold shadow-lg whitespace-nowrap">
-        已保存
+      <div class="rc-modal-foot">
+        <button type="button" class="rc-btn rc-btn-primary" id="btnDonePrefModal">完成</button>
       </div>
     </div>
   </div>
 
-  <script type="module" src="/src/pages/recite/main.ts"></script>
+  <!-- 通用确认与输入弹窗 -->
+  <div class="rc-modal-backdrop" id="appModal" hidden role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="rc-modal-dialog rc-modal-sm">
+      <div class="rc-modal-head">
+        <h3 id="modalTitle">提示</h3>
+        <button type="button" class="rc-close-btn" id="btnCloseAppModal" aria-label="关闭">✕</button>
+      </div>
+      <div class="rc-modal-body">
+        <div id="modalBody" class="modal-body-text"></div>
+        <input type="text" id="modalInput" class="rc-input" hidden>
+      </div>
+      <div class="rc-modal-foot">
+        <button type="button" class="rc-btn rc-btn-ghost" id="btnModalCancel">取消</button>
+        <button type="button" class="rc-btn rc-btn-primary" id="btnModalConfirm">确定</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="./src/pages/recite/main.ts"></script>
 </body>
 </html>

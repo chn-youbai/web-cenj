@@ -1,10 +1,12 @@
 import {
+  TYPOGRAPHY_PRESETS,
   buildFilteredDeck,
   calculateMasteryStats,
   cleanWordForSpeech,
   filterWordList,
   getQuizCandidates,
   getWordsByGroup,
+  jumpToWordInDeck,
 } from "@/pages/recite/engine";
 import {
   applyImportedCsvRows,
@@ -63,6 +65,17 @@ describe("recite study engine", () => {
 
     const quizPool = getQuizCandidates(sampleWords, reviewDeck, marks, "all", "review");
     expect(quizPool.map((w) => w.id)).toEqual([2, 3]);
+
+    const inDeck = jumpToWordInDeck(sampleWords, reviewDeck, 3);
+    expect(inDeck.resetGroupOrFilter).toBe(false);
+    expect(inDeck.index).toBe(1);
+
+    const outOfDeck = jumpToWordInDeck(sampleWords, reviewDeck, 4);
+    expect(outOfDeck.resetGroupOrFilter).toBe(true);
+    expect(outOfDeck.deck).toHaveLength(4);
+    expect(outOfDeck.index).toBe(3);
+
+    expect(TYPOGRAPHY_PRESETS.some((p) => p.id === "standard" && p.enFontSize === 58)).toBe(true);
   });
 });
 

@@ -1,13 +1,13 @@
 import "@/core/fonts";
 import { copyToClipboard, escapeHtml, optById } from "@/core/dom";
 import { initAppShell } from "@/core/shell";
-import { getPreferredTheme, toggleTheme } from "@/core/theme";
 import {
+  TYPOGRAPHY_PRESETS,
   buildFilteredDeck,
   cleanWordForSpeech,
-  getFontWeightLabel,
   getQuizCandidates,
   getWordsByGroup,
+  jumpToWordInDeck,
   wordMatchesFilter,
 } from "./engine";
 import {
@@ -24,8 +24,9 @@ import {
   openModal,
   populateGroupSelector,
   renderAllViews,
-  renderHeaderAndMiniStats,
+  renderHeaderAndControls,
   renderQuizScoreUI,
+  renderStatsView,
   renderStudyCard,
   renderWordList,
   showToast,
@@ -51,6 +52,7 @@ import {
   type MaskMode,
   type QuizPool,
   type ReciteWord,
+  SYSTEM_DEFAULTS,
   type StatusFilter,
   type WordMarkStatus,
   createInitialReciteState,
@@ -137,16 +139,16 @@ async function pushCloudSync(isManual = false): Promise<void> {
         // ignore
       }
       updateSyncUI();
-      if (isManual) showToast(`☁️ 已保存并同步至专属云端 (${nowStr})`);
+      if (isManual) showToast(`☁️ 已保存并同步至云端 (${nowStr})`);
     } else if (res.status === "conflict" && res.cloudData) {
       mergeCloudDataIntoState(state, res.cloudData);
       saveState(false);
       rebuildFilteredDeck(false);
       renderAllViews(state, vocabList, filteredDeck);
-      if (isManual) showToast("☁️ 已与云端最新进度智能对齐！");
+      if (isManual) showToast("☁️ 已与云端最新进度智能对齐");
     }
   } catch {
-    if (isManual) showToast("⚠️ 云端同步暂不可用，已保存在个人本地空间");
+    if (isManual) showToast("⚠️ 云端同步暂不可用，已保存在本地");
   }
 }
 
@@ -174,11 +176,11 @@ async function pullCloudSync(targetKey: string): Promise<void> {
         // ignore
       }
       updateSyncUI();
-      showToast(`✅ 已载入用户「${cleanKey}」的专属个性化数据`);
+      showToast(`✅ 已载入「${cleanKey}」云端学习进度`);
     } else if (res.status === "empty") {
       updateSyncUI();
       await pushCloudSync(true);
-      showToast(`✅ 已绑定新用户同步码「${cleanKey}」，个性化数据独立保存！`);
+      showToast(`✅ 已绑定新同步码「${cleanKey}」`);
     } else {
       showToast(`⚠️ 同步失败：${res.message || "同步码无效"}`);
     }
@@ -199,39 +201,21 @@ function copyCurrentKey(): void {
 function openSyncKeyModal(): void {
   const currentKey = getOrCreateSyncKey();
   openModal({
-    title: "☁️ 跨端云同步 · 自定义同步码",
+    title: "☁️ 跨端云同步 · 设置同步码",
     body: `
-      <div class="space-y-3 text-left">
-        <div class="p-3 rounded-2xl bg-slate-100 dark:bg-slate-800 border">
-          <div class="text-[10px] sub-text font-semibold">当前设备绑定的同步码</div>
-          <div class="flex items-center justify-between mt-1">
-            <span id="modalCurrentKeyDisplay" class="text-base font-extrabold font-mono text-teal-600 dark:text-teal-400 select-all">${escapeHtml(currentKey)}</span>
-            <button type="button" id="modalCopyBtn" class="px-2.5 py-1 rounded-xl bg-white dark:bg-slate-700 border text-xs font-bold">📋 复制</button>
-          </div>
-        </div>
-
-        <div class="space-y-1.5">
-          <label class="text-xs font-bold block text-slate-700 dark:text-slate-200">
-            ✏️ 输入自定义专属同步码
-          </label>
-          <input id="modalSyncInput" type="text" placeholder="输入自定义同步码 (如 cenji / 高考必胜 / mywords)" value="${escapeHtml(currentKey)}" class="w-full px-3 py-2 rounded-xl card-surface border text-xs font-bold focus:outline-none focus:ring-2 focus:ring-teal-500" />
-          <p class="text-[10px] sub-text leading-tight mt-1">
-            💡 <strong>多端同步使用指南</strong>：支持任意中文、英文、数字组合！在另一台手机或电脑输入完全相同的同步码，点击「绑定并同步」，即可自动实现多端云端漫游。
-          </p>
-        </div>
-
-        <div class="grid grid-cols-2 gap-2 pt-1">
-          <button type="button" id="modalRandomBtn" class="py-2 px-2.5 rounded-xl border text-xs font-semibold sub-text hover:text-teal-600">
-            🎲 随机生成码
-          </button>
-          <button type="button" id="modalPullBtn" class="py-2 px-2.5 rounded-xl bg-teal-500/10 text-teal-600 dark:text-teal-400 border border-teal-500/20 text-xs font-bold">
-            📥 拉取覆盖云端
-          </button>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div>当前同步码：<strong style="font-family:var(--font-mono);">${escapeHtml(currentKey)}</strong></div>
+        <div style="font-size:12px;opacity:0.8;">支持任意 1–50 位中英文或数字组合；多端输入相同同步码即可云端互通。</div>
+        <div style="display:flex;gap:8px;">
+          <button type="button" id="modalCopyBtn" class="rc-btn rc-btn-ghost" style="flex:1;">📋 复制当前码</button>
+          <button type="button" id="modalRandomBtn" class="rc-btn rc-btn-ghost" style="flex:1;">🎲 随机短码</button>
         </div>
       </div>
     `,
+    showInput: true,
+    inputValue: currentKey,
     onConfirm: () => {
-      const input = optById<HTMLInputElement>("modalSyncInput");
+      const input = optById<HTMLInputElement>("modalInput");
       const val = (input?.value || "").trim();
       if (!val) {
         showToast("请输入同步码");
@@ -246,21 +230,10 @@ function openSyncKeyModal(): void {
     optById("modalCopyBtn")?.addEventListener("click", copyCurrentKey);
     optById("modalRandomBtn")?.addEventListener("click", () => {
       const rand = Math.random().toString(36).substring(2, 6).toUpperCase();
-      const newKey = `GK-${rand}`;
-      const inp = optById<HTMLInputElement>("modalSyncInput");
-      if (inp) inp.value = newKey;
+      const inp = optById<HTMLInputElement>("modalInput");
+      if (inp) inp.value = `GK-${rand}`;
     });
-    optById("modalPullBtn")?.addEventListener("click", () => {
-      const input = optById<HTMLInputElement>("modalSyncInput");
-      const val = (input?.value || "").trim();
-      if (!val) {
-        showToast("请输入同步码");
-        return;
-      }
-      closeModal();
-      void pullCloudSync(val);
-    });
-  }, 50);
+  }, 30);
 }
 
 function rebuildFilteredDeck(resetIndex = false): void {
@@ -280,6 +253,8 @@ function rebuildFilteredDeck(resetIndex = false): void {
     state.currentIndex = 0;
   }
   state.cardRevealed = false;
+  state.editingMemo = false;
+
   if (state.currentQuizWord) {
     const validQuizPool = getQuizCandidates(
       vocabList,
@@ -295,18 +270,6 @@ function rebuildFilteredDeck(resetIndex = false): void {
   renderAllViews(state, vocabList, filteredDeck);
 }
 
-function advanceZenWord(delta = 1): void {
-  if (filteredDeck.length === 0) return;
-  state.currentIndex = (state.currentIndex + delta + filteredDeck.length) % filteredDeck.length;
-  state.cardRevealed = false;
-  saveState();
-  renderAllViews(state, vocabList, filteredDeck);
-  const word = filteredDeck[state.currentIndex]?.word;
-  if (state.autoSpeak && word) {
-    speakText(word);
-  }
-}
-
 function markCurrentWord(status: WordMarkStatus): void {
   if (filteredDeck.length === 0) return;
   if (
@@ -320,6 +283,8 @@ function markCurrentWord(status: WordMarkStatus): void {
   if (!item) return;
 
   state.marks[item.id] = status;
+  state.editingMemo = false;
+
   const statusLabels: Record<WordMarkStatus, string> = {
     known: "🟢 很熟",
     fuzzy: "🟡 有点模糊",
@@ -343,14 +308,14 @@ function markCurrentWord(status: WordMarkStatus): void {
       if (selGroup) selGroup.value = state.currentGroup;
       filteredDeck = getWordsByGroup(vocabList, state.currentGroup);
       state.currentIndex = 0;
-      toastMsg = `🎉 第 ${currentG} 组已完成，自动进入第 ${currentG + 1} 组！`;
+      toastMsg = `🎉 第 ${currentG} 组已完成，自动进入第 ${currentG + 1} 组`;
     } else {
       state.currentIndex = 0;
-      toastMsg = "🎉 第 41 组已完成，已回到本组开头！";
+      toastMsg = "🎉 第 41 组已完成，已回到本组开头";
     }
   } else {
     state.currentIndex = 0;
-    toastMsg = `${item.word} → ${statusLabels[status]} (已循环到列表开头)`;
+    toastMsg = `${item.word} → ${statusLabels[status]}（已循环到开头）`;
   }
 
   state.cardRevealed = false;
@@ -364,19 +329,24 @@ function markCurrentWord(status: WordMarkStatus): void {
   }
 }
 
-function stepWord(delta: number): void {
+function stepWord(delta: number, wrapInZen = false): void {
   if (filteredDeck.length === 0) return;
-  const nextIdx = state.currentIndex + delta;
-  if (nextIdx < 0) {
-    showToast("已经是第一词了");
-    return;
-  }
-  if (nextIdx >= filteredDeck.length) {
-    showToast("已经是最后一词了");
-    return;
+  let nextIdx = state.currentIndex + delta;
+  if (wrapInZen) {
+    nextIdx = (nextIdx + filteredDeck.length) % filteredDeck.length;
+  } else {
+    if (nextIdx < 0) {
+      showToast("已经是第一个单词");
+      return;
+    }
+    if (nextIdx >= filteredDeck.length) {
+      showToast("已经是最后一个单词");
+      return;
+    }
   }
   state.currentIndex = nextIdx;
   state.cardRevealed = false;
+  state.editingMemo = false;
   saveState();
   renderAllViews(state, vocabList, filteredDeck);
   const word = filteredDeck[state.currentIndex]?.word;
@@ -410,8 +380,8 @@ function renderQuizChoicesForCurrentWord(): void {
 
   const fb = optById("quizFeedbackText");
   if (fb) {
-    fb.textContent = "纯测验模式（不修改熟练度）";
-    fb.className = "text-xs font-semibold sub-text";
+    fb.textContent = "纯检验模式（绝不修改原有熟练度标记）";
+    fb.className = "quiz-feedback-text";
   }
 
   const prevIds = new Set(state.lastDistractorIds);
@@ -448,7 +418,7 @@ function renderQuizChoicesForCurrentWord(): void {
     choiceBox.innerHTML = options
       .map(
         (opt, idx) => `
-        <button type="button" data-quiz-opt="${opt.id}" class="quiz-opt-btn w-full text-left px-3.5 py-2.5 rounded-2xl card-surface border text-xs font-semibold hover:border-teal-500 transition flex items-center justify-between">
+        <button type="button" data-quiz-opt="${opt.id}" class="quiz-opt-btn">
           <span>${idx + 1}. ${escapeHtml(opt.meaning)}</span>
         </button>
       `,
@@ -479,14 +449,15 @@ function nextQuizQuestion(): void {
   state.quizAnswered = false;
   state.quizHintLevel = 0;
 
-  const groupLabel = optById("headerGroupBadge")?.textContent?.trim() || "当前组";
   const metaEl = optById("quizWordMeta");
-  if (metaEl) metaEl.textContent = `${groupLabel} · #${target.id} · 考频 ${target.freq}次`;
+  if (metaEl) {
+    metaEl.textContent = `#${target.id} · ${target.freq > 0 ? `考频 ${target.freq} 次` : "新增词"}`;
+  }
 
   const fb = optById("quizFeedbackText");
   if (fb) {
-    fb.textContent = "纯测验模式（不修改熟练度）";
-    fb.className = "text-xs font-semibold sub-text";
+    fb.textContent = "纯检验模式（绝不修改原有熟练度标记）";
+    fb.className = "quiz-feedback-text";
   }
 
   const choiceBox = optById("quizChoiceContainer");
@@ -496,34 +467,168 @@ function nextQuizQuestion(): void {
   const promptSub = optById("quizPromptSub");
 
   if (state.quizType === "choice") {
-    choiceBox?.classList.remove("hidden");
-    spellBox?.classList.add("hidden");
-    refreshBtn?.classList.remove("hidden");
+    if (choiceBox) choiceBox.hidden = false;
+    if (spellBox) spellBox.hidden = true;
+    if (refreshBtn) refreshBtn.hidden = false;
     if (promptMain) promptMain.textContent = target.word;
-    if (promptSub) promptSub.textContent = "请选择正确的中文释义（刷新可更换其余三个干扰项）";
+    if (promptSub) promptSub.textContent = "按键盘 1–4 或点击选项选出正确释义";
     renderQuizChoicesForCurrentWord();
+    if (state.autoSpeak) speakText(target.word);
   } else {
-    choiceBox?.classList.add("hidden");
-    spellBox?.classList.remove("hidden");
-    refreshBtn?.classList.add("hidden");
+    if (choiceBox) choiceBox.hidden = true;
+    if (spellBox) spellBox.hidden = false;
+    if (refreshBtn) refreshBtn.hidden = true;
     if (promptMain) promptMain.textContent = target.meaning;
-    if (promptSub) promptSub.textContent = "请根据释义或发音拼写英文单词";
-    const spellHint = optById("quizSpellHint");
-    if (spellHint) spellHint.textContent = "";
+    if (promptSub) promptSub.textContent = "根据释义与发音拼写完整英文单词";
+
+    const cleanTarget = cleanWordForSpeech(target.word) || target.word;
+    const hintEl = optById("quizSpellHint");
+    if (hintEl)
+      hintEl.textContent = `${"_ ".repeat(cleanTarget.length).trim()} (${cleanTarget.length}字母)`;
+
     const inp = optById<HTMLInputElement>("inputQuizSpell");
     if (inp) {
       inp.value = "";
       inp.disabled = false;
-      window.setTimeout(() => inp.focus(), 50);
+      window.setTimeout(() => inp.focus(), 40);
     }
-  }
-
-  if (state.autoSpeak) {
     speakText(target.word);
   }
 }
 
-function exportCsvByFilter(filterFn: (w: ReciteWord) => boolean, filenameSuffix: string): void {
+function handleQuizChoiceAnswer(optBtn: HTMLButtonElement): void {
+  if (state.quizAnswered || !state.currentQuizWord) return;
+  state.quizAnswered = true;
+  const chosenId = Number.parseInt(optBtn.dataset.quizOpt ?? "0", 10);
+  const target = state.currentQuizWord;
+  const isCorrect = chosenId === target.id;
+
+  state.quizTotal += 1;
+  if (isCorrect) {
+    state.quizCorrect += 1;
+    state.quizStreak += 1;
+  } else {
+    state.quizStreak = 0;
+  }
+
+  for (const b of document.querySelectorAll<HTMLButtonElement>(".quiz-opt-btn")) {
+    const bid = Number.parseInt(b.dataset.quizOpt ?? "0", 10);
+    b.disabled = true;
+    if (bid === target.id) {
+      b.classList.add("is-correct");
+    } else if (bid === chosenId && !isCorrect) {
+      b.classList.add("is-wrong");
+    }
+  }
+
+  const fb = optById("quizFeedbackText");
+  if (fb) {
+    if (isCorrect) {
+      fb.textContent = "✅ 回答正确（仅自测，未改动标记）";
+      fb.className = "quiz-feedback-text is-correct";
+    } else {
+      fb.textContent = `❌ 正确答案：${target.meaning}`;
+      fb.className = "quiz-feedback-text is-wrong";
+    }
+  }
+  renderQuizScoreUI(state);
+  speakText(target.word);
+
+  if (isCorrect) {
+    scheduleQuizAutoNext(1100);
+  }
+}
+
+function handleQuizSpellSubmit(): void {
+  if (state.quizAnswered || !state.currentQuizWord) return;
+  const inp = optById<HTMLInputElement>("inputQuizSpell");
+  const userAns = (inp?.value || "").trim().toLowerCase();
+  if (!userAns) {
+    showToast("请先输入单词拼写");
+    return;
+  }
+
+  const targetWord = (
+    cleanWordForSpeech(state.currentQuizWord.word) || state.currentQuizWord.word
+  ).toLowerCase();
+  const isCorrect = userAns === targetWord;
+
+  state.quizAnswered = true;
+  if (inp) inp.disabled = true;
+  state.quizTotal += 1;
+  if (isCorrect) {
+    state.quizCorrect += 1;
+    state.quizStreak += 1;
+  } else {
+    state.quizStreak = 0;
+  }
+
+  const fb = optById("quizFeedbackText");
+  if (fb) {
+    if (isCorrect) {
+      fb.textContent = `✅ 拼写正确：${targetWord}`;
+      fb.className = "quiz-feedback-text is-correct";
+    } else {
+      fb.textContent = `❌ 正确拼写：${targetWord}`;
+      fb.className = "quiz-feedback-text is-wrong";
+    }
+  }
+  renderQuizScoreUI(state);
+  speakText(state.currentQuizWord.word);
+
+  if (isCorrect) {
+    scheduleQuizAutoNext(1100);
+  }
+}
+
+function switchTab(tabName: MainTab): void {
+  clearQuizAutoNextTimer();
+  state.activeTab = tabName;
+
+  for (const btn of document.querySelectorAll<HTMLButtonElement>("[data-nav]")) {
+    const isTarget = btn.dataset.nav === tabName;
+    btn.classList.toggle("active", isTarget);
+    btn.setAttribute("aria-selected", String(isTarget));
+  }
+
+  const views: Record<MainTab, string> = {
+    study: "viewStudy",
+    quiz: "viewQuiz",
+    list: "viewList",
+    stats: "viewStats",
+  };
+  for (const [k, id] of Object.entries(views)) {
+    const el = optById(id);
+    if (el) el.hidden = k !== tabName;
+  }
+
+  if (tabName === "quiz" && !state.currentQuizWord) {
+    nextQuizQuestion();
+  }
+  if (tabName === "list") {
+    renderWordList(state, vocabList);
+  }
+  if (tabName === "stats") {
+    renderStatsView(state, vocabList);
+  }
+}
+
+function openPrefModal(): void {
+  const modal = optById("prefModalBackdrop");
+  if (modal) modal.hidden = false;
+  renderHeaderAndControls(state, vocabList);
+}
+
+function closePrefModal(): void {
+  const modal = optById("prefModalBackdrop");
+  if (modal) modal.hidden = true;
+}
+
+function exportCsv(
+  filterFn: (w: ReciteWord) => boolean,
+  filePrefix: string,
+  emptyMsg: string,
+): void {
   const { csvContent, count } = buildExportCsvContent(
     vocabList,
     state.marks,
@@ -531,725 +636,479 @@ function exportCsvByFilter(filterFn: (w: ReciteWord) => boolean, filenameSuffix:
     filterFn,
   );
   if (count === 0) {
-    showToast("⚠️ 当前筛选条件下没有可导出的单词");
+    showToast(emptyMsg);
     return;
   }
   const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
-  const dateStr = new Date().toISOString().slice(0, 10);
   a.href = url;
-  a.download = `高考英语2050核心词汇_${filenameSuffix}_${dateStr}.csv`;
+  a.download = `${filePrefix}_${new Date().toISOString().slice(0, 10)}.csv`;
   document.body.appendChild(a);
   a.click();
-  document.body.removeChild(a);
+  a.remove();
   URL.revokeObjectURL(url);
-  showToast(`✅ 已导出 ${count} 个单词到 CSV`);
+  showToast(`✅ 已导出 ${count} 个单词 CSV 报表`);
 }
 
-function handleImportCsv(file: File): void {
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    const buffer = e.target?.result;
-    if (!(buffer instanceof ArrayBuffer)) return;
-
-    let text = "";
-    try {
-      text = new TextDecoder("utf-8", { fatal: true }).decode(buffer);
-    } catch {
-      text = new TextDecoder("gb18030").decode(buffer);
-    }
-
-    const rows = parseCsvRows(text);
-    if (rows.length <= 1) {
-      showToast("⚠️ CSV 文件内容为空或格式无法识别");
-      return;
-    }
-
-    const summary = applyImportedCsvRows(rows, vocabList, state.marks, state.memos);
-    const importedTotal = summary.importedKnown + summary.importedFuzzy + summary.importedUnknown;
-    rebuildFilteredDeck(false);
-
-    if (state.statusFilter === "all" && filteredDeck.length > 0) {
-      const firstUnmarkedIdx = filteredDeck.findIndex((w) => !state.marks[w.id]);
-      if (firstUnmarkedIdx !== -1) {
-        state.currentIndex = firstUnmarkedIdx;
-      }
-    }
-
-    saveState();
-    renderAllViews(state, vocabList, filteredDeck);
-    showToast(
-      `✅ 已恢复 ${importedTotal} 词 (熟${summary.importedKnown}/模${summary.importedFuzzy}/生${summary.importedUnknown})`,
-    );
-  };
-  reader.readAsArrayBuffer(file);
-}
-
-function switchTab(tabName: MainTab): void {
-  state.activeTab = tabName;
-  const views: Record<MainTab, HTMLElement | null> = {
-    study: optById("viewStudy"),
-    zen: optById("viewZen"),
-    quiz: optById("viewQuiz"),
-    list: optById("viewList"),
-    stats: optById("viewStats"),
-  };
-
-  for (const key of Object.keys(views) as MainTab[]) {
-    const el = views[key];
-    if (!el) continue;
-    if (key === tabName) el.classList.remove("hidden");
-    else el.classList.add("hidden");
-  }
-
-  const topHeader = optById("appTopHeader");
-  const miniBar = optById("appMiniStatusBar");
-  if (tabName === "zen") {
-    topHeader?.classList.add("hidden");
-    miniBar?.classList.add("hidden");
-  } else {
-    topHeader?.classList.remove("hidden");
-    miniBar?.classList.remove("hidden");
-  }
-
-  for (const btn of document.querySelectorAll<HTMLElement>(".nav-tab-btn")) {
-    const isCurrent = btn.getAttribute("data-nav") === tabName;
-    btn.className = `nav-tab-btn flex flex-col items-center justify-center gap-0.5 text-[10px] w-16 ${
-      isCurrent ? "tab-active text-teal-600 dark:text-teal-400 font-bold" : "sub-text font-medium"
-    }`;
-  }
-
-  if (tabName === "quiz") {
-    const pool = getQuizCandidates(
-      vocabList,
-      filteredDeck,
-      state.marks,
-      state.currentGroup,
-      state.quizPool,
-    );
-    const inPool = Boolean(
-      state.currentQuizWord && pool.some((w) => w.id === state.currentQuizWord?.id),
-    );
-    if (!inPool) {
-      nextQuizQuestion();
-    } else if (state.quizType === "choice" && state.currentQuizWord) {
-      const groupLabel = optById("headerGroupBadge")?.textContent?.trim() || "当前组";
-      const metaEl = optById("quizWordMeta");
-      if (metaEl) {
-        metaEl.textContent = `${groupLabel} · #${state.currentQuizWord.id} · 考频 ${state.currentQuizWord.freq}次`;
-      }
-      renderQuizChoicesForCurrentWord();
-    }
-  }
-  renderAllViews(state, vocabList, filteredDeck);
-}
-
-async function initVocabDataset(): Promise<void> {
-  rebuildFilteredDeck(false);
-  renderAllViews(state, vocabList, filteredDeck);
-
-  try {
-    const db = await openVocabDb();
-    if (db) {
-      const cached = await loadVocabFromIdb(db);
-      if (cached && cached.length >= 2000) {
-        vocabList = cached;
-        rebuildFilteredDeck(false);
-        renderAllViews(state, vocabList, filteredDeck);
-      } else {
-        await saveVocabToIdb(db, vocabList);
-      }
-    }
-  } catch {
-    // IDB fallback
-  }
-
-  fetchVocabFromCloud()
-    .then(async (cloudWords) => {
-      if (cloudWords && cloudWords.length >= 2000) {
-        vocabList = cloudWords;
-        rebuildFilteredDeck(false);
-        renderAllViews(state, vocabList, filteredDeck);
-        const db = await openVocabDb();
-        if (db) await saveVocabToIdb(db, cloudWords);
-      }
-    })
-    .catch(() => {});
-}
-
-function setupApp(): void {
-  initAppShell({ activePage: "recite" });
-  try {
-    loadReciteState(state);
-    state.darkMode = getPreferredTheme() === "dark";
-    populateGroupSelector(state.currentGroup);
-    updateSyncUI();
-    void initVocabDataset();
-    renderQuizScoreUI(state);
-  } catch (err) {
-    console.warn("InitReciteApp error:", err);
-  }
-
-  const themeObserver = new MutationObserver(() => {
-    const isDark = getPreferredTheme() === "dark";
-    if (state.darkMode !== isDark) {
-      state.darkMode = isDark;
-      renderAllViews(state, vocabList, filteredDeck);
-    }
-  });
-  themeObserver.observe(document.documentElement, {
-    attributes: true,
-    attributeFilter: ["data-theme"],
-  });
-
-  optById("displaySyncKey")?.addEventListener("click", copyCurrentKey);
-  optById("btnCopySyncKey")?.addEventListener("click", copyCurrentKey);
-
-  optById("btnManualSync")?.addEventListener("click", () => {
-    void pushCloudSync(true);
-  });
-
-  optById("btnApplyCustomKey")?.addEventListener("click", () => {
-    const inp = optById<HTMLInputElement>("inputCustomSyncKey");
-    if (!inp) return;
-    const val = inp.value.trim();
-    if (!val) {
-      showToast("请输入你想自定义的同步码");
-      inp.focus();
-      return;
-    }
-    void pullCloudSync(val);
-    inp.value = "";
-  });
-
-  optById("btnRandomKey")?.addEventListener("click", () => {
-    const rand = Math.random().toString(36).substring(2, 6).toUpperCase();
-    const newKey = `GK-${rand}`;
-    try {
-      localStorage.setItem(SYNC_KEY_STORAGE, newKey);
-    } catch {
-      // ignore
-    }
-    updateSyncUI();
-    showToast(`已生成新随机同步码: ${newKey}`);
-    void pushCloudSync(true);
-  });
-
-  optById("btnHeaderSyncPill")?.addEventListener("click", openSyncKeyModal);
-  optById("btnHeaderSyncIcon")?.addEventListener("click", openSyncKeyModal);
-
-  const updateAppHeight = () => {
-    document.documentElement.style.setProperty("--app-height", `${window.innerHeight}px`);
-  };
-  window.addEventListener("resize", updateAppHeight);
-  window.addEventListener("orientationchange", updateAppHeight);
-  updateAppHeight();
-
-  optById("btnShowShortcuts")?.addEventListener("click", () => {
-    openModal({
-      title: "⌨️ 键盘快捷键与手势指南",
-      body: `
-        <div class="space-y-1.5">
-          <div>• <strong>数字键 1</strong>：标记为「🟢 很熟」并跳下一词</div>
-          <div>• <strong>数字键 2</strong>：标记为「🟡 有点模糊」并跳下一词</div>
-          <div>• <strong>数字键 3</strong>：标记为「🔴 完全不会」并跳下一词</div>
-          <div>• <strong>空格键 Space</strong>：朗读当前单词发音 / 揭晓遮罩</div>
-          <div>• <strong>左右方向键 ← / →</strong>：切换上一词 / 下一词</div>
-          <div>• <strong>手机端左右滑动卡片</strong>：快速切换上一词 / 下一词</div>
-        </div>
-      `,
-      onConfirm: closeModal,
-    });
-  });
-
-  optById("btnAccentToggle")?.addEventListener("click", () => {
-    state.accent = state.accent === "en-US" ? "en-GB" : "en-US";
-    saveState();
-    renderHeaderAndMiniStats(state, vocabList, filteredDeck);
-    showToast(state.accent === "en-US" ? "🇺🇸 已切换为美式发音" : "🇬🇧 已切换为英式发音");
-    const word = filteredDeck[state.currentIndex]?.word;
-    if (word) speakText(word);
-  });
-
-  optById("btnThemeToggle")?.addEventListener("click", () => {
-    state.darkMode = toggleTheme() === "dark";
-    saveState();
-    renderAllViews(state, vocabList, filteredDeck);
-  });
-
-  for (const btn of document.querySelectorAll<HTMLElement>(".quick-stat-pill")) {
+function bindEvents(): void {
+  for (const btn of document.querySelectorAll<HTMLButtonElement>("[data-nav]")) {
     btn.addEventListener("click", () => {
-      const f = (btn.getAttribute("data-quick-filter") || "all") as StatusFilter;
-      state.statusFilter = f;
-      const selFilter = optById<HTMLSelectElement>("selectStatusFilter");
-      if (selFilter) selFilter.value = f;
-      const groupMatches = getWordsByGroup(vocabList, state.currentGroup).filter((w) =>
-        wordMatchesFilter(state.marks, w.id, f),
-      );
-      if (groupMatches.length === 0 && state.currentGroup !== "all") {
-        state.currentGroup = "all";
-        const selGroup = optById<HTMLSelectElement>("selectGroup");
-        if (selGroup) selGroup.value = "all";
-      }
-      switchTab("study");
-      rebuildFilteredDeck(true);
+      switchTab((btn.dataset.nav as MainTab | undefined) ?? "study");
     });
   }
 
+  // Group selector
   optById<HTMLSelectElement>("selectGroup")?.addEventListener("change", (e) => {
     state.currentGroup = (e.target as HTMLSelectElement).value;
+    rebuildFilteredDeck(true);
     saveState();
-    rebuildFilteredDeck(true);
   });
 
-  optById<HTMLSelectElement>("selectStatusFilter")?.addEventListener("change", (e) => {
-    state.statusFilter = (e.target as HTMLSelectElement).value as StatusFilter;
-    rebuildFilteredDeck(true);
-  });
+  // Inline status filters
+  for (const chip of document.querySelectorAll<HTMLButtonElement>("[data-status-filter]")) {
+    chip.addEventListener("click", () => {
+      const f = (chip.dataset.statusFilter as StatusFilter | undefined) ?? "all";
+      state.statusFilter = f;
+      rebuildFilteredDeck(true);
+      saveState();
+    });
+  }
 
-  optById<HTMLSelectElement>("selectMaskMode")?.addEventListener("change", (e) => {
-    state.maskMode = (e.target as HTMLSelectElement).value as MaskMode;
+  // Mask mode cycle button
+  optById("btnMaskToggle")?.addEventListener("click", () => {
+    const order: MaskMode[] = ["none", "hide_cn", "hide_en"];
+    const next = order[(order.indexOf(state.maskMode) + 1) % order.length] ?? "none";
+    state.maskMode = next;
     state.cardRevealed = false;
-    renderStudyCard(state, filteredDeck);
-  });
-
-  optById("btnOpenPrefDrawer")?.addEventListener("click", () => {
-    optById("prefDrawerModal")?.classList.remove("hidden");
-  });
-  optById("btnClosePrefDrawer")?.addEventListener("click", () => {
-    optById("prefDrawerModal")?.classList.add("hidden");
-  });
-
-  optById<HTMLInputElement>("sliderEnFontSize")?.addEventListener("input", (e) => {
-    state.enFontSize = Number.parseInt((e.target as HTMLInputElement).value, 10);
-    const valEl = optById("valEnFontSize");
-    if (valEl) valEl.textContent = `${state.enFontSize}px`;
     saveState();
-    renderStudyCard(state, filteredDeck);
+    renderAllViews(state, vocabList, filteredDeck);
   });
 
-  optById<HTMLInputElement>("sliderCnFontSize")?.addEventListener("input", (e) => {
-    state.cnFontSize = Number.parseInt((e.target as HTMLInputElement).value, 10);
-    const valEl = optById("valCnFontSize");
-    if (valEl) valEl.textContent = `${state.cnFontSize}px`;
-    saveState();
-    renderStudyCard(state, filteredDeck);
-  });
-
-  optById<HTMLInputElement>("sliderEnFontWeight")?.addEventListener("input", (e) => {
-    state.enFontWeight = Number.parseInt((e.target as HTMLInputElement).value, 10);
-    const valEl = optById("valEnFontWeight");
-    if (valEl) valEl.textContent = getFontWeightLabel(state.enFontWeight);
-    saveState();
-    renderStudyCard(state, filteredDeck);
-  });
-
-  optById<HTMLInputElement>("sliderCnFontWeight")?.addEventListener("input", (e) => {
-    state.cnFontWeight = Number.parseInt((e.target as HTMLInputElement).value, 10);
-    const valEl = optById("valCnFontWeight");
-    if (valEl) valEl.textContent = getFontWeightLabel(state.cnFontWeight);
-    saveState();
-    renderStudyCard(state, filteredDeck);
-  });
-
-  optById("btnResetFontSizes")?.addEventListener("click", () => {
-    state.enFontSize = 58;
-    state.cnFontSize = 34;
-    state.enFontWeight = 700;
-    state.cnFontWeight = 700;
-    saveState();
-    renderHeaderAndMiniStats(state, vocabList, filteredDeck);
-    renderStudyCard(state, filteredDeck);
-    showToast("🔤 已恢复默认字号与粗细 (英文58px/粗体, 中文34px/粗体)");
-  });
-
-  optById("btnDrawerAccentToggle")?.addEventListener("click", () => {
-    state.accent = state.accent === "en-US" ? "en-GB" : "en-US";
-    saveState();
-    renderHeaderAndMiniStats(state, vocabList, filteredDeck);
-    showToast(state.accent === "en-US" ? "🇺🇸 已切换为美式发音" : "🇬🇧 已切换为英式发音");
-    const word = filteredDeck[state.currentIndex]?.word;
-    if (word) speakText(word);
-  });
-
-  optById("btnDrawerSpeedToggle")?.addEventListener("click", () => {
-    state.speechRate = state.speechRate === 0.7 ? 1.0 : 0.7;
-    saveState();
-    renderHeaderAndMiniStats(state, vocabList, filteredDeck);
-    showToast(state.speechRate === 0.7 ? "🐢 已切换为 0.7x 慢速跟读" : "⚡ 已恢复正常 1.0x 语速");
-    const word = filteredDeck[state.currentIndex]?.word;
-    if (word) speakText(word);
-  });
-
-  optById("btnSavePrefDrawer")?.addEventListener("click", () => {
-    optById("prefDrawerModal")?.classList.add("hidden");
-  });
-  optById("prefDrawerModal")?.addEventListener("click", (e) => {
-    if (e.target === optById("prefDrawerModal")) {
-      optById("prefDrawerModal")?.classList.add("hidden");
-    }
-  });
-
+  // Shuffle toggle
   optById("btnShuffleDeck")?.addEventListener("click", () => {
     state.isShuffled = !state.isShuffled;
     rebuildFilteredDeck(true);
-    showToast(state.isShuffled ? "🔀 已随机打乱当前词表" : "📋 已恢复词频顺序");
+    showToast(state.isShuffled ? "🔀 已开启乱序刷词" : "📋 已恢复考频顺序");
   });
 
-  optById("btnAutoPlayAudio")?.addEventListener("click", () => {
-    state.autoSpeak = !state.autoSpeak;
-    saveState();
-    renderHeaderAndMiniStats(state, vocabList, filteredDeck);
-    showToast(state.autoSpeak ? "🔊 已开启切词自动发音" : "🔇 已关闭切词自动发音");
+  // Zen mode toggle (sub-mode inside Study)
+  optById("btnZenToggle")?.addEventListener("click", () => {
+    state.zenMode = !state.zenMode;
+    state.editingMemo = false;
+    renderAllViews(state, vocabList, filteredDeck);
+    showToast(
+      state.zenMode ? "⚡ 已进入极速专注模式（点击卡片切下一词）" : "📖 已切换为标准详情模式",
+    );
   });
 
-  optById("btnSpeakWord")?.addEventListener("click", (e) => {
-    e.stopPropagation();
-    const word = filteredDeck[state.currentIndex]?.word;
-    if (word) speakText(word, 1.0);
-  });
-
-  optById("btnSpeakSlow")?.addEventListener("click", (e) => {
-    e.stopPropagation();
-    const word = filteredDeck[state.currentIndex]?.word;
-    if (word) speakText(word, 0.65);
-  });
-
-  const cardWordEl = optById("cardWordText");
-  cardWordEl?.addEventListener("click", (e) => {
-    e.stopPropagation();
-    const word = filteredDeck[state.currentIndex]?.word;
-    if (word) {
-      speakText(word);
-      cardWordEl.classList.add("opacity-70", "scale-95");
-      window.setTimeout(() => cardWordEl.classList.remove("opacity-70", "scale-95"), 120);
-    }
-  });
-
-  optById("cardCenterArea")?.addEventListener("click", (e) => {
-    const target = e.target as HTMLElement | null;
-    const formBtn = target?.closest<HTMLElement>("[data-speak-form]");
-    if (formBtn) {
-      e.stopPropagation();
-      speakText(formBtn.getAttribute("data-speak-form") || "", 1.0);
+  // Card center area interaction
+  optById("cardCenterArea")?.addEventListener("click", () => {
+    if (filteredDeck.length === 0) return;
+    if (state.zenMode) {
+      if (state.maskMode !== "none" && !state.cardRevealed) {
+        state.cardRevealed = true;
+        renderStudyCard(state, filteredDeck);
+        const w = filteredDeck[state.currentIndex]?.word;
+        if (w) speakText(w);
+        return;
+      }
+      stepWord(1, true);
       return;
     }
+
     if (state.maskMode !== "none" && !state.cardRevealed) {
       state.cardRevealed = true;
       renderStudyCard(state, filteredDeck);
-    }
-    const word = filteredDeck[state.currentIndex]?.word;
-    if (word) speakText(word, 1.0);
-  });
-
-  optById("cardFormsList")?.addEventListener("click", (e) => {
-    const target = e.target as HTMLElement | null;
-    const formBtn = target?.closest<HTMLElement>("[data-speak-form]");
-    if (formBtn) {
-      e.stopPropagation();
-      speakText(formBtn.getAttribute("data-speak-form") || "", 1.0);
+      const w = filteredDeck[state.currentIndex]?.word;
+      if (w) speakText(w);
+    } else {
+      const w = filteredDeck[state.currentIndex]?.word;
+      if (w) speakText(w);
     }
   });
 
-  optById("btnPrevWord")?.addEventListener("click", () => stepWord(-1));
-  optById("btnNextWord")?.addEventListener("click", () => stepWord(1));
-
-  const openMemoEditor = () => {
-    if (filteredDeck.length === 0) return;
-    const item = filteredDeck[state.currentIndex];
-    if (!item) return;
-    openModal({
-      title: `✍️ 添加助记笔记 · ${item.word}`,
-      body: "记录词根词缀、谐音联想或真题例句（导出 CSV 时会一并包含）：",
-      showInput: true,
-      inputValue: state.memos[item.id] || "",
-      onConfirm: () => {
-        const input = optById<HTMLInputElement>("modalInput");
-        const val = (input?.value || "").trim();
-        if (val) state.memos[item.id] = val;
-        else delete state.memos[item.id];
-        saveState();
-        renderStudyCard(state, filteredDeck);
-        closeModal();
-        showToast("已保存助记笔记");
-      },
-    });
-  };
-
-  optById("btnAddMemo")?.addEventListener("click", openMemoEditor);
-  optById("btnEditMemoInline")?.addEventListener("click", openMemoEditor);
-
-  optById("viewZen")?.addEventListener("click", () => advanceZenWord(1));
-
-  optById("btnMarkKnown")?.addEventListener("click", () => markCurrentWord("known"));
-  optById("btnMarkFuzzy")?.addEventListener("click", () => markCurrentWord("fuzzy"));
-  optById("btnMarkUnknown")?.addEventListener("click", () => markCurrentWord("unknown"));
-
+  // Card swipe on mobile
   let touchStartX = 0;
+  let touchStartY = 0;
   const cardEl = optById("wordCardContainer");
   cardEl?.addEventListener(
     "touchstart",
     (e) => {
       const touch = e.changedTouches[0];
-      if (touch) touchStartX = touch.screenX;
+      if (!touch) return;
+      touchStartX = touch.screenX;
+      touchStartY = touch.screenY;
     },
     { passive: true },
   );
   cardEl?.addEventListener(
     "touchend",
     (e) => {
+      if (state.activeTab !== "study") return;
       const touch = e.changedTouches[0];
       if (!touch) return;
-      const diffX = touch.screenX - touchStartX;
-      if (Math.abs(diffX) > 65) {
-        if (diffX < 0) stepWord(1);
-        else stepWord(-1);
+      const dx = touch.screenX - touchStartX;
+      const dy = touch.screenY - touchStartY;
+      if (Math.abs(dx) > 56 && Math.abs(dy) < 55) {
+        stepWord(dx > 0 ? -1 : 1, state.zenMode);
       }
     },
     { passive: true },
   );
 
-  optById<HTMLSelectElement>("selectQuizPool")?.addEventListener("change", (e) => {
-    state.quizPool = (e.target as HTMLSelectElement).value as QuizPool;
-    nextQuizQuestion();
+  // Study controls
+  optById("btnPrevCard")?.addEventListener("click", () => stepWord(-1, state.zenMode));
+  optById("btnNextCard")?.addEventListener("click", () => stepWord(1, state.zenMode));
+  optById("btnSpeakWord")?.addEventListener("click", () => {
+    const w = filteredDeck[state.currentIndex]?.word;
+    if (w) speakText(w);
   });
 
+  // Mark pills
+  optById("btnMarkKnown")?.addEventListener("click", () => markCurrentWord("known"));
+  optById("btnMarkFuzzy")?.addEventListener("click", () => markCurrentWord("fuzzy"));
+  optById("btnMarkUnknown")?.addEventListener("click", () => markCurrentWord("unknown"));
+
+  // Inline memo editor
+  const openMemoEditor = () => {
+    const item = filteredDeck[state.currentIndex];
+    if (!item) return;
+    state.editingMemo = true;
+    renderStudyCard(state, filteredDeck);
+    const inp = optById<HTMLInputElement>("inputInlineMemo");
+    if (inp) {
+      inp.value = state.memos[item.id] ?? "";
+      inp.focus();
+    }
+  };
+  optById("btnToggleMemoEditor")?.addEventListener("click", () => {
+    if (state.editingMemo) {
+      state.editingMemo = false;
+      renderStudyCard(state, filteredDeck);
+    } else {
+      openMemoEditor();
+    }
+  });
+  optById("btnEditMemoInline")?.addEventListener("click", openMemoEditor);
+  optById("btnCancelInlineMemo")?.addEventListener("click", () => {
+    state.editingMemo = false;
+    renderStudyCard(state, filteredDeck);
+  });
+  optById<HTMLFormElement>("memoInlineForm")?.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const item = filteredDeck[state.currentIndex];
+    if (!item) return;
+    const val = (optById<HTMLInputElement>("inputInlineMemo")?.value || "").trim();
+    if (val) state.memos[item.id] = val;
+    else delete state.memos[item.id];
+    state.editingMemo = false;
+    saveState();
+    renderAllViews(state, vocabList, filteredDeck);
+    showToast(val ? "📝 助记笔记已保存" : "已清除该词助记笔记");
+  });
+
+  // Header controls
+  optById("btnHeaderSync")?.addEventListener("click", openSyncKeyModal);
+  const toggleAccent = () => {
+    state.accent = state.accent === "en-US" ? "en-GB" : "en-US";
+    saveState();
+    renderHeaderAndControls(state, vocabList);
+    showToast(state.accent === "en-US" ? "已切换为美式发音" : "已切换为英式发音");
+    if (state.activeTab === "study") {
+      const w = filteredDeck[state.currentIndex]?.word;
+      if (w) speakText(w);
+    }
+  };
+  optById("btnAccentToggle")?.addEventListener("click", toggleAccent);
+  optById("btnDrawerAccentToggle")?.addEventListener("click", toggleAccent);
+
+  // Preference modal
+  optById("btnOpenPref")?.addEventListener("click", openPrefModal);
+  optById("btnClosePrefModal")?.addEventListener("click", closePrefModal);
+  optById("btnDonePrefModal")?.addEventListener("click", closePrefModal);
+  optById("prefModalBackdrop")?.addEventListener("click", (e) => {
+    if (e.target === optById("prefModalBackdrop")) closePrefModal();
+  });
+
+  for (const presetBtn of document.querySelectorAll<HTMLButtonElement>("[data-typo-preset]")) {
+    presetBtn.addEventListener("click", () => {
+      const preset = TYPOGRAPHY_PRESETS.find((p) => p.id === presetBtn.dataset.typoPreset);
+      if (!preset) return;
+      state.enFontSize = preset.enFontSize;
+      state.cnFontSize = preset.cnFontSize;
+      state.enFontWeight = preset.enFontWeight;
+      state.cnFontWeight = preset.cnFontWeight;
+      saveState();
+      renderAllViews(state, vocabList, filteredDeck);
+    });
+  }
+
+  optById("btnResetFontSizes")?.addEventListener("click", () => {
+    state.enFontSize = SYSTEM_DEFAULTS.enFontSize;
+    state.cnFontSize = SYSTEM_DEFAULTS.cnFontSize;
+    state.enFontWeight = SYSTEM_DEFAULTS.enFontWeight;
+    state.cnFontWeight = SYSTEM_DEFAULTS.cnFontWeight;
+    saveState();
+    renderAllViews(state, vocabList, filteredDeck);
+    showToast("已恢复默认字号与粗细");
+  });
+
+  const bindRange = (id: string, assign: (val: number) => void, onDoneToast?: string): void => {
+    const el = optById<HTMLInputElement>(id);
+    el?.addEventListener("input", (e) => {
+      assign(Number.parseInt((e.target as HTMLInputElement).value, 10));
+      renderHeaderAndControls(state, vocabList);
+      renderStudyCard(state, filteredDeck);
+    });
+    el?.addEventListener("change", () => {
+      saveState();
+      if (onDoneToast) showToast(onDoneToast);
+    });
+  };
+  bindRange("sliderEnFontSize", (v) => {
+    state.enFontSize = v;
+  });
+  bindRange("sliderCnFontSize", (v) => {
+    state.cnFontSize = v;
+  });
+  bindRange("sliderEnFontWeight", (v) => {
+    state.enFontWeight = v;
+  });
+  bindRange("sliderCnFontWeight", (v) => {
+    state.cnFontWeight = v;
+  });
+
+  optById("btnDrawerSpeedToggle")?.addEventListener("click", () => {
+    const speeds = [0.8, 1.0, 1.25];
+    const next = speeds[(speeds.indexOf(state.speechRate) + 1) % speeds.length] ?? 1.0;
+    state.speechRate = next;
+    saveState();
+    renderHeaderAndControls(state, vocabList);
+    showToast(`语速已切换为 ${next}x`);
+  });
+
+  optById("btnAutoPlayAudio")?.addEventListener("click", () => {
+    state.autoSpeak = !state.autoSpeak;
+    saveState();
+    renderHeaderAndControls(state, vocabList);
+    showToast(state.autoSpeak ? "🔔 已开启切词自动发音" : "🔕 已关闭切词自动发音");
+  });
+
+  // Quiz controls
   optById("btnQuizTypeChoice")?.addEventListener("click", () => {
     state.quizType = "choice";
-    const btnChoice = optById("btnQuizTypeChoice");
-    const btnSpell = optById("btnQuizTypeSpell");
-    if (btnChoice) {
-      btnChoice.className =
-        "py-1.5 rounded-lg bg-white dark:bg-slate-700 shadow-sm text-teal-600 dark:text-teal-300 transition";
-    }
-    if (btnSpell) btnSpell.className = "py-1.5 rounded-lg sub-text transition";
-    if (state.currentQuizWord) {
-      optById("quizChoiceContainer")?.classList.remove("hidden");
-      optById("quizSpellContainer")?.classList.add("hidden");
-      optById("btnQuizRefreshOptions")?.classList.remove("hidden");
-      const pm = optById("quizPromptMain");
-      const ps = optById("quizPromptSub");
-      if (pm) pm.textContent = state.currentQuizWord.word;
-      if (ps) ps.textContent = "请选择正确的中文释义（刷新可更换其余三个干扰项）";
-      renderQuizChoicesForCurrentWord();
-    } else {
-      nextQuizQuestion();
-    }
-  });
-
-  optById("btnQuizTypeSpell")?.addEventListener("click", () => {
-    state.quizType = "spell";
-    const btnChoice = optById("btnQuizTypeChoice");
-    const btnSpell = optById("btnQuizTypeSpell");
-    if (btnSpell) {
-      btnSpell.className =
-        "py-1.5 rounded-lg bg-white dark:bg-slate-700 shadow-sm text-teal-600 dark:text-teal-300 transition";
-    }
-    if (btnChoice) btnChoice.className = "py-1.5 rounded-lg sub-text transition";
+    optById("btnQuizTypeChoice")?.classList.add("active");
+    optById("btnQuizTypeSpell")?.classList.remove("active");
     nextQuizQuestion();
   });
-
+  optById("btnQuizTypeSpell")?.addEventListener("click", () => {
+    state.quizType = "spell";
+    optById("btnQuizTypeSpell")?.classList.add("active");
+    optById("btnQuizTypeChoice")?.classList.remove("active");
+    nextQuizQuestion();
+  });
+  optById<HTMLSelectElement>("selectQuizPool")?.addEventListener("change", (e) => {
+    state.quizPool = (e.target as HTMLSelectElement).value as QuizPool;
+    state.currentQuizWord = null;
+    nextQuizQuestion();
+  });
+  optById("btnQuizSpeak")?.addEventListener("click", () => {
+    if (state.currentQuizWord) speakText(state.currentQuizWord.word);
+  });
   optById("btnQuizRefreshOptions")?.addEventListener("click", () => {
-    if (!state.currentQuizWord) {
+    if (state.quizType !== "choice" || !state.currentQuizWord) return;
+    if (state.quizAnswered) {
       nextQuizQuestion();
       return;
     }
     renderQuizChoicesForCurrentWord();
-    showToast("🔄 已更换另外三个干扰选项");
+    showToast("🔄 已换一组干扰项");
   });
-
-  optById("btnQuizSpeak")?.addEventListener("click", () => {
-    if (state.currentQuizWord) speakText(state.currentQuizWord.word);
-  });
-
+  optById("btnQuizNext")?.addEventListener("click", nextQuizQuestion);
   optById("quizChoiceContainer")?.addEventListener("click", (e) => {
-    const target = e.target as HTMLElement | null;
-    const btn = target?.closest<HTMLElement>("[data-quiz-opt]");
-    if (!btn || state.quizAnswered || !state.currentQuizWord) return;
-    state.quizAnswered = true;
-
-    const chosenId = Number.parseInt(btn.getAttribute("data-quiz-opt") || "0", 10);
-    const correctId = state.currentQuizWord.id;
-    state.quizTotal += 1;
-
-    for (const b of document.querySelectorAll<HTMLElement>(".quiz-opt-btn")) {
-      const oid = Number.parseInt(b.getAttribute("data-quiz-opt") || "0", 10);
-      if (oid === correctId) {
-        b.className =
-          "quiz-opt-btn w-full text-left px-3.5 py-2.5 rounded-2xl bg-emerald-500 text-white text-xs font-bold flex items-center justify-between";
-      } else if (oid === chosenId) {
-        b.className =
-          "quiz-opt-btn w-full text-left px-3.5 py-2.5 rounded-2xl bg-rose-500 text-white text-xs font-bold flex items-center justify-between";
-      }
-    }
-
-    const fb = optById("quizFeedbackText");
-    if (chosenId === correctId) {
-      state.quizCorrect += 1;
-      state.quizStreak += 1;
-      if (fb) {
-        fb.textContent = "✅ 回答正确！（0.5s 后下一题）";
-        fb.className = "text-xs font-bold text-emerald-500";
-      }
-      speakText(state.currentQuizWord.word);
-      scheduleQuizAutoNext(500);
-    } else {
-      state.quizStreak = 0;
-      if (fb) {
-        fb.textContent = `❌ 答错了 · 正确释义：${state.currentQuizWord.meaning}（1.5s 后下一题）`;
-        fb.className = "text-xs font-bold text-rose-500";
-      }
-      scheduleQuizAutoNext(1500);
-    }
-    renderQuizScoreUI(state);
+    const btn = (e.target as HTMLElement).closest<HTMLButtonElement>(".quiz-opt-btn");
+    if (btn) handleQuizChoiceAnswer(btn);
   });
-
+  optById("btnQuizSpellSubmit")?.addEventListener("click", handleQuizSpellSubmit);
   optById("btnQuizSpellHintTrigger")?.addEventListener("click", () => {
     if (!state.currentQuizWord) return;
-    const w = (state.currentQuizWord.word.split("/")[0] ?? "").trim();
-    state.quizHintLevel = Math.min(w.length, state.quizHintLevel + 2);
-    const revealed =
-      w.slice(0, state.quizHintLevel) + "_".repeat(Math.max(0, w.length - state.quizHintLevel));
+    const cleanTarget =
+      cleanWordForSpeech(state.currentQuizWord.word) || state.currentQuizWord.word;
+    state.quizHintLevel += 1;
+    const showLen = Math.min(state.quizHintLevel, Math.max(1, cleanTarget.length - 1));
+    const masked = `${cleanTarget.slice(0, showLen)} ${"_ ".repeat(Math.max(0, cleanTarget.length - showLen)).trim()}`;
     const hintEl = optById("quizSpellHint");
-    if (hintEl) hintEl.textContent = revealed.split("").join(" ");
-    speakText(w);
+    if (hintEl) hintEl.textContent = `${masked} (${cleanTarget.length}字母)`;
   });
-
-  optById("btnQuizSpellSubmit")?.addEventListener("click", () => {
-    if (!state.currentQuizWord || state.quizAnswered) return;
-    const inp = optById<HTMLInputElement>("inputQuizSpell");
-    const inputVal = (inp?.value || "").trim().toLowerCase();
-    if (!inputVal) return;
-
-    state.quizAnswered = true;
-    state.quizTotal += 1;
-    const validAnswers = state.currentQuizWord.word
-      .toLowerCase()
-      .split("/")
-      .map((s) => s.trim());
-    const fb = optById("quizFeedbackText");
-
-    if (validAnswers.includes(inputVal)) {
-      state.quizCorrect += 1;
-      state.quizStreak += 1;
-      if (fb) {
-        fb.textContent = `✅ 拼写正确 (${state.currentQuizWord.word})！（0.5s 后下一题）`;
-        fb.className = "text-xs font-bold text-emerald-500";
-      }
-      scheduleQuizAutoNext(500);
-    } else {
-      state.quizStreak = 0;
-      if (fb) {
-        fb.textContent = `❌ 正确拼写：${state.currentQuizWord.word}（1.5s 后下一题）`;
-        fb.className = "text-xs font-bold text-rose-500";
-      }
-      scheduleQuizAutoNext(1500);
-    }
-    speakText(state.currentQuizWord.word);
-    renderQuizScoreUI(state);
-  });
-
   optById<HTMLInputElement>("inputQuizSpell")?.addEventListener("keydown", (e) => {
     if (e.key === "Enter") {
+      e.preventDefault();
       if (state.quizAnswered) nextQuizQuestion();
-      else optById("btnQuizSpellSubmit")?.click();
+      else handleQuizSpellSubmit();
     }
   });
 
-  optById("btnQuizNext")?.addEventListener("click", nextQuizQuestion);
-
-  const searchInput = optById<HTMLInputElement>("inputListSearch");
-  const clearBtn = optById("btnClearSearch");
-  searchInput?.addEventListener("input", (e) => {
-    state.listSearch = (e.target as HTMLInputElement).value;
+  // Word list controls (search + filter + inline quick mark + jump to flashcard)
+  let searchTimer: number | null = null;
+  const searchInp = optById<HTMLInputElement>("inputListSearch");
+  const clearSearchBtn = optById<HTMLButtonElement>("btnClearSearch");
+  searchInp?.addEventListener("input", (e) => {
+    const val = (e.target as HTMLInputElement).value;
+    state.listSearch = val;
+    if (clearSearchBtn) clearSearchBtn.hidden = !val;
     state.listPage = 1;
-    clearBtn?.classList.toggle("hidden", !state.listSearch);
-    renderWordList(state, vocabList);
+    if (searchTimer !== null) window.clearTimeout(searchTimer);
+    searchTimer = window.setTimeout(() => {
+      renderWordList(state, vocabList);
+    }, 120);
   });
-  clearBtn?.addEventListener("click", () => {
+  clearSearchBtn?.addEventListener("click", () => {
+    if (searchInp) searchInp.value = "";
     state.listSearch = "";
-    if (searchInput) searchInput.value = "";
-    clearBtn.classList.add("hidden");
+    clearSearchBtn.hidden = true;
     state.listPage = 1;
     renderWordList(state, vocabList);
   });
-
-  for (const btn of document.querySelectorAll<HTMLElement>(".list-filter-tab")) {
-    btn.addEventListener("click", () => {
-      state.listTab = (btn.getAttribute("data-list-tab") || "all") as ListTab;
+  for (const tabBtn of document.querySelectorAll<HTMLButtonElement>("[data-list-tab]")) {
+    tabBtn.addEventListener("click", () => {
+      state.listTab = (tabBtn.dataset.listTab as ListTab | undefined) ?? "all";
       state.listPage = 1;
-      for (const b of document.querySelectorAll<HTMLElement>(".list-filter-tab")) {
-        const active = b.getAttribute("data-list-tab") === state.listTab;
-        b.className = `list-filter-tab px-2.5 py-1 rounded-full whitespace-nowrap ${
-          active ? "bg-teal-600 text-white font-semibold" : "card-surface border"
-        }`;
+      for (const t of document.querySelectorAll<HTMLButtonElement>("[data-list-tab]")) {
+        t.classList.toggle("active", t === tabBtn);
       }
       renderWordList(state, vocabList);
     });
   }
-
   optById("btnListPrevPage")?.addEventListener("click", () => {
     if (state.listPage > 1) {
       state.listPage -= 1;
       renderWordList(state, vocabList);
+      optById("wordListScroll")?.scrollIntoView({ behavior: "smooth", block: "start" });
     }
   });
   optById("btnListNextPage")?.addEventListener("click", () => {
     state.listPage += 1;
     renderWordList(state, vocabList);
+    optById("wordListScroll")?.scrollIntoView({ behavior: "smooth", block: "start" });
   });
 
   optById("wordListScroll")?.addEventListener("click", (e) => {
-    const target = e.target as HTMLElement | null;
-    const speakBtn = target?.closest<HTMLElement>("[data-list-speak]");
+    const target = e.target as HTMLElement;
+    const speakBtn = target.closest<HTMLButtonElement>("[data-list-speak]");
     if (speakBtn) {
-      speakText(speakBtn.getAttribute("data-list-speak") || "");
+      const id = Number.parseInt(speakBtn.dataset.listSpeak ?? "0", 10);
+      const word = vocabList.find((w) => w.id === id);
+      if (word) speakText(word.word);
       return;
     }
-    const markBtn = target?.closest<HTMLElement>("[data-list-mark]");
+
+    const markBtn = target.closest<HTMLButtonElement>("[data-list-mark]");
     if (markBtn) {
-      const parts = (markBtn.getAttribute("data-list-mark") || "").split(":");
-      const id = Number.parseInt(parts[0] || "0", 10);
-      const status = parts[1] as WordMarkStatus | undefined;
+      const [idStr, st] = (markBtn.dataset.listMark ?? "").split(":");
+      const id = Number.parseInt(idStr ?? "0", 10);
+      const status = st as WordMarkStatus | undefined;
       if (!id || !status) return;
-      if (state.marks[id] === status) delete state.marks[id];
-      else state.marks[id] = status;
+      if (state.marks[id] === status) {
+        delete state.marks[id];
+      } else {
+        state.marks[id] = status;
+      }
       saveState();
-      renderWordList(state, vocabList);
-      renderHeaderAndMiniStats(state, vocabList, filteredDeck);
+      renderAllViews(state, vocabList, filteredDeck);
+      return;
+    }
+
+    const jumpBtn = target.closest<HTMLButtonElement>("[data-list-jump]");
+    if (jumpBtn) {
+      const id = Number.parseInt(jumpBtn.dataset.listJump ?? "0", 10);
+      if (!id) return;
+      const jumped = jumpToWordInDeck(vocabList, filteredDeck, id);
+      if (jumped.resetGroupOrFilter) {
+        state.currentGroup = "all";
+        state.statusFilter = "all";
+        const sel = optById<HTMLSelectElement>("selectGroup");
+        if (sel) sel.value = "all";
+      }
+      filteredDeck = jumped.deck;
+      state.currentIndex = jumped.index;
+      state.cardRevealed = false;
+      state.editingMemo = false;
+      switchTab("study");
+      renderAllViews(state, vocabList, filteredDeck);
+      showToast("🎯 已定位到对应记忆闪卡");
     }
   });
 
-  optById("btnExportAllCsv")?.addEventListener("click", () => {
-    exportCsvByFilter(() => true, "全部2050词");
+  // Cloud sync & CSV actions
+  optById("btnManualSync")?.addEventListener("click", () => {
+    showToast("⏳ 正在同步到云端...");
+    void pushCloudSync(true);
   });
-  optById("btnExportReviewCsv")?.addEventListener("click", () => {
-    exportCsvByFilter(
+  optById("btnCopySyncKey")?.addEventListener("click", copyCurrentKey);
+  optById("btnRandomKey")?.addEventListener("click", () => {
+    const rand = Math.random().toString(36).substring(2, 6).toUpperCase();
+    const newKey = `GK-${rand}`;
+    const customInp = optById<HTMLInputElement>("inputCustomSyncKey");
+    if (customInp) customInp.value = newKey;
+    showToast(`已填入随机码 ${newKey}，点击「绑定并拉取」生效`);
+  });
+  optById("btnApplyCustomKey")?.addEventListener("click", () => {
+    const val = (optById<HTMLInputElement>("inputCustomSyncKey")?.value || "").trim();
+    if (!val) {
+      showToast("请输入有效的同步码");
+      return;
+    }
+    void pullCloudSync(val);
+  });
+
+  optById("btnExportAllCsv")?.addEventListener("click", () =>
+    exportCsv(() => true, "高考2050词汇全量进度", "词库为空"),
+  );
+  optById("btnExportReviewCsv")?.addEventListener("click", () =>
+    exportCsv(
       (w) => state.marks[w.id] === "unknown" || state.marks[w.id] === "fuzzy",
-      "重点攻克词表_不会与模糊",
-    );
-  });
-  optById("btnExportUnknownCsv")?.addEventListener("click", () => {
-    exportCsvByFilter((w) => state.marks[w.id] === "unknown", "完全不会词表");
-  });
-  optById("btnExportFuzzyCsv")?.addEventListener("click", () => {
-    exportCsvByFilter((w) => state.marks[w.id] === "fuzzy", "有点模糊词表");
-  });
+      "高考2050重点错词本",
+      "暂无不会或模糊词汇",
+    ),
+  );
+  optById("btnExportUnknownCsv")?.addEventListener("click", () =>
+    exportCsv((w) => state.marks[w.id] === "unknown", "高考2050完全不会词表", "暂无完全不会词汇"),
+  );
+  optById("btnExportFuzzyCsv")?.addEventListener("click", () =>
+    exportCsv((w) => state.marks[w.id] === "fuzzy", "高考2050有点模糊词表", "暂无有点模糊词汇"),
+  );
 
   optById<HTMLInputElement>("inputImportCsv")?.addEventListener("change", (e) => {
-    const input = e.target as HTMLInputElement;
-    const file = input.files?.[0];
-    if (file) {
-      handleImportCsv(file);
-      input.value = "";
-    }
+    const inputEl = e.target as HTMLInputElement;
+    const file = inputEl.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const rows = parseCsvRows(String(ev.target?.result ?? ""));
+        if (rows.length < 2) {
+          showToast("CSV 文件内容为空或格式不对");
+          return;
+        }
+        const summary = applyImportedCsvRows(rows, vocabList, state.marks, state.memos);
+        saveState();
+        rebuildFilteredDeck(false);
+        showToast(
+          `✅ 成功恢复：很熟 ${summary.importedKnown} · 模糊 ${summary.importedFuzzy} · 不会 ${summary.importedUnknown}`,
+        );
+      } catch {
+        showToast("CSV 解析失败，请检查文件编码");
+      }
+    };
+    reader.readAsText(file, "UTF-8");
+    inputEl.value = "";
   });
 
   optById("btnResetProgress")?.addEventListener("click", () => {
     openModal({
-      title: "⚠️ 确认清空学习进度？",
-      body: "此操作将清除所有单词的「很熟 / 有点模糊 / 完全不会」标记及笔记。建议清空前先导出 CSV 备份。",
+      title: "⚠️ 确认清空全部进度？",
+      body: "此操作将清空你本地所有词汇熟练度标记与助记笔记，且不可撤销。",
       onConfirm: () => {
         state.marks = {};
         state.memos = {};
@@ -1262,62 +1121,136 @@ function setupApp(): void {
     });
   });
 
+  // Generic modal controls
   optById("btnModalCancel")?.addEventListener("click", closeModal);
+  optById("btnCloseAppModal")?.addEventListener("click", closeModal);
   optById("btnModalConfirm")?.addEventListener("click", triggerModalConfirm);
+  optById("appModal")?.addEventListener("click", (e) => {
+    if (e.target === optById("appModal")) closeModal();
+  });
 
-  for (const btn of document.querySelectorAll<HTMLElement>(".nav-tab-btn")) {
-    btn.addEventListener("click", () => {
-      const nav = (btn.getAttribute("data-nav") || "study") as MainTab;
-      switchTab(nav);
-    });
-  }
-
-  window.addEventListener("keydown", (e) => {
-    const tag = document.activeElement?.tagName ?? "";
-    if (["INPUT", "TEXTAREA", "SELECT"].includes(tag)) return;
-    if (isModalOpen()) return;
-
-    if (state.activeTab === "zen") {
-      if (e.key === " " || e.key === "ArrowRight" || e.key === "Enter") {
-        e.preventDefault();
-        advanceZenWord(1);
-      } else if (e.key === "ArrowLeft") {
-        e.preventDefault();
-        advanceZenWord(-1);
+  // Global keyboard shortcuts
+  document.addEventListener("keydown", (e) => {
+    const target = e.target as HTMLElement | null;
+    if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA")) {
+      if (e.key === "Escape" && state.editingMemo) {
+        state.editingMemo = false;
+        renderStudyCard(state, filteredDeck);
       }
       return;
     }
-    if (state.activeTab !== "study") return;
+    if (isModalOpen()) {
+      if (e.key === "Escape") closeModal();
+      return;
+    }
+    const prefModal = optById("prefModalBackdrop");
+    if (prefModal && !prefModal.hidden) {
+      if (e.key === "Escape") closePrefModal();
+      return;
+    }
 
-    if (e.key === "1") {
-      e.preventDefault();
-      markCurrentWord("known");
-    } else if (e.key === "2") {
-      e.preventDefault();
-      markCurrentWord("fuzzy");
-    } else if (e.key === "3") {
-      e.preventDefault();
-      markCurrentWord("unknown");
-    } else if (e.key === "ArrowRight") {
-      e.preventDefault();
-      stepWord(1);
-    } else if (e.key === "ArrowLeft") {
-      e.preventDefault();
-      stepWord(-1);
-    } else if (e.key === " ") {
-      e.preventDefault();
-      if (state.maskMode !== "none" && !state.cardRevealed) {
-        state.cardRevealed = true;
-        renderStudyCard(state, filteredDeck);
+    if (state.activeTab === "study") {
+      if (e.key === "1") {
+        e.preventDefault();
+        markCurrentWord("known");
+      } else if (e.key === "2") {
+        e.preventDefault();
+        markCurrentWord("fuzzy");
+      } else if (e.key === "3") {
+        e.preventDefault();
+        markCurrentWord("unknown");
+      } else if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        stepWord(-1, state.zenMode);
+      } else if (e.key === "ArrowRight") {
+        e.preventDefault();
+        stepWord(1, state.zenMode);
+      } else if (e.key === "z" || e.key === "Z") {
+        e.preventDefault();
+        optById("btnZenToggle")?.click();
+      } else if (e.code === "Space") {
+        e.preventDefault();
+        if (state.maskMode !== "none" && !state.cardRevealed) {
+          state.cardRevealed = true;
+          renderStudyCard(state, filteredDeck);
+        }
+        const w = filteredDeck[state.currentIndex]?.word;
+        if (w) speakText(w);
       }
-      const word = filteredDeck[state.currentIndex]?.word;
-      if (word) speakText(word);
+      return;
+    }
+
+    if (state.activeTab === "quiz" && state.quizType === "choice") {
+      if (["1", "2", "3", "4"].includes(e.key) && !state.quizAnswered) {
+        e.preventDefault();
+        const idx = Number.parseInt(e.key, 10) - 1;
+        const buttons = document.querySelectorAll<HTMLButtonElement>(".quiz-opt-btn");
+        const targetBtn = buttons[idx];
+        if (targetBtn) handleQuizChoiceAnswer(targetBtn);
+      } else if (e.key === "Enter" && state.quizAnswered) {
+        e.preventDefault();
+        nextQuizQuestion();
+      }
     }
   });
 }
 
-if (document.readyState !== "loading") {
-  setupApp();
-} else {
-  window.addEventListener("DOMContentLoaded", setupApp);
+async function initApp(): Promise<void> {
+  initAppShell({ activePage: "recite" });
+  getOrCreateSyncKey();
+  loadReciteState(state);
+  populateGroupSelector(vocabList, state.currentGroup);
+  filteredDeck = buildFilteredDeck(
+    vocabList,
+    state.marks,
+    state.currentGroup,
+    state.statusFilter,
+    state.isShuffled,
+  );
+  bindEvents();
+  renderAllViews(state, vocabList, filteredDeck);
+
+  // Hydrate full 2050 words from IndexedDB / Cloud
+  const db = await openVocabDb();
+  const idbWords = await loadVocabFromIdb(db);
+  if (idbWords && idbWords.length >= 2000) {
+    vocabList = idbWords;
+    populateGroupSelector(vocabList, state.currentGroup);
+    rebuildFilteredDeck(false);
+    void fetchVocabFromCloud().then((fresh) => {
+      if (fresh && fresh.length >= 2000) {
+        vocabList = fresh;
+        void saveVocabToIdb(db, fresh);
+        rebuildFilteredDeck(false);
+      }
+    });
+  } else {
+    void fetchVocabFromCloud().then((cloudWords) => {
+      if (cloudWords && cloudWords.length >= 2000) {
+        vocabList = cloudWords;
+        void saveVocabToIdb(db, cloudWords);
+        populateGroupSelector(vocabList, state.currentGroup);
+        rebuildFilteredDeck(false);
+      }
+    });
+  }
+
+  // Pull cloud sync progress cleanly on startup
+  const currentKey = getOrCreateSyncKey();
+  if (currentKey && currentKey !== "GK-LOCAL") {
+    void pullCloudSyncRequest(currentKey)
+      .then((res) => {
+        if (res.status === "ok" && res.data) {
+          mergeCloudDataIntoState(state, res.data);
+          saveState(false);
+          rebuildFilteredDeck(false);
+          renderAllViews(state, vocabList, filteredDeck);
+        }
+      })
+      .catch(() => {
+        // silent offline fallback
+      });
+  }
 }
+
+void initApp();

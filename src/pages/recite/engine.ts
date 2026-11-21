@@ -26,6 +26,42 @@ export interface MasteryStats {
   tiers: FreqTierStat[];
 }
 
+export interface TypographyPreset {
+  id: "compact" | "standard" | "large";
+  label: string;
+  enFontSize: number;
+  cnFontSize: number;
+  enFontWeight: number;
+  cnFontWeight: number;
+}
+
+export const TYPOGRAPHY_PRESETS: readonly TypographyPreset[] = [
+  {
+    id: "compact",
+    label: "紧凑",
+    enFontSize: 42,
+    cnFontSize: 24,
+    enFontWeight: 600,
+    cnFontWeight: 600,
+  },
+  {
+    id: "standard",
+    label: "标准",
+    enFontSize: 58,
+    cnFontSize: 34,
+    enFontWeight: 700,
+    cnFontWeight: 700,
+  },
+  {
+    id: "large",
+    label: "大字",
+    enFontSize: 72,
+    cnFontSize: 42,
+    enFontWeight: 700,
+    cnFontWeight: 700,
+  },
+] as const;
+
 export function cleanWordForSpeech(raw: string): string {
   if (!raw) return "";
   const first = raw.split("/")[0] ?? "";
@@ -85,26 +121,40 @@ export function buildFilteredDeck(
   return pool;
 }
 
+export interface JumpToWordResult {
+  deck: ReciteWord[];
+  index: number;
+  resetGroupOrFilter: boolean;
+}
+
+export function jumpToWordInDeck(
+  vocabList: ReciteWord[],
+  currentDeck: ReciteWord[],
+  wordId: number,
+): JumpToWordResult {
+  const idx = currentDeck.findIndex((w) => w.id === wordId);
+  if (idx >= 0) {
+    return { deck: currentDeck, index: idx, resetGroupOrFilter: false };
+  }
+  const fullIdx = vocabList.findIndex((w) => w.id === wordId);
+  return {
+    deck: [...vocabList],
+    index: fullIdx >= 0 ? fullIdx : 0,
+    resetGroupOrFilter: true,
+  };
+}
+
 export function getStatusInfo(status: WordMarkStatus | undefined): { label: string; cls: string } {
   if (status === "known") {
-    return {
-      label: "🟢 很熟",
-      cls: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-300 border border-emerald-500/30",
-    };
+    return { label: "🟢 很熟", cls: "status-pill status-known" };
   }
   if (status === "fuzzy") {
-    return {
-      label: "🟡 有点模糊",
-      cls: "bg-amber-500/15 text-amber-600 dark:text-amber-300 border border-amber-500/30",
-    };
+    return { label: "🟡 有点模糊", cls: "status-pill status-fuzzy" };
   }
   if (status === "unknown") {
-    return {
-      label: "🔴 完全不会",
-      cls: "bg-rose-500/15 text-rose-600 dark:text-rose-300 border border-rose-500/30",
-    };
+    return { label: "🔴 完全不会", cls: "status-pill status-unknown" };
   }
-  return { label: "⚪ 未标记", cls: "bg-slate-100 dark:bg-slate-800 sub-text" };
+  return { label: "⚪ 未标记", cls: "status-pill status-unmarked" };
 }
 
 export function getFontWeightLabel(weight: number): string {
@@ -141,10 +191,10 @@ export function calculateMasteryStats(
   const pct = (n: number, denom: number) => (denom > 0 ? ((n / denom) * 100).toFixed(1) : "0.0");
 
   const tierDefs: { name: string; filter: (w: ReciteWord) => boolean }[] = [
-    { name: "🔥 超高频核心词 (考频≥15)", filter: (w) => w.freq >= 15 },
-    { name: "⭐ 中高频常考词 (考频5-14)", filter: (w) => w.freq >= 5 && w.freq <= 14 },
-    { name: "📌 基础必备词 (考频1-4)", filter: (w) => w.freq >= 1 && w.freq <= 4 },
-    { name: "🆕 近年新增认知词 (考频0)", filter: (w) => w.freq === 0 },
+    { name: "高频核心词 (考频 ≥ 15)", filter: (w) => w.freq >= 15 },
+    { name: "中频常考词 (考频 5–14)", filter: (w) => w.freq >= 5 && w.freq <= 14 },
+    { name: "基础必备词 (考频 1–4)", filter: (w) => w.freq >= 1 && w.freq <= 4 },
+    { name: "新增认知词 (考频 0)", filter: (w) => w.freq === 0 },
   ];
 
   const tiers: FreqTierStat[] = tierDefs.map((t) => {

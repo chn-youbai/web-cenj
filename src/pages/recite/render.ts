@@ -1,5 +1,13 @@
 import { escapeHtml, optById } from "@/core/dom";
-import { calculateMasteryStats, filterWordList, getFontWeightLabel, getStatusInfo } from "./engine";
+import { showToast as showGlobalToast } from "@/core/toast";
+import {
+  TYPOGRAPHY_PRESETS,
+  calculateMasteryStats,
+  cleanWordForSpeech,
+  filterWordList,
+  getFontWeightLabel,
+  getStatusInfo,
+} from "./engine";
 import { GAOKAO_PHRASES_DICT } from "./phrases-dict";
 import { LAST_SYNC_STORAGE, getOrCreateSyncKey } from "./sync";
 import type { ReciteState, ReciteWord } from "./types";
@@ -12,20 +20,10 @@ export interface ReciteModalOptions {
   onConfirm: (() => void) | null;
 }
 
-let toastTimer: number | null = null;
 let modalConfirmCallback: (() => void) | null = null;
 
 export function showToast(msg: string): void {
-  const toast = optById("appToast");
-  if (!toast) return;
-  toast.textContent = msg;
-  toast.classList.remove("opacity-0");
-  toast.classList.add("opacity-100");
-  if (toastTimer !== null) window.clearTimeout(toastTimer);
-  toastTimer = window.setTimeout(() => {
-    toast.classList.remove("opacity-100");
-    toast.classList.add("opacity-0");
-  }, 1800);
+  showGlobalToast(msg, 2400);
 }
 
 export function openModal(opts: ReciteModalOptions): void {
@@ -36,26 +34,25 @@ export function openModal(opts: ReciteModalOptions): void {
   if (titleEl) titleEl.textContent = opts.title;
   if (bodyEl) bodyEl.innerHTML = opts.body;
   if (input) {
+    input.hidden = !opts.showInput;
     if (opts.showInput) {
-      input.classList.remove("hidden");
       input.value = opts.inputValue ?? "";
       window.setTimeout(() => input.focus(), 50);
-    } else {
-      input.classList.add("hidden");
     }
   }
   modalConfirmCallback = opts.onConfirm;
-  modal?.classList.remove("hidden");
+  if (modal) modal.hidden = false;
 }
 
 export function closeModal(): void {
-  optById("appModal")?.classList.add("hidden");
+  const modal = optById("appModal");
+  if (modal) modal.hidden = true;
   modalConfirmCallback = null;
 }
 
 export function isModalOpen(): boolean {
   const modal = optById("appModal");
-  return Boolean(modal && !modal.classList.contains("hidden"));
+  return Boolean(modal && !modal.hidden);
 }
 
 export function triggerModalConfirm(): void {
@@ -63,307 +60,268 @@ export function triggerModalConfirm(): void {
   else closeModal();
 }
 
-export function populateGroupSelector(currentGroup: string): void {
+export function populateGroupSelector(vocabList: ReciteWord[], currentGroup: string): void {
   const sel = optById<HTMLSelectElement>("selectGroup");
   if (!sel) return;
-  let html = `
-    <option value="all">📚 全部词汇 (1-2050)</option>
-    <option value="tier_high">🔥 超高频核心词 (考频≥15 · 304词)</option>
-    <option value="tier_mid">⭐ 中高频常考词 (考频5-14 · 522词)</option>
-    <option value="tier_low">📌 基础必备词 (考频1-4 · 859词)</option>
-    <option value="tier_zero">🆕 近年新增认知词 (考频0 · 365词)</option>
-  `;
-  for (let g = 1; g <= 41; g += 1) {
-    const start = (g - 1) * 50 + 1;
-    const end = Math.min(g * 50, 2050);
-    html += `<option value="g_${g}">第 ${g} 组 (${start}-${end})</option>`;
+  const totalGroups = Math.ceil(vocabList.length / 50);
+  const cHigh = vocabList.filter((w) => w.freq >= 15).length;
+  const cMid = vocabList.filter((w) => w.freq >= 5 && w.freq <= 14).length;
+  const cLow = vocabList.filter((w) => w.freq >= 1 && w.freq <= 4).length;
+  const cZero = vocabList.filter((w) => w.freq === 0).length;
+
+  const opts: string[] = [
+    `<option value="all">🌐 全部词汇 (${vocabList.length} 词)</option>`,
+    `<option value="tier_high">🔥 超高频核心词 · 考频 ≥ 15 (${cHigh} 词)</option>`,
+    `<option value="tier_mid">⭐ 中高频常考词 · 考频 5–14 (${cMid} 词)</option>`,
+    `<option value="tier_low">📌 基础必备词 · 考频 1–4 (${cLow} 词)</option>`,
+    `<option value="tier_zero">🆕 近年新增词 · 考频 0 (${cZero} 词)</option>`,
+  ];
+  for (let g = 1; g <= totalGroups; g += 1) {
+    const startId = (g - 1) * 50 + 1;
+    const endId = Math.min(g * 50, vocabList.length);
+    opts.push(`<option value="g_${g}">第 ${g} 组 (#${startId}–#${endId})</option>`);
   }
-  sel.innerHTML = html;
+  sel.innerHTML = opts.join("");
   sel.value = currentGroup;
 }
 
 export function updateSyncUI(): void {
   const key = getOrCreateSyncKey();
-  const headerKeyEl = optById("headerSyncKey");
-  if (headerKeyEl) headerKeyEl.textContent = key;
-  const displayEl = optById("displaySyncKey");
-  if (displayEl) displayEl.textContent = key;
+  const hKey = optById("headerSyncKey");
+  const dKey = optById("displaySyncKey");
+  if (hKey) hKey.textContent = key;
+  if (dKey) dKey.textContent = key;
 
-  const customInput = optById<HTMLInputElement>("inputCustomSyncKey");
-  if (customInput && !customInput.value) {
-    customInput.placeholder = `当前同步码: ${key} (可输入新同步码)`;
-  }
-
-  let lastSyncStr: string | null = null;
   try {
-    lastSyncStr = localStorage.getItem(LAST_SYNC_STORAGE);
+    const lastTime = localStorage.getItem(LAST_SYNC_STORAGE);
+    const timeEl = optById("lastSyncTimeText");
+    if (timeEl && lastTime) {
+      timeEl.textContent = `上次云端同步：${lastTime}`;
+    }
   } catch {
-    lastSyncStr = null;
-  }
-
-  const timeEl = optById("lastSyncTimeText");
-  if (timeEl) {
-    timeEl.textContent = lastSyncStr ? `上次同步：${lastSyncStr}` : "上次同步：尚未进行云端同步";
-  }
-  const badge = optById("syncStatusBadge");
-  if (badge) {
-    badge.textContent = `云端就绪 · ${key}`;
+    // ignore storage errors
   }
 }
 
-export function renderHeaderAndMiniStats(
-  state: ReciteState,
-  vocabList: ReciteWord[],
-  filteredDeck: ReciteWord[],
-): void {
+export function renderHeaderAndControls(state: ReciteState, vocabList: ReciteWord[]): void {
   const stats = calculateMasteryStats(vocabList, state.marks);
-  const progressSub = optById("headerProgressSub");
-  if (progressSub) {
-    progressSub.textContent = `已刷 ${stats.marked} / 2050 词 · 熟词率 ${stats.masteryPct}%`;
+  const hSub = optById("headerProgressSub");
+  if (hSub) {
+    hSub.textContent = `已刷 ${stats.marked} / ${stats.total} · 掌握 ${stats.masteryPct}%`;
   }
 
-  const groupSelect = optById<HTMLSelectElement>("selectGroup");
-  const selectedText = groupSelect?.options[groupSelect.selectedIndex]?.text || "全词库";
-  const groupBadge = optById("headerGroupBadge");
-  if (groupBadge) groupBadge.textContent = selectedText.split(" ")[1] || "全词库";
+  const accLabel = state.accent === "en-US" ? "美音" : "英音";
+  const hAcc = optById("accentLabel");
+  if (hAcc) hAcc.textContent = accLabel;
 
-  const miniPool = optById("miniPoolCount");
-  if (miniPool) miniPool.textContent = String(filteredDeck.length);
-  const miniKnown = optById("miniKnownCount");
-  if (miniKnown) miniKnown.textContent = String(stats.known);
-  const miniFuzzy = optById("miniFuzzyCount");
-  if (miniFuzzy) miniFuzzy.textContent = String(stats.fuzzy);
-  const miniUnknown = optById("miniUnknownCount");
-  if (miniUnknown) miniUnknown.textContent = String(stats.unknown);
+  const dAcc = optById("drawerAccentLabel");
+  if (dAcc) {
+    dAcc.textContent = state.accent === "en-US" ? "口音: 美音 (US)" : "口音: 英音 (UK)";
+  }
 
-  const accentLabel = optById("accentLabel");
-  if (accentLabel) accentLabel.textContent = state.accent === "en-US" ? "美音" : "英音";
-  const themeIcon = optById("themeIcon");
-  if (themeIcon) themeIcon.textContent = state.darkMode ? "☀️" : "🌙";
-  const shuffleIcon = optById("shuffleIcon");
-  if (shuffleIcon) shuffleIcon.textContent = state.isShuffled ? "🔀" : "➡️";
-  const shuffleLabel = optById("shuffleLabel");
-  if (shuffleLabel) shuffleLabel.textContent = state.isShuffled ? "随机乱序" : "顺序播放";
-  const autoAudioIcon = optById("autoAudioIcon");
-  if (autoAudioIcon) autoAudioIcon.textContent = state.autoSpeak ? "🔔" : "🔕";
-  const autoAudioLabel = optById("autoAudioLabel");
-  if (autoAudioLabel)
-    autoAudioLabel.textContent = state.autoSpeak ? "切词发音: 开" : "切词发音: 关";
-  const drawerAccentLabel = optById("drawerAccentLabel");
-  if (drawerAccentLabel) {
-    drawerAccentLabel.textContent =
-      state.accent === "en-US" ? "口音: 美音 (US)" : "口音: 英式 (UK)";
-  }
-  const drawerSpeedLabel = optById("drawerSpeedLabel");
-  if (drawerSpeedLabel) {
-    drawerSpeedLabel.textContent =
-      state.speechRate === 0.7 ? "语速: 慢速 (0.7x)" : "语速: 正常 (1.0x)";
-  }
-  const drawerSpeedIcon = optById("drawerSpeedIcon");
-  if (drawerSpeedIcon) drawerSpeedIcon.textContent = state.speechRate === 0.7 ? "🐢" : "⚡";
+  const dSpeed = optById("drawerSpeedLabel");
+  if (dSpeed) dSpeed.textContent = `语速: ${state.speechRate}x`;
 
-  const sliderEn = optById<HTMLInputElement>("sliderEnFontSize");
-  const valEn = optById("valEnFontSize");
-  if (sliderEn && valEn) {
-    sliderEn.value = String(state.enFontSize || 58);
-    valEn.textContent = `${state.enFontSize || 58}px`;
+  const autoLabel = optById("autoAudioLabel");
+  if (autoLabel) autoLabel.textContent = `切词自动发音: ${state.autoSpeak ? "开" : "关"}`;
+
+  const maskMap: Record<ReciteState["maskMode"], string> = {
+    none: "全显",
+    hide_cn: "遮中文",
+    hide_en: "遮英文",
+  };
+  const maskLabel = optById("maskModeLabel");
+  if (maskLabel) maskLabel.textContent = maskMap[state.maskMode];
+  optById("btnMaskToggle")?.classList.toggle("active", state.maskMode !== "none");
+
+  const shufLabel = optById("shuffleLabel");
+  if (shufLabel) shufLabel.textContent = state.isShuffled ? "乱序" : "顺序";
+  optById("btnShuffleDeck")?.classList.toggle("active", state.isShuffled);
+
+  optById("btnZenToggle")?.classList.toggle("active", state.zenMode);
+
+  for (const chip of document.querySelectorAll<HTMLButtonElement>("[data-status-filter]")) {
+    chip.classList.toggle("active", chip.dataset.statusFilter === state.statusFilter);
   }
-  const sliderCn = optById<HTMLInputElement>("sliderCnFontSize");
-  const valCn = optById("valCnFontSize");
-  if (sliderCn && valCn) {
-    sliderCn.value = String(state.cnFontSize || 34);
-    valCn.textContent = `${state.cnFontSize || 34}px`;
-  }
-  const sliderEnWeight = optById<HTMLInputElement>("sliderEnFontWeight");
-  const valEnWeight = optById("valEnFontWeight");
-  if (sliderEnWeight && valEnWeight) {
-    sliderEnWeight.value = String(state.enFontWeight || 700);
-    valEnWeight.textContent = getFontWeightLabel(state.enFontWeight || 700);
-  }
-  const sliderCnWeight = optById<HTMLInputElement>("sliderCnFontWeight");
-  const valCnWeight = optById("valCnFontWeight");
-  if (sliderCnWeight && valCnWeight) {
-    sliderCnWeight.value = String(state.cnFontWeight || 700);
-    valCnWeight.textContent = getFontWeightLabel(state.cnFontWeight || 700);
+
+  // Preference sliders & presets sync
+  const sEn = optById<HTMLInputElement>("sliderEnFontSize");
+  const sCn = optById<HTMLInputElement>("sliderCnFontSize");
+  const sEnW = optById<HTMLInputElement>("sliderEnFontWeight");
+  const sCnW = optById<HTMLInputElement>("sliderCnFontWeight");
+  if (sEn) sEn.value = String(state.enFontSize);
+  if (sCn) sCn.value = String(state.cnFontSize);
+  if (sEnW) sEnW.value = String(state.enFontWeight);
+  if (sCnW) sCnW.value = String(state.cnFontWeight);
+
+  const vEn = optById("valEnFontSize");
+  const vCn = optById("valCnFontSize");
+  const vEnW = optById("valEnFontWeight");
+  const vCnW = optById("valCnFontWeight");
+  if (vEn) vEn.textContent = `${state.enFontSize}px`;
+  if (vCn) vCn.textContent = `${state.cnFontSize}px`;
+  if (vEnW) vEnW.textContent = getFontWeightLabel(state.enFontWeight);
+  if (vCnW) vCnW.textContent = getFontWeightLabel(state.cnFontWeight);
+
+  for (const btn of document.querySelectorAll<HTMLButtonElement>("[data-typo-preset]")) {
+    const preset = TYPOGRAPHY_PRESETS.find((p) => p.id === btn.dataset.typoPreset);
+    const isMatch =
+      preset !== undefined &&
+      preset.enFontSize === state.enFontSize &&
+      preset.cnFontSize === state.cnFontSize;
+    btn.classList.toggle("active", isMatch);
   }
 }
 
 export function renderStudyCard(state: ReciteState, filteredDeck: ReciteWord[]): void {
-  const cardWordText = optById("cardWordText");
-  const cardMeaningText = optById("cardMeaningText");
-  const cardWordId = optById("cardWordId");
-  const cardFreqBadge = optById("cardFreqBadge");
-  const cardStatusBadge = optById("cardStatusBadge");
-  const cardFormsSection = optById("cardFormsSection");
-  const deckPositionText = optById("deckPositionText");
-  const deckProgressBar = optById("deckProgressBar");
-  const maskHintText = optById("maskHintText");
-  const memoBar = optById("memoDisplayBar");
-  const memoText = optById("memoDisplayText");
+  const posText = optById("deckPositionText");
+  const bar = optById("deckProgressBar");
+  const total = filteredDeck.length;
 
-  if (filteredDeck.length === 0) {
-    if (cardWordId) cardWordId.textContent = "#-";
-    if (cardFreqBadge) cardFreqBadge.textContent = "🎉 筛选范围内无单词";
-    if (cardStatusBadge) {
-      cardStatusBadge.textContent = "已完成";
-      cardStatusBadge.className =
-        "px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/15 text-emerald-600";
-    }
-    if (cardWordText) {
-      cardWordText.textContent = "当前列表已刷完！";
-      cardWordText.className = "text-2xl font-extrabold text-teal-600 dark:text-teal-400";
-      cardWordText.style.fontSize = "";
-      cardWordText.style.fontWeight = "";
-    }
-    if (cardMeaningText) {
-      cardMeaningText.textContent =
-        "你可以切换上方的「分组」或「状态筛选」，或者前往「统计导出」查看成果并下载 CSV。";
-      cardMeaningText.className = "text-sm sub-text leading-relaxed";
-      cardMeaningText.style.fontSize = "";
-      cardMeaningText.style.fontWeight = "";
-    }
-    cardFormsSection?.classList.add("hidden");
-    optById("cardExamExpandedSection")?.classList.add("hidden");
-    memoBar?.classList.add("hidden");
-    if (deckPositionText) deckPositionText.textContent = "0 / 0 词";
-    if (deckProgressBar) deckProgressBar.style.width = "100%";
+  const extrasSection = optById("cardExamExpandedSection");
+  const stageEl = optById("cardCenterArea");
+  const wordText = optById("cardWordText");
+  const meaningText = optById("cardMeaningText");
+  const maskHint = optById("maskHintText");
+  const memoBar = optById("memoDisplayBar");
+  const memoInlineForm = optById("memoInlineForm");
+  const lookupLink = optById<HTMLAnchorElement>("btnLookupVocab");
+
+  if (stageEl) {
+    stageEl.classList.toggle("is-zen", state.zenMode);
+  }
+  if (extrasSection) {
+    extrasSection.hidden = state.zenMode;
+  }
+
+  if (total === 0) {
+    if (posText) posText.textContent = "0 / 0";
+    if (bar) bar.style.width = "0%";
+    if (wordText) wordText.textContent = "🎉 已完成当前筛选";
+    if (meaningText)
+      meaningText.textContent = "当前分组与筛选条件下暂无待刷单词，可切换顶部筛选或分组";
+    if (maskHint) maskHint.hidden = true;
+    if (memoBar) memoBar.hidden = true;
+    if (memoInlineForm) memoInlineForm.hidden = true;
     return;
   }
+
+  if (state.currentIndex >= total) state.currentIndex = 0;
+  if (state.currentIndex < 0) state.currentIndex = total - 1;
 
   const item = filteredDeck[state.currentIndex];
   if (!item) return;
 
-  const mark = state.marks[item.id];
-  const statusInfo = getStatusInfo(mark);
+  if (posText) posText.textContent = `${state.currentIndex + 1} / ${total}`;
+  if (bar) bar.style.width = `${(((state.currentIndex + 1) / total) * 100).toFixed(1)}%`;
 
-  if (cardWordId) cardWordId.textContent = `#${item.id}`;
-  if (cardFreqBadge) {
-    cardFreqBadge.textContent =
-      item.freq > 0 ? `🔥 真题考频 ${item.freq}次` : "🆕 新增核心词 (0频)";
-  }
-  if (cardStatusBadge) {
-    cardStatusBadge.textContent = statusInfo.label;
-    cardStatusBadge.className = `px-2.5 py-0.5 rounded-full text-[10px] font-semibold shadow-2xs ${statusInfo.cls}`;
-  }
+  const wIdEl = optById("cardWordId");
+  const freqEl = optById("cardFreqBadge");
+  if (wIdEl) wIdEl.textContent = `#${item.id}`;
+  if (freqEl) freqEl.textContent = item.freq > 0 ? `考频 ${item.freq} 次` : "近年新增";
 
-  const hideCn = state.maskMode === "hide_cn" && !state.cardRevealed;
-  const hideEn = state.maskMode === "hide_en" && !state.cardRevealed;
-
-  if (cardWordText) {
-    cardWordText.textContent = item.word;
-    cardWordText.className = `leading-tight tracking-tight select-none sm:select-text break-words max-w-full px-1 cursor-pointer transition hover:opacity-90 active:scale-95 ${hideEn ? "meaning-masked" : "meaning-revealed"}`;
-    cardWordText.style.fontSize = `${state.enFontSize || 58}px`;
-    cardWordText.style.fontWeight = String(state.enFontWeight || 700);
-    cardWordText.style.lineHeight = "1.1";
-    cardWordText.style.wordBreak = "break-word";
+  const stInfo = getStatusInfo(state.marks[item.id]);
+  const stBadge = optById("cardStatusBadge");
+  if (stBadge) {
+    stBadge.textContent = stInfo.label;
+    stBadge.className = stInfo.cls;
   }
 
-  if (cardMeaningText) {
-    cardMeaningText.textContent = item.meaning;
-    cardMeaningText.className = `leading-tight select-text break-words max-w-full ${hideCn ? "meaning-masked" : "meaning-revealed"}`;
-    cardMeaningText.style.fontSize = `${state.cnFontSize || 34}px`;
-    cardMeaningText.style.fontWeight = String(state.cnFontWeight || 700);
-    cardMeaningText.style.lineHeight = "1.2";
-    cardMeaningText.style.wordBreak = "break-word";
+  const cleanHead = cleanWordForSpeech(item.word) || item.word;
+  if (lookupLink) {
+    lookupLink.href = `./vocab.html?q=${encodeURIComponent(cleanHead)}`;
   }
 
-  if (hideCn || hideEn) {
-    maskHintText?.classList.remove("hidden");
-  } else {
-    maskHintText?.classList.add("hidden");
+  if (wordText) {
+    wordText.textContent = item.word;
+    wordText.style.fontSize = `${state.enFontSize}px`;
+    wordText.style.fontWeight = String(state.enFontWeight);
+    wordText.classList.toggle("is-masked", state.maskMode === "hide_en" && !state.cardRevealed);
   }
 
-  const examExpandedSection = optById("cardExamExpandedSection");
-  const formsContainer = optById("cardFormsContainer");
+  if (meaningText) {
+    meaningText.textContent = item.meaning;
+    meaningText.style.fontSize = `${state.cnFontSize}px`;
+    meaningText.style.fontWeight = String(state.cnFontWeight);
+    meaningText.classList.toggle("is-masked", state.maskMode === "hide_cn" && !state.cardRevealed);
+  }
+
+  if (maskHint) {
+    maskHint.hidden = state.maskMode === "none" || state.cardRevealed;
+  }
+
+  // Inline memo display & editor
+  const memo = state.memos[item.id] ?? "";
+  if (memoBar) {
+    memoBar.hidden = state.zenMode || state.editingMemo || !memo;
+  }
+  const memoTextEl = optById("memoDisplayText");
+  if (memoTextEl && memo) {
+    memoTextEl.textContent = memo;
+  }
+  if (memoInlineForm) {
+    memoInlineForm.hidden = !state.editingMemo;
+  }
+
+  // Forms & Phrases
   const formsList = optById("cardFormsList");
+  const formsContainer = optById("cardFormsContainer");
+  if (formsContainer && formsList) {
+    if (item.forms.length > 0) {
+      formsContainer.hidden = false;
+      formsList.innerHTML = item.forms
+        .map((f) => `<span class="form-pill">${escapeHtml(f)}</span>`)
+        .join("");
+    } else {
+      formsContainer.hidden = true;
+    }
+  }
+
   const phrasesContainer = optById("cardPhrasesContainer");
   const phrasesList = optById("cardPhrasesList");
-
-  let hasForms = false;
-  if (item.forms && item.forms.length > 0) {
-    hasForms = true;
-    formsContainer?.classList.remove("hidden");
-    if (formsList) {
-      formsList.innerHTML = item.forms
-        .map(
-          (f) =>
-            `<button type="button" data-speak-form="${escapeHtml(f)}" class="form-chip px-2 py-0.5 rounded-lg bg-white dark:bg-slate-800 border border-teal-500/20 text-[11px] font-medium text-teal-700 dark:text-teal-300 hover:bg-teal-500 hover:text-white transition">${escapeHtml(f)}</button>`,
-        )
-        .join("");
-    }
-  } else {
-    formsContainer?.classList.add("hidden");
-  }
-
-  let hasPhrases = false;
-  const lowerW = (item.word || "").toLowerCase();
-  const foundPhrases = GAOKAO_PHRASES_DICT[lowerW];
-  if (foundPhrases && foundPhrases.length > 0) {
-    hasPhrases = true;
-    phrasesContainer?.classList.remove("hidden");
-    if (phrasesList) {
-      phrasesList.innerHTML = foundPhrases
-        .slice(0, 4)
-        .map(
-          (p) =>
-            `<div class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-amber-500 flex-shrink-0"></span><span class="font-medium">${escapeHtml(p)}</span></div>`,
-        )
-        .join("");
-    }
-  } else {
-    phrasesContainer?.classList.add("hidden");
-  }
-
-  if (examExpandedSection) {
-    if (hasForms || hasPhrases) examExpandedSection.classList.remove("hidden");
-    else examExpandedSection.classList.add("hidden");
-  }
-
-  const filterPill = optById("activeFilterPill");
-  if (filterPill) {
-    if (state.statusFilter !== "all") {
-      const filterLabels: Record<string, string> = {
-        unmarked: "⚪未标",
-        review: "🔥重难点",
-        unknown: "🔴不会",
-        fuzzy: "🟡模糊",
-        known: "🟢熟词",
-      };
-      filterPill.textContent = filterLabels[state.statusFilter] ?? "筛选中";
-      filterPill.classList.remove("hidden");
+  if (phrasesContainer && phrasesList) {
+    const cleanKey = cleanHead.toLowerCase();
+    const matchedPhrases = GAOKAO_PHRASES_DICT[cleanKey];
+    if (matchedPhrases && matchedPhrases.length > 0) {
+      phrasesContainer.hidden = false;
+      phrasesList.innerHTML = matchedPhrases.map((p) => `<div>• ${escapeHtml(p)}</div>`).join("");
     } else {
-      filterPill.classList.add("hidden");
+      phrasesContainer.hidden = true;
     }
   }
 
-  const memo = state.memos[item.id];
-  if (memo && memoBar && memoText) {
-    memoBar.classList.remove("hidden");
-    memoText.textContent = `💡 笔记：${memo}`;
-  } else {
-    memoBar?.classList.add("hidden");
+  if (extrasSection && !state.zenMode) {
+    const hasForms = item.forms.length > 0;
+    const hasPhrases = Boolean(GAOKAO_PHRASES_DICT[cleanHead.toLowerCase()]?.length);
+    extrasSection.hidden = !hasForms && !hasPhrases;
   }
+}
 
-  const pos = state.currentIndex + 1;
-  const total = filteredDeck.length;
-  if (deckPositionText) deckPositionText.textContent = `当前进度 ${pos} / ${total} 词`;
-  if (deckProgressBar) deckProgressBar.style.width = `${((pos / total) * 100).toFixed(1)}%`;
+export function renderQuizScoreUI(state: ReciteState): void {
+  const totEl = optById("quizTotalCount");
+  const accEl = optById("quizAccuracy");
+  const strEl = optById("quizStreak");
+  if (totEl) totEl.textContent = String(state.quizTotal);
+  const acc =
+    state.quizTotal > 0 ? `${Math.round((state.quizCorrect / state.quizTotal) * 100)}%` : "100%";
+  if (accEl) accEl.textContent = acc;
+  if (strEl) strEl.textContent = `🔥 ${state.quizStreak}`;
 }
 
 export function renderWordList(state: ReciteState, vocabList: ReciteWord[]): void {
-  const filtered = filterWordList(vocabList, state.marks, state.listSearch, state.listTab);
+  const list = filterWordList(vocabList, state.marks, state.listSearch, state.listTab);
+  const resCount = optById("listResultCount");
+  if (resCount) resCount.textContent = `${list.length} 词`;
 
-  const countEl = optById("listResultCount");
-  if (countEl) countEl.textContent = `共 ${filtered.length} 词`;
-
-  const totalPages = Math.max(1, Math.ceil(filtered.length / state.listPageSize));
+  const totalPages = Math.max(1, Math.ceil(list.length / state.listPageSize));
   if (state.listPage > totalPages) state.listPage = totalPages;
+  if (state.listPage < 1) state.listPage = 1;
 
   const start = (state.listPage - 1) * state.listPageSize;
-  const pageItems = filtered.slice(start, start + state.listPageSize);
+  const pageItems = list.slice(start, start + state.listPageSize);
 
-  const indicator = optById("listPageIndicator");
-  if (indicator) indicator.textContent = `第 ${state.listPage} / ${totalPages} 页`;
+  const pageInd = optById("listPageIndicator");
+  if (pageInd) pageInd.textContent = `第 ${state.listPage} / ${totalPages} 页`;
 
   const prevBtn = optById<HTMLButtonElement>("btnListPrevPage");
   const nextBtn = optById<HTMLButtonElement>("btnListNextPage");
@@ -374,30 +332,31 @@ export function renderWordList(state: ReciteState, vocabList: ReciteWord[]): voi
   if (!container) return;
 
   if (pageItems.length === 0) {
-    container.innerHTML = `<div class="text-center py-12 text-xs sub-text">未找到匹配的单词</div>`;
+    container.innerHTML = '<div class="empty-state">未找到匹配单词，可调整搜索词或状态筛选</div>';
     return;
   }
 
   container.innerHTML = pageItems
     .map((w) => {
       const m = state.marks[w.id];
+      const memo = state.memos[w.id];
       return `
-        <div class="card-surface border rounded-2xl p-2.5 flex items-center justify-between gap-2">
-          <div class="min-w-0 flex-1">
-            <div class="flex items-center gap-1.5">
-              <span class="text-[10px] font-bold sub-text">#${w.id}</span>
-              <button type="button" data-list-speak="${escapeHtml(w.word)}" class="text-sm font-extrabold hover:text-teal-500 truncate flex items-center gap-1">
-                <span>${escapeHtml(w.word)}</span>
-                <span class="text-[11px] text-teal-500">🔊</span>
-              </button>
-              <span class="text-[10px] px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-800 sub-text">频:${w.freq}</span>
+        <div class="word-list-row" data-list-word="${w.id}">
+          <div class="word-row-main">
+            <div class="word-row-title">
+              <span class="word-row-id">#${w.id}</span>
+              <span class="word-row-en">${escapeHtml(w.word)}</span>
+              ${w.freq > 0 ? `<span class="word-row-freq">考频 ${w.freq}</span>` : ""}
             </div>
-            <div class="text-xs sub-text truncate mt-0.5">${escapeHtml(w.meaning)}</div>
+            <div class="word-row-cn">${escapeHtml(w.meaning)}</div>
+            ${memo ? `<div class="word-row-memo">📝 ${escapeHtml(memo)}</div>` : ""}
           </div>
-          <div class="flex items-center gap-1 flex-shrink-0">
-            <button type="button" data-list-mark="${w.id}:known" class="w-7 h-7 rounded-xl text-xs font-bold border transition ${m === "known" ? "bg-emerald-500 text-white border-emerald-500" : "card-surface opacity-60 hover:opacity-100"}" title="标为很熟">熟</button>
-            <button type="button" data-list-mark="${w.id}:fuzzy" class="w-7 h-7 rounded-xl text-xs font-bold border transition ${m === "fuzzy" ? "bg-amber-500 text-white border-amber-500" : "card-surface opacity-60 hover:opacity-100"}" title="标为有点模糊">模</button>
-            <button type="button" data-list-mark="${w.id}:unknown" class="w-7 h-7 rounded-xl text-xs font-bold border transition ${m === "unknown" ? "bg-rose-500 text-white border-rose-500" : "card-surface opacity-60 hover:opacity-100"}" title="标为完全不会">生</button>
+          <div class="word-row-actions">
+            <button type="button" class="row-mini-btn" data-list-speak="${w.id}" title="朗读单词">🔊</button>
+            <button type="button" class="row-mini-btn${m === "known" ? " active-known" : ""}" data-list-mark="${w.id}:known" title="标记为很熟">熟</button>
+            <button type="button" class="row-mini-btn${m === "fuzzy" ? " active-fuzzy" : ""}" data-list-mark="${w.id}:fuzzy" title="标记为有点模糊">模</button>
+            <button type="button" class="row-mini-btn${m === "unknown" ? " active-unknown" : ""}" data-list-mark="${w.id}:unknown" title="标记为完全不会">生</button>
+            <button type="button" class="row-mini-btn" data-list-jump="${w.id}" title="定位到记忆闪卡">🎯 闪卡</button>
           </div>
         </div>
       `;
@@ -407,123 +366,61 @@ export function renderWordList(state: ReciteState, vocabList: ReciteWord[]): voi
 
 export function renderStatsView(state: ReciteState, vocabList: ReciteWord[]): void {
   const stats = calculateMasteryStats(vocabList, state.marks);
-
   const sub = optById("statsSummarySubtitle");
-  if (sub) sub.textContent = `已标记 ${stats.marked} 词 · 剩余 ${stats.unmarked} 词待过`;
   const badge = optById("statsMasteryBadge");
-  if (badge) badge.textContent = `熟词率 ${stats.masteryPct}%`;
+  if (sub) sub.textContent = `已标记 ${stats.marked} 词 · 剩余 ${stats.unmarked} 词待过`;
+  if (badge) badge.textContent = `${stats.masteryPct}%`;
 
-  const barKnown = optById("barKnown");
-  const barFuzzy = optById("barFuzzy");
-  const barUnknown = optById("barUnknown");
-  if (barKnown) barKnown.style.width = `${stats.knownPct}%`;
-  if (barFuzzy) barFuzzy.style.width = `${stats.fuzzyPct}%`;
-  if (barUnknown) barUnknown.style.width = `${stats.unknownPct}%`;
+  const barK = optById("barKnown");
+  const barF = optById("barFuzzy");
+  const barU = optById("barUnknown");
+  if (barK) barK.style.width = `${stats.knownPct}%`;
+  if (barF) barF.style.width = `${stats.fuzzyPct}%`;
+  if (barU) barU.style.width = `${stats.unknownPct}%`;
 
-  const setTxt = (id: string, text: string) => {
-    const el = optById(id);
-    if (el) el.textContent = text;
-  };
-  setTxt("statKnownNum", String(stats.known));
-  setTxt("statKnownPct", `占比 ${stats.knownPct}%`);
-  setTxt("statFuzzyNum", String(stats.fuzzy));
-  setTxt("statFuzzyPct", `占比 ${stats.fuzzyPct}%`);
-  setTxt("statUnknownNum", String(stats.unknown));
-  setTxt("statUnknownPct", `占比 ${stats.unknownPct}%`);
-  setTxt("statUnmarkedNum", String(stats.unmarked));
-  setTxt("statUnmarkedPct", `占比 ${stats.unmarkedPct}%`);
-  setTxt("exportReviewCountBadge", `${stats.fuzzy + stats.unknown} 词`);
+  const sKNum = optById("statKnownNum");
+  const sFNum = optById("statFuzzyNum");
+  const sUNum = optById("statUnknownNum");
+  const sUmNum = optById("statUnmarkedNum");
+  if (sKNum) sKNum.textContent = String(stats.known);
+  if (sFNum) sFNum.textContent = String(stats.fuzzy);
+  if (sUNum) sUNum.textContent = String(stats.unknown);
+  if (sUmNum) sUmNum.textContent = String(stats.unmarked);
 
-  const tierContainer = optById("freqTierStatsContainer");
-  if (tierContainer) {
-    tierContainer.innerHTML = stats.tiers
+  const sKPct = optById("statKnownPct");
+  const sFPct = optById("statFuzzyPct");
+  const sUPct = optById("statUnknownPct");
+  const sUmPct = optById("statUnmarkedPct");
+  if (sKPct) sKPct.textContent = `占比 ${stats.knownPct}%`;
+  if (sFPct) sFPct.textContent = `占比 ${stats.fuzzyPct}%`;
+  if (sUPct) sUPct.textContent = `占比 ${stats.unknownPct}%`;
+  if (sUmPct) sUmPct.textContent = `占比 ${stats.unmarkedPct}%`;
+
+  const revBadge = optById("exportReviewCountBadge");
+  if (revBadge) revBadge.textContent = `${stats.fuzzy + stats.unknown} 词`;
+
+  const tierBox = optById("freqTierStatsContainer");
+  if (tierBox) {
+    tierBox.innerHTML = stats.tiers
       .map(
         (t) => `
-        <div>
-          <div class="flex items-center justify-between mb-1">
-            <span class="font-semibold">${t.name}</span>
-            <span class="text-[11px] sub-text">熟 ${t.known} / 模 ${t.fuzzy} / 生 ${t.unknown} (共${t.total})</span>
+        <div class="tier-row">
+          <div class="tier-row-top">
+            <span>${escapeHtml(t.name)}</span>
+            <span class="deck-counter">${t.known}/${t.total} (${t.knownPct}%)</span>
           </div>
-          <div class="w-full h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden flex">
-            <div class="bg-emerald-500 h-full" style="width:${t.knownPct}%"></div>
-            <div class="bg-amber-500 h-full" style="width:${t.fuzzyPct}%"></div>
-            <div class="bg-rose-500 h-full" style="width:${t.unknownPct}%"></div>
+          <div class="tier-bar">
+            <div class="stacked-known" style="width:${t.knownPct}%"></div>
+            <div class="stacked-fuzzy" style="width:${t.fuzzyPct}%"></div>
+            <div class="stacked-unknown" style="width:${t.unknownPct}%"></div>
           </div>
         </div>
       `,
       )
       .join("");
   }
-}
 
-function fitTextSingleLine(
-  el: HTMLElement | null,
-  maxPx: number,
-  minPx: number,
-  fallbackMaxWidth: number,
-): void {
-  if (!el) return;
-  el.style.whiteSpace = "nowrap";
-  const parentW =
-    el.parentElement && el.parentElement.clientWidth > 40
-      ? el.parentElement.clientWidth - 24
-      : fallbackMaxWidth;
-  let size = maxPx;
-  el.style.fontSize = `${size}px`;
-  if (el.offsetParent !== null && parentW > 0) {
-    while (el.scrollWidth > parentW && size > minPx) {
-      size -= 1;
-      el.style.fontSize = `${size}px`;
-    }
-  } else {
-    const text = el.textContent || "";
-    let estUnits = 0;
-    for (let i = 0; i < text.length; i += 1) {
-      estUnits += text.charCodeAt(i) > 255 ? 1.02 : 0.58;
-    }
-    if (estUnits > 0) {
-      const calcSize = Math.floor(fallbackMaxWidth / estUnits);
-      size = Math.max(minPx, Math.min(maxPx, calcSize));
-      el.style.fontSize = `${size}px`;
-    }
-  }
-}
-
-export function renderZenCard(state: ReciteState, filteredDeck: ReciteWord[]): void {
-  const wordEl = optById("zenWordText");
-  const meaningEl = optById("zenMeaningText");
-  if (!wordEl || !meaningEl) return;
-
-  if (filteredDeck.length === 0) {
-    wordEl.textContent = "当前筛选无单词";
-    meaningEl.textContent = "请切换筛选范围";
-    fitTextSingleLine(wordEl, 42, 20, 355);
-    fitTextSingleLine(meaningEl, 24, 14, 355);
-    return;
-  }
-  if (
-    !Number.isInteger(state.currentIndex) ||
-    state.currentIndex < 0 ||
-    state.currentIndex >= filteredDeck.length
-  ) {
-    state.currentIndex = 0;
-  }
-  const item = filteredDeck[state.currentIndex];
-  if (!item) return;
-  wordEl.textContent = item.word;
-  meaningEl.textContent = item.meaning;
-  fitTextSingleLine(wordEl, 62, 24, 358);
-  fitTextSingleLine(meaningEl, 34, 16, 358);
-}
-
-export function renderQuizScoreUI(state: ReciteState): void {
-  const totalEl = optById("quizTotalCount");
-  const accEl = optById("quizAccuracy");
-  const streakEl = optById("quizStreak");
-  if (totalEl) totalEl.textContent = String(state.quizTotal);
-  const acc = state.quizTotal > 0 ? Math.round((state.quizCorrect / state.quizTotal) * 100) : 100;
-  if (accEl) accEl.textContent = `${acc}%`;
-  if (streakEl) streakEl.textContent = `🔥 ${state.quizStreak}`;
+  updateSyncUI();
 }
 
 export function renderAllViews(
@@ -531,14 +428,13 @@ export function renderAllViews(
   vocabList: ReciteWord[],
   filteredDeck: ReciteWord[],
 ): void {
-  const frame = optById("deviceFrame");
-  if (frame) {
-    if (state.darkMode) frame.classList.add("dark-theme", "dark");
-    else frame.classList.remove("dark-theme", "dark");
-  }
-  renderHeaderAndMiniStats(state, vocabList, filteredDeck);
+  renderHeaderAndControls(state, vocabList);
   renderStudyCard(state, filteredDeck);
-  renderZenCard(state, filteredDeck);
-  if (state.activeTab === "list") renderWordList(state, vocabList);
-  if (state.activeTab === "stats") renderStatsView(state, vocabList);
+  renderQuizScoreUI(state);
+  if (state.activeTab === "list") {
+    renderWordList(state, vocabList);
+  }
+  if (state.activeTab === "stats") {
+    renderStatsView(state, vocabList);
+  }
 }

@@ -180,6 +180,7 @@ python scripts/verify_vocab.py
   - **系统主题自动同步修复**：手切回到与系统一致的主题时自动清除 `localStorage` 覆盖，并监听 `pageshow` / `focus` / `visibilitychange` / `storage`。
   - **独立游乐场 [`games.html`](./games.html)**：支持 `?tab=2048|puzzle|memory` 与侧边栏高亮同步，航拍拼图与记忆翻卡复用画廊图库清单（[`photos.ts`](./src/pages/gallery/photos.ts)）。
   - **隐藏工具严格隐身**（[`matchSlashCommands`](./src/core/nav-config.ts#L257-L261) 全等匹配 + 移除所有页面提示）。
+  - **智能过词彻底重构（[`recite.html`](./recite.html) / [`src/pages/recite/*`](./src/pages/recite/main.ts)）**：移除 390px 模拟手机壳与底部 TabBar，升级为全站 Claude 暖纸感响应式工作台；整合为 4 大主模式（记忆闪卡+内置极速专注 / 纯检验自测练习 / 词表检索+行内快捷标词与定位闪卡 / 数据与云同步），100% 对齐 `/api/recite-sync`、`/api/recite-vocab`、`IndexedDB` 与 CSV 导入导出契约。
   - **已合入 `main` 并清理旧文档**：已合并 PR #7，删除过期冗余的 `PROJECT_ARCHITECTURE.md`，全部内容整合至本 `HANDOFF.md`。
 - **待收尾 / 可选清理事项**：
   1. **仓库内历史遗留冗余资产（非功能阻塞，但可择机清理）**：
