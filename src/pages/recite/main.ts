@@ -50,7 +50,9 @@ import {
   type ListTab,
   type MainTab,
   type MaskMode,
+  type QuizKind,
   type QuizPool,
+  type QuizType,
   type ReciteWord,
   SYSTEM_DEFAULTS,
   type StatusFilter,
@@ -369,18 +371,67 @@ function scheduleQuizAutoNext(delayMs: number): void {
   }, delayMs);
 }
 
+const ALL_QUIZ_KINDS: QuizKind[] = ["en_to_cn", "cn_to_en", "listen_to_cn", "spell"];
+
+const QUIZ_KIND_LABELS: Record<QuizKind, string> = {
+  en_to_cn: "看英选中",
+  cn_to_en: "看中选英",
+  listen_to_cn: "听音选义",
+  spell: "拼写",
+};
+
+function resolveQuizKind(mode: QuizType): QuizKind {
+  if (mode === "mixed") {
+    return ALL_QUIZ_KINDS[Math.floor(Math.random() * ALL_QUIZ_KINDS.length)] ?? "en_to_cn";
+  }
+  return mode;
+}
+
+function isChoiceQuizKind(kind: QuizKind): boolean {
+  return kind === "en_to_cn" || kind === "cn_to_en" || kind === "listen_to_cn";
+}
+
+function syncWrongMarkGroup(visible: boolean): void {
+  const group = optById("quizWrongMarkGroup");
+  if (!group) return;
+  group.hidden = !visible;
+  const wordId = state.currentQuizWord?.id;
+  const currentStatus = wordId !== undefined ? state.marks[wordId] : undefined;
+  for (const btn of group.querySelectorAll<HTMLButtonElement>("[data-quiz-mark]")) {
+    const status = btn.dataset.quizMark as WordMarkStatus | undefined;
+    btn.classList.toggle("active", Boolean(status && currentStatus === status));
+  }
+}
+
+function markWordFromQuiz(status: WordMarkStatus): void {
+  const word = state.currentQuizWord;
+  if (!word) return;
+  if (state.marks[word.id] === status) {
+    delete state.marks[word.id];
+    showToast(`已取消「${word.word}」的标记`);
+  } else {
+    state.marks[word.id] = status;
+    showToast(status === "unknown" ? `已标「${word.word}」为不会` : `已标「${word.word}」为模糊`);
+  }
+  syncWrongMarkGroup(true);
+  saveState();
+  renderAllViews(state, vocabList, filteredDeck);
+}
+
 function renderQuizChoicesForCurrentWord(): void {
   clearQuizAutoNextTimer();
   const target = state.currentQuizWord;
   if (!target) return;
   state.quizAnswered = false;
+  syncWrongMarkGroup(false);
 
   const fb = optById("quizFeedbackText");
   if (fb) {
-    fb.textContent = "纯检验模式（绝不修改原有熟练度标记）";
+    fb.textContent = "默认不改熟练度，答错可一键标为不会/模糊";
     fb.className = "quiz-feedback-text";
   }
 
+  const isCnToEn = state.currentQuizKind === "cn_to_en";
   const prevIds = new Set(state.lastDistractorIds);
   const distractors: ReciteWord[] = [];
   let safety = 0;
@@ -391,8 +442,11 @@ function renderQuizChoicesForCurrentWord(): void {
       cand &&
       cand.id !== target.id &&
       cand.meaning !== target.meaning &&
+      cand.word !== target.word &&
       !prevIds.has(cand.id) &&
-      !distractors.some((d) => d.id === cand.id || d.meaning === cand.meaning)
+      !distractors.some(
+        (d) => d.id === cand.id || d.meaning === cand.meaning || d.word === cand.word,
+      )
     ) {
       distractors.push(cand);
     }
@@ -415,8 +469,8 @@ function renderQuizChoicesForCurrentWord(): void {
     choiceBox.innerHTML = options
       .map(
         (opt, idx) => `
-        <button type="button" data-quiz-opt="${opt.id}" class="quiz-opt-btn">
-          <span>${idx + 1}. ${escapeHtml(opt.meaning)}</span>
+        <button type="button" data-quiz-opt="${opt.id}" class="quiz-opt-btn${isCnToEn ? " is-en" : ""}">
+          <span>${idx + 1}. ${escapeHtml(isCnToEn ? opt.word : opt.meaning)}</span>
         </button>
       `,
       )
@@ -443,17 +497,21 @@ function nextQuizQuestion(): void {
   if (!target) return;
 
   state.currentQuizWord = target;
+  state.currentQuizKind = resolveQuizKind(state.quizType);
   state.quizAnswered = false;
   state.quizHintLevel = 0;
+  syncWrongMarkGroup(false);
 
+  const kind = state.currentQuizKind;
   const metaEl = optById("quizWordMeta");
   if (metaEl) {
-    metaEl.textContent = `#${target.id} · ${target.freq > 0 ? `考频 ${target.freq} 次` : "新增词"}`;
+    const freqText = target.freq > 0 ? `考频 ${target.freq} 次` : "新增词";
+    metaEl.textContent = `${QUIZ_KIND_LABELS[kind]} · #${target.id} · ${freqText}`;
   }
 
   const fb = optById("quizFeedbackText");
   if (fb) {
-    fb.textContent = "纯检验模式（绝不修改原有熟练度标记）";
+    fb.textContent = "默认不改熟练度，答错可一键标为不会/模糊";
     fb.className = "quiz-feedback-text";
   }
 
@@ -461,22 +519,48 @@ function nextQuizQuestion(): void {
   const spellBox = optById("quizSpellContainer");
   const refreshBtn = optById("btnQuizRefreshOptions");
   const promptMain = optById("quizPromptMain");
+  const listenBtn = optById("btnQuizListenReplay");
   const promptSub = optById("quizPromptSub");
 
-  if (state.quizType === "choice") {
+  if (isChoiceQuizKind(kind)) {
     if (choiceBox) choiceBox.hidden = false;
     if (spellBox) spellBox.hidden = true;
     if (refreshBtn) refreshBtn.hidden = false;
-    if (promptMain) promptMain.textContent = target.word;
-    if (promptSub) promptSub.textContent = "按键盘 1–4 或点击选项选出正确释义";
-    renderQuizChoicesForCurrentWord();
-    if (state.autoSpeak) speakText(target.word);
+
+    if (kind === "en_to_cn") {
+      if (promptMain) {
+        promptMain.hidden = false;
+        promptMain.textContent = target.word;
+      }
+      if (listenBtn) listenBtn.hidden = true;
+      if (promptSub) promptSub.textContent = "按 1–4 或点击选项选出正确中文释义";
+      renderQuizChoicesForCurrentWord();
+      if (state.autoSpeak) speakText(target.word);
+    } else if (kind === "cn_to_en") {
+      if (promptMain) {
+        promptMain.hidden = false;
+        promptMain.textContent = target.meaning;
+      }
+      if (listenBtn) listenBtn.hidden = true;
+      if (promptSub) promptSub.textContent = "按 1–4 或点击选项选出对应英文单词";
+      renderQuizChoicesForCurrentWord();
+    } else {
+      if (promptMain) promptMain.hidden = true;
+      if (listenBtn) listenBtn.hidden = false;
+      if (promptSub) promptSub.textContent = "听发音后按 1–4 或点击选项选出中文释义（空格重播）";
+      renderQuizChoicesForCurrentWord();
+      speakText(target.word);
+    }
   } else {
     if (choiceBox) choiceBox.hidden = true;
     if (spellBox) spellBox.hidden = false;
     if (refreshBtn) refreshBtn.hidden = true;
-    if (promptMain) promptMain.textContent = target.meaning;
-    if (promptSub) promptSub.textContent = "根据释义与发音拼写完整英文单词";
+    if (listenBtn) listenBtn.hidden = true;
+    if (promptMain) {
+      promptMain.hidden = false;
+      promptMain.textContent = target.meaning;
+    }
+    if (promptSub) promptSub.textContent = "根据中文释义与发音拼写完整英文单词";
 
     const cleanTarget = cleanWordForSpeech(target.word) || target.word;
     const hintEl = optById("quizSpellHint");
@@ -498,6 +582,7 @@ function handleQuizChoiceAnswer(optBtn: HTMLButtonElement): void {
   state.quizAnswered = true;
   const chosenId = Number.parseInt(optBtn.dataset.quizOpt ?? "0", 10);
   const target = state.currentQuizWord;
+  const kind = state.currentQuizKind;
   const isCorrect = chosenId === target.id;
 
   state.quizTotal += 1;
@@ -518,21 +603,32 @@ function handleQuizChoiceAnswer(optBtn: HTMLButtonElement): void {
     }
   }
 
+  if (kind === "listen_to_cn") {
+    const promptMain = optById("quizPromptMain");
+    if (promptMain) {
+      promptMain.hidden = false;
+      promptMain.textContent = target.word;
+    }
+  }
+
   const fb = optById("quizFeedbackText");
   if (fb) {
     if (isCorrect) {
-      fb.textContent = "✅ 回答正确（仅自测，未改动标记）";
+      fb.textContent = `✅ 回答正确：${target.word} · ${target.meaning}`;
       fb.className = "quiz-feedback-text is-correct";
     } else {
-      fb.textContent = `❌ 正确答案：${target.meaning}`;
+      const answerDisplay =
+        kind === "cn_to_en" ? target.word : `${target.word} · ${target.meaning}`;
+      fb.textContent = `❌ 正确答案：${answerDisplay}`;
       fb.className = "quiz-feedback-text is-wrong";
     }
   }
+  syncWrongMarkGroup(!isCorrect);
   renderQuizScoreUI(state);
   speakText(target.word);
 
   if (isCorrect) {
-    scheduleQuizAutoNext(1100);
+    scheduleQuizAutoNext(650);
   }
 }
 
@@ -545,9 +641,8 @@ function handleQuizSpellSubmit(): void {
     return;
   }
 
-  const targetWord = (
-    cleanWordForSpeech(state.currentQuizWord.word) || state.currentQuizWord.word
-  ).toLowerCase();
+  const target = state.currentQuizWord;
+  const targetWord = (cleanWordForSpeech(target.word) || target.word).toLowerCase();
   const isCorrect = userAns === targetWord;
 
   state.quizAnswered = true;
@@ -570,11 +665,12 @@ function handleQuizSpellSubmit(): void {
       fb.className = "quiz-feedback-text is-wrong";
     }
   }
+  syncWrongMarkGroup(!isCorrect);
   renderQuizScoreUI(state);
-  speakText(state.currentQuizWord.word);
+  speakText(target.word);
 
   if (isCorrect) {
-    scheduleQuizAutoNext(1100);
+    scheduleQuizAutoNext(650);
   }
 }
 
@@ -904,16 +1000,15 @@ function bindEvents(): void {
   });
 
   // Quiz controls
-  optById("btnQuizTypeChoice")?.addEventListener("click", () => {
-    state.quizType = "choice";
-    optById("btnQuizTypeChoice")?.classList.add("active");
-    optById("btnQuizTypeSpell")?.classList.remove("active");
-    nextQuizQuestion();
-  });
-  optById("btnQuizTypeSpell")?.addEventListener("click", () => {
-    state.quizType = "spell";
-    optById("btnQuizTypeSpell")?.classList.add("active");
-    optById("btnQuizTypeChoice")?.classList.remove("active");
+  const quizModeSwitch = optById("quizModeSwitch");
+  quizModeSwitch?.addEventListener("click", (e) => {
+    const btn = (e.target as HTMLElement).closest<HTMLButtonElement>("[data-quiz-type]");
+    const nextMode = btn?.dataset.quizType as QuizType | undefined;
+    if (!nextMode) return;
+    state.quizType = nextMode;
+    for (const item of quizModeSwitch.querySelectorAll<HTMLButtonElement>("[data-quiz-type]")) {
+      item.classList.toggle("active", item.dataset.quizType === nextMode);
+    }
     nextQuizQuestion();
   });
   optById<HTMLSelectElement>("selectQuizPool")?.addEventListener("change", (e) => {
@@ -924,14 +1019,22 @@ function bindEvents(): void {
   optById("btnQuizSpeak")?.addEventListener("click", () => {
     if (state.currentQuizWord) speakText(state.currentQuizWord.word);
   });
+  optById("btnQuizListenReplay")?.addEventListener("click", () => {
+    if (state.currentQuizWord) speakText(state.currentQuizWord.word);
+  });
   optById("btnQuizRefreshOptions")?.addEventListener("click", () => {
-    if (state.quizType !== "choice" || !state.currentQuizWord) return;
+    if (!isChoiceQuizKind(state.currentQuizKind) || !state.currentQuizWord) return;
     if (state.quizAnswered) {
       nextQuizQuestion();
       return;
     }
     renderQuizChoicesForCurrentWord();
     showToast("🔄 已换一组干扰项");
+  });
+  optById("quizWrongMarkGroup")?.addEventListener("click", (e) => {
+    const btn = (e.target as HTMLElement).closest<HTMLButtonElement>("[data-quiz-mark]");
+    const status = btn?.dataset.quizMark as WordMarkStatus | undefined;
+    if (status) markWordFromQuiz(status);
   });
   optById("btnQuizNext")?.addEventListener("click", nextQuizQuestion);
   optById("quizChoiceContainer")?.addEventListener("click", (e) => {
@@ -1186,13 +1289,20 @@ function bindEvents(): void {
       return;
     }
 
-    if (state.activeTab === "quiz" && state.quizType === "choice") {
+    if (state.activeTab === "quiz" && isChoiceQuizKind(state.currentQuizKind)) {
       if (["1", "2", "3", "4"].includes(e.key) && !state.quizAnswered) {
         e.preventDefault();
         const idx = Number.parseInt(e.key, 10) - 1;
         const buttons = document.querySelectorAll<HTMLButtonElement>(".quiz-opt-btn");
         const targetBtn = buttons[idx];
         if (targetBtn) handleQuizChoiceAnswer(targetBtn);
+      } else if (e.code === "Space" && state.currentQuizWord) {
+        e.preventDefault();
+        if (state.quizAnswered) {
+          nextQuizQuestion();
+        } else {
+          speakText(state.currentQuizWord.word);
+        }
       } else if (e.key === "Enter" && state.quizAnswered) {
         e.preventDefault();
         nextQuizQuestion();

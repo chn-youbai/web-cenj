@@ -152,48 +152,52 @@
       </div>
     </section>
 
-    <!-- ==================== VIEW 2: 自测练习（纯检验模式） ==================== -->
+    <!-- ==================== VIEW 2: 自测练习（5 选 1 多题型开阔画布） ==================== -->
     <section id="viewQuiz" class="recite-panel" hidden>
       <div class="quiz-controls">
-        <div class="quiz-mode-switch" role="group" aria-label="自测题型">
-          <button type="button" class="seg-btn active" id="btnQuizTypeChoice">🎯 看英选义（四选一）</button>
-          <button type="button" class="seg-btn" id="btnQuizTypeSpell">⌨️ 听音看义拼写</button>
+        <div class="quiz-mode-switch" id="quizModeSwitch" role="group" aria-label="自测题型">
+          <button type="button" class="seg-btn active" data-quiz-type="en_to_cn">看英选中</button>
+          <button type="button" class="seg-btn" data-quiz-type="cn_to_en">看中选英</button>
+          <button type="button" class="seg-btn" data-quiz-type="listen_to_cn">听音选义</button>
+          <button type="button" class="seg-btn" data-quiz-type="spell">拼写</button>
+          <button type="button" class="seg-btn" data-quiz-type="mixed">全部混合</button>
         </div>
-        <select id="selectQuizPool" aria-label="测试题库范围" class="rc-select">
-          <option value="current_group">📂 当前所选分组</option>
-          <option value="review">🔥 不会 + 模糊复习池</option>
-          <option value="high_freq">🏆 高频前 300 词</option>
-          <option value="all">🌐 全部 2050 词随机</option>
-        </select>
-      </div>
 
-      <div class="quiz-kpi-grid">
-        <div class="kpi-card">
-          <span class="kpi-label">本轮已测</span>
-          <strong class="kpi-value" id="quizTotalCount">0</strong>
-        </div>
-        <div class="kpi-card">
-          <span class="kpi-label">正确率</span>
-          <strong class="kpi-value text-success" id="quizAccuracy">100%</strong>
-        </div>
-        <div class="kpi-card">
-          <span class="kpi-label">连对 Streak</span>
-          <strong class="kpi-value text-accent" id="quizStreak">🔥 0</strong>
+        <div class="quiz-meta-strip">
+          <select id="selectQuizPool" aria-label="测试题库范围" class="rc-select quiz-pool-select">
+            <option value="current_group">当前分组</option>
+            <option value="review">不会+模糊池</option>
+            <option value="high_freq">高频前 300 词</option>
+            <option value="all">全部 2050 词</option>
+          </select>
+          <div class="quiz-kpi-inline" aria-label="本轮自测统计">
+            <span>已测 <strong id="quizTotalCount">0</strong></span>
+            <span>正确率 <strong class="text-success" id="quizAccuracy">100%</strong></span>
+            <span class="text-accent"><strong id="quizStreak">🔥 0</strong></span>
+          </div>
         </div>
       </div>
 
-      <article class="quiz-card">
+      <div class="quiz-canvas">
         <div class="quiz-card-top">
           <span class="meta-badge" id="quizWordMeta">#1 · 考频 73 次</span>
           <div class="quiz-card-actions">
             <button type="button" class="rc-chip-btn" id="btnQuizRefreshOptions" title="保持当前正确答案，更换另外三个干扰项">🔄 换选项</button>
-            <button type="button" class="rc-chip-btn" id="btnQuizSpeak">🔊 发音提示</button>
+            <button type="button" class="rc-chip-btn" id="btnQuizSpeak">🔊 发音</button>
           </div>
         </div>
 
         <div class="quiz-prompt-box">
           <div class="quiz-prompt-main" id="quizPromptMain">promise</div>
-          <div class="quiz-prompt-sub" id="quizPromptSub">纯自测模式 · 按 1-4 选择正确中文释义</div>
+          <button type="button" class="quiz-listen-btn" id="btnQuizListenReplay" hidden aria-label="点击重播单词发音">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+              <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+              <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+            </svg>
+            <span>点击听音 / 重播</span>
+          </button>
+          <div class="quiz-prompt-sub" id="quizPromptSub">按 1–4 或点击选项选出正确中文释义</div>
         </div>
 
         <div class="quiz-choice-list" id="quizChoiceContainer"></div>
@@ -208,10 +212,16 @@
         </div>
 
         <div class="quiz-feedback-bar">
-          <span class="quiz-feedback-text" id="quizFeedbackText">纯检验模式（绝不修改原有熟练度标记）</span>
-          <button type="button" class="rc-btn rc-btn-primary" id="btnQuizNext">下一题 →</button>
+          <span class="quiz-feedback-text" id="quizFeedbackText">默认不改熟练度，答错可一键标为不会/模糊</span>
+          <div class="quiz-feedback-actions">
+            <div class="quiz-wrong-marks" id="quizWrongMarkGroup" hidden>
+              <button type="button" class="rc-chip-btn quiz-mark-btn unknown" data-quiz-mark="unknown">🔴 标不会</button>
+              <button type="button" class="rc-chip-btn quiz-mark-btn fuzzy" data-quiz-mark="fuzzy">🟡 标模糊</button>
+            </div>
+            <button type="button" class="rc-btn rc-btn-primary" id="btnQuizNext">下一题 →</button>
+          </div>
         </div>
-      </article>
+      </div>
     </section>
 
     <!-- ==================== VIEW 3: 词表检索 ==================== -->

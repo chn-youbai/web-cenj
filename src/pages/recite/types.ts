@@ -4,7 +4,8 @@ export type MaskMode = "none" | "hide_cn" | "hide_en";
 export type MainTab = "study" | "quiz" | "list" | "stats";
 export type ListTab = "all" | "unmarked" | WordMarkStatus;
 export type QuizPool = "current_group" | "review" | "high_freq" | "all";
-export type QuizType = "choice" | "spell";
+export type QuizKind = "en_to_cn" | "cn_to_en" | "listen_to_cn" | "spell";
+export type QuizType = QuizKind | "mixed";
 export type AccentType = "en-US" | "en-GB";
 
 export interface ReciteWord {
@@ -60,6 +61,7 @@ export interface ReciteState {
   listPageSize: number;
   quizPool: QuizPool;
   quizType: QuizType;
+  currentQuizKind: QuizKind;
   quizTotal: number;
   quizCorrect: number;
   quizStreak: number;
@@ -107,7 +109,8 @@ export function createInitialReciteState(): ReciteState {
     listPage: 1,
     listPageSize: 50,
     quizPool: "current_group",
-    quizType: "choice",
+    quizType: "en_to_cn",
+    currentQuizKind: "en_to_cn",
     quizTotal: 0,
     quizCorrect: 0,
     quizStreak: 0,
