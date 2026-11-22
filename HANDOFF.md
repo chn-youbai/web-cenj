@@ -41,7 +41,7 @@ web-cenj/
 ├── recite.html                   # 3. 高考 2050 核心词速记卡（云同步 + 测验）
 ├── gallery.html                  # 4. 精选航拍图库 + GitHub Releases Range 视频点播
 ├── upload.html                   # 5. 移动端视频直传 GitHub Releases 工具页
-├── pan.html                      # 6. 资源网盘直链下载 + 双机场流量/订阅 & Apple ID 解锁
+├── pan.html                      # 6. 云端文件库网盘（分级上传/下载、公开私密双模式、在线预览）
 ├── games.html                    # 7. 独立摸鱼游乐场（2048 / 航拍拼图 / 记忆翻卡，支持 ?tab=）
 ├── takeout.html                  # 8. [隐藏] 沙县外卖多人记账助手（/bill）
 ├── board.html                    # 9. [隐藏] 秘密留言板（/msg）
@@ -70,7 +70,7 @@ web-cenj/
 │   │   ├── recite/               # main.ts, engine.ts, raw-words.ts, phrases-dict.ts, idb.ts, sync.ts, render.ts
 │   │   ├── gallery/              # main.ts, photos.ts（121 张图库清单）, videos.ts, lightbox.ts
 │   │   ├── upload/               # main.ts
-│   │   ├── pan/                  # main.ts, subscription.ts, bind-modal.ts
+│   │   ├── pan/                  # main.ts, utils.ts（云端文件库分级上传/预览/公开私密控制）
 │   │   ├── takeout/              # main.ts, settlement.ts, cloud-sync.ts, menu-data.ts, modals.ts, store.ts, render.ts
 │   │   ├── board/                # main.ts, identity.ts, messages.ts
 │   │   └── clash/                # main.ts, api.ts, auth.ts, renderers.ts
@@ -154,13 +154,15 @@ npm run format && npm run check
 | `/api/videos` | `GET`, `PATCH`, `DELETE` | 写入/删除需 `ADMIN_PASSWORD` | 云端视频列表、重命名与 GitHub Release 资产清理 |
 | `/api/video` | `GET`, `HEAD` | 公开 | HTTP Range 206 视频流式透传（适配 iOS Safari） |
 | `/api/upload-asset` | `POST` | `ADMIN_PASSWORD` 或请求携带 GitHub Token | 边缘中继流式上传视频至 GitHub Releases 并入库 D1 |
-| `/api/download` | `GET`, `HEAD` | 公开 | 网盘安装包边缘流式直链下载（支持多线程） |
-| `/api/subscription` | `GET`, `POST` | `ACCESS_PASSWORD` | 机场流量查询、VPN07 刷新、美区 Apple ID 凭证下发 |
-| `/api/sub` | `GET`, `HEAD` | 固定私人中继 | 自动协议伪装与多域名容灾探活的 Clash YAML 订阅下发 |
+| `/api/pan` | `GET`, `POST`, `PATCH`, `DELETE` | 公开浏览/上传；私密/编辑/删除需 `ADMIN_PASSWORD` | 云端文件库 CRUD、`≤20MB` D1 分块存储（`cf_d1`）、`>20MB` GitHub Releases 直传/80MB 分片（`v_pan`）与外链登记 |
+| `/api/pan-file` | `GET`, `HEAD` | 公开免密；私密需 `ADMIN_PASSWORD` | 网盘文件分级流式下载/在线预览（支持 D1 分块流、GitHub 分片零内存流式拼接与 `Range` 断点续传） |
+| `/api/download` | `GET`, `HEAD` | 公开 | 历史预置安装包边缘流式直链下载（向后兼容保留） |
+| `/api/subscription` | `GET`, `POST` | `ACCESS_PASSWORD` | 机场流量查询、VPN07 刷新、美区 Apple ID 凭证下发（后端保留） |
+| `/api/sub` | `GET`, `HEAD` | 固定私人中继 | 自动协议伪装与多域名容灾探活的 Clash YAML 订阅下发（后端保留） |
 | `/api/*` | `*` | - | `[[catchall]].ts` 返回规范 404 JSON |
 
 ### D1 数据库初始化与词库脚本（[`data/schema.sql`](./data/schema.sql)）
-D1 共 7 张表：`textbook_words`、`word_derivatives`、`site_stats`、`videos`、`clash_control`、`recite_sync`、`guestbook_messages`。初始化与词库维护命令：
+D1 核心表：`textbook_words`、`word_derivatives`、`site_stats`、`videos`、`clash_control`、`recite_sync`、`guestbook_messages`，以及按需幂等自动创建的网盘表 `pan_files`、`pan_blobs`、`pan_meta`（[`ensurePanTables`](./functions/_lib/db.ts)）。初始化与词库维护命令：
 ```bash
 npx wrangler d1 execute web-vocab-db --remote --file=data/schema.sql
 python scripts/seed_d1.py
@@ -173,7 +175,7 @@ python scripts/verify_vocab.py
 ## 4. 当前开发进度审计（已完成 vs 待收尾）
 
 - **已完成并已验证通过的功能**：
-  - 全站 10 个 MPA 页面迁移与全栈 TypeScript 强类型改造（`npm run check` 44/44 单测与构建全绿）。
+  - 全站 10 个 MPA 页面迁移与全栈 TypeScript 强类型改造。
   - 首页 Claude 纸感布局：6 时段日出日落精细问候（无个人姓名）、Omnibox 即输即查（支持 `/api/vocab` 失败时降级读 `./data/vocab.json`）、心形点赞胶囊、桌面与手机顶部主题切换按钮。
   - **首页专属可折叠细长图标窄栏** + 非首页保留标准桌面可折叠侧边栏与手机端顶栏抽屉。
   - **VS Code 风格 Quick Pick 全局命令面板**（`⌘K` 搜索页面/单词/主题、最近使用置顶、`⌘⇧P` 或输入 `>` 进入命令模式并高亮模糊匹配）。
@@ -181,6 +183,7 @@ python scripts/verify_vocab.py
   - **独立游乐场 [`games.html`](./games.html)**：支持 `?tab=2048|puzzle|memory` 与侧边栏高亮同步，航拍拼图与记忆翻卡复用画廊图库清单（[`photos.ts`](./src/pages/gallery/photos.ts)）；记忆翻卡（[`game-memory.ts`](./src/pages/games/game-memory.ts)）已实现开局 100% 并发预加载与进度遮罩（`#memPreloadOverlay`），移除 `loading="lazy"` 并改为原地 DOM class 切换翻转；航拍拼图（[`game-puzzle.ts`](./src/pages/games/game-puzzle.ts)）基于曼哈顿距离+线性冲突的 A*/加权 A* 求解器（[`solvePuzzle`](./src/pages/games/game-puzzle.ts#L207)）支持 3×3 与 4×4 的「提示一步」高亮闪动、70ms/步「自动求解」快速演示（不弹结算遮罩），以及可选「显示编号」角标开关。
   - **隐藏工具严格隐身**（[`matchSlashCommands`](./src/core/nav-config.ts#L257-L261) 全等匹配 + 移除所有页面提示）。
   - **智能过词彻底重构（[`recite.html`](./recite.html) / [`src/pages/recite/*`](./src/pages/recite/main.ts)）**：移除 390px 模拟手机壳、底部 TabBar、卡片盒外框、真题变形/短语块与前后端助记笔记字段（`memos` 已从 `/api/recite-sync`、[`shared/types.ts`](./shared/types.ts) 与 6 列 CSV 中彻底移除）；主过词界面采用无卡片开阔画布 + 底部 `position: fixed` 锚定三态熟练度栏（`.mark-dock`，按钮位置恒定丝毫不动，支持左右滑动/拖拽与 `←/→` 切词），并支持全屏纯享专注模式（`#zenFullscreen`，仅显示单词与中文）；**自测练习**修复 `[hidden]` 被 `display: flex/grid` 覆盖导致题型重叠的 Bug，升级为 5 选 1 紧凑无卡片开阔画布（`看英选中` / `看中选英` / `听音选义` / `拼写` / `全部混合`），答对 650ms 自动下一题，答错停住显示正解并提供一键「标不会 / 标模糊」快捷按钮。
+  - **资源网盘彻底重构（[`pan.html`](./pan.html) / [`src/pages/pan/*`](./src/pages/pan/main.ts) / [`functions/api/pan.ts`](./functions/api/pan.ts) / [`functions/api/pan-file.ts`](./functions/api/pan-file.ts)）**：移出原有机场订阅与 Apple ID 前端界面（后端 `/api/sub` 与 `/api/subscription` 保持兼容），重构为统一 Claude Editorial 风格的云端文件库；实现按体积自动分级存储（`≤ 20 MB` 走 Cloudflare D1 `512 KB` 分块直存、`20–90 MB` 单步直传 GitHub Releases `v_pan`、`> 90 MB` 自动 `80 MB` 分片并在下载端 `TransformStream` 零内存流式拼接 + 支持外链登记），支持公开/私密双模式（免密公开浏览/下载/上传，私密空间与删除/编辑强制校验 `ADMIN_PASSWORD`）、拖拽多文件上传、常见文件在线预览与首批 3 个经典安装包自动一次性预置。
   - **已合入 `main` 并清理旧文档**：已合并 PR #7，删除过期冗余的 `PROJECT_ARCHITECTURE.md`，全部内容整合至本 `HANDOFF.md`。
 - **待收尾 / 可选清理事项**：
   1. **仓库内历史遗留冗余资产（非功能阻塞，但可择机清理）**：

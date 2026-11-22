@@ -6,7 +6,7 @@ export const DEFAULT_CORS_HEADERS: Record<string, string> = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, PATCH, PUT, DELETE, HEAD, OPTIONS",
   "Access-Control-Allow-Headers":
-    "Content-Type, Authorization, Range, X-Admin-Password, x-admin-key, X-Access-Pwd, X-Clash-Daemon-Secret, X-GitHub-Token, X-File-Name, X-Title, X-Duration, X-Poster-Url",
+    "Content-Type, Authorization, Range, X-Admin-Password, x-admin-key, X-Access-Pwd, X-Clash-Daemon-Secret, X-GitHub-Token, X-File-Name, X-Title, X-Duration, X-Poster-Url, X-Pan-Visibility, X-Pan-Category, X-Pan-Note, X-Pan-Mime, X-Pan-Size",
   "Access-Control-Max-Age": "86400",
 };
 

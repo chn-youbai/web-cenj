@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#faf9f5">
-  <title>资源网盘 - 高速下载</title>
+  <title>资源网盘 · 云端文件库</title>
   <link rel="icon" href="./OIP-C.jpg" type="image/jpeg">
   <script>
     (function(){try{var t=localStorage.getItem("cenj_theme_v1");var d=t==="dark"||(t!=="light"&&window.matchMedia("(prefers-color-scheme: dark)").matches);document.documentElement.dataset.theme=d?"dark":"light";document.documentElement.classList.toggle("dark",d);var m=document.querySelector('meta[name="theme-color"]');if(m)m.content=d?"#262624":"#faf9f5";}catch(e){}})();
@@ -16,283 +16,245 @@
   <link rel="stylesheet" href="./src/styles/pan.css">
 </head>
 <body>
-  <header class="header">
-    <div class="title-group">
-      <div class="eyebrow">ARCHIVE · DOWNLOADS</div>
-      <h1>资源网盘下载</h1>
-      <p>高速直连分发 · 免客户端 · 国内免代理跑满带宽</p>
-    </div>
-  </header>
-
-  <main class="container">
-    <!-- 密码提示 -->
-    <div class="password-banner">
-      <div class="password-info">
-        <span class="password-icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 10v6M12 7.5h.01"/></svg>
-        </span>
-        <div class="password-text">
-          <h3>下载提示：优先推荐「官网高速直下」通道</h3>
-          <p>主通道直连中继秒下，免跳转、免输入密码；如遇网络波动，可使用备用蓝奏云（密码：<code>pass</code>）</p>
-        </div>
+  <div class="pan-stage">
+    <!-- 顶部出版物页头（与全站 Claude Editorial 风格统一） -->
+    <header class="pan-header">
+      <div class="pan-header-title">
+        <div class="pan-eyebrow">ARCHIVE · CLOUD DRIVE</div>
+        <h1>资源网盘</h1>
+        <p class="pan-stats-line" id="panStatsLine">正在加载文件库...</p>
       </div>
-      <button type="button" class="copy-btn" id="copyLanzouPassBtn">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-        <span>复制备用密码 (pass)</span>
-      </button>
-    </div>
 
-    <!-- 资源 1: cmfa v2.11.36 (安卓 arm64-v8a) -->
-    <article class="file-card">
-      <div class="file-meta">
-        <div class="file-icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2" width="12" height="20" rx="2.5"/><path d="M11 18h2"/></svg>
+      <div class="pan-header-actions">
+        <button type="button" class="pan-btn pan-btn-ghost" id="btnToggleAdmin">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+          <span id="btnToggleAdminText">私密解锁</span>
+        </button>
+        <button type="button" class="pan-btn pan-btn-ghost" id="btnOpenLinkModal">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+          </svg>
+          <span>添加外链</span>
+        </button>
+        <button type="button" class="pan-btn pan-btn-primary" id="btnTriggerUpload">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/>
+            <line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+          <span>上传文件</span>
+        </button>
+        <input type="file" id="panFileInput" multiple hidden>
+      </div>
+    </header>
+
+    <!-- 工具栏：搜索 + 排序 + 分类胶囊 + 权限开关 -->
+    <section class="pan-toolbar" aria-label="筛选与检索">
+      <div class="pan-toolbar-top">
+        <div class="pan-search-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="11" cy="11" r="7"/>
+            <path d="M21 21l-4.35-4.35"/>
+          </svg>
+          <input type="text" id="panSearchInput" class="pan-search-input" placeholder="搜索文件名、备注或类型...">
+          <button type="button" class="pan-clear-btn" id="panSearchClear" hidden aria-label="清空搜索">✕</button>
         </div>
-        <div class="file-details">
-          <span class="card-index">01 · ANDROID</span>
-          <h2>Clash Meta For Android (v2.11.36 arm64-v8a)</h2>
-          <div class="file-tags">
-            <span class="tag speed">官网直连 · 免密</span>
-            <span class="tag mono">45.4 MB</span>
-            <span class="tag">Android arm64-v8a .apk</span>
-            <span class="tag">MetaCubeX 官方版</span>
+
+        <div class="pan-toolbar-right">
+          <div class="pan-vis-switch" id="panVisSwitch" hidden role="group" aria-label="可见性筛选">
+            <button type="button" class="pan-seg-btn active" data-vis="all">全部</button>
+            <button type="button" class="pan-seg-btn" data-vis="public">公开</button>
+            <button type="button" class="pan-seg-btn" data-vis="private">私密</button>
           </div>
-        </div>
-      </div>
-      <div class="download-group">
-        <a href="/api/download?file=cmfa" class="download-action" download="cmfa-2.11.36-meta-arm64-v8a-release.apk">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 11l5 5 5-5M5 21h14"/></svg>
-          <span>官网高速直下</span>
-        </a>
-        <a href="https://github.com/MetaCubeX/ClashMetaForAndroid/releases/download/v2.11.36/cmfa-2.11.36-meta-arm64-v8a-release.apk" target="_blank" rel="noopener noreferrer" class="download-action sub-line">
-          <span>GitHub 官方源</span>
-        </a>
-      </div>
-    </article>
 
-    <!-- 资源 2: cfma (安卓客户端 通用版) -->
-    <article class="file-card">
-      <div class="file-meta">
-        <div class="file-icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2" width="12" height="20" rx="2.5"/><path d="M11 18h2"/></svg>
-        </div>
-        <div class="file-details">
-          <span class="card-index">02 · ANDROID</span>
-          <h2>CFMA (安卓客户端)</h2>
-          <div class="file-tags">
-            <span class="tag speed">官网直连 · 免密</span>
-            <span class="tag mono">46.5 MB</span>
-            <span class="tag">Android .apk</span>
-          </div>
-        </div>
-      </div>
-      <div class="download-group">
-        <a href="/api/download?file=cfma" class="download-action" download>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 11l5 5 5-5M5 21h14"/></svg>
-          <span>官网高速直下</span>
-        </a>
-        <a href="http://wwbbh.zizi2.com/ioL544ao3a7e" target="_blank" rel="noopener noreferrer" class="download-action sub-line">
-          <span>备用蓝奏线 (提取码 pass)</span>
-        </a>
-      </div>
-    </article>
-
-    <!-- 资源 3: clashverge (Windows 电脑) -->
-    <article class="file-card">
-      <div class="file-meta">
-        <div class="file-icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M2 20h20"/></svg>
-        </div>
-        <div class="file-details">
-          <span class="card-index">03 · WINDOWS</span>
-          <h2>Clash Verge (Windows 电脑版)</h2>
-          <div class="file-tags">
-            <span class="tag speed">官网直连 · 免密</span>
-            <span class="tag mono">44.9 MB</span>
-            <span class="tag">x64 安装包 .exe</span>
-          </div>
-        </div>
-      </div>
-      <div class="download-group">
-        <a href="/api/download?file=clashverge" class="download-action" download>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 11l5 5 5-5M5 21h14"/></svg>
-          <span>官网高速直下</span>
-        </a>
-        <a href="http://wwbbh.zizi2.com/i8bwP4anaxwd" target="_blank" rel="noopener noreferrer" class="download-action sub-line">
-          <span>备用蓝奏线 (提取码 pass)</span>
-        </a>
-      </div>
-    </article>
-
-    <!-- 备用订阅地址 -->
-    <section class="file-card sub-card">
-      <div class="sub-header">
-        <div class="file-icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-        </div>
-        <div>
-          <span class="card-index">04 · SUBSCRIPTION</span>
-          <h2>备用订阅地址</h2>
-          <div class="file-tags">
-            <span class="tag accent">Clash / CFMA 订阅链接</span>
-          </div>
+          <select id="panSortSelect" class="pan-select" aria-label="排序方式">
+            <option value="newest">最新上传</option>
+            <option value="downloads">下载最多</option>
+            <option value="size">文件最大</option>
+            <option value="name">名称排序</option>
+          </select>
         </div>
       </div>
 
-      <!-- 状态 A：未解锁时 -->
-      <div class="sub-locked-section" id="subLockedSection">
-        <form class="sub-locked-form" id="subUnlockForm">
-          <input type="password" id="unlockInput" class="unlock-input" placeholder="请输入访问密码解锁" autocomplete="off">
-          <button type="submit" id="unlockSubmitBtn" class="unlock-btn">解锁访问</button>
-        </form>
-      </div>
-
-      <!-- 状态 B：解锁后 -->
-      <div class="sub-unlocked-section" id="subUnlockedSection" style="display: none;">
-        <div class="airport-tabs">
-          <button type="button" class="airport-tab-btn active" id="tabDjjc">
-            顶级机场 (200GB 长期有效)
-          </button>
-          <button type="button" class="airport-tab-btn" id="tabVpn07">
-            VPN07 (250GB 月付)
-          </button>
+      <div class="pan-category-row">
+        <div class="pan-cat-chips" id="panCatChips" role="tablist" aria-label="文件分类">
+          <button type="button" class="pan-chip active" data-cat="all">全部</button>
+          <button type="button" class="pan-chip" data-cat="software">软件</button>
+          <button type="button" class="pan-chip" data-cat="document">文档</button>
+          <button type="button" class="pan-chip" data-cat="image">图片</button>
+          <button type="button" class="pan-chip" data-cat="archive">压缩包</button>
+          <button type="button" class="pan-chip" data-cat="media">影音</button>
+          <button type="button" class="pan-chip" data-cat="other">其他</button>
         </div>
 
-        <div class="sub-metrics-grid" id="subMetricsGrid">
-          <div class="metric-item">
-            <span class="metric-label">当前套餐</span>
-            <span class="metric-val highlight" id="metricPlan">加载中...</span>
-          </div>
-          <div class="metric-item">
-            <span class="metric-label">剩余流量</span>
-            <span class="metric-val success" id="metricRemaining">--</span>
-          </div>
-          <div class="metric-item">
-            <span class="metric-label">已用 / 总配额</span>
-            <span class="metric-val" id="metricUsedTotal">--</span>
-          </div>
-          <div class="metric-item">
-            <span class="metric-label">到期时间</span>
-            <span class="metric-val" id="metricExpire">--</span>
-          </div>
-        </div>
-
-        <div class="subscribe-box" id="subscribeText">加载中...</div>
-
-        <div class="sub-actions">
-          <button type="button" class="copy-btn btn-relay" id="copyRelayBtn">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-            <span>复制私人永久直链 (推荐)</span>
-          </button>
-          <button type="button" class="copy-btn" id="copyRawBtn">
-            <span>复制官方原生直链</span>
-          </button>
-          <button type="button" class="copy-btn btn-refresh" id="btnRefreshSub">
-            强制刷新最新订阅
-          </button>
-        </div>
-
-        <div class="sub-hint-text">
-          <span id="subSyncTime">最近拉取：刚刚</span>
-          <button type="button" id="bindAccountLink" class="text-link">绑定 / 修改账号凭据</button>
-          <span id="subTip">提示：私人永久直链支持多域名自动探活自愈，导入 Clash / 手机客户端后终身免改链接</span>
-        </div>
-
-        <!-- iOS 共享美区 Apple ID 与客户端（由云端 /api/subscription 动态下发） -->
-        <div class="apple-id-card">
-          <div class="apple-id-header">
-            <div class="apple-id-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="3"/><path d="M12 18h.01"/></svg>
-            </div>
-            <div class="apple-id-body">
-              <div class="apple-id-title-row">
-                <h3>iOS 美区 Apple ID 共享账号</h3>
-                <span class="tag accent">免翻墙下载代理软件</span>
-              </div>
-              <p class="apple-id-desc">
-                专供苹果用户下载国区 App Store 未上架的代理工具，下载后请退出切回自己账号。
-              </p>
-            </div>
-          </div>
-
-          <div class="apple-warning-box">
-            <div class="warning-title">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4M12 17h.01"/></svg>
-              <span>防锁机安全警告（必读）</span>
-            </div>
-            <ul class="warning-list">
-              <li><strong>严禁在手机「设置 → iCloud」登录！</strong>会导致个人相册/通讯录同步，甚至因锁机变砖。</li>
-              <li><strong>只能在「App Store」应用内登录！</strong>（打开 App Store → 点击右上角头像 → 滑到最底退出当前账号 → 登录此美区账号）。</li>
-              <li>若提示<strong>「Apple ID 安全 / 双重认证」</strong>，务必点击<strong>「其他选项」→「不升级」</strong>，切勿绑定个人手机号！</li>
-            </ul>
-          </div>
-
-          <div class="apple-creds-grid">
-            <div class="cred-item">
-              <span class="cred-label">美区 Apple ID 账号</span>
-              <div class="cred-val-row">
-                <span class="cred-text" id="appleIdUserText">云端拉取中...</span>
-                <button type="button" class="mini-copy-btn" id="copyAppleIdUserBtn">复制</button>
-              </div>
-            </div>
-            <div class="cred-item">
-              <span class="cred-label">登录密码</span>
-              <div class="cred-val-row">
-                <span class="cred-text" id="appleIdPwdText">云端拉取中...</span>
-                <button type="button" class="mini-copy-btn" id="copyAppleIdPwdBtn">复制</button>
-              </div>
-            </div>
-          </div>
-
-          <div class="apple-apps-section">
-            <div class="apps-section-title">
-              推荐免费客户端（登录美区 App Store 后直接搜索下载）
-            </div>
-            <div class="apps-grid">
-              <div class="app-item">
-                <div class="app-header">
-                  <span class="app-badge clash">Clash 内核首选</span>
-                  <strong class="app-name">Karing</strong>
-                </div>
-                <p class="app-desc">完全免费，直接搜「Karing」安装。完美支持 Clash 订阅直链与精细规则分流，界面现代化。</p>
-              </div>
-              <div class="app-item">
-                <div class="app-header">
-                  <span class="app-badge singbox">Sing-box 官方内核</span>
-                  <strong class="app-name">sing-box</strong>
-                </div>
-                <p class="app-desc">完全免费，直接搜「sing-box」安装。由官方维护原生核心，性能极强，支持主流加密协议。</p>
-              </div>
-            </div>
-          </div>
-
-          <div class="apple-guide-step">
-            <strong>配置三步法</strong>：① App Store 登录下载 Karing 或 sing-box → ② 退出美区账号换回自己 ID → ③ 返回本页复制上方的「复制私人永久直链」，在软件中导入即可。
-          </div>
-        </div>
+        <label class="pan-upload-vis-toggle" id="uploadVisToggleWrap" hidden>
+          <input type="checkbox" id="uploadPrivateCheck">
+          <span>本次上传设为私密</span>
+        </label>
       </div>
     </section>
-  </main>
 
-  <!-- 绑定/修改账号与 Token 模态窗 -->
-  <div id="bindModal" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="bindModalTitle">
-    <div class="modal-sheet">
-      <div class="ui-sheet-handle" aria-hidden="true"></div>
-      <h3 id="bindModalTitle">配置账号凭据</h3>
-      <p id="bindModalDesc" class="modal-desc">凭证将安全保存在 Cloudflare D1 边缘数据库中，用于自动化同步与监控。</p>
+    <!-- 拖拽上传轻提示条 -->
+    <div class="pan-drop-bar" id="panDropBar" role="button" tabindex="0" aria-label="拖拽或点击选择文件上传">
+      <span>拖拽任意文件到此处或点击上传 · ≤20MB 走 CF 边缘极速，>20MB 自动走 GitHub 直传/分片</span>
+    </div>
 
-      <div id="formVpn07">
-        <input type="text" id="bindEmail" class="unlock-input" placeholder="输入 VPN07 官网登录邮箱" autocomplete="off">
-        <input type="password" id="bindPassword" class="unlock-input" placeholder="输入 VPN07 官网登录密码" autocomplete="off">
+    <!-- 上传任务队列 -->
+    <section class="pan-queue" id="panQueue" hidden aria-label="上传队列">
+      <div class="pan-queue-head">
+        <span id="panQueueTitle">上传队列</span>
+        <button type="button" class="pan-text-btn" id="btnClearQueue">清除已完成</button>
       </div>
+      <div class="pan-queue-list" id="panQueueList"></div>
+    </section>
 
-      <div id="formDjjc" style="display: none;">
-        <input type="text" id="bindDjjcToken" class="unlock-input" placeholder="粘贴顶级机场完整订阅直链 或 32位Token" autocomplete="off">
+    <!-- 主文件列表 -->
+    <main class="pan-list-wrap" aria-live="polite">
+      <div class="pan-list" id="panFileList"></div>
+      <div class="pan-empty" id="panEmptyState" hidden>
+        <p class="pan-empty-title" id="panEmptyTitle">暂无文件</p>
+        <p class="pan-empty-sub" id="panEmptySub">拖拽文件到页面或点击右上角「上传文件」即可开始使用</p>
       </div>
+    </main>
+  </div>
 
-      <div class="modal-actions">
-        <button type="button" id="bindCancelBtn" class="download-action sub-line">取消</button>
-        <button type="button" id="bindSubmitBtn" class="unlock-btn">保存并立即拉取</button>
+  <!-- 全局拖拽蒙层 -->
+  <div class="pan-drag-overlay" id="panDragOverlay" hidden>
+    <div class="pan-drag-box">
+      <p class="pan-drag-title">松手立即上传至云端文件库</p>
+      <p class="pan-drag-sub" id="panDragSub">≤ 20 MB 自动存入 CF 边缘极速库，> 20 MB 自动走 GitHub 高速通道</p>
+    </div>
+  </div>
+
+  <!-- 模态窗 1：管理解锁 -->
+  <div class="pan-modal-backdrop" id="adminModal" hidden role="dialog" aria-modal="true" aria-labelledby="adminModalTitle">
+    <div class="pan-modal pan-modal-sm">
+      <div class="pan-modal-head">
+        <h3 id="adminModalTitle">解锁私密与管理权限</h3>
+        <button type="button" class="pan-icon-close" data-close-modal="adminModal" aria-label="关闭">✕</button>
+      </div>
+      <p class="pan-modal-desc">输入管理密码后可查看/下载/上传私密文件，以及切换公开私密、编辑和删除文件（仅当前标签页有效）。</p>
+      <form id="adminUnlockForm" class="pan-form">
+        <input type="password" id="adminPasswordInput" class="pan-input" placeholder="请输入管理密码 (ADMIN_PASSWORD)" autocomplete="current-password">
+        <div class="pan-modal-actions">
+          <button type="button" class="pan-btn pan-btn-ghost" data-close-modal="adminModal">取消</button>
+          <button type="submit" class="pan-btn pan-btn-primary" id="adminSubmitBtn">解锁</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 模态窗 2：添加外链资源 -->
+  <div class="pan-modal-backdrop" id="linkModal" hidden role="dialog" aria-modal="true" aria-labelledby="linkModalTitle">
+    <div class="pan-modal">
+      <div class="pan-modal-head">
+        <h3 id="linkModalTitle">添加外链资源</h3>
+        <button type="button" class="pan-icon-close" data-close-modal="linkModal" aria-label="关闭">✕</button>
+      </div>
+      <form id="linkForm" class="pan-form">
+        <label class="pan-field">
+          <span>资源名称</span>
+          <input type="text" id="linkNameInput" class="pan-input" placeholder="例如：Clash Verge 安装包" required>
+        </label>
+        <label class="pan-field">
+          <span>直链或分享 URL</span>
+          <input type="url" id="linkUrlInput" class="pan-input" placeholder="https://..." required>
+        </label>
+        <div class="pan-field-row">
+          <label class="pan-field">
+            <span>分类</span>
+            <select id="linkCatSelect" class="pan-select">
+              <option value="software">软件</option>
+              <option value="document">文档</option>
+              <option value="image">图片</option>
+              <option value="archive">压缩包</option>
+              <option value="media">影音</option>
+              <option value="other" selected>其他</option>
+            </select>
+          </label>
+          <label class="pan-field" id="linkVisField" hidden>
+            <span>可见性</span>
+            <select id="linkVisSelect" class="pan-select">
+              <option value="public">公开</option>
+              <option value="private">私密</option>
+            </select>
+          </label>
+        </div>
+        <label class="pan-field">
+          <span>备注 / 提取码（可选）</span>
+          <input type="text" id="linkNoteInput" class="pan-input" placeholder="如：提取码 pass、适用系统说明...">
+        </label>
+        <div class="pan-modal-actions">
+          <button type="button" class="pan-btn pan-btn-ghost" data-close-modal="linkModal">取消</button>
+          <button type="submit" class="pan-btn pan-btn-primary" id="linkSubmitBtn">保存资源</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 模态窗 3：编辑文件信息 -->
+  <div class="pan-modal-backdrop" id="editModal" hidden role="dialog" aria-modal="true" aria-labelledby="editModalTitle">
+    <div class="pan-modal">
+      <div class="pan-modal-head">
+        <h3 id="editModalTitle">编辑文件信息</h3>
+        <button type="button" class="pan-icon-close" data-close-modal="editModal" aria-label="关闭">✕</button>
+      </div>
+      <form id="editForm" class="pan-form">
+        <input type="hidden" id="editFileId">
+        <label class="pan-field">
+          <span>文件名称</span>
+          <input type="text" id="editNameInput" class="pan-input" required>
+        </label>
+        <div class="pan-field-row">
+          <label class="pan-field">
+            <span>分类</span>
+            <select id="editCatSelect" class="pan-select">
+              <option value="software">软件</option>
+              <option value="document">文档</option>
+              <option value="image">图片</option>
+              <option value="archive">压缩包</option>
+              <option value="media">影音</option>
+              <option value="other">其他</option>
+            </select>
+          </label>
+          <label class="pan-field">
+            <span>可见性</span>
+            <select id="editVisSelect" class="pan-select">
+              <option value="public">公开</option>
+              <option value="private">私密</option>
+            </select>
+          </label>
+        </div>
+        <label class="pan-field">
+          <span>备注</span>
+          <input type="text" id="editNoteInput" class="pan-input" placeholder="可选备注说明">
+        </label>
+        <div class="pan-modal-actions">
+          <button type="button" class="pan-btn pan-btn-ghost" data-close-modal="editModal">取消</button>
+          <button type="submit" class="pan-btn pan-btn-primary" id="editSubmitBtn">保存修改</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 模态窗 4：在线预览 -->
+  <div class="pan-modal-backdrop" id="previewModal" hidden role="dialog" aria-modal="true" aria-labelledby="previewModalTitle">
+    <div class="pan-modal pan-modal-lg">
+      <div class="pan-modal-head">
+        <div class="pan-preview-head-meta">
+          <h3 id="previewModalTitle">文件预览</h3>
+          <span class="pan-preview-sub" id="previewModalSub"></span>
+        </div>
+        <button type="button" class="pan-icon-close" data-close-modal="previewModal" aria-label="关闭">✕</button>
+      </div>
+      <div class="pan-preview-body" id="previewModalBody"></div>
+      <div class="pan-modal-actions">
+        <a id="previewOpenRawLink" class="pan-btn pan-btn-ghost" href="#" target="_blank" rel="noopener noreferrer">新窗口打开</a>
+        <a id="previewDownloadLink" class="pan-btn pan-btn-primary" href="#" download>高速下载</a>
       </div>
     </div>
   </div>

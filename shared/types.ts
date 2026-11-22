@@ -276,3 +276,62 @@ export interface TakeoutBackupResponse {
   updateTime?: string;
   message?: string;
 }
+
+/* ---------- 资源网盘 (/api/pan, /api/pan-file) ---------- */
+export type PanCategory = "software" | "document" | "image" | "archive" | "media" | "other";
+export type PanVisibility = "public" | "private";
+export type PanStorageTier = "cf_d1" | "gh_single" | "gh_chunked" | "external_link";
+
+export interface PanChunkMeta {
+  index: number;
+  url: string;
+  asset_id?: number;
+  size: number;
+}
+
+export interface PanFileItem {
+  id: string;
+  name: string;
+  size: number;
+  mime_type: string;
+  category: PanCategory;
+  visibility: PanVisibility;
+  storage_tier: PanStorageTier;
+  asset_url: string;
+  asset_id?: number | null;
+  chunks?: PanChunkMeta[];
+  note: string;
+  downloads: number;
+  created_at: number;
+  updated_at: number;
+}
+
+export interface PanListStats {
+  total: number;
+  publicCount: number;
+  privateCount: number;
+  totalBytes: number;
+  cfUsedBytes: number;
+}
+
+export interface PanListResponse {
+  status: "ok" | "error";
+  isAdmin: boolean;
+  files: PanFileItem[];
+  stats: PanListStats;
+  message?: string;
+}
+
+export interface PanUploadResponse {
+  status: "ok" | "error";
+  file?: PanFileItem;
+  message?: string;
+  error?: string;
+}
+
+export interface PanChunkUploadResponse {
+  status: "ok" | "error";
+  chunk?: PanChunkMeta;
+  message?: string;
+  error?: string;
+}
