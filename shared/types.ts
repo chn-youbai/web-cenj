@@ -335,3 +335,56 @@ export interface PanChunkUploadResponse {
   message?: string;
   error?: string;
 }
+
+/* ---------- 视界画廊统一媒体库 (/api/media, /api/media-file) ---------- */
+export type MediaKind = "photo" | "video";
+export type MediaVisibility = "public" | "private";
+export type MediaStorageTier = "cf_d1" | "gh_single" | "gh_chunked";
+
+export interface MediaItem {
+  id: string;
+  kind: MediaKind;
+  title: string;
+  album: string;
+  description: string;
+  visibility: MediaVisibility;
+  storage_tier: MediaStorageTier;
+  mime_type: string;
+  file_size: number;
+  width: number;
+  height: number;
+  duration: number;
+  asset_url: string;
+  asset_id?: number | null;
+  chunks?: PanChunkMeta[];
+  has_thumb: boolean;
+  poster_url?: string;
+  downloads: number;
+  created_at: number;
+  updated_at: number;
+}
+
+export interface MediaListStats {
+  total: number;
+  photoCount: number;
+  videoCount: number;
+  privateCount: number;
+  totalBytes: number;
+  cfUsedBytes: number;
+}
+
+export interface MediaListResponse {
+  status: "ok" | "error";
+  isAdmin: boolean;
+  items: MediaItem[];
+  albums: string[];
+  stats: MediaListStats;
+  message?: string;
+}
+
+export interface MediaUploadResponse {
+  status: "ok" | "error";
+  item?: MediaItem;
+  message?: string;
+  error?: string;
+}

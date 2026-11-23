@@ -9,12 +9,12 @@ describe("Claude App Shell & Global Command Palette", () => {
     window.localStorage.clear();
   });
 
-  it("renders desktop sidebar with all 9 navigation items and highlights active page", () => {
+  it("renders desktop sidebar with all 8 navigation items and highlights active page", () => {
     const shell = initAppShell({ activePage: "gallery" });
     expect(shell.activePage).toBe("gallery");
 
     const navLinks = document.querySelectorAll("#appSidebar .app-nav-link");
-    expect(navLinks.length).toBe(9);
+    expect(navLinks.length).toBe(8);
 
     const activeLink = document.querySelector('#appSidebar .app-nav-link[data-nav-id="gallery"]');
     expect(activeLink?.classList.contains("active")).toBe(true);
@@ -47,7 +47,7 @@ describe("Claude App Shell & Global Command Palette", () => {
     expect(backdrop?.classList.contains("open")).toBe(true);
 
     const drawerLinks = document.querySelectorAll("#mobileDrawerBackdrop .app-nav-link");
-    expect(drawerLinks.length).toBe(9);
+    expect(drawerLinks.length).toBe(8);
 
     indexShell.closeDrawer();
     subShell.closeDrawer();

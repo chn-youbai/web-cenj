@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#faf9f5">
-  <title>视界画廊与视频专区 - Photo Gallery</title>
+  <title>视界画廊 · 照片与视频库</title>
   <link rel="icon" href="./OIP-C.jpg" type="image/jpeg">
   <script>
     (function(){try{var t=localStorage.getItem("cenj_theme_v1");var d=t==="dark"||(t!=="light"&&window.matchMedia("(prefers-color-scheme: dark)").matches);document.documentElement.dataset.theme=d?"dark":"light";document.documentElement.classList.toggle("dark",d);var m=document.querySelector('meta[name="theme-color"]');if(m)m.content=d?"#262624":"#faf9f5";}catch(e){}})();
@@ -16,72 +16,246 @@
   <link rel="stylesheet" href="./src/styles/gallery.css">
 </head>
 <body>
-  <header class="header">
-    <div class="title-group">
-      <div class="eyebrow">ARCHIVE · GALLERY</div>
-      <h1>视界画廊与视频专区</h1>
-      <p>精选航拍照片与高清视频 · 在线秒播与原画下载</p>
+  <div class="gallery-stage">
+    <!-- 顶部出版物页头（与全站 Claude Editorial 风格统一） -->
+    <header class="gal-header">
+      <div class="gal-header-title">
+        <div class="gal-eyebrow">ARCHIVE · MEDIA GALLERY</div>
+        <h1>视界画廊</h1>
+        <p class="gal-stats-line" id="galStatsLine">121 张航拍精选 · 正在同步云端媒体库...</p>
+      </div>
+
+      <div class="gal-header-actions">
+        <button type="button" class="gal-btn gal-btn-ghost" id="btnGalAdmin">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+          <span id="btnGalAdminText">私密解锁</span>
+        </button>
+        <button type="button" class="gal-btn gal-btn-primary" id="btnOpenUploadModal">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/>
+            <line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+          <span>上传照片 / 视频</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- 工具栏：类型选项卡 + 搜索 + 相册筛选 + 私密可见性 -->
+    <section class="gal-toolbar" aria-label="筛选与检索">
+      <div class="gal-toolbar-top">
+        <div class="gal-kind-switch" id="galKindSwitch" role="tablist" aria-label="媒体类型">
+          <button type="button" class="gal-seg-btn active" data-kind="all">全部 <span class="tab-count" id="countAll">121</span></button>
+          <button type="button" class="gal-seg-btn" data-kind="photo">照片 <span class="tab-count" id="countPhoto">121</span></button>
+          <button type="button" class="gal-seg-btn" data-kind="video">视频 <span class="tab-count" id="countVideo">0</span></button>
+        </div>
+
+        <div class="gal-toolbar-right">
+          <div class="gal-vis-switch" id="galVisSwitch" hidden role="group" aria-label="可见性筛选">
+            <button type="button" class="gal-seg-btn active" data-vis="all">全部</button>
+            <button type="button" class="gal-seg-btn" data-vis="public">公开</button>
+            <button type="button" class="gal-seg-btn" data-vis="private">私密</button>
+          </div>
+
+          <div class="gal-search-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="11" cy="11" r="7"/>
+              <path d="M21 21l-4.35-4.35"/>
+            </svg>
+            <input type="text" id="galSearchInput" class="gal-search-input" placeholder="搜索标题、相册或描述...">
+            <button type="button" class="gal-clear-btn" id="galSearchClear" hidden aria-label="清空搜索">✕</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="gal-album-chips" id="galAlbumChips" role="tablist" aria-label="相册筛选"></div>
+    </section>
+
+    <!-- 上传队列进度面板 -->
+    <section class="gal-queue" id="galQueue" hidden aria-label="上传队列">
+      <div class="gal-queue-head">
+        <span id="galQueueTitle">上传队列</span>
+        <button type="button" class="gal-text-btn" id="btnGalClearQueue">清除已完成</button>
+      </div>
+      <div class="gal-queue-list" id="galQueueList"></div>
+    </section>
+
+    <!-- 统一媒体网格 -->
+    <main class="gal-main" aria-live="polite">
+      <div class="media-grid" id="mediaGrid"></div>
+      <div class="gal-empty" id="galEmptyState" hidden>
+        <p class="gal-empty-title" id="galEmptyTitle">暂无匹配媒体</p>
+        <p class="gal-empty-sub" id="galEmptySub">点击右上角「上传照片 / 视频」或直接拖拽图片、视频到页面即可上传</p>
+      </div>
+    </main>
+  </div>
+
+  <!-- 全局拖拽蒙层 -->
+  <div class="gal-drag-overlay" id="galDragOverlay" hidden>
+    <div class="gal-drag-box">
+      <p class="gal-drag-title">松手立即上传照片 / 视频</p>
+      <p class="gal-drag-sub">自动生成缩略图与视频封面 · ≤20MB 走 CF 极速库，>20MB 走 GitHub 高速通道</p>
     </div>
-    <div class="header-actions">
-      <a href="./upload.html" class="upload-link-btn">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
-        <span>投递视频</span>
-      </a>
+  </div>
+
+  <!-- 模态窗 1：双上传弹窗 -->
+  <div class="gal-modal-backdrop" id="uploadModal" hidden role="dialog" aria-modal="true" aria-labelledby="uploadModalTitle">
+    <div class="gal-modal">
+      <div class="gal-modal-head">
+        <h3 id="uploadModalTitle">上传照片 / 视频到画廊</h3>
+        <button type="button" class="gal-icon-close" data-close-modal="uploadModal" aria-label="关闭">✕</button>
+      </div>
+      <form id="uploadForm" class="gal-form">
+        <div class="gal-upload-drop" id="uploadDropArea" role="button" tabindex="0">
+          <input type="file" id="galFileInput" accept="image/*,video/*" multiple hidden>
+          <p class="gal-drop-main" id="uploadSelectLabel">点击选择照片或视频（支持多选 / 拖拽）</p>
+          <p class="gal-drop-hint">≤20MB 直存 Cloudflare 极速库 · >20MB 自动走 GitHub 直传/分片</p>
+        </div>
+
+        <div class="gal-field-row">
+          <label class="gal-field">
+            <span>所属相册</span>
+            <input type="text" id="uploadAlbumInput" list="albumSuggestions" class="gal-input" placeholder="如：日常、旅行、随手拍" value="日常摄影">
+            <datalist id="albumSuggestions"></datalist>
+          </label>
+          <label class="gal-field" id="uploadVisField" hidden>
+            <span>可见性</span>
+            <select id="uploadVisSelect" class="gal-select">
+              <option value="public">公开展示</option>
+              <option value="private">私密相册</option>
+            </select>
+          </label>
+        </div>
+
+        <label class="gal-field">
+          <span>批量描述 / 备注（可选）</span>
+          <input type="text" id="uploadDescInput" class="gal-input" placeholder="记录拍摄地点或画面说明...">
+        </label>
+
+        <div class="gal-modal-actions">
+          <button type="button" class="gal-btn gal-btn-ghost" data-close-modal="uploadModal">取消</button>
+          <button type="submit" class="gal-btn gal-btn-primary" id="uploadSubmitBtn" disabled>开始上传</button>
+        </div>
+      </form>
     </div>
-  </header>
+  </div>
 
-  <!-- 分类选项卡 -->
-  <nav class="category-tabs" aria-label="画廊分类">
-    <button type="button" class="cat-tab active" id="tabPhotoBtn">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
-      <span>精选摄影</span>
-      <span class="tab-count" id="photoCount">121</span>
-    </button>
-    <button type="button" class="cat-tab" id="tabVideoBtn">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2.5"/><path d="M10 9l5 3-5 3V9z"/></svg>
-      <span>视频专区</span>
-      <span class="tab-count" id="videoCount">0</span>
-    </button>
-  </nav>
+  <!-- 模态窗 2：管理解锁 -->
+  <div class="gal-modal-backdrop" id="galAdminModal" hidden role="dialog" aria-modal="true" aria-labelledby="galAdminTitle">
+    <div class="gal-modal gal-modal-sm">
+      <div class="gal-modal-head">
+        <h3 id="galAdminTitle">解锁私密与媒体管理</h3>
+        <button type="button" class="gal-icon-close" data-close-modal="galAdminModal" aria-label="关闭">✕</button>
+      </div>
+      <p class="gal-modal-desc">输入管理密码后可浏览/上传私密媒体，并编辑相册或删除已上传的照片与视频。</p>
+      <form id="galAdminForm" class="gal-form">
+        <input type="password" id="galAdminPwdInput" class="gal-input" placeholder="请输入管理密码 (ADMIN_PASSWORD)" autocomplete="current-password">
+        <div class="gal-modal-actions">
+          <button type="button" class="gal-btn gal-btn-ghost" data-close-modal="galAdminModal">取消</button>
+          <button type="submit" class="gal-btn gal-btn-primary" id="galAdminSubmitBtn">解锁</button>
+        </div>
+      </form>
+    </div>
+  </div>
 
-  <!-- 图片瀑布流 -->
-  <div class="gallery-grid" id="galleryGrid"></div>
-
-  <!-- 视频卡片流 -->
-  <div class="video-grid" id="videoGrid"></div>
+  <!-- 模态窗 3：编辑媒体元数据 -->
+  <div class="gal-modal-backdrop" id="galEditModal" hidden role="dialog" aria-modal="true" aria-labelledby="galEditTitle">
+    <div class="gal-modal">
+      <div class="gal-modal-head">
+        <h3 id="galEditTitle">编辑媒体信息</h3>
+        <button type="button" class="gal-icon-close" data-close-modal="galEditModal" aria-label="关闭">✕</button>
+      </div>
+      <form id="galEditForm" class="gal-form">
+        <input type="hidden" id="editMediaId">
+        <label class="gal-field">
+          <span>标题</span>
+          <input type="text" id="editMediaTitle" class="gal-input" required>
+        </label>
+        <div class="gal-field-row">
+          <label class="gal-field">
+            <span>相册分组</span>
+            <input type="text" id="editMediaAlbum" list="albumSuggestions" class="gal-input" required>
+          </label>
+          <label class="gal-field">
+            <span>可见性</span>
+            <select id="editMediaVis" class="gal-select">
+              <option value="public">公开</option>
+              <option value="private">私密</option>
+            </select>
+          </label>
+        </div>
+        <label class="gal-field">
+          <span>描述</span>
+          <input type="text" id="editMediaDesc" class="gal-input" placeholder="可选描述">
+        </label>
+        <div class="gal-modal-actions">
+          <button type="button" class="gal-btn gal-btn-ghost" data-close-modal="galEditModal">取消</button>
+          <button type="submit" class="gal-btn gal-btn-primary" id="editMediaSubmitBtn">保存修改</button>
+        </div>
+      </form>
+    </div>
+  </div>
 
   <!-- 视频大屏播放弹窗 -->
   <div class="video-modal" id="videoModal">
     <div class="video-modal-card">
       <div class="video-modal-header">
-        <div class="video-modal-title" id="videoModalTitle">视频播放</div>
+        <div class="video-modal-title-wrap">
+          <div class="video-modal-title" id="videoModalTitle">视频播放</div>
+          <div class="video-modal-meta" id="videoModalMeta">时长: -- · 体积: --</div>
+        </div>
         <button type="button" class="video-modal-close" aria-label="关闭">&times;</button>
       </div>
       <div class="video-modal-player-wrap">
         <video id="activePlayer" controls playsinline preload="metadata"></video>
       </div>
       <div class="video-modal-footer">
-        <div class="video-modal-meta" id="videoModalMeta">时长: -- · 体积: --</div>
-        <a id="videoDownloadBtn" href="#" class="download-video-btn" download target="_blank" rel="noopener noreferrer">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
-          <span>下载原始视频 (原画)</span>
+        <div class="video-modal-admin-btns">
+          <button type="button" class="gal-btn gal-btn-ghost" id="videoEditBtn" hidden>编辑</button>
+          <button type="button" class="gal-btn gal-btn-ghost" id="videoVisBtn" hidden>设为私密</button>
+          <button type="button" class="gal-btn gal-btn-danger" id="videoDeleteBtn" hidden>删除</button>
+        </div>
+        <a id="videoDownloadBtn" href="#" class="gal-btn gal-btn-primary" download target="_blank" rel="noopener noreferrer">
+          <span>下载原画视频</span>
         </a>
       </div>
     </div>
   </div>
 
-  <!-- 照片大图浏览 -->
+  <!-- 升级版照片大图灯箱（缩放/拖拽/原图下载/管理） -->
   <div class="lightbox" id="lightbox">
-    <button type="button" class="close-btn" aria-label="关闭">&times;</button>
-    <button type="button" class="nav-arrow prev" aria-label="上一张">&#10094;</button>
+    <div class="lightbox-topbar">
+      <div class="lightbox-counter" id="lightboxCounter">1 / 121</div>
+      <div class="lightbox-top-actions">
+        <button type="button" class="lightbox-pill-btn" id="lightboxZoomBtn" hidden>100%</button>
+        <button type="button" class="lightbox-pill-btn close-btn" aria-label="关闭">&times; 关闭</button>
+      </div>
+    </div>
 
+    <button type="button" class="nav-arrow prev" aria-label="上一张">&#10094;</button>
     <div class="lightbox-content">
       <img id="lightboxImg" src="" alt="大图预览">
     </div>
-
     <button type="button" class="nav-arrow next" aria-label="下一张">&#10095;</button>
-    <div class="lightbox-counter" id="lightboxCounter">1 / 121</div>
+
+    <div class="lightbox-bottombar">
+      <div class="lightbox-info">
+        <div class="lightbox-title" id="lightboxTitle">航拍精选</div>
+        <div class="lightbox-meta" id="lightboxMeta">航拍精选</div>
+      </div>
+      <div class="lightbox-actions">
+        <button type="button" class="lightbox-pill-btn" id="lightboxEditBtn" hidden>编辑</button>
+        <button type="button" class="lightbox-pill-btn" id="lightboxVisBtn" hidden>设为私密</button>
+        <button type="button" class="lightbox-pill-btn danger" id="lightboxDeleteBtn" hidden>删除</button>
+        <a class="lightbox-pill-btn primary" id="lightboxDownloadBtn" href="#" download>下载原图</a>
+      </div>
+    </div>
   </div>
+
+  <div class="toast" id="toast">操作成功</div>
 
   <script type="module" src="./src/pages/gallery/main.ts"></script>
 </body>

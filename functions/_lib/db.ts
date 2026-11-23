@@ -209,3 +209,141 @@ export async function ensurePanTables(db: D1Database): Promise<void> {
     console.error("ensurePanTables error:", err);
   }
 }
+
+const GALLERY_MIGRATE_KEY = "migrated_legacy_videos_v1";
+
+export async function ensureGalleryTables(db: D1Database): Promise<void> {
+  try {
+    await db
+      .prepare(`
+      CREATE TABLE IF NOT EXISTS media_items (
+        id TEXT PRIMARY KEY,
+        kind TEXT NOT NULL DEFAULT 'photo',
+        title TEXT NOT NULL,
+        album TEXT NOT NULL DEFAULT '默认相册',
+        description TEXT NOT NULL DEFAULT '',
+        visibility TEXT NOT NULL DEFAULT 'public',
+        storage_tier TEXT NOT NULL DEFAULT 'cf_d1',
+        mime_type TEXT NOT NULL DEFAULT 'application/octet-stream',
+        file_size INTEGER NOT NULL DEFAULT 0,
+        width INTEGER NOT NULL DEFAULT 0,
+        height INTEGER NOT NULL DEFAULT 0,
+        duration INTEGER NOT NULL DEFAULT 0,
+        asset_url TEXT NOT NULL DEFAULT '',
+        asset_id INTEGER DEFAULT NULL,
+        chunks_json TEXT NOT NULL DEFAULT '[]',
+        has_thumb INTEGER NOT NULL DEFAULT 0,
+        poster_url TEXT NOT NULL DEFAULT '',
+        downloads INTEGER NOT NULL DEFAULT 0,
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL
+      )
+    `)
+      .run();
+
+    await db
+      .prepare(
+        "CREATE INDEX IF NOT EXISTS idx_media_items_vis_created ON media_items(visibility, created_at DESC)",
+      )
+      .run();
+
+    await db
+      .prepare(`
+      CREATE TABLE IF NOT EXISTS media_blobs (
+        media_id TEXT NOT NULL,
+        chunk_index INTEGER NOT NULL,
+        data BLOB NOT NULL,
+        PRIMARY KEY (media_id, chunk_index)
+      )
+    `)
+      .run();
+
+    await db
+      .prepare(`
+      CREATE TABLE IF NOT EXISTS media_thumbs (
+        media_id TEXT PRIMARY KEY,
+        mime_type TEXT NOT NULL DEFAULT 'image/webp',
+        data BLOB NOT NULL
+      )
+    `)
+      .run();
+
+    await db
+      .prepare(`
+      CREATE TABLE IF NOT EXISTS media_meta (
+        key TEXT PRIMARY KEY,
+        value TEXT NOT NULL
+      )
+    `)
+      .run();
+
+    const migrated = await db
+      .prepare("SELECT value FROM media_meta WHERE key = ?")
+      .bind(GALLERY_MIGRATE_KEY)
+      .first<{ value?: string }>();
+
+    if (!migrated?.value) {
+      const now = Date.now();
+      try {
+        const legacy = await db
+          .prepare(
+            "SELECT id, title, description, duration, file_size, poster_url, asset_url, download_count, created_at FROM videos ORDER BY created_at DESC",
+          )
+          .all<{
+            id: string;
+            title: string;
+            description?: string;
+            duration?: number;
+            file_size?: number;
+            poster_url?: string;
+            asset_url: string;
+            download_count?: number;
+            created_at?: string;
+          }>();
+
+        const rows = legacy.results || [];
+        for (let i = 0; i < rows.length; i++) {
+          const v = rows[i];
+          if (!v || !v.asset_url) continue;
+          const parsedTs = v.created_at ? Date.parse(v.created_at) : Number.NaN;
+          const ts = Number.isFinite(parsedTs) ? parsedTs : now - i * 1000;
+          const lower = v.asset_url.toLowerCase();
+          const mimeType = lower.endsWith(".mov")
+            ? "video/quicktime"
+            : lower.endsWith(".webm")
+              ? "video/webm"
+              : "video/mp4";
+
+          await db
+            .prepare(`
+              INSERT OR IGNORE INTO media_items
+                (id, kind, title, album, description, visibility, storage_tier, mime_type, file_size, width, height, duration, asset_url, asset_id, chunks_json, has_thumb, poster_url, downloads, created_at, updated_at)
+              VALUES (?, 'video', ?, '视频精选', ?, 'public', 'gh_single', ?, ?, 0, 0, ?, ?, NULL, '[]', 0, ?, ?, ?, ?)
+            `)
+            .bind(
+              v.id,
+              v.title || "视频",
+              v.description || "",
+              mimeType,
+              Number(v.file_size) || 0,
+              Number(v.duration) || 0,
+              v.asset_url,
+              v.poster_url || "",
+              Number(v.download_count) || 0,
+              ts,
+              ts,
+            )
+            .run();
+        }
+      } catch {
+        // legacy videos table may not exist in fresh/test D1
+      }
+      await db
+        .prepare("INSERT OR REPLACE INTO media_meta (key, value) VALUES (?, ?)")
+        .bind(GALLERY_MIGRATE_KEY, String(now))
+        .run();
+    }
+  } catch (err) {
+    console.error("ensureGalleryTables error:", err);
+  }
+}
