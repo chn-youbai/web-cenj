@@ -388,3 +388,26 @@ export interface MediaUploadResponse {
   message?: string;
   error?: string;
 }
+
+/* ---------- 临时私人订阅链接 (/api/sub-links, /api/sub) ---------- */
+export type TempSubLinkStatus = "active" | "expired" | "exhausted" | "revoked";
+
+export interface TempSubLinkItem {
+  token: string;
+  airport: AirportType;
+  label: string;
+  expires_at: number | null;
+  max_uses: number | null;
+  used_count: number;
+  revoked: boolean;
+  status: TempSubLinkStatus;
+  created_at: number;
+  last_used_at: number | null;
+}
+
+export interface SubLinksListResponse {
+  status: "ok" | "error";
+  links: TempSubLinkItem[];
+  message?: string;
+  error?: string;
+}

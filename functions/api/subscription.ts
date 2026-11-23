@@ -1,5 +1,5 @@
 import type { AppleIdGuideCredentials, SubscriptionResponse } from "../../shared/types";
-import { verifyAccessPassword } from "../_lib/auth";
+import { verifyAccessPassword, verifyAdminPassword } from "../_lib/auth";
 import { getClashPayloadJson, setClashPayloadJson } from "../_lib/db";
 import { type Env, getEnvString } from "../_lib/env";
 import { getErrorMessage, jsonResponse, noContentOptions, readJsonBody } from "../_lib/http";
@@ -260,15 +260,16 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     if (parsed.ok) body = parsed.data;
   }
 
-  const auth = verifyAccessPassword(env, request, body);
-  if (!auth.configured) {
+  const adminAuth = verifyAdminPassword(env, request, body);
+  const accessAuth = verifyAccessPassword(env, request, body);
+  if (!adminAuth.configured && !accessAuth.configured) {
     return jsonResponse(
-      { success: false, message: "服务端尚未配置 ACCESS_PASSWORD 环境变量" },
+      { success: false, message: "服务端尚未配置 ADMIN_PASSWORD 或 ACCESS_PASSWORD 环境变量" },
       503,
     );
   }
-  if (!auth.valid) {
-    return jsonResponse({ success: false, message: "访问密码错误，无权获取订阅信息" }, 401);
+  if (!adminAuth.valid && !accessAuth.valid) {
+    return jsonResponse({ success: false, message: "管理密码错误，无权获取订阅信息" }, 401);
   }
 
   const appleId = getAppleIdCredentials(env);

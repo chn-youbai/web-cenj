@@ -347,3 +347,30 @@ export async function ensureGalleryTables(db: D1Database): Promise<void> {
     console.error("ensureGalleryTables error:", err);
   }
 }
+
+export async function ensureSubLinksTable(db: D1Database): Promise<void> {
+  try {
+    await db
+      .prepare(`
+      CREATE TABLE IF NOT EXISTS sub_temp_links (
+        token TEXT PRIMARY KEY,
+        airport TEXT NOT NULL DEFAULT 'djjc',
+        label TEXT NOT NULL DEFAULT '',
+        expires_at INTEGER DEFAULT NULL,
+        max_uses INTEGER DEFAULT NULL,
+        used_count INTEGER NOT NULL DEFAULT 0,
+        revoked INTEGER NOT NULL DEFAULT 0,
+        created_at INTEGER NOT NULL,
+        last_used_at INTEGER DEFAULT NULL
+      )
+    `)
+      .run();
+    await db
+      .prepare(
+        "CREATE INDEX IF NOT EXISTS idx_sub_temp_links_created ON sub_temp_links(created_at DESC)",
+      )
+      .run();
+  } catch (err) {
+    console.error("ensureSubLinksTable error:", err);
+  }
+}

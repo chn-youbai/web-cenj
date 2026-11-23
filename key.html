@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#faf9f5">
+  <title>私人密钥 · 订阅中枢与 Apple ID</title>
+  <link rel="icon" href="./OIP-C.jpg" type="image/jpeg">
+  <script>
+    (function(){try{var t=localStorage.getItem("cenj_theme_v1");var d=t==="dark"||(t!=="light"&&window.matchMedia("(prefers-color-scheme: dark)").matches);document.documentElement.dataset.theme=d?"dark":"light";document.documentElement.classList.toggle("dark",d);var m=document.querySelector('meta[name="theme-color"]');if(m)m.content=d?"#262624":"#faf9f5";}catch(e){}})();
+  </script>
+  <link rel="preconnect" href="https://fonts.loli.net" crossorigin>
+  <link rel="stylesheet" href="https://fonts.loli.net/css2?family=Noto+Serif+SC:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="./src/styles/base.css">
+  <link rel="stylesheet" href="./src/styles/shell.css">
+  <link rel="stylesheet" href="./src/styles/key.css">
+</head>
+<body>
+  <div class="key-stage">
+    <header class="key-header">
+      <div>
+        <div class="key-eyebrow">PRIVATE · KEY VAULT</div>
+        <h1>私人订阅与密钥中枢</h1>
+        <p class="key-subtitle">永久直链自用 · 临时 Token 限时/限次分享 · 美区 Apple ID 凭证</p>
+      </div>
+      <div class="key-header-actions">
+        <button type="button" class="key-btn key-btn-ghost" id="btnLockVault" hidden>锁定退出</button>
+      </div>
+    </header>
+
+    <!-- 未解锁状态 -->
+    <section class="key-lock-card" id="keyLockCard">
+      <h2>输入管理密码解锁</h2>
+      <p>使用全站管理密码（<code>ADMIN_PASSWORD</code>）解锁后即可查看永久直链、生成临时分享链接与美区 Apple ID。</p>
+      <form id="keyUnlockForm" class="key-lock-form">
+        <input type="password" id="keyPwdInput" class="key-input" placeholder="请输入管理密码..." autocomplete="current-password">
+        <button type="submit" id="keyUnlockBtn" class="key-btn key-btn-primary">解锁访问</button>
+      </form>
+    </section>
+
+    <!-- 解锁后工作台 -->
+    <main class="key-workspace" id="keyWorkspace" hidden>
+      <!-- 1. 双机场流量看板 + 永久直链 -->
+      <section class="key-card">
+        <div class="key-card-head">
+          <div>
+            <h2>订阅流量与永久直链</h2>
+            <p id="subSyncTime">正在同步最新节点信息...</p>
+          </div>
+          <div class="key-airport-tabs" role="group" aria-label="机场选择">
+            <button type="button" class="key-seg-btn active" id="tabDjjc">顶级机场</button>
+            <button type="button" class="key-seg-btn" id="tabVpn07">VPN07</button>
+          </div>
+        </div>
+
+        <div class="key-metrics-grid">
+          <div class="key-metric">
+            <span class="key-metric-label">当前套餐</span>
+            <strong class="key-metric-val" id="metricPlan">--</strong>
+          </div>
+          <div class="key-metric">
+            <span class="key-metric-label">剩余流量</span>
+            <strong class="key-metric-val is-success" id="metricRemaining">--</strong>
+          </div>
+          <div class="key-metric">
+            <span class="key-metric-label">已用 / 总配额</span>
+            <strong class="key-metric-val" id="metricUsedTotal">--</strong>
+          </div>
+          <div class="key-metric">
+            <span class="key-metric-label">到期时间</span>
+            <strong class="key-metric-val" id="metricExpire">--</strong>
+          </div>
+        </div>
+
+        <div class="key-link-box">
+          <span class="key-link-tag">永久私人直链</span>
+          <code id="permSubUrl">--</code>
+        </div>
+
+        <div class="key-actions-row">
+          <button type="button" class="key-btn key-btn-primary" id="btnCopyPermUrl">复制永久直链</button>
+          <button type="button" class="key-btn key-btn-ghost" id="btnCopyRawUrl">复制官方原生直链</button>
+          <button type="button" class="key-btn key-btn-ghost" id="btnRefreshSub">强制刷新流量</button>
+          <button type="button" class="key-btn key-btn-ghost" id="btnOpenBindModal">绑定账号凭据</button>
+        </div>
+      </section>
+
+      <!-- 2. 临时私人订阅链接生成器与列表 -->
+      <section class="key-card">
+        <div class="key-card-head">
+          <div>
+            <h2>临时私人订阅链接</h2>
+            <p>生成独立随机 Token 短链（<code>/api/sub?token=...</code>），过期或用尽即失效，绝不暴露你的永久直链</p>
+          </div>
+        </div>
+
+        <form id="tempLinkForm" class="key-temp-form">
+          <label class="key-field">
+            <span>绑定机场</span>
+            <select id="tempAirportSelect" class="key-select">
+              <option value="djjc">顶级机场</option>
+              <option value="vpn07">VPN07</option>
+            </select>
+          </label>
+          <label class="key-field">
+            <span>有效期</span>
+            <select id="tempTtlSelect" class="key-select">
+              <option value="60">1 小时</option>
+              <option value="1440" selected>24 小时</option>
+              <option value="10080">7 天</option>
+              <option value="43200">30 天</option>
+              <option value="0">不限时</option>
+            </select>
+          </label>
+          <label class="key-field">
+            <span>可用次数</span>
+            <select id="tempMaxUsesSelect" class="key-select">
+              <option value="1">1 次（阅后即焚）</option>
+              <option value="3" selected>3 次</option>
+              <option value="10">10 次</option>
+              <option value="0">不限次</option>
+            </select>
+          </label>
+          <label class="key-field key-field-grow">
+            <span>备注（可选）</span>
+            <input type="text" id="tempLabelInput" class="key-input" placeholder="如：借给朋友、iPad 临时用" maxlength="60">
+          </label>
+          <button type="submit" id="btnCreateTempLink" class="key-btn key-btn-primary">生成并复制</button>
+        </form>
+
+        <div class="key-temp-list" id="tempLinkList"></div>
+      </section>
+
+      <!-- 3. 美区 Apple ID 共享账号 -->
+      <section class="key-card">
+        <div class="key-card-head">
+          <div>
+            <h2>iOS 美区 Apple ID 共享账号</h2>
+            <p>仅限 App Store 内登录下载 Karing / sing-box，严禁在手机「设置 → iCloud」登录以防锁机</p>
+          </div>
+        </div>
+
+        <div class="key-creds-grid">
+          <div class="key-cred-item">
+            <span class="key-metric-label">美区 Apple ID 账号</span>
+            <div class="key-cred-row">
+              <code id="appleIdUserText">拉取中...</code>
+              <button type="button" class="key-btn key-btn-ghost key-btn-sm" id="btnCopyAppleUser">复制</button>
+            </div>
+          </div>
+          <div class="key-cred-item">
+            <span class="key-metric-label">登录密码</span>
+            <div class="key-cred-row">
+              <code id="appleIdPwdText">拉取中...</code>
+              <button type="button" class="key-btn key-btn-ghost key-btn-sm" id="btnCopyApplePwd">复制</button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- 绑定/修改机场凭据弹窗 -->
+  <div class="key-modal-backdrop" id="bindModal" hidden role="dialog" aria-modal="true" aria-labelledby="bindModalTitle">
+    <div class="key-modal">
+      <div class="key-modal-head">
+        <h3 id="bindModalTitle">配置机场账号凭据</h3>
+        <button type="button" class="key-icon-close" id="btnCloseBindModal" aria-label="关闭">✕</button>
+      </div>
+      <p class="key-modal-desc" id="bindModalDesc">凭证将保存在 Cloudflare D1 中，用于自动同步节点与剩余流量。</p>
+      <form id="bindForm" class="key-form">
+        <div id="formDjjc" hidden>
+          <input type="text" id="bindDjjcToken" class="key-input" placeholder="粘贴顶级机场完整订阅直链或 32 位 Token" autocomplete="off">
+        </div>
+        <div id="formVpn07" hidden>
+          <input type="text" id="bindVpnEmail" class="key-input" placeholder="输入 VPN07 登录邮箱" autocomplete="off">
+          <input type="password" id="bindVpnPwd" class="key-input" placeholder="输入 VPN07 登录密码" autocomplete="off">
+        </div>
+        <div class="key-modal-actions">
+          <button type="button" class="key-btn key-btn-ghost" id="btnCancelBind">取消</button>
+          <button type="submit" class="key-btn key-btn-primary" id="btnSaveBind">保存并同步</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="toast" id="toast">已复制到剪贴板</div>
+
+  <script type="module" src="./src/pages/key/main.ts"></script>
+</body>
+</html>

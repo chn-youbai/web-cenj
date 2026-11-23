@@ -1,21 +1,85 @@
-import { getClashPayloadJson } from "../_lib/db";
+import { ensureSubLinksTable, getClashPayloadJson } from "../_lib/db";
 import { type Env, getEnvString } from "../_lib/env";
 import { getErrorMessage, noContentOptions } from "../_lib/http";
 
 const DJJC_DOMAINS = ["dash.djjc.cfd", "sub.djjc.cfd", "api.djjc.cfd", "djjc.cfd"];
 const CLASH_UA = "ClashMetaForAndroid/v2.11.36";
 
+interface TempLinkRow {
+  token: string;
+  airport: string;
+  expires_at: number | null;
+  max_uses: number | null;
+  used_count: number;
+  revoked: number;
+}
+
 export const onRequest: PagesFunction<Env> = async (context) => {
   const { request, env } = context;
   const url = new URL(request.url);
-  const airportType = (
+
+  if (request.method === "OPTIONS") {
+    return noContentOptions("GET, HEAD, OPTIONS");
+  }
+
+  let airportType = (
     url.searchParams.get("type") ||
     url.searchParams.get("airport") ||
     "djjc"
   ).toLowerCase();
 
-  if (request.method === "OPTIONS") {
-    return noContentOptions("GET, HEAD, OPTIONS");
+  const tempToken = (url.searchParams.get("token") || "").trim();
+  if (tempToken) {
+    if (!env.DB) {
+      return new Response("# D1 数据库未绑定，临时链接不可用\nproxies: []", {
+        status: 503,
+        headers: { "Content-Type": "text/yaml; charset=utf-8" },
+      });
+    }
+    await ensureSubLinksTable(env.DB);
+    const link = await env.DB.prepare(
+      "SELECT token, airport, expires_at, max_uses, used_count, revoked FROM sub_temp_links WHERE token = ?",
+    )
+      .bind(tempToken)
+      .first<TempLinkRow>();
+
+    if (!link) {
+      return new Response("# 临时私人订阅链接无效或已删除\nproxies: []", {
+        status: 403,
+        headers: { "Content-Type": "text/yaml; charset=utf-8" },
+      });
+    }
+    if (link.revoked) {
+      return new Response("# 该临时私人订阅链接已被手动吊销\nproxies: []", {
+        status: 403,
+        headers: { "Content-Type": "text/yaml; charset=utf-8" },
+      });
+    }
+    const now = Date.now();
+    if (link.expires_at !== null && now > Number(link.expires_at)) {
+      return new Response("# 该临时私人订阅链接已过期\nproxies: []", {
+        status: 403,
+        headers: { "Content-Type": "text/yaml; charset=utf-8" },
+      });
+    }
+    if (link.max_uses !== null && Number(link.used_count) >= Number(link.max_uses)) {
+      return new Response("# 该临时私人订阅链接已达到最大使用次数\nproxies: []", {
+        status: 403,
+        headers: { "Content-Type": "text/yaml; charset=utf-8" },
+      });
+    }
+
+    airportType = (link.airport || "djjc").toLowerCase();
+    if (request.method !== "HEAD") {
+      context.waitUntil(
+        env.DB.prepare(
+          "UPDATE sub_temp_links SET used_count = used_count + 1, last_used_at = ? WHERE token = ?",
+        )
+          .bind(now, tempToken)
+          .run()
+          .catch(() => undefined),
+      );
+    }
   }
 
   const clientUA = request.headers.get("User-Agent") || "";

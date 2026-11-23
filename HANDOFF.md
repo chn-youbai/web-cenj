@@ -28,7 +28,7 @@
 2. **认证鉴权流（Fail-Closed）**：所有受保护接口（`/api/auth`、`/api/subscription`、`/api/videos` 写操作、`/api/board` 删除、`/api/takeout` 与 `/api/clash`）均通过 [`functions/_lib/auth.ts`](./functions/_lib/auth.ts) 执行常量时间字符串比对（`safeEqual`）。若 Cloudflare Pages 环境变量未注入对应密钥，服务端直接返回 `503` 拒绝访问，前端无任何默认兜底密码。
 3. **搜索与隐藏入口流**：
    - 可见导航（[`NAV_ITEMS`](./src/core/nav-config.ts)）仅包含 **5 组 8 项**：首页、英语查词、智能过词、视界画廊、资源网盘、2048、航拍拼图、记忆翻卡（原「投递视频」已合并入视界画廊，`upload.html` 保留跳转兼容）。
-   - **3 个隐藏工具**（[`takeout.html`](./takeout.html)、[`board.html`](./board.html)、[`clash.html`](./clash.html)）不在任何菜单或提示文案中暴露，仅当用户在首页 Omnibox 或全局命令面板**精确完整输入** `/bill`、`/msg`、`/clash` 时，由 `matchSlashCommands()` 匹配触发跳转。
+   - **4 个隐藏工具**（[`takeout.html`](./takeout.html)、[`board.html`](./board.html)、[`clash.html`](./clash.html)、[`key.html`](./key.html)）不在任何菜单或提示文案中暴露，仅当用户在首页 Omnibox 或全局命令面板**精确完整输入** `/bill`、`/msg`、`/clash`、`/key` 时，由 `matchSlashCommands()` 匹配触发跳转。
 
 ---
 
@@ -46,6 +46,7 @@ web-cenj/
 ├── takeout.html                  # 8. [隐藏] 沙县外卖多人记账助手（/bill）
 ├── board.html                    # 9. [隐藏] 秘密留言板（/msg）
 ├── clash.html                    # 10. [隐藏] Windows PC Clash Verge 远程控台（/clash）
+├── key.html                      # 11. [隐藏] 私人订阅（永久+临时）与美区 Apple ID 中枢（/key）
 │
 ├── shared/
 │   └── types.ts                  # 前后端共享接口与数据契约
@@ -159,12 +160,13 @@ npm run format && npm run check
 | `/api/pan` | `GET`, `POST`, `PATCH`, `DELETE` | 公开浏览/上传；私密/编辑/删除需 `ADMIN_PASSWORD` | 云端文件库 CRUD、`≤20MB` D1 分块存储（`cf_d1`）、`>20MB` GitHub Releases 直传/80MB 分片（`v_pan`）与外链登记 |
 | `/api/pan-file` | `GET`, `HEAD` | 公开免密；私密需 `ADMIN_PASSWORD` | 网盘文件分级流式下载/在线预览（支持 D1 分块流、GitHub 分片零内存流式拼接与 `Range` 断点续传） |
 | `/api/download` | `GET`, `HEAD` | 公开 | 历史预置安装包边缘流式直链下载（向后兼容保留） |
-| `/api/subscription` | `GET`, `POST` | `ACCESS_PASSWORD` | 机场流量查询、VPN07 刷新、美区 Apple ID 凭证下发（后端保留） |
-| `/api/sub` | `GET`, `HEAD` | 固定私人中继 | 自动协议伪装与多域名容灾探活的 Clash YAML 订阅下发（后端保留） |
+| `/api/subscription` | `GET`, `POST` | `ADMIN_PASSWORD` 或 `ACCESS_PASSWORD` | 机场流量查询、VPN07 刷新、美区 Apple ID 凭证下发 |
+| `/api/sub` | `GET`, `HEAD` | 永久直链 / `?token=tmp_...` | Clash YAML 订阅下发：支持永久直链（`?type=djjc\|vpn07`）与限时/限次/可吊销的临时私人链接（`?token=...`） |
+| `/api/sub-links` | `GET`, `POST`, `PATCH`, `DELETE` | `ADMIN_PASSWORD` | 临时私人订阅链接生成、状态查询、吊销与删除 |
 | `/api/*` | `*` | - | `[[catchall]].ts` 返回规范 404 JSON |
 
 ### D1 数据库初始化与词库脚本（[`data/schema.sql`](./data/schema.sql)）
-D1 核心表：`textbook_words`、`word_derivatives`、`site_stats`、`videos`、`clash_control`、`recite_sync`、`guestbook_messages`，以及按需幂等自动创建的网盘表（`pan_files`、`pan_blobs`、`pan_meta` via [`ensurePanTables`](./functions/_lib/db.ts)）与画廊媒体表（`media_items`、`media_blobs`、`media_thumbs`、`media_meta` via [`ensureGalleryTables`](./functions/_lib/db.ts)）。初始化与词库维护命令：
+D1 核心表：`textbook_words`、`word_derivatives`、`site_stats`、`videos`、`clash_control`、`recite_sync`、`guestbook_messages`，以及按需幂等自动创建的网盘表（`pan_files`、`pan_blobs`、`pan_meta` via [`ensurePanTables`](./functions/_lib/db.ts)）、画廊媒体表（`media_items`、`media_blobs`、`media_thumbs`、`media_meta` via [`ensureGalleryTables`](./functions/_lib/db.ts)）与临时订阅链接表 `sub_temp_links`（[`ensureSubLinksTable`](./functions/_lib/db.ts)）。初始化与词库维护命令：
 ```bash
 npx wrangler d1 execute web-vocab-db --remote --file=data/schema.sql
 python scripts/seed_d1.py

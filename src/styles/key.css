@@ -1,0 +1,543 @@
+/* ==========================================================================
+   key.css · Claude Editorial 私人订阅与密钥中枢样式
+   ========================================================================== */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+body {
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: var(--c-bg);
+  color: var(--c-label);
+  font-family: var(--font-sans);
+  padding: calc(18px + var(--safe-top)) calc(16px + var(--safe-right))
+    calc(52px + var(--safe-bottom)) calc(16px + var(--safe-left));
+}
+
+.key-stage {
+  width: 100%;
+  max-width: 920px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.key-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--c-separator);
+}
+
+.key-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  color: var(--c-label-3);
+  margin-bottom: 4px;
+}
+
+.key-header h1 {
+  font-family: var(--font-serif);
+  font-size: clamp(24px, 4vw, 30px);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--c-label);
+}
+
+.key-subtitle {
+  margin-top: 5px;
+  font-size: 12.5px;
+  color: var(--c-label-2);
+}
+
+/* ---------- 通用按钮与表单 ---------- */
+.key-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 13px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--c-separator);
+  background: var(--c-surface);
+  color: var(--c-label);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color var(--dur-1) var(--ease), border-color var(--dur-1) var(--ease),
+    color var(--dur-1) var(--ease);
+}
+
+.key-btn-sm {
+  min-height: 30px;
+  padding: 0 10px;
+  font-size: 12px;
+}
+
+.key-btn-ghost {
+  background: var(--c-bg-subtle);
+}
+
+.key-btn-ghost:hover:not(:disabled) {
+  border-color: var(--c-border-strong);
+  background: var(--c-surface);
+}
+
+.key-btn-primary {
+  background: var(--c-accent);
+  border-color: var(--c-accent);
+  color: #ffffff;
+}
+
+.key-btn-primary:hover:not(:disabled) {
+  filter: brightness(1.06);
+}
+
+.key-btn-danger:hover:not(:disabled) {
+  border-color: var(--c-danger);
+  color: var(--c-danger);
+  background: var(--c-danger-soft);
+}
+
+.key-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.key-input,
+.key-select {
+  min-height: 36px;
+  padding: 0 11px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--c-separator);
+  background: var(--c-bg);
+  color: var(--c-label);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  outline: none;
+}
+
+.key-input:focus,
+.key-select:focus {
+  border-color: var(--c-accent);
+}
+
+/* ---------- 锁屏卡片 ---------- */
+.key-lock-card {
+  max-width: 460px;
+  width: 100%;
+  margin: 28px auto;
+  padding: 24px;
+  border-radius: var(--r-xl);
+  border: 1px solid var(--c-separator);
+  background: var(--c-surface);
+  box-shadow: var(--sh-2);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.key-lock-card h2 {
+  font-family: var(--font-serif);
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.key-lock-card p {
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--c-label-2);
+}
+
+.key-lock-form {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.key-lock-form .key-input {
+  flex: 1;
+}
+
+/* ---------- 解锁工作台 ---------- */
+.key-workspace {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.key-card {
+  padding: 18px 20px;
+  border-radius: var(--r-xl);
+  border: 1px solid var(--c-separator);
+  background: var(--c-surface);
+  box-shadow: var(--sh-1);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.key-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.key-card-head h2 {
+  font-family: var(--font-serif);
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.key-card-head p {
+  margin-top: 3px;
+  font-size: 12.5px;
+  color: var(--c-label-2);
+}
+
+.key-airport-tabs {
+  display: inline-flex;
+  gap: 3px;
+  padding: 3px;
+  border-radius: var(--r-sm);
+  background: var(--c-bg-subtle);
+  border: 1px solid var(--c-separator);
+}
+
+.key-seg-btn {
+  padding: 5px 12px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--c-label-2);
+  font-size: 12.5px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.key-seg-btn.active {
+  background: var(--c-surface);
+  color: var(--c-label);
+  font-weight: 600;
+  box-shadow: var(--sh-1);
+}
+
+.key-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.key-metric {
+  padding: 10px 12px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--c-separator);
+  background: var(--c-bg);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.key-metric-label {
+  font-size: 11.5px;
+  color: var(--c-label-3);
+}
+
+.key-metric-val {
+  font-family: var(--font-mono);
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--c-label);
+}
+
+.key-metric-val.is-success {
+  color: var(--c-success);
+}
+
+.key-link-box {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--c-separator);
+  background: var(--c-bg);
+}
+
+.key-link-tag {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--c-accent) 12%, var(--c-surface));
+  color: var(--c-accent);
+  font-size: 11.5px;
+  font-weight: 600;
+}
+
+.key-link-box code {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  word-break: break-all;
+  color: var(--c-label);
+}
+
+.key-actions-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* ---------- 临时链接生成器与列表 ---------- */
+.key-temp-form {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.key-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--c-label-2);
+}
+
+.key-field-grow {
+  flex: 1 1 180px;
+}
+
+.key-temp-list {
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--c-separator);
+}
+
+.key-temp-empty {
+  padding: 20px 8px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--c-label-3);
+}
+
+.key-temp-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 12px 4px;
+  border-bottom: 1px solid var(--c-separator);
+}
+
+.key-temp-info {
+  min-width: 0;
+  flex: 1 1 260px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.key-temp-top {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.key-temp-title {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--c-label);
+}
+
+.key-pill {
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 500;
+  border: 1px solid var(--c-separator);
+  background: var(--c-bg-subtle);
+  color: var(--c-label-2);
+}
+
+.key-pill.is-active {
+  border-color: color-mix(in srgb, var(--c-success) 40%, var(--c-separator));
+  color: var(--c-success);
+}
+
+.key-pill.is-dead {
+  border-color: color-mix(in srgb, var(--c-danger) 40%, var(--c-separator));
+  color: var(--c-danger);
+}
+
+.key-temp-url {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--c-label-2);
+  word-break: break-all;
+}
+
+.key-temp-meta {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--c-label-3);
+}
+
+.key-temp-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ---------- Apple ID ---------- */
+.key-creds-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.key-cred-item {
+  padding: 12px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--c-separator);
+  background: var(--c-bg);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.key-cred-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.key-cred-row code {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  word-break: break-all;
+}
+
+/* ---------- 弹窗 ---------- */
+.key-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1300;
+  background: rgba(20, 20, 19, 0.55);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.key-modal {
+  width: min(460px, 100%);
+  padding: 18px 20px;
+  border-radius: var(--r-xl);
+  border: 1px solid var(--c-separator);
+  background: var(--c-surface);
+  box-shadow: var(--sh-2);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.key-modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.key-modal-head h3 {
+  font-family: var(--font-serif);
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.key-icon-close {
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  border: 1px solid var(--c-separator);
+  background: var(--c-bg-subtle);
+  color: var(--c-label-2);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.key-modal-desc {
+  font-size: 13px;
+  color: var(--c-label-2);
+}
+
+.key-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.key-form > div {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.key-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(26px + var(--safe-bottom));
+  transform: translateX(-50%) translateY(16px);
+  padding: 9px 16px;
+  border-radius: var(--r-pill);
+  background: var(--c-ink-btn);
+  color: var(--c-ink-btn-text);
+  font-size: 13px;
+  font-weight: 500;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  z-index: 1500;
+  box-shadow: var(--sh-2);
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+@media (max-width: 680px) {
+  .key-metrics-grid,
+  .key-creds-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

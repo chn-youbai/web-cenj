@@ -16,7 +16,8 @@ export type PageId =
   | "game-memory"
   | "takeout"
   | "board"
-  | "clash";
+  | "clash"
+  | "key";
 
 export type NavGroupId = "workspace" | "learn" | "media" | "resource" | "playground";
 
@@ -186,6 +187,15 @@ export const SLASH_COMMANDS: readonly SlashCommandRoute[] = [
     iconSvg:
       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 9l3 3-3 3M13 15h4"/></svg>',
   },
+  {
+    command: "/key",
+    label: "私人密钥",
+    subtitle: "永久/临时订阅直链 · 美区 Apple ID",
+    href: "./key.html",
+    requiresAuth: true,
+    iconSvg:
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>',
+  },
 ] as const;
 
 const EXTRA_PAGE_META: Partial<Record<PageId, NavItemMeta>> = {
@@ -229,6 +239,17 @@ const EXTRA_PAGE_META: Partial<Record<PageId, NavItemMeta>> = {
     group: "workspace",
     keywords: [],
     iconSvg: SLASH_COMMANDS[2]?.iconSvg ?? "",
+    requiresAuth: true,
+  },
+  key: {
+    id: "key",
+    label: "私人密钥",
+    shortLabel: "密钥",
+    subtitle: "永久/临时订阅直链 · 美区 Apple ID",
+    href: "./key.html",
+    group: "workspace",
+    keywords: [],
+    iconSvg: SLASH_COMMANDS[3]?.iconSvg ?? "",
     requiresAuth: true,
   },
 };
