@@ -441,7 +441,7 @@ function bindEvents(): void {
             }
           : {
               type: "vpn07",
-              action: "bind_account",
+              action: "set_credentials",
               email: (optById<HTMLInputElement>("bindVpnEmail")?.value || "").trim(),
               vpn_password: optById<HTMLInputElement>("bindVpnPwd")?.value || "",
             };
