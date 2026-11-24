@@ -62,4 +62,17 @@ describe("command palette (⌘K)", () => {
     expect(listText).not.toContain("/clash");
     expect(document.querySelector(".cmd-match")?.textContent).toBe("侧边栏");
   });
+
+  it("suggests public / commands and supports Tab completion", () => {
+    const palette = initCommandPalette();
+    palette.open("/vo");
+
+    const input = document.getElementById("cmdPaletteInput") as HTMLInputElement;
+    const listText = document.getElementById("cmdPaletteList")?.textContent ?? "";
+    expect(listText).toContain("/vocab");
+    expect(listText).not.toContain("/key");
+
+    input.dispatchEvent(new KeyboardEvent("keydown", { key: "Tab", bubbles: true }));
+    expect(input.value).toBe("/vocab");
+  });
 });

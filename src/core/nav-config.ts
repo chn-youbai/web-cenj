@@ -256,12 +256,29 @@ export function getNavItem(id: PageId): NavItemMeta {
   return found;
 }
 
+export function getNavSlashCommand(item: NavItemMeta): string {
+  switch (item.id) {
+    case "index":
+      return "/home";
+    case "game-2048":
+      return "/2048";
+    case "game-puzzle":
+      return "/puzzle";
+    case "game-memory":
+      return "/memory";
+    default:
+      return `/${item.id}`;
+  }
+}
+
 export function filterNavItems(query: string): NavItemMeta[] {
   const clean = query.trim().replace(/^\/+/, "").toLowerCase();
   if (!clean) {
     return [...NAV_ITEMS];
   }
   return NAV_ITEMS.filter((item) => {
+    const slashCmd = getNavSlashCommand(item).toLowerCase();
+    if (slashCmd.includes(clean)) return true;
     if (item.id.toLowerCase().includes(clean)) return true;
     if (item.label.toLowerCase().includes(clean)) return true;
     if (item.shortLabel.toLowerCase().includes(clean)) return true;

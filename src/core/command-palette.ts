@@ -1,5 +1,11 @@
 import { escapeHtml } from "./dom";
-import { NAV_ITEMS, type NavItemMeta, filterNavItems, matchSlashCommands } from "./nav-config";
+import {
+  NAV_ITEMS,
+  type NavItemMeta,
+  filterNavItems,
+  getNavSlashCommand,
+  matchSlashCommands,
+} from "./nav-config";
 import { getJsonStorage, removeStorageItem, setJsonStorage, setStorageItem } from "./storage";
 import { toggleTheme } from "./theme";
 
@@ -12,6 +18,7 @@ export interface CommandItem {
   kbd?: string;
   iconSvg: string;
   isHiddenSlash?: boolean;
+  completionText?: string;
   action: () => void;
 }
 
@@ -228,6 +235,7 @@ function buildCommandItems(
   // Quick Open Mode (pages, exact slash commands, English vocab lookup, theme)
   const items: CommandItem[] = [];
 
+  const isSlashMode = trimmed.startsWith("/");
   for (const cmd of matchSlashCommands(trimmed)) {
     items.push({
       id: `slash-${cmd.command}`,
@@ -237,6 +245,7 @@ function buildCommandItems(
       badge: cmd.requiresAuth ? "需密码" : "直达",
       iconSvg: cmd.iconSvg,
       isHiddenSlash: true,
+      completionText: cmd.command,
       action: () => {
         closePalette();
         window.location.href = cmd.href;
@@ -260,15 +269,17 @@ function buildCommandItems(
     });
   }
 
-  const matchedPages: NavItemMeta[] = trimmed.startsWith("/") ? [] : filterNavItems(trimmed);
+  const matchedPages: NavItemMeta[] = filterNavItems(trimmed);
   for (const page of matchedPages) {
+    const slashCmd = getNavSlashCommand(page);
     items.push({
       id: `page-${page.id}`,
-      category: "页面",
-      title: page.label,
+      category: isSlashMode ? "指令" : "页面",
+      title: isSlashMode ? `${slashCmd} · ${page.label}` : page.label,
       subtitle: page.subtitle,
-      badge: page.requiresAuth ? "需密码" : undefined,
+      badge: isSlashMode ? page.shortLabel : page.requiresAuth ? "需密码" : undefined,
       iconSvg: page.iconSvg,
+      completionText: slashCmd,
       action: () => {
         closePalette();
         window.location.href = page.href;
@@ -281,7 +292,7 @@ function buildCommandItems(
     ["theme", "dark", "light", "主题", "深色", "浅色", "夜间", "黑夜", "白天"].some((k) =>
       k.includes(trimmed.toLowerCase()),
     );
-  if (themeMatch && !trimmed.startsWith("/")) {
+  if (themeMatch && !isSlashMode) {
     items.push({
       id: "cmd-toggle-theme",
       category: "外观",
@@ -297,7 +308,11 @@ function buildCommandItems(
   }
 
   const finalItems = !trimmed ? sortWithRecents(items) : items;
-  return { items: finalItems, matchQuery: trimmed, mode: "quick-open" };
+  return {
+    items: finalItems,
+    matchQuery: isSlashMode ? trimmed.slice(1) : trimmed,
+    mode: "quick-open",
+  };
 }
 
 export function initCommandPalette(): CommandPaletteController {
@@ -495,6 +510,15 @@ export function initCommandPalette(): CommandPaletteController {
       if (currentItems.length > 0) {
         activeIndex = (activeIndex - 1 + currentItems.length) % currentItems.length;
         updateActiveHighlight();
+      }
+    } else if (e.key === "Tab") {
+      const selected = currentItems[activeIndex];
+      if (selected?.completionText && inputEl) {
+        e.preventDefault();
+        inputEl.value = selected.completionText;
+        inputEl.setSelectionRange(selected.completionText.length, selected.completionText.length);
+        activeIndex = 0;
+        renderList();
       }
     } else if (e.key === "Enter") {
       e.preventDefault();

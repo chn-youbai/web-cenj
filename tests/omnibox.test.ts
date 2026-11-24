@@ -47,4 +47,19 @@ describe("slash jump commands and hidden tools", () => {
     expect(bodyText).toContain("/bill");
     expect(bodyText).toContain("外卖记账");
   });
+
+  it("suggests public slash commands when typing / without leaking hidden commands", () => {
+    const palette = initCommandPalette();
+    palette.open("/");
+    const bodyText = document.body.textContent ?? "";
+    expect(bodyText).toContain("/vocab");
+    expect(bodyText).toContain("/recite");
+    expect(bodyText).toContain("/gallery");
+    expect(bodyText).toContain("/pan");
+    expect(bodyText).toContain("/2048");
+    expect(bodyText).not.toContain("/bill");
+    expect(bodyText).not.toContain("/msg");
+    expect(bodyText).not.toContain("/clash");
+    expect(bodyText).not.toContain("/key");
+  });
 });

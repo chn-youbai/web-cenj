@@ -1,6 +1,6 @@
 import { requestJson } from "@/core/api";
 import { escapeHtml } from "@/core/dom";
-import { filterNavItems, matchSlashCommands } from "@/core/nav-config";
+import { filterNavItems, getNavSlashCommand, matchSlashCommands } from "@/core/nav-config";
 import type { VocabApiResponse, VocabCompactWord } from "@shared/types";
 
 let localWordsCache: VocabCompactWord[] | null = null;
@@ -96,31 +96,74 @@ export function initHomeOmnibox(): void {
 
   let debounceTimer: number | undefined;
   let requestSeq = 0;
+  let slashCandidates: Array<{ command: string; href: string }> = [];
+  let activeSlashIndex = 0;
 
   function hideResults(): void {
     if (!resultsEl) return;
     resultsEl.classList.remove("open");
     resultsEl.innerHTML = "";
+    slashCandidates = [];
+    activeSlashIndex = 0;
+  }
+
+  function updateSlashHighlight(): void {
+    if (!resultsEl) return;
+    const rows = resultsEl.querySelectorAll<HTMLElement>("[data-slash-idx]");
+    for (const row of rows) {
+      const idx = Number.parseInt(row.dataset.slashIdx ?? "0", 10);
+      const isActive = idx === activeSlashIndex;
+      row.classList.toggle("is-active", isActive);
+      if (isActive && typeof row.scrollIntoView === "function") {
+        row.scrollIntoView({ block: "nearest" });
+      }
+    }
   }
 
   function renderSlashMatches(rawQuery: string): string {
-    const slashMatches = matchSlashCommands(rawQuery);
-    if (slashMatches.length === 0) return "";
+    const exactHidden = matchSlashCommands(rawQuery);
+    const publicPages = rawQuery.trim().startsWith("/")
+      ? filterNavItems(rawQuery).filter((item) => item.id !== "index")
+      : [];
+
+    const entries = [
+      ...exactHidden.map((cmd) => ({
+        command: cmd.command,
+        label: cmd.label,
+        subtitle: cmd.subtitle,
+        href: cmd.href,
+        iconSvg: cmd.iconSvg,
+        tag: "直达",
+      })),
+      ...publicPages.map((item) => ({
+        command: getNavSlashCommand(item),
+        label: item.label,
+        subtitle: item.subtitle,
+        href: item.href,
+        iconSvg: item.iconSvg,
+        tag: item.shortLabel,
+      })),
+    ];
+
+    slashCandidates = entries.map((e) => ({ command: e.command, href: e.href }));
+    activeSlashIndex = 0;
+
+    if (entries.length === 0) return "";
 
     return `
       <div class="omni-section">
-        <div class="omni-section-header">快捷跳转指令</div>
+        <div class="omni-section-header">快捷跳转指令（↑↓ 选择 · Tab 补全 · Enter 跳转）</div>
         <div class="omni-page-list">
-          ${slashMatches
+          ${entries
             .map(
-              (cmd) => `
-            <a href="${escapeHtml(cmd.href)}" class="omni-page-row">
-              <span class="omni-page-icon">${cmd.iconSvg}</span>
+              (entry, idx) => `
+            <a href="${escapeHtml(entry.href)}" class="omni-page-row${idx === activeSlashIndex ? " is-active" : ""}" data-slash-idx="${idx}">
+              <span class="omni-page-icon">${entry.iconSvg}</span>
               <span class="omni-page-body">
-                <span class="omni-page-title">${escapeHtml(cmd.command)} · ${escapeHtml(cmd.label)}</span>
-                <span class="omni-page-sub">${escapeHtml(cmd.subtitle)}</span>
+                <span class="omni-page-title">${escapeHtml(entry.command)} · ${escapeHtml(entry.label)}</span>
+                <span class="omni-page-sub">${escapeHtml(entry.subtitle)}</span>
               </span>
-              <span class="omni-page-tag">${cmd.requiresAuth ? "受保护" : "直达"}</span>
+              <span class="omni-page-tag">${escapeHtml(entry.tag)}</span>
             </a>
           `,
             )
@@ -252,10 +295,46 @@ export function initHomeOmnibox(): void {
   input.addEventListener("input", () => {
     if (debounceTimer !== undefined) {
       window.clearTimeout(debounceTimer);
+      debounceTimer = undefined;
+    }
+    if (input.value.trim().startsWith("/")) {
+      void handleInput();
+      return;
     }
     debounceTimer = window.setTimeout(() => {
       void handleInput();
     }, 180);
+  });
+
+  input.addEventListener("keydown", (e) => {
+    const raw = input.value.trim();
+    if (!raw.startsWith("/") || slashCandidates.length === 0) {
+      if (e.key === "Escape") {
+        hideResults();
+      }
+      return;
+    }
+
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      activeSlashIndex = (activeSlashIndex + 1) % slashCandidates.length;
+      updateSlashHighlight();
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      activeSlashIndex = (activeSlashIndex - 1 + slashCandidates.length) % slashCandidates.length;
+      updateSlashHighlight();
+    } else if (e.key === "Tab") {
+      const selected = slashCandidates[activeSlashIndex];
+      if (selected) {
+        e.preventDefault();
+        input.value = selected.command;
+        input.setSelectionRange(selected.command.length, selected.command.length);
+        void handleInput();
+      }
+    } else if (e.key === "Escape") {
+      e.preventDefault();
+      hideResults();
+    }
   });
 
   clearBtn?.addEventListener("click", () => {
@@ -271,6 +350,11 @@ export function initHomeOmnibox(): void {
     if (!raw) return;
 
     if (raw.startsWith("/")) {
+      const activeCandidate = slashCandidates[activeSlashIndex];
+      if (activeCandidate) {
+        window.location.href = activeCandidate.href;
+        return;
+      }
       const slashMatches = matchSlashCommands(raw);
       const exact = slashMatches.find((cmd) => cmd.command.toLowerCase() === raw.toLowerCase());
       const target = exact ?? slashMatches[0];
