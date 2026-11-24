@@ -1,6 +1,11 @@
 import { requestJson } from "@/core/api";
 import { escapeHtml } from "@/core/dom";
-import { filterNavItems, getNavSlashCommand, matchSlashCommands } from "@/core/nav-config";
+import {
+  filterNavItems,
+  filterSlashNavItems,
+  getNavSlashCommand,
+  matchSlashCommands,
+} from "@/core/nav-config";
 import type { VocabApiResponse, VocabCompactWord } from "@shared/types";
 
 let localWordsCache: VocabCompactWord[] | null = null;
@@ -123,7 +128,7 @@ export function initHomeOmnibox(): void {
   function renderSlashMatches(rawQuery: string): string {
     const exactHidden = matchSlashCommands(rawQuery);
     const publicPages = rawQuery.trim().startsWith("/")
-      ? filterNavItems(rawQuery).filter((item) => item.id !== "index")
+      ? filterSlashNavItems(rawQuery).filter((item) => item.id !== "index")
       : [];
 
     const entries = [

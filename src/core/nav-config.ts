@@ -271,6 +271,26 @@ export function getNavSlashCommand(item: NavItemMeta): string {
   }
 }
 
+export function filterSlashNavItems(query: string): NavItemMeta[] {
+  const raw = query.trim().toLowerCase();
+  if (!raw.startsWith("/")) return [];
+  const clean = raw.slice(1).trim();
+  if (!clean) {
+    return [...NAV_ITEMS];
+  }
+  const isAscii = /^[a-z0-9-]+$/.test(clean);
+  return NAV_ITEMS.filter((item) => {
+    const cmd = getNavSlashCommand(item).slice(1).toLowerCase();
+    if (cmd.startsWith(clean)) return true;
+    if (!isAscii) {
+      return (
+        item.label.toLowerCase().includes(clean) || item.shortLabel.toLowerCase().includes(clean)
+      );
+    }
+    return false;
+  });
+}
+
 export function filterNavItems(query: string): NavItemMeta[] {
   const clean = query.trim().replace(/^\/+/, "").toLowerCase();
   if (!clean) {

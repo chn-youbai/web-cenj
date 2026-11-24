@@ -3,6 +3,7 @@ import {
   NAV_ITEMS,
   type NavItemMeta,
   filterNavItems,
+  filterSlashNavItems,
   getNavSlashCommand,
   matchSlashCommands,
 } from "./nav-config";
@@ -269,7 +270,9 @@ function buildCommandItems(
     });
   }
 
-  const matchedPages: NavItemMeta[] = filterNavItems(trimmed);
+  const matchedPages: NavItemMeta[] = isSlashMode
+    ? filterSlashNavItems(trimmed)
+    : filterNavItems(trimmed);
   for (const page of matchedPages) {
     const slashCmd = getNavSlashCommand(page);
     items.push({

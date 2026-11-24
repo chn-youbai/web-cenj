@@ -61,5 +61,16 @@ describe("slash jump commands and hidden tools", () => {
     expect(bodyText).not.toContain("/msg");
     expect(bodyText).not.toContain("/clash");
     expect(bodyText).not.toContain("/key");
+
+    palette.open("/g");
+    const gText = document.body.textContent ?? "";
+    expect(gText).toContain("/gallery");
+    expect(gText).not.toContain("/2048");
+    expect(gText).not.toContain("/puzzle");
+
+    palette.open("/xyz");
+    expect(document.getElementById("cmdPaletteList")?.textContent).toContain(
+      "未找到匹配的页面或命令",
+    );
   });
 });
