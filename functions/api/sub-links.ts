@@ -4,7 +4,6 @@ import type {
   TempSubLinkItem,
   TempSubLinkStatus,
 } from "../../shared/types";
-import { verifyAdminPassword } from "../_lib/auth";
 import { ensureSubLinksTable } from "../_lib/db";
 import type { Env } from "../_lib/env";
 import { jsonResponse, noContentOptions, noStoreJsonResponse, readJsonBody } from "../_lib/http";
@@ -53,24 +52,6 @@ export const onRequestOptions: PagesFunction<Env> = async () => {
 };
 
 export const onRequestGet: PagesFunction<Env> = async (context) => {
-  const auth = verifyAdminPassword(context.env, context.request);
-  if (!auth.configured) {
-    return noStoreJsonResponse(
-      {
-        status: "error",
-        links: [],
-        error: "服务端未配置 ADMIN_PASSWORD",
-      } satisfies SubLinksListResponse,
-      503,
-    );
-  }
-  if (!auth.valid) {
-    return noStoreJsonResponse(
-      { status: "error", links: [], error: "管理密码错误" } satisfies SubLinksListResponse,
-      401,
-    );
-  }
-
   const db = context.env.DB;
   if (!db) {
     return noStoreJsonResponse(
@@ -102,14 +83,6 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   }
 
   const body = parsed.data;
-  const auth = verifyAdminPassword(context.env, context.request, body);
-  if (!auth.configured) {
-    return jsonResponse({ status: "error", error: "服务端未配置 ADMIN_PASSWORD" }, 503);
-  }
-  if (!auth.valid) {
-    return jsonResponse({ status: "error", error: "管理密码错误" }, 401);
-  }
-
   const db = context.env.DB;
   if (!db) {
     return jsonResponse({ status: "error", error: "D1 数据库未绑定" }, 503);
@@ -164,14 +137,6 @@ export const onRequestPatch: PagesFunction<Env> = async (context) => {
   }
 
   const body = parsed.data;
-  const auth = verifyAdminPassword(context.env, context.request, body);
-  if (!auth.configured) {
-    return jsonResponse({ status: "error", error: "服务端未配置 ADMIN_PASSWORD" }, 503);
-  }
-  if (!auth.valid) {
-    return jsonResponse({ status: "error", error: "管理密码错误" }, 401);
-  }
-
   const db = context.env.DB;
   if (!db) {
     return jsonResponse({ status: "error", error: "D1 数据库未绑定" }, 503);
@@ -193,14 +158,6 @@ export const onRequestPatch: PagesFunction<Env> = async (context) => {
 };
 
 export const onRequestDelete: PagesFunction<Env> = async (context) => {
-  const auth = verifyAdminPassword(context.env, context.request);
-  if (!auth.configured) {
-    return jsonResponse({ status: "error", error: "服务端未配置 ADMIN_PASSWORD" }, 503);
-  }
-  if (!auth.valid) {
-    return jsonResponse({ status: "error", error: "管理密码错误" }, 401);
-  }
-
   const db = context.env.DB;
   if (!db) {
     return jsonResponse({ status: "error", error: "D1 数据库未绑定" }, 503);

@@ -1,21 +1,6 @@
 import "@/core/fonts";
 import { initAppShell } from "@/core/shell";
-import {
-  refreshStatus,
-  sendCommand,
-  setOnAuthLost,
-  startAutoRefresh,
-  stopAutoRefresh,
-  submitNewSub,
-} from "./api";
-import {
-  clearClashAuth,
-  closeChangePwdModal,
-  isAuthorized,
-  openChangePwdModal,
-  saveNewPassword,
-  submitClashAuth,
-} from "./auth";
+import { refreshStatus, sendCommand, startAutoRefresh, submitNewSub } from "./api";
 
 function switchTab(tabName: string): void {
   for (const btn of document.querySelectorAll(".tab-btn")) {
@@ -33,32 +18,6 @@ function switchTab(tabName: string): void {
   }
 }
 
-function checkAccessGate(): void {
-  const backdrop = document.getElementById("authModalBackdrop");
-  const mainApp = document.getElementById("mainAppContainer");
-  const input = document.getElementById("clashAuthInput") as HTMLInputElement | null;
-  const err = document.getElementById("authErrorMsg");
-
-  if (isAuthorized()) {
-    backdrop?.classList.remove("show");
-    if (mainApp) mainApp.style.filter = "";
-    void refreshStatus();
-    startAutoRefresh();
-  } else {
-    stopAutoRefresh();
-    if (err) {
-      err.style.color = "#ef4444";
-      err.textContent = "";
-    }
-    if (input) input.value = "";
-    backdrop?.classList.add("show");
-    if (mainApp) mainApp.style.filter = "blur(10px)";
-    window.setTimeout(() => input?.focus(), 150);
-  }
-}
-
-setOnAuthLost(checkAccessGate);
-
 function initClashPage(): void {
   initAppShell({ activePage: "clash" });
   for (const btn of document.querySelectorAll<HTMLElement>(".tab-btn[data-tab]")) {
@@ -67,30 +26,6 @@ function initClashPage(): void {
       if (tab) switchTab(tab);
     });
   }
-
-  document.getElementById("btnClashUnlock")?.addEventListener("click", () => {
-    void submitClashAuth(checkAccessGate);
-  });
-
-  document.getElementById("clashAuthInput")?.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") {
-      void submitClashAuth(checkAccessGate);
-    }
-  });
-
-  document.getElementById("btnOpenChangePwd")?.addEventListener("click", openChangePwdModal);
-  document.getElementById("btnCloseChangePwd")?.addEventListener("click", closeChangePwdModal);
-  document.getElementById("btnSaveChangePwd")?.addEventListener("click", () => {
-    void saveNewPassword(() => void refreshStatus());
-  });
-
-  document.getElementById("btnLogoutClash")?.addEventListener("click", () => {
-    if (window.confirm("确定退出锁定状态吗？退出后再次进入需要重新输入访问密码。")) {
-      stopAutoRefresh();
-      clearClashAuth();
-      checkAccessGate();
-    }
-  });
 
   document.getElementById("btnRefreshStatus")?.addEventListener("click", () => {
     void refreshStatus();
@@ -124,12 +59,13 @@ function initClashPage(): void {
   });
 
   document.addEventListener("visibilitychange", () => {
-    if (!document.hidden && isAuthorized()) {
+    if (!document.hidden) {
       void refreshStatus(true);
     }
   });
 
-  checkAccessGate();
+  void refreshStatus();
+  startAutoRefresh();
 }
 
 if (document.readyState === "loading") {

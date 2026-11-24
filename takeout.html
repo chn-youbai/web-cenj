@@ -238,27 +238,6 @@
         </div>
       </div>
 
-      <!-- Security & Password Card -->
-      <div class="card">
-        <div class="card-title">
-          <span>🔐 访问安全与密码设置</span>
-        </div>
-        <div class="setting-item">
-          <div>
-            <div class="setting-label">修改访问密码</div>
-            <div class="setting-desc">当前支持30天免密，可随时修改独立访问密码</div>
-          </div>
-          <button class="icon-btn" id="btnOpenChangePwd" type="button">修改密码</button>
-        </div>
-        <div class="setting-item">
-          <div>
-            <div class="setting-label">退出解锁状态</div>
-            <div class="setting-desc">立即清除免密授权，重新进入需输密码</div>
-          </div>
-          <button class="icon-btn" style="color:var(--warning);" id="btnLogoutAuth" type="button">退出锁定</button>
-        </div>
-      </div>
-
       <!-- Return Home Card -->
       <div class="card">
         <div class="setting-item" style="cursor:pointer;" id="cardReturnHome">
@@ -446,45 +425,6 @@
       <button class="btn btn-secondary" id="btnApplyPasteMerge" type="button">合并恢复 (保留现有)</button>
       <button class="btn btn-primary" id="btnApplyPasteOverwrite" type="button">全量覆盖恢复</button>
     </div>
-  </div>
-</div>
-
-<!-- Modal: Change Password -->
-<div class="modal-backdrop" id="change-pwd-modal">
-  <div class="bottom-sheet">
-    <div class="sheet-header">
-      <div class="sheet-title">🔐 修改访问密码</div>
-      <button class="sheet-close" id="btnCloseChangePwdModal" type="button">✕</button>
-    </div>
-    <div style="margin-bottom:12px;">
-      <label style="font-size:13px; font-weight:600; display:block; margin-bottom:6px;">原访问密码：</label>
-      <input type="password" id="pwd-current-input" class="input-field" placeholder="请输入当前访问密码">
-    </div>
-    <div style="margin-bottom:14px;">
-      <label style="font-size:13px; font-weight:600; display:block; margin-bottom:6px;">新密码 (至少4位)：</label>
-      <input type="password" id="pwd-new-input" class="input-field" placeholder="输入新的访问密码">
-    </div>
-    <button class="btn btn-primary" style="width:100%; padding:12px;" id="btnSaveNewPwd" type="button">
-      确认修改密码
-    </button>
-  </div>
-</div>
-
-<!-- Modal: In-Page Takeout Auth Gate -->
-<div class="modal-backdrop" id="takeoutAuthBackdrop" style="z-index: 1100;">
-  <div class="bottom-sheet" style="max-width: 400px; margin: auto; border-radius: var(--r-lg);">
-    <div class="sheet-header">
-      <div class="sheet-title">🔐 沙县外卖记账 · 身份验证</div>
-      <a href="./index.html" class="sheet-close" title="返回工作台" style="text-decoration:none;">✕</a>
-    </div>
-    <p style="font-size:13px; color:var(--text-muted); margin-bottom:12px;">
-      请输入访问密码以解锁外卖记账本与云端同步记录。
-    </p>
-    <input type="password" id="takeoutAuthInput" class="input-field" placeholder="请输入访问密码" autocomplete="current-password" style="margin-bottom:8px;">
-    <div id="takeoutAuthError" style="font-size:12px; min-height:18px; margin-bottom:10px;"></div>
-    <button class="btn btn-primary" style="width:100%; padding:12px;" id="takeoutAuthSubmit" type="button">
-      解锁进入
-    </button>
   </div>
 </div>
 

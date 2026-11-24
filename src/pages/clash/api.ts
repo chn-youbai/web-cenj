@@ -1,7 +1,6 @@
-import { ApiRequestError, postJson, requestJson } from "@/core/api";
+import { postJson, requestJson } from "@/core/api";
 import { escapeHtml } from "@/core/dom";
 import type { ClashStatusResponse } from "@shared/types";
-import { clearClashAuth, getStoredPassword, isAuthorized } from "./auth";
 import {
   renderCommandFeedback,
   renderHeartbeat,
@@ -13,11 +12,6 @@ import {
 let autoRefreshTimer: number | undefined;
 let isStatusRefreshing = false;
 let isLastPCOnline = true;
-let onAuthLostCallback: (() => void) | null = null;
-
-export function setOnAuthLost(cb: () => void): void {
-  onAuthLostCallback = cb;
-}
 
 export function stopAutoRefresh(): void {
   if (autoRefreshTimer !== undefined) {
@@ -29,7 +23,7 @@ export function stopAutoRefresh(): void {
 export function startAutoRefresh(): void {
   stopAutoRefresh();
   autoRefreshTimer = window.setInterval(() => {
-    if (isAuthorized() && !document.hidden) {
+    if (!document.hidden) {
       void refreshStatus(true);
     }
   }, 6000);
@@ -39,7 +33,6 @@ export async function refreshStatus(isBackground = false): Promise<void> {
   if (isStatusRefreshing && isBackground) return;
   isStatusRefreshing = true;
 
-  const pwd = getStoredPassword();
   const statusEl = document.getElementById("clashStatusText");
 
   if (!isBackground && statusEl) {
@@ -47,9 +40,7 @@ export async function refreshStatus(isBackground = false): Promise<void> {
   }
 
   try {
-    const data = await requestJson<ClashStatusResponse>(
-      `/api/clash?pwd=${encodeURIComponent(pwd)}`,
-    );
+    const data = await requestJson<ClashStatusResponse>("/api/clash");
 
     if (data.status === "ok") {
       const isOnline = Boolean(data.heartbeat && data.heartbeat.status === "online");
@@ -69,15 +60,9 @@ export async function refreshStatus(isBackground = false): Promise<void> {
       renderSubs(data.profiles_data);
       renderNodes(data.nodes_data);
     } else if (statusEl) {
-      statusEl.innerHTML = `<span style="color:#ef4444;">❌ ${escapeHtml(data.message || "密码错误")}</span>`;
+      statusEl.innerHTML = `<span style="color:#ef4444;">❌ ${escapeHtml(data.message || "状态获取失败")}</span>`;
     }
-  } catch (err) {
-    if (err instanceof ApiRequestError && err.status === 401) {
-      clearClashAuth();
-      stopAutoRefresh();
-      onAuthLostCallback?.();
-      return;
-    }
+  } catch {
     if (!isBackground && statusEl) {
       statusEl.innerHTML = '<span style="color:#ef4444;">❌ 网络请求异常</span>';
     }
@@ -87,7 +72,6 @@ export async function refreshStatus(isBackground = false): Promise<void> {
 }
 
 export async function sendCommand(command: string, payload = ""): Promise<void> {
-  const pwd = getStoredPassword();
   const statusEl = document.getElementById("clashStatusText");
 
   if (statusEl) {
@@ -96,7 +80,6 @@ export async function sendCommand(command: string, payload = ""): Promise<void> 
 
   try {
     const data = await postJson<{ status?: string; message?: string }>("/api/clash", {
-      pwd,
       action: "dispatch_command",
       command,
       payload,
@@ -115,14 +98,7 @@ export async function sendCommand(command: string, payload = ""): Promise<void> 
     } else if (statusEl) {
       statusEl.innerHTML = `<span style="color:#ef4444;">❌ 失败: ${escapeHtml(data.message || "未知错误")}</span>`;
     }
-  } catch (err) {
-    if (err instanceof ApiRequestError && err.status === 401) {
-      window.alert("访问密码已失效或已被修改，请重新解锁");
-      clearClashAuth();
-      stopAutoRefresh();
-      onAuthLostCallback?.();
-      return;
-    }
+  } catch {
     if (statusEl) {
       statusEl.innerHTML = '<span style="color:#ef4444;">❌ 网络请求失败</span>';
     }

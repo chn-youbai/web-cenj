@@ -1,5 +1,4 @@
 import type { AppleIdGuideCredentials, SubscriptionResponse } from "../../shared/types";
-import { verifyAccessPassword, verifyAdminPassword } from "../_lib/auth";
 import { getClashPayloadJson, setClashPayloadJson } from "../_lib/db";
 import { type Env, getEnvString } from "../_lib/env";
 import { getErrorMessage, jsonResponse, noContentOptions, readJsonBody } from "../_lib/http";
@@ -272,18 +271,6 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   if (request.method === "POST") {
     const parsed = await readJsonBody<SubscriptionPostBody>(request);
     if (parsed.ok) body = parsed.data;
-  }
-
-  const adminAuth = verifyAdminPassword(env, request, body);
-  const accessAuth = verifyAccessPassword(env, request, body);
-  if (!adminAuth.configured && !accessAuth.configured) {
-    return jsonResponse(
-      { success: false, message: "服务端尚未配置 ADMIN_PASSWORD 或 ACCESS_PASSWORD 环境变量" },
-      503,
-    );
-  }
-  if (!adminAuth.valid && !accessAuth.valid) {
-    return jsonResponse({ success: false, message: "管理密码错误，无权获取订阅信息" }, 401);
   }
 
   const appleId = getAppleIdCredentials(env);

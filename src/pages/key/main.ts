@@ -12,26 +12,12 @@ import type {
 
 initAppShell({ activePage: "key" });
 
-const KEY_ADMIN_PWD_SESSION = "cenj_key_admin_pwd_v1";
-
 const state = {
-  adminPassword: "",
-  unlocked: false,
   currentAirport: "djjc" as AirportType,
   rawUrls: { djjc: "", vpn07: "" } as Record<AirportType, string>,
   appleId: null as AppleIdGuideCredentials | null,
   tempLinks: [] as TempSubLinkItem[],
 };
-
-try {
-  state.adminPassword = window.sessionStorage.getItem(KEY_ADMIN_PWD_SESSION) || "";
-} catch {
-  // ignore
-}
-
-function getAuthHeaders(): Record<string, string> {
-  return state.adminPassword ? { "X-Admin-Password": state.adminPassword } : {};
-}
 
 function permanentUrlFor(airport: AirportType): string {
   return `${window.location.origin}/api/sub?type=${airport}`;
@@ -51,16 +37,6 @@ function formatExpiry(expiresAt: number | null): string {
   if (hours < 48) return `剩余 ${hours} 小时`;
   const days = Math.ceil(hours / 24);
   return `剩余 ${days} 天`;
-}
-
-function setLockedView(unlocked: boolean): void {
-  state.unlocked = unlocked;
-  const lockCard = optById("keyLockCard");
-  const workspace = optById("keyWorkspace");
-  const lockBtn = optById("btnLockVault");
-  if (lockCard) lockCard.hidden = unlocked;
-  if (workspace) workspace.hidden = !unlocked;
-  if (lockBtn) lockBtn.hidden = !unlocked;
 }
 
 function renderAppleId(): void {
@@ -129,19 +105,16 @@ function renderTempLinks(): void {
     .join("");
 }
 
-async function fetchSubscription(airport: AirportType, forceRefresh = false): Promise<boolean> {
+async function fetchSubscription(airport: AirportType, forceRefresh = false): Promise<void> {
   const permEl = optById("permSubUrl");
   if (permEl) permEl.textContent = permanentUrlFor(airport);
 
   try {
     const resp = await fetch(
       `/api/subscription?type=${airport}${forceRefresh ? "&refresh=true" : ""}`,
-      { headers: getAuthHeaders(), cache: "no-store" },
+      { cache: "no-store" },
     );
     const data = (await resp.json()) as SubscriptionResponse;
-    if (resp.status === 401 || resp.status === 403) {
-      return false;
-    }
 
     if (data.apple_id !== undefined) {
       state.appleId = data.apple_id;
@@ -169,55 +142,22 @@ async function fetchSubscription(airport: AirportType, forceRefresh = false): Pr
         ? `提示：${data.warning}`
         : `最近同步：${new Date().toLocaleTimeString("zh-CN", { hour12: false })}`;
     }
-    return true;
   } catch {
     showToast("订阅信息拉取失败");
-    return true;
   }
 }
 
-async function fetchTempLinks(): Promise<boolean> {
+async function fetchTempLinks(): Promise<void> {
   try {
-    const resp = await fetch("/api/sub-links", {
-      headers: getAuthHeaders(),
-      cache: "no-store",
-    });
-    if (resp.status === 401 || resp.status === 403) return false;
+    const resp = await fetch("/api/sub-links", { cache: "no-store" });
     const data = (await resp.json()) as SubLinksListResponse;
     if (data.status === "ok") {
       state.tempLinks = data.links || [];
       renderTempLinks();
     }
-    return true;
-  } catch {
-    return true;
-  }
-}
-
-async function unlockAndLoad(pwd: string): Promise<boolean> {
-  state.adminPassword = pwd;
-  const [subOk, linksOk] = await Promise.all([
-    fetchSubscription(state.currentAirport, false),
-    fetchTempLinks(),
-  ]);
-  if (!subOk || !linksOk) {
-    state.adminPassword = "";
-    try {
-      window.sessionStorage.removeItem(KEY_ADMIN_PWD_SESSION);
-    } catch {
-      // ignore
-    }
-    setLockedView(false);
-    return false;
-  }
-
-  try {
-    window.sessionStorage.setItem(KEY_ADMIN_PWD_SESSION, pwd);
   } catch {
     // ignore
   }
-  setLockedView(true);
-  return true;
 }
 
 function switchAirport(airport: AirportType): void {
@@ -247,47 +187,6 @@ function closeBindModal(): void {
 }
 
 function bindEvents(): void {
-  optById<HTMLFormElement>("keyUnlockForm")?.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const input = optById<HTMLInputElement>("keyPwdInput");
-    const btn = optById<HTMLButtonElement>("keyUnlockBtn");
-    const pwd = (input?.value || "").trim();
-    if (!pwd) {
-      showToast("请输入管理密码");
-      input?.focus();
-      return;
-    }
-    if (btn) {
-      btn.disabled = true;
-      btn.textContent = "验证中...";
-    }
-    const ok = await unlockAndLoad(pwd);
-    if (btn) {
-      btn.disabled = false;
-      btn.textContent = "解锁访问";
-    }
-    if (ok) {
-      showToast("已解锁私人订阅与密钥中枢");
-    } else {
-      showToast("管理密码错误");
-      if (input) {
-        input.value = "";
-        input.focus();
-      }
-    }
-  });
-
-  optById("btnLockVault")?.addEventListener("click", () => {
-    state.adminPassword = "";
-    try {
-      window.sessionStorage.removeItem(KEY_ADMIN_PWD_SESSION);
-    } catch {
-      // ignore
-    }
-    setLockedView(false);
-    showToast("已锁定密钥中枢");
-  });
-
   optById("tabDjjc")?.addEventListener("click", () => switchAirport("djjc"));
   optById("tabVpn07")?.addEventListener("click", () => switchAirport("vpn07"));
 
@@ -349,7 +248,7 @@ function bindEvents(): void {
     try {
       const resp = await fetch("/api/sub-links", {
         method: "POST",
-        headers: { "Content-Type": "application/json", ...getAuthHeaders() },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           airport,
           label,
@@ -396,7 +295,7 @@ function bindEvents(): void {
     } else if (act === "revoke") {
       const resp = await fetch("/api/sub-links", {
         method: "PATCH",
-        headers: { "Content-Type": "application/json", ...getAuthHeaders() },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ token, revoked: true }),
       });
       if (resp.ok) {
@@ -406,7 +305,6 @@ function bindEvents(): void {
     } else if (act === "delete") {
       const resp = await fetch(`/api/sub-links?token=${encodeURIComponent(token)}`, {
         method: "DELETE",
-        headers: getAuthHeaders(),
       });
       if (resp.ok) {
         showToast("已删除该临时链接");
@@ -448,7 +346,7 @@ function bindEvents(): void {
 
       const resp = await fetch("/api/subscription", {
         method: "POST",
-        headers: { "Content-Type": "application/json", ...getAuthHeaders() },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
       const data = (await resp.json()) as { success?: boolean; message?: string };
@@ -471,8 +369,4 @@ function bindEvents(): void {
 }
 
 bindEvents();
-if (state.adminPassword) {
-  void unlockAndLoad(state.adminPassword);
-} else {
-  setLockedView(false);
-}
+void Promise.all([fetchSubscription(state.currentAirport, false), fetchTempLinks()]);

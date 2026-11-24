@@ -103,15 +103,15 @@ function makeCtx(request: Request, env: Env) {
 }
 
 describe("functions /api/sub-links and /api/sub temporary links", () => {
-  it("enforces ADMIN_PASSWORD, enforces maxUses/TTL/revoke on /api/sub?token=, and deletes cleanly", async () => {
+  it("lists/creates/revokes/deletes links and enforces maxUses/TTL/revoke on /api/sub?token=", async () => {
     const db = createMockSubDb();
-    const env: Env = { DB: db, ADMIN_PASSWORD: "key-admin-pass" };
+    const env: Env = { DB: db };
 
-    // 1. Unauthorized access blocked
-    const unauth = await getSubLinks(
+    // 1. Direct access succeeds without password
+    const initList = await getSubLinks(
       makeCtx(new Request("https://example.com/api/sub-links"), env).ctx,
     );
-    expect(unauth.status).toBe(401);
+    expect(initList.status).toBe(200);
 
     // 2. Create temp link with maxUses = 1
     const createResp = await postSubLinks(
@@ -120,7 +120,6 @@ describe("functions /api/sub-links and /api/sub temporary links", () => {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "X-Admin-Password": "key-admin-pass",
           },
           body: JSON.stringify({
             airport: "djjc",
@@ -157,12 +156,7 @@ describe("functions /api/sub-links and /api/sub temporary links", () => {
 
     // 6. List shows exhausted status, revoke & delete work
     const listResp = await getSubLinks(
-      makeCtx(
-        new Request("https://example.com/api/sub-links", {
-          headers: { "X-Admin-Password": "key-admin-pass" },
-        }),
-        env,
-      ).ctx,
+      makeCtx(new Request("https://example.com/api/sub-links"), env).ctx,
     );
     const listData = (await listResp.json()) as SubLinksListResponse;
     expect(listData.links[0]?.status).toBe("exhausted");
@@ -173,7 +167,6 @@ describe("functions /api/sub-links and /api/sub temporary links", () => {
           method: "PATCH",
           headers: {
             "Content-Type": "application/json",
-            "X-Admin-Password": "key-admin-pass",
           },
           body: JSON.stringify({ token, revoked: true }),
         }),
@@ -186,7 +179,6 @@ describe("functions /api/sub-links and /api/sub temporary links", () => {
       makeCtx(
         new Request(`https://example.com/api/sub-links?token=${token}`, {
           method: "DELETE",
-          headers: { "X-Admin-Password": "key-admin-pass" },
         }),
         env,
       ).ctx,

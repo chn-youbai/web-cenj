@@ -23,23 +23,11 @@
         <h1>私人订阅与密钥中枢</h1>
         <p class="key-subtitle">永久直链自用 · 临时 Token 限时/限次分享 · 美区 Apple ID 凭证</p>
       </div>
-      <div class="key-header-actions">
-        <button type="button" class="key-btn key-btn-ghost" id="btnLockVault" hidden>锁定退出</button>
-      </div>
+      <div class="key-header-actions"></div>
     </header>
 
-    <!-- 未解锁状态 -->
-    <section class="key-lock-card" id="keyLockCard">
-      <h2>输入管理密码解锁</h2>
-      <p>使用全站管理密码（<code>ADMIN_PASSWORD</code>）解锁后即可查看永久直链、生成临时分享链接与美区 Apple ID。</p>
-      <form id="keyUnlockForm" class="key-lock-form">
-        <input type="password" id="keyPwdInput" class="key-input" placeholder="请输入管理密码..." autocomplete="current-password">
-        <button type="submit" id="keyUnlockBtn" class="key-btn key-btn-primary">解锁访问</button>
-      </form>
-    </section>
-
-    <!-- 解锁后工作台 -->
-    <main class="key-workspace" id="keyWorkspace" hidden>
+    <!-- 工作台 -->
+    <main class="key-workspace" id="keyWorkspace">
       <!-- 1. 双机场流量看板 + 永久直链 -->
       <section class="key-card">
         <div class="key-card-head">

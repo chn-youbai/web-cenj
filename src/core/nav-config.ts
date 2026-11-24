@@ -166,7 +166,6 @@ export const SLASH_COMMANDS: readonly SlashCommandRoute[] = [
     label: "外卖记账",
     subtitle: "沙县点餐日历 · 月度账单统计",
     href: "./takeout.html",
-    requiresAuth: true,
     iconSvg:
       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 3h16v18l-2.5-1.5L15 21l-3-1.5L9 21l-2.5-1.5L4 21V3z"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>',
   },
@@ -183,7 +182,6 @@ export const SLASH_COMMANDS: readonly SlashCommandRoute[] = [
     label: "Clash 云控",
     subtitle: "远程节点切换 · 延迟探测终端",
     href: "./clash.html",
-    requiresAuth: true,
     iconSvg:
       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 9l3 3-3 3M13 15h4"/></svg>',
   },
@@ -192,7 +190,6 @@ export const SLASH_COMMANDS: readonly SlashCommandRoute[] = [
     label: "私人密钥",
     subtitle: "永久/临时订阅直链 · 美区 Apple ID",
     href: "./key.html",
-    requiresAuth: true,
     iconSvg:
       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>',
   },
@@ -218,7 +215,6 @@ const EXTRA_PAGE_META: Partial<Record<PageId, NavItemMeta>> = {
     group: "workspace",
     keywords: [],
     iconSvg: SLASH_COMMANDS[0]?.iconSvg ?? "",
-    requiresAuth: true,
   },
   board: {
     id: "board",
@@ -239,7 +235,6 @@ const EXTRA_PAGE_META: Partial<Record<PageId, NavItemMeta>> = {
     group: "workspace",
     keywords: [],
     iconSvg: SLASH_COMMANDS[2]?.iconSvg ?? "",
-    requiresAuth: true,
   },
   key: {
     id: "key",
@@ -250,7 +245,6 @@ const EXTRA_PAGE_META: Partial<Record<PageId, NavItemMeta>> = {
     group: "workspace",
     keywords: [],
     iconSvg: SLASH_COMMANDS[3]?.iconSvg ?? "",
-    requiresAuth: true,
   },
 };
 

@@ -6,7 +6,6 @@ import type {
   ClashSpeedData,
   ClashStatusResponse,
 } from "../../shared/types";
-import { getClashSystemPassword, safeEqual, verifyClashAuth } from "../_lib/auth";
 import type { Env } from "../_lib/env";
 import { getErrorMessage, jsonResponse, noContentOptions, readJsonBody } from "../_lib/http";
 
@@ -49,7 +48,6 @@ interface ClashPostBody extends Record<string, unknown> {
 export const onRequest: PagesFunction<Env> = async (context) => {
   const { request, env } = context;
   const db = env.DB;
-  const url = new URL(request.url);
 
   if (request.method === "OPTIONS") {
     return noContentOptions("GET, POST, OPTIONS");
@@ -61,12 +59,6 @@ export const onRequest: PagesFunction<Env> = async (context) => {
 
   try {
     if (request.method === "GET") {
-      const pwd = url.searchParams.get("pwd") || request.headers.get("X-Admin-Password") || "";
-      const isAuthed = await verifyClashAuth(request, env, pwd);
-      if (!isAuthed) {
-        return jsonResponse({ status: "error", message: "密码错误" }, 401);
-      }
-
       const records = await db
         .prepare(
           "SELECT * FROM clash_control WHERE id IN ('latest', 'heartbeat', 'profiles', 'nodes', 'speed_data')",
@@ -128,37 +120,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     if (request.method === "POST") {
       const parsed = await readJsonBody<ClashPostBody>(request);
       const data: ClashPostBody = parsed.ok ? parsed.data : {};
-      const providedPwd = String(data.pwd || data.password || data.old_pwd || "");
-      const isAuthed = await verifyClashAuth(request, env, providedPwd);
-      if (!isAuthed) {
-        return jsonResponse({ status: "error", message: "密码错误" }, 401);
-      }
-
       const action = typeof data.action === "string" ? data.action : "";
-
-      if (action === "change_password") {
-        const oldPwd = typeof data.old_pwd === "string" ? data.old_pwd.trim() : "";
-        const newPwd = typeof data.new_pwd === "string" ? data.new_pwd.trim() : "";
-        const systemPwd = await getClashSystemPassword(db, env);
-
-        if (!systemPwd || !safeEqual(oldPwd, systemPwd)) {
-          return jsonResponse({ status: "error", message: "原访问密码错误" }, 400);
-        }
-        if (!newPwd || newPwd.length < 4) {
-          return jsonResponse({ status: "error", message: "新密码至少需要4位字符" }, 400);
-        }
-
-        await db
-          .prepare(
-            "INSERT INTO clash_control (id, command, payload, status, result, updated_at) " +
-              "VALUES ('auth_pwd', 'auth_pwd', '', 'ok', ?, datetime('now')) " +
-              "ON CONFLICT(id) DO UPDATE SET result = excluded.result, updated_at = excluded.updated_at",
-          )
-          .bind(newPwd)
-          .run();
-
-        return jsonResponse({ status: "ok", message: "密码修改成功，请牢记新密码！" });
-      }
 
       if (action === "dispatch_command") {
         const cmd = typeof data.command === "string" ? data.command : "";
