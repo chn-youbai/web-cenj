@@ -5,6 +5,20 @@ import { type Env, getEnvString } from "../_lib/env";
 import { getErrorMessage, jsonResponse, noContentOptions, readJsonBody } from "../_lib/http";
 
 const DJJC_DOMAINS = ["dash.djjc.cfd", "sub.djjc.cfd", "api.djjc.cfd", "djjc.cfd"];
+const SUB_CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours auto-refresh
+
+function isSubCacheFresh(cached: { data: SubscriptionResponse; updatedAt?: string }): boolean {
+  let syncedMs = typeof cached.data.synced_at === "number" ? cached.data.synced_at : 0;
+  if (!syncedMs && cached.updatedAt) {
+    const iso = cached.updatedAt.includes("T")
+      ? cached.updatedAt
+      : `${cached.updatedAt.replace(" ", "T")}Z`;
+    const parsed = Date.parse(iso);
+    if (Number.isFinite(parsed)) syncedMs = parsed;
+  }
+  if (!syncedMs) return false;
+  return Date.now() - syncedMs < SUB_CACHE_TTL_MS;
+}
 
 export const onRequestOptions: PagesFunction<Env> = async () => {
   return noContentOptions("GET, POST, OPTIONS");
@@ -298,7 +312,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
 
     if (!forceRefresh && env.DB) {
       const cached = await getClashPayloadJson<SubscriptionResponse>(env.DB, "djjc_sub");
-      if (cached) {
+      if (cached && isSubCacheFresh(cached)) {
         return jsonResponse({
           ...cached.data,
           apple_id: appleId,
@@ -379,7 +393,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
 
   if (!forceRefresh && env.DB) {
     const cached = await getClashPayloadJson<SubscriptionResponse>(env.DB, "vpn07_sub");
-    if (cached) {
+    if (cached && isSubCacheFresh(cached)) {
       return jsonResponse({
         ...cached.data,
         apple_id: appleId,

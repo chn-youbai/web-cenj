@@ -160,7 +160,7 @@ npm run format && npm run check
 | `/api/pan` | `GET`, `POST`, `PATCH`, `DELETE` | 公开浏览/上传；私密/编辑/删除需 `ADMIN_PASSWORD` | 云端文件库 CRUD、`≤20MB` D1 分块存储（`cf_d1`）、`>20MB` GitHub Releases 直传/80MB 分片（`v_pan`）与外链登记 |
 | `/api/pan-file` | `GET`, `HEAD` | 公开免密；私密需 `ADMIN_PASSWORD` | 网盘文件分级流式下载/在线预览（支持 D1 分块流、GitHub 分片零内存流式拼接与 `Range` 断点续传） |
 | `/api/download` | `GET`, `HEAD` | 公开 | 历史预置安装包边缘流式直链下载（向后兼容保留） |
-| `/api/subscription` | `GET`, `POST` | `ADMIN_PASSWORD` 或 `ACCESS_PASSWORD` | 机场流量查询、VPN07 刷新、美区 Apple ID 凭证下发 |
+| `/api/subscription` | `GET`, `POST` | `ADMIN_PASSWORD` 或 `ACCESS_PASSWORD` | 机场流量查询（D1 缓存 24 小时自动刷新）、VPN07 刷新、美区 Apple ID 凭证下发 |
 | `/api/sub` | `GET`, `HEAD` | 永久直链 / `?token=tmp_...` | Clash YAML 订阅下发：支持永久直链（`?type=djjc\|vpn07`）与限时/限次/可吊销的临时私人链接（`?token=...`） |
 | `/api/sub-links` | `GET`, `POST`, `PATCH`, `DELETE` | `ADMIN_PASSWORD` | 临时私人订阅链接生成、状态查询、吊销与删除 |
 | `/api/*` | `*` | - | `[[catchall]].ts` 返回规范 404 JSON |
