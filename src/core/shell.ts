@@ -77,6 +77,8 @@ export function initAppShell(options: AppShellOptions): AppShellController {
     : getStorageItem(SIDEBAR_COLLAPSED_KEY) === "1";
   document.body.classList.toggle("sidebar-collapsed", isCollapsed);
 
+  document.body.classList.remove("drawer-open");
+  document.documentElement.classList.remove("drawer-open");
   document.getElementById("appSidebar")?.remove();
   document.getElementById("mobileTopBar")?.remove();
   document.getElementById("mobileDrawerBackdrop")?.remove();
@@ -115,16 +117,7 @@ export function initAppShell(options: AppShellOptions): AppShellController {
       </button>
     </div>
 
-    <div class="app-sidebar-search">
-      <button type="button" class="sidebar-cmd-btn" data-cmd-open aria-label="打开快捷搜索与命令面板 (⌘K)">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <circle cx="11" cy="11" r="7"/>
-          <path d="M21 21l-4.35-4.35"/>
-        </svg>
-        <span class="sidebar-cmd-label">搜索或查词...</span>
-        <kbd class="sidebar-cmd-kbd">⌘K</kbd>
-      </button>
-    </div>
+    <div class="app-sidebar-divider" aria-hidden="true"></div>
 
     <nav class="app-sidebar-nav" aria-label="模块分组">
       ${renderSidebarNavGroups(activePage)}
@@ -208,15 +201,7 @@ export function initAppShell(options: AppShellOptions): AppShellController {
         </button>
       </div>
 
-      <div class="mobile-drawer-search">
-        <button type="button" class="sidebar-cmd-btn" data-cmd-open aria-label="打开快捷搜索或查词">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <circle cx="11" cy="11" r="7"/>
-            <path d="M21 21l-4.35-4.35"/>
-          </svg>
-          <span class="sidebar-cmd-label">搜索页面或英文查词...</span>
-        </button>
-      </div>
+      <div class="app-sidebar-divider" aria-hidden="true"></div>
 
       <nav class="app-sidebar-nav mobile-drawer-nav" aria-label="移动端全站导航">
         ${renderSidebarNavGroups(activePage)}
@@ -249,13 +234,19 @@ export function initAppShell(options: AppShellOptions): AppShellController {
   function openDrawer(): void {
     mobileDrawerBackdrop.classList.add("open");
     mobileDrawerBackdrop.setAttribute("aria-hidden", "false");
+    document.documentElement.classList.add("drawer-open");
+    document.body.classList.add("drawer-open");
     document.getElementById("sidebarCollapseBtn")?.setAttribute("aria-expanded", "true");
+    document.getElementById("mobileMenuBtn")?.setAttribute("aria-expanded", "true");
   }
 
   function closeDrawer(): void {
     mobileDrawerBackdrop.classList.remove("open");
     mobileDrawerBackdrop.setAttribute("aria-hidden", "true");
+    document.documentElement.classList.remove("drawer-open");
+    document.body.classList.remove("drawer-open");
     document.getElementById("sidebarCollapseBtn")?.setAttribute("aria-expanded", "false");
+    document.getElementById("mobileMenuBtn")?.setAttribute("aria-expanded", "false");
   }
 
   document.getElementById("sidebarCollapseBtn")?.addEventListener("click", () => {
@@ -285,11 +276,18 @@ export function initAppShell(options: AppShellOptions): AppShellController {
     }
   });
 
-  for (const cmdTrigger of mobileDrawerBackdrop.querySelectorAll<HTMLElement>("[data-cmd-open]")) {
-    cmdTrigger.addEventListener("click", () => {
-      closeDrawer();
-    });
-  }
+  // 阻止 iOS Safari 在遮罩或抽屉边界滑动时穿透滚动背后页面
+  mobileDrawerBackdrop.addEventListener(
+    "touchmove",
+    (e) => {
+      const target = e.target as HTMLElement | null;
+      const nav = target?.closest<HTMLElement>(".mobile-drawer-nav");
+      if (!nav || nav.scrollHeight <= nav.clientHeight) {
+        e.preventDefault();
+      }
+    },
+    { passive: false },
+  );
 
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && mobileDrawerBackdrop.classList.contains("open")) {

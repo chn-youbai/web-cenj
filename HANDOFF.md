@@ -181,7 +181,7 @@ python scripts/verify_vocab.py
 - **已完成并已验证通过的功能**：
   - 全站 10 个 MPA 页面迁移与全栈 TypeScript 强类型改造。
   - 首页 Claude 纸感布局：6 时段日出日落精细问候（无个人姓名）、Omnibox 即输即查（支持 `/api/vocab` 失败时降级读 `./data/vocab.json`）、心形点赞胶囊、桌面与手机顶部主题切换按钮。
-  - **首页专属可折叠细长图标窄栏** + 非首页保留标准桌面可折叠侧边栏与手机端顶栏抽屉。
+  - **首页专属可折叠细长图标窄栏** + 非首页保留标准桌面可折叠侧边栏与手机端顶栏抽屉（已移除侧边栏与手机抽屉内搜索触发框，替换为横线分割 `.app-sidebar-divider`；打开手机抽屉时通过 `drawer-open` 类与遮罩 `touchmove` 拦截锁定背景页面滚动）。
   - **VS Code 风格 Quick Pick 全局命令面板**（`⌘K` 搜索页面/单词/主题、最近使用置顶、`⌘⇧P` 或输入 `>` 进入命令模式并高亮模糊匹配）。
   - **系统主题自动同步修复**：手切回到与系统一致的主题时自动清除 `localStorage` 覆盖，并监听 `pageshow` / `focus` / `visibilitychange` / `storage`。
   - **独立游乐场 [`games.html`](./games.html)**：支持 `?tab=2048|puzzle|memory` 与侧边栏高亮同步，航拍拼图与记忆翻卡复用画廊图库清单（[`photos.ts`](./src/pages/gallery/photos.ts)）；记忆翻卡（[`game-memory.ts`](./src/pages/games/game-memory.ts)）已实现开局 100% 并发预加载与进度遮罩（`#memPreloadOverlay`），移除 `loading="lazy"` 并改为原地 DOM class 切换翻转；航拍拼图（[`game-puzzle.ts`](./src/pages/games/game-puzzle.ts)）基于曼哈顿距离+线性冲突的 A*/加权 A* 求解器（[`solvePuzzle`](./src/pages/games/game-puzzle.ts#L207)）支持 3×3 与 4×4 的「提示一步」高亮闪动、70ms/步「自动求解」快速演示（不弹结算遮罩），以及可选「显示编号」角标开关。

@@ -45,6 +45,10 @@ describe("Claude App Shell & Global Command Palette", () => {
 
     subShell.openDrawer();
     expect(backdrop?.classList.contains("open")).toBe(true);
+    expect(document.body.classList.contains("drawer-open")).toBe(true);
+    expect(document.documentElement.classList.contains("drawer-open")).toBe(true);
+    expect(document.querySelector(".app-sidebar-divider")).not.toBeNull();
+    expect(document.querySelector(".sidebar-cmd-btn")).toBeNull();
 
     const drawerLinks = document.querySelectorAll("#mobileDrawerBackdrop .app-nav-link");
     expect(drawerLinks.length).toBe(8);
@@ -52,6 +56,8 @@ describe("Claude App Shell & Global Command Palette", () => {
     indexShell.closeDrawer();
     subShell.closeDrawer();
     expect(backdrop?.classList.contains("open")).toBe(false);
+    expect(document.body.classList.contains("drawer-open")).toBe(false);
+    expect(document.documentElement.classList.contains("drawer-open")).toBe(false);
   });
 
   it("filters pages and offers instant English word lookup in ⌘K Command Palette", () => {

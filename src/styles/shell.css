@@ -155,7 +155,7 @@ body[data-active-page="index"] .app-sidebar {
 }
 
 body.sidebar-collapsed .app-sidebar .app-brand,
-body.sidebar-collapsed .app-sidebar .app-sidebar-search,
+body.sidebar-collapsed .app-sidebar .app-sidebar-divider,
 body.sidebar-collapsed .app-sidebar .app-sidebar-footer {
   display: none;
 }
@@ -169,7 +169,7 @@ body.sidebar-collapsed .app-sidebar .app-sidebar-top {
 
 @media (max-width: 919px) {
   .app-sidebar .app-brand,
-  .app-sidebar .app-sidebar-search,
+  .app-sidebar .app-sidebar-divider,
   .app-sidebar .app-sidebar-footer {
     display: none;
   }
@@ -181,58 +181,19 @@ body.sidebar-collapsed .app-sidebar .app-sidebar-top {
   }
 }
 
-/* 侧边栏 ⌘K 搜索框触发器 */
-.app-sidebar-search {
-  padding: 0 2px 12px;
-}
-
-.sidebar-cmd-btn {
-  width: 100%;
-  min-height: 38px;
-  padding: 0 10px;
-  border-radius: var(--r-sm);
-  border: 1px solid var(--c-separator);
-  background: var(--c-surface);
-  color: var(--c-label-2);
-  font-family: var(--font-sans);
-  font-size: 13px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  transition: border-color var(--dur-1) var(--ease), color var(--dur-1) var(--ease), box-shadow
-    var(--dur-1) var(--ease);
-}
-
-.sidebar-cmd-btn svg {
-  width: 15px;
-  height: 15px;
+/* 侧边栏顶部分隔横线 */
+.app-sidebar-divider {
+  height: 1px;
+  background: var(--c-separator);
+  margin: 2px 4px 12px;
   flex-shrink: 0;
-  color: var(--c-label-3);
 }
 
-.sidebar-cmd-label {
-  flex: 1;
-  text-align: left;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.sidebar-cmd-kbd {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  padding: 1px 5px;
-  border-radius: 4px;
-  background: var(--c-fill);
-  color: var(--c-label-3);
-}
-
-@media (hover: hover) {
-  .sidebar-cmd-btn:hover {
-    border-color: var(--c-border-strong);
-    color: var(--c-label);
-  }
+/* 打开手机端侧滑抽屉时彻底锁定背后页面滚动 */
+html.drawer-open,
+body.drawer-open {
+  overflow: hidden !important;
+  overscroll-behavior: none !important;
 }
 
 /* 侧边栏分组导航列表 */
@@ -563,6 +524,8 @@ body[data-active-page="index"] .mobile-topbar {
   justify-content: flex-start;
   opacity: 0;
   pointer-events: none;
+  overscroll-behavior: contain;
+  touch-action: none;
   transition: opacity var(--dur-2) var(--ease);
 }
 
@@ -620,13 +583,11 @@ body[data-active-page="index"] .mobile-topbar {
   height: 16px;
 }
 
-.mobile-drawer-search {
-  padding: 0 2px 12px;
-}
-
 .mobile-drawer-nav {
   flex: 1;
   overflow-y: auto;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
 }
 
 /* ---------- 全局 VS Code 风格 Quick Pick 命令面板 ---------- */
