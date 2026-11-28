@@ -1,8 +1,10 @@
 import { extractWordsFromBatchCSV, parseUploadedCSVContent } from "@/pages/vocab/csv";
 import {
+  aggregateLookupEntries,
   buildEntryKeys,
   deinflectSingleToken,
   editDistance,
+  extractWordsFromFreeText,
   generateDeinflectedCandidates,
   indexAllEntries,
   judgeWordByTextbookStandard,
@@ -140,5 +142,35 @@ describe("vocab CSV parsing", () => {
     const csv = "序号,英文单词,中文备注\n1,apply,申请\n2,took care of,照顾\n";
     const words = extractWordsFromBatchCSV(csv);
     expect(words).toEqual(["apply", "took care of"]);
+  });
+
+  it("supports Chinese meaning reverse lookup, multi-book aggregation, and free-text extraction", () => {
+    const vocab = makeSampleVocab();
+    vocab.push({
+      b: "大学英语四级 (CET-4)",
+      u: "A",
+      w: "apply",
+      p: "v.",
+      m: "申请；应用",
+      f: "CET-4核心",
+      n: "",
+    });
+    indexAllEntries(vocab);
+
+    const zhRes = lookupWordInTextbook(vocab, "住宿", "ALL");
+    expect(zhRes?.fragmentMatches[0]?.w).toBe("accommodate");
+
+    const applyRes = lookupWordInTextbook(vocab, "apply", "ALL");
+    const aggregated = aggregateLookupEntries(applyRes?.fragmentMatches ?? []);
+    expect(aggregated).toHaveLength(1);
+    expect(aggregated[0]?.occurrences).toHaveLength(2);
+    expect(aggregated[0]?.isBold).toBe(true);
+
+    const extracted = extractWordsFromFreeText(
+      "applied, resilience\nWe should take care of our planet and accommodate everyone.",
+    );
+    expect(extracted).toContain("applied");
+    expect(extracted).toContain("resilience");
+    expect(extracted).toContain("accommodate");
   });
 });

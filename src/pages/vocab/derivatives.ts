@@ -1861,25 +1861,21 @@ export function generateWordDetailData(
 
   let badgesHtml = "";
   if (isCet4) {
-    badgesHtml +=
-      '<span class="inline-flex items-center text-[11px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200 px-2 py-0.5 rounded-md">🎓 大学英语四级 (CET-4)</span>';
+    badgesHtml += '<span class="vc-tag is-cet">四级 CET-4</span>';
   } else if (isCet6) {
-    badgesHtml +=
-      '<span class="inline-flex items-center text-[11px] font-semibold bg-violet-50 text-violet-700 border border-violet-200 px-2 py-0.5 rounded-md">🎓 大学英语六级 (CET-6)</span>';
+    badgesHtml += '<span class="vc-tag is-cet">六级 CET-6</span>';
   } else if (isExtended) {
-    badgesHtml +=
-      '<span class="inline-flex items-center text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-md">✨ 课外同根拓展词</span>';
+    badgesHtml += '<span class="vc-tag is-ext">课外同根拓展</span>';
   } else {
     badgesHtml += isBold
-      ? '<span class="inline-flex items-center text-[11px] font-semibold bg-gray-900 text-white px-2 py-0.5 rounded-md">黑体 · 重点词</span>'
-      : '<span class="inline-flex items-center text-[11px] font-medium bg-gray-100 text-gray-600 px-2 py-0.5 rounded-md">白体 · 认读词</span>';
+      ? '<span class="vc-tag is-bold">课标黑体重点</span>'
+      : '<span class="vc-tag">课标白体认读</span>';
   }
   if (isProper) {
-    badgesHtml +=
-      '<span class="inline-flex items-center text-[11px] font-medium bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-md">△ 专有名词</span>';
+    badgesHtml += '<span class="vc-tag">△ 专有名词</span>';
   }
   if (coreWord && coreWord !== normalizeWordStr(entry.w)) {
-    badgesHtml += `<span class="inline-flex items-center text-[11px] font-semibold bg-purple-50 text-purple-700 border border-purple-200 px-2 py-0.5 rounded-md">核心词干: ${escapeHtml(coreWord)}</span>`;
+    badgesHtml += `<span class="vc-tag is-lemma">核心词干 · ${escapeHtml(coreWord)}</span>`;
   }
 
   const normW = normalizeWordStr(entry.w);
@@ -1898,94 +1894,116 @@ export function generateWordDetailData(
   const extCognateCount = familyData.cognates.length - inCsvCognateCount;
 
   let bodyHtml = `
-    <div class="ios-card p-3.5 space-y-2">
-      <div class="flex items-center justify-between">
-        <span class="text-xs font-bold text-gray-800 flex items-center gap-1.5">
-          <span class="w-2 h-2 rounded-full bg-[#007AFF]"></span>
-          📍 课本与大纲收录情况（${allOccurrences.length > 0 ? `共 ${allOccurrences.length} 处` : "未单独收录于词库，以下为完整拓展卡片"}）
-        </span>
+    <section class="vc-detail-section">
+      <div class="vc-sec-head">
+        <span class="vc-sec-title">课本与大纲收录</span>
+        <span class="vc-sec-meta">${allOccurrences.length > 0 ? `共 ${allOccurrences.length} 处` : "课外拓展词"}</span>
       </div>
       ${
         allOccurrences.length > 0
-          ? `<div class="space-y-1.5">
+          ? `<div class="vc-occ-list">
           ${allOccurrences
             .map((occ) => {
-              const isOccCet4 = occ.b && (occ.b.includes("四级") || occ.b.includes("CET-4"));
-              const isOccCet6 = occ.b && (occ.b.includes("六级") || occ.b.includes("CET-6"));
-              const cardBg = isOccCet4
-                ? "bg-indigo-50/60 border-indigo-100"
-                : isOccCet6
-                  ? "bg-purple-50/60 border-purple-100"
-                  : "bg-blue-50/60 border-blue-100";
-              const titleColor = isOccCet4
-                ? "text-indigo-950"
-                : isOccCet6
-                  ? "text-purple-950"
-                  : "text-blue-950";
-              const icon = isOccCet4 || isOccCet6 ? "🎓" : "📘";
+              const isOccCet = Boolean(
+                occ.b &&
+                  (occ.b.includes("四级") || occ.b.includes("六级") || occ.b.includes("CET")),
+              );
               return `
-              <div class="${cardBg} border rounded-xl p-2.5 flex items-center justify-between gap-2">
-                <div>
-                  <div class="text-xs font-bold ${titleColor}">${icon} ${escapeHtml(getShortBookName(occ.b))} · ${escapeHtml(formatUnitLabel(occ.u))}</div>
-                  <div class="text-[11px] text-gray-600 mt-0.5">${escapeHtml(occ.p ? `[${occ.p}] ` : "")}${escapeHtml(occ.m)}</div>
+              <div class="vc-occ-item">
+                <div class="vc-occ-main">
+                  <div class="vc-occ-loc">${isOccCet ? "CET · " : ""}${escapeHtml(getShortBookName(occ.b))} · ${escapeHtml(formatUnitLabel(occ.u))}</div>
+                  <div class="vc-occ-mean">${escapeHtml(occ.p ? `[${occ.p}] ` : "")}${escapeHtml(occ.m)}</div>
                 </div>
-                <span class="text-[10px] font-semibold px-2 py-0.5 rounded ${occ.f === "黑体" ? "bg-gray-900 text-white" : "bg-white text-gray-600 border border-gray-200"} shrink-0">${escapeHtml(occ.f || "核心")}</span>
+                <span class="vc-tag ${occ.f === "黑体" ? "is-bold" : ""}">${escapeHtml(occ.f || "核心")}</span>
               </div>
             `;
             })
             .join("")}
         </div>`
-          : `<div class="bg-emerald-50/60 border border-emerald-100 rounded-xl p-2.5 text-xs text-emerald-900">
-          该词（<strong>${escapeHtml(entry.w)}</strong>）属于课外拓展/变形词，虽未单独列于 CSV 词表中，已为您完整生成其<strong>所有不同形式</strong>与<strong>全部同根词家族</strong>。
-        </div>`
+          : `<p class="vc-ext-note">该词（<strong>${escapeHtml(entry.w)}</strong>）未单独列于当前课本词表中，以下已生成其全形态词形变化与同根词家族。</p>`
       }
-    </div>
+    </section>
+  `;
+
+  bodyHtml += `
+    <section class="vc-detail-section">
+      <div class="vc-sec-head">
+        <span class="vc-sec-title">一词多义与词性详解</span>
+        <span class="vc-sec-meta">${textbookSenses.length + extraPolysemy.length} 项</span>
+      </div>
+      <div class="vc-sense-list">
+        ${textbookSenses
+          .map(
+            (s) => `
+          <div class="vc-sense-item">
+            <span class="vc-sense-num">${s.index}</span>
+            <div class="vc-sense-content">
+              ${s.pos ? `<span class="vc-pos-inline">${escapeHtml(s.pos)}</span>` : ""}
+              <span class="vc-sense-text">${escapeHtml(s.meaning)}</span>
+            </div>
+          </div>
+        `,
+          )
+          .join("")}
+        ${
+          extraPolysemy.length > 0
+            ? `<div class="vc-poly-extra-wrap">
+            <div class="vc-poly-extra-title">熟词生义 / 高考高频拓展（${escapeHtml(coreWord)}）</div>
+            ${extraPolysemy
+              .map(
+                (ep) => `
+              <div class="vc-poly-extra-item">
+                <div>
+                  ${ep.pos ? `<span class="vc-pos-inline">${escapeHtml(ep.pos)}</span>` : ""}
+                  <span class="vc-sense-text">${escapeHtml(ep.mean)}</span>
+                </div>
+                ${ep.ex ? `<div class="vc-poly-ex">例：${escapeHtml(ep.ex)}</div>` : ""}
+              </div>
+            `,
+              )
+              .join("")}
+          </div>`
+            : ""
+        }
+      </div>
+    </section>
   `;
 
   if (inflections.length > 0) {
     bodyHtml += `
-      <div class="ios-card p-3.5 space-y-2.5">
-        <div class="flex items-center justify-between">
-          <span class="text-xs font-bold text-gray-800 flex items-center gap-1.5">
-            <span class="w-2 h-2 rounded-full bg-blue-500"></span>
-            🔄 所有不同形式（全形态词形变化：${escapeHtml(coreWord)}）
-          </span>
-          <span class="text-[10px] text-purple-700 bg-purple-50 border border-purple-200 px-1.5 py-0.5 rounded">含非CSV全变形 · 点击发音</span>
+      <section class="vc-detail-section">
+        <div class="vc-sec-head">
+          <span class="vc-sec-title">全形态词形变化（${escapeHtml(coreWord)}）</span>
+          <span class="vc-sec-meta">点击任意变形发音</span>
         </div>
-        <div class="grid grid-cols-2 gap-2">
+        <div class="vc-inflect-grid">
           ${inflections
             .map((inf) => {
               const speakTarget = (inf.val.split("/")[0] ?? "").replace(/\([^)]*\)/g, "").trim();
               return `
-            <button type="button" data-speak-word="${escapeHtml(speakTarget)}" class="speak-btn ios-btn-active text-left bg-purple-50/60 border border-purple-100 rounded-xl p-2.5">
-              <div class="flex items-center justify-between gap-1">
-                <span class="text-[10px] font-medium text-purple-700">${escapeHtml(inf.label)}</span>
-                ${inf.inCsv ? '<span class="text-[10px] bg-blue-50 text-blue-600 px-1 rounded">课本词</span>' : ""}
+            <button type="button" data-speak-word="${escapeHtml(speakTarget)}" class="vc-inflect-btn speak-btn">
+              <div class="vc-inflect-top">
+                <span class="vc-inflect-label">${escapeHtml(inf.label)}</span>
+                ${inf.inCsv ? '<span class="vc-tag is-mini">课本</span>' : ""}
               </div>
-              <div class="text-sm font-bold text-purple-900 mt-0.5 break-words">${escapeHtml(inf.val)}</div>
+              <div class="vc-inflect-val">${escapeHtml(inf.val)}</div>
             </button>
           `;
             })
             .join("")}
         </div>
-      </div>
+      </section>
     `;
   }
 
   if (familyData.cognates.length > 0) {
     bodyHtml += `
-      <div class="ios-card p-3.5 space-y-2.5">
-        <div class="flex items-center justify-between flex-wrap gap-1">
-          <span class="text-xs font-bold text-gray-800 flex items-center gap-1.5">
-            <span class="w-2 h-2 rounded-full bg-[#34C759]"></span>
-            🌱 所有同根词与派生词（共 ${familyData.cognates.length} 个）
-          </span>
-          ${familyData.rootGroupTitle ? `<span class="text-[10px] font-semibold bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-md">${escapeHtml(familyData.rootGroupTitle)}</span>` : ""}
+      <section class="vc-detail-section">
+        <div class="vc-sec-head">
+          <span class="vc-sec-title">同根词与派生家族（${familyData.cognates.length}）</span>
+          ${familyData.rootGroupTitle ? `<span class="vc-tag is-lemma">${escapeHtml(familyData.rootGroupTitle)}</span>` : `<span class="vc-sec-meta">课本 ${inCsvCognateCount}${extCognateCount > 0 ? ` · 拓展 ${extCognateCount}` : ""}</span>`}
         </div>
-        <div class="text-[11px] text-gray-500">
-          已列出全部真实同根词（其中课本收录 <strong>${inCsvCognateCount}</strong> 个${extCognateCount > 0 ? `，权威词族拓展 <strong>${extCognateCount}</strong> 个` : ""}）。点击任意词条可切换查看其卡片：
-        </div>
-        <div class="space-y-1.5">
+        <div class="vc-cog-list">
           ${familyData.cognates
             .map(
               (cog) => `
@@ -1996,119 +2014,48 @@ export function generateWordDetailData(
               data-open-pos="${escapeHtml(cog.p || "")}"
               data-open-mean="${escapeHtml(cog.m || "")}"
               data-open-incsv="${cog.inCsv ? "1" : "0"}"
-              class="modal-jump-word-btn ios-btn-active w-full text-left ${cog.inCsv ? "bg-gray-50/90 border-gray-200/80" : "bg-emerald-50/60 border-emerald-200"} hover:bg-blue-50 border rounded-xl p-2.5 flex items-center justify-between gap-2"
+              class="vc-jump-btn modal-jump-word-btn"
             >
-              <div class="min-w-0 flex-1">
-                <div class="flex items-center gap-1.5 flex-wrap">
-                  <span class="font-bold text-sm ${cog.inCsv ? "text-[#007AFF]" : "text-emerald-900"}">${escapeHtml(cog.w)}</span>
-                  ${cog.p ? `<span class="text-[11px] italic text-gray-500">${escapeHtml(cog.p)}</span>` : ""}
-                  ${cog.inCsv && cog.f === "黑体" ? '<span class="text-[10px] bg-gray-900 text-white px-1.5 py-0.2 rounded">黑体</span>' : ""}
+              <div class="vc-jump-main">
+                <div class="vc-jump-top">
+                  <span class="vc-jump-word">${escapeHtml(cog.w)}</span>
+                  ${cog.p ? `<span class="vc-pos-inline">${escapeHtml(cog.p)}</span>` : ""}
+                  ${cog.inCsv && cog.f === "黑体" ? '<span class="vc-tag is-bold is-mini">黑体</span>' : ""}
                 </div>
-                <div class="text-xs text-gray-600 mt-0.5 break-words">${escapeHtml(cog.m)}</div>
+                <div class="vc-jump-mean">${escapeHtml(cog.m)}</div>
               </div>
-              ${
-                cog.inCsv
-                  ? `<span class="text-[10px] font-semibold text-blue-600 bg-blue-50 border border-blue-100 px-2 py-1 rounded-lg shrink-0">
-                  📘 ${escapeHtml(getShortBookName(cog.b))} · ${escapeHtml(formatShortUnitBadge(cog.u))} ›
-                </span>`
-                  : `<span class="text-[10px] font-semibold text-emerald-700 bg-white border border-emerald-200 px-2 py-1 rounded-lg shrink-0">
-                  ✨ 词族拓展 ›
-                </span>`
-              }
+              <span class="vc-jump-loc ${cog.inCsv ? "" : "is-ext"}">
+                ${
+                  cog.inCsv
+                    ? `${escapeHtml(getShortBookName(cog.b))} · ${escapeHtml(formatShortUnitBadge(cog.u))} ›`
+                    : "词族拓展 ›"
+                }
+              </span>
             </button>
           `,
             )
             .join("")}
         </div>
-      </div>
-    `;
-  } else {
-    bodyHtml += `
-      <div class="ios-card p-3.5 space-y-1.5">
-        <div class="flex items-center justify-between">
-          <span class="text-xs font-bold text-gray-800 flex items-center gap-1.5">
-            <span class="w-2 h-2 rounded-full bg-gray-400"></span>
-            🌱 同根词与派生词
-          </span>
-          <span class="text-[11px] text-gray-400">暂无拓展词族</span>
-        </div>
-        <div class="text-[11px] text-gray-500 leading-relaxed">
-          本词在高中与四六级词库及核心词族库中暂无其他派生词，重点掌握上方释义、变形与例句搭配即可。
-        </div>
-      </div>
+      </section>
     `;
   }
 
-  bodyHtml += `
-    <div class="ios-card p-3.5 space-y-2.5">
-      <div class="flex items-center justify-between">
-        <span class="text-xs font-bold text-gray-800 flex items-center gap-1.5">
-          <span class="w-2 h-2 rounded-full bg-[#34C759]"></span>
-          📖 一词多义与词性详解
-        </span>
-        <span class="text-[11px] text-gray-400">共 ${textbookSenses.length + extraPolysemy.length} 个义项维度</span>
-      </div>
-      <div class="space-y-1.5">
-        ${textbookSenses
-          .map(
-            (s) => `
-          <div class="bg-gray-50/90 border border-gray-100 rounded-xl p-2.5 flex items-start gap-2">
-            <span class="w-5 h-5 rounded-full bg-blue-50 text-blue-700 text-[11px] font-bold flex items-center justify-center shrink-0 mt-0.5">${s.index}</span>
-            <div class="flex-1 min-w-0">
-              <div class="flex items-center gap-1.5 flex-wrap">
-                <span class="text-[11px] font-semibold italic text-blue-600">${escapeHtml(s.pos)}</span>
-                <span class="text-sm font-bold text-gray-900">${escapeHtml(s.meaning)}</span>
-              </div>
-            </div>
-          </div>
-        `,
-          )
-          .join("")}
-        ${
-          extraPolysemy.length > 0
-            ? `<div class="pt-1">
-            <div class="text-[11px] font-semibold text-emerald-700 mb-1.5">✨ 高考常见一词多义 / 熟词生义拓展（${escapeHtml(coreWord)}）：</div>
-            <div class="space-y-1.5">
-              ${extraPolysemy
-                .map(
-                  (ep) => `
-                <div class="bg-emerald-50/60 border border-emerald-100 rounded-xl p-2.5">
-                  <div class="flex items-center gap-1.5 flex-wrap">
-                    <span class="text-[11px] font-bold italic text-emerald-700 bg-white px-1.5 py-0.2 rounded border border-emerald-200">${escapeHtml(ep.pos)}</span>
-                    <span class="text-xs font-bold text-gray-900">${escapeHtml(ep.mean)}</span>
-                  </div>
-                  ${ep.ex ? `<div class="text-[11px] text-gray-500 mt-1">例: ${escapeHtml(ep.ex)}</div>` : ""}
-                </div>
-              `,
-                )
-                .join("")}
-            </div>
-          </div>`
-            : ""
-        }
-      </div>
-    </div>
-  `;
-
   if (familyData.phrases.length > 0) {
     bodyHtml += `
-      <div class="ios-card p-3.5 space-y-2.5">
-        <div class="flex items-center justify-between">
-          <span class="text-xs font-bold text-gray-800 flex items-center gap-1.5">
-            <span class="w-2 h-2 rounded-full bg-[#007AFF]"></span>
-            🔗 课本关联短语 / 搭配（${familyData.phrases.length} 个）
-          </span>
+      <section class="vc-detail-section">
+        <div class="vc-sec-head">
+          <span class="vc-sec-title">关联短语与搭配（${familyData.phrases.length}）</span>
         </div>
-        <div class="space-y-1.5">
+        <div class="vc-cog-list">
           ${familyData.phrases
             .map(
               (phr) => `
-            <button type="button" data-open-word="${escapeHtml(phr.w)}" data-open-book="${escapeHtml(phr.b)}" data-open-incsv="1" class="modal-jump-word-btn ios-btn-active w-full text-left bg-blue-50/40 border border-blue-100 rounded-xl p-2.5 flex items-center justify-between gap-2">
-              <div class="min-w-0 flex-1">
-                <div class="font-bold text-sm text-gray-900">${escapeHtml(phr.w)}</div>
-                <div class="text-xs text-gray-600 mt-0.5">${escapeHtml(phr.m)}</div>
+            <button type="button" data-open-word="${escapeHtml(phr.w)}" data-open-book="${escapeHtml(phr.b)}" data-open-incsv="1" class="vc-jump-btn modal-jump-word-btn">
+              <div class="vc-jump-main">
+                <div class="vc-jump-word">${escapeHtml(phr.w)}</div>
+                <div class="vc-jump-mean">${escapeHtml(phr.m)}</div>
               </div>
-              <span class="text-[10px] font-semibold text-blue-700 bg-white border border-blue-200 px-2 py-1 rounded-lg shrink-0">
+              <span class="vc-jump-loc">
                 ${escapeHtml(getShortBookName(phr.b))} · ${escapeHtml(formatShortUnitBadge(phr.u))} ›
               </span>
             </button>
@@ -2116,7 +2063,7 @@ export function generateWordDetailData(
             )
             .join("")}
         </div>
-      </div>
+      </section>
     `;
   }
 

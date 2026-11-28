@@ -41,6 +41,13 @@ export interface BatchCheckResult {
   matches: VocabEntry[];
 }
 
+export interface AggregatedVocabItem {
+  key: string;
+  primary: ScoredVocabEntry;
+  occurrences: VocabEntry[];
+  isBold: boolean;
+}
+
 export type BatchFilterMode = "ALL" | "YES" | "NO";
 export type VocabTab = "lookup" | "browse" | "import";
 

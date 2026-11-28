@@ -1,4 +1,5 @@
 import type {
+  AggregatedVocabItem,
   BatchCheckResult,
   LookupResult,
   ScoredVocabEntry,
@@ -462,6 +463,17 @@ export function scoreSubstringMatch(
     return { matched: true, rank: 6, matchType: "包含字母片段", hlTerm: q };
   }
 
+  const meaningLower = (entry.m || "").toLowerCase();
+  if (meaningLower.includes(q)) {
+    const exactMeaning = meaningLower === q;
+    return {
+      matched: true,
+      rank: exactMeaning ? 1 : 3,
+      matchType: exactMeaning ? "中文释义精确" : "中文释义匹配",
+      hlTerm: q,
+    };
+  }
+
   return { matched: false, rank: 99, matchType: "", hlTerm: q };
 }
 
@@ -662,4 +674,71 @@ export function getUniqueBooks(vocabList: VocabEntry[]): Array<[string, number]>
   const entries = Array.from(map.entries());
   entries.sort((a, b) => getBookSortWeight(a[0]) - getBookSortWeight(b[0]));
   return entries;
+}
+
+export function aggregateLookupEntries(entries: ScoredVocabEntry[]): AggregatedVocabItem[] {
+  const groups = new Map<string, { primary: ScoredVocabEntry; occurrences: VocabEntry[] }>();
+
+  for (const entry of entries) {
+    const key = entry._headLower || normalizeWordStr(entry.w);
+    if (!key) continue;
+    const existing = groups.get(key);
+    if (!existing) {
+      groups.set(key, { primary: entry, occurrences: [entry] });
+    } else {
+      const duplicateOcc = existing.occurrences.some(
+        (o) => o.b === entry.b && o.u === entry.u && o.w === entry.w,
+      );
+      if (!duplicateOcc) {
+        existing.occurrences.push(entry);
+      }
+      if (entry._matchRank < existing.primary._matchRank) {
+        existing.primary = entry;
+      }
+    }
+  }
+
+  const result: AggregatedVocabItem[] = [];
+  for (const [key, group] of groups.entries()) {
+    group.occurrences.sort((a, b) => getBookSortWeight(a.b) - getBookSortWeight(b.b));
+    const isBold = group.occurrences.some((o) => o.f === "黑体");
+    result.push({
+      key,
+      primary: group.primary,
+      occurrences: group.occurrences,
+      isBold,
+    });
+  }
+  return result;
+}
+
+export function extractWordsFromFreeText(text: string): string[] {
+  const lines = String(text || "")
+    .split(/[\r\n,;\t]+/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+  const seen = new Set<string>();
+  const words: string[] = [];
+
+  for (const line of lines) {
+    // If line looks like a sentence with multiple words and no quotes, still allow phrases <= 4 words;
+    // otherwise split long paragraphs into individual English tokens.
+    const rawTokens =
+      line.split(/\s+/).length > 4
+        ? line
+            .split(/[^a-zA-Z'-]+/)
+            .map((t) => t.trim())
+            .filter((t) => t.length >= 2)
+        : [line.replace(/^[^a-zA-Z]+|[^a-zA-Z]+$/g, "").trim()];
+
+    for (const tok of rawTokens) {
+      if (!tok || !/[a-zA-Z]/.test(tok)) continue;
+      const key = tok.toLowerCase();
+      if (!seen.has(key)) {
+        seen.add(key);
+        words.push(tok);
+      }
+    }
+  }
+  return words;
 }

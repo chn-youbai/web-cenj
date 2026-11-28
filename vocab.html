@@ -2,464 +2,293 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-  <meta name="apple-mobile-web-app-title" content="英语查词" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#faf9f5" />
-  <title>英语综合查词系统 (人教版高中7册 · 大学四六级全量 · 词根衍生 · 批量检测)</title>
+  <title>英语查词 · 教材与四六级词典</title>
   <link rel="icon" href="./OIP-C.jpg" type="image/jpeg" />
   <script>
-    (function(){try{var t=localStorage.getItem("cenj_theme_v1");var d=t==="dark"||(t!=="light"&&window.matchMedia("(prefers-color-scheme: dark)").matches);document.documentElement.dataset.theme=d?"dark":"light";if(d)document.documentElement.classList.add("dark");var m=document.querySelector('meta[name="theme-color"]');if(m)m.content=d?"#262624":"#faf9f5";}catch(e){}})();
+    (function(){try{var t=localStorage.getItem("cenj_theme_v1");var d=t==="dark"||(t!=="light"&&window.matchMedia("(prefers-color-scheme: dark)").matches);document.documentElement.dataset.theme=d?"dark":"light";document.documentElement.classList.toggle("dark",d);var m=document.querySelector('meta[name="theme-color"]');if(m)m.content=d?"#262624":"#faf9f5";}catch(e){}})();
   </script>
   <link rel="stylesheet" href="./src/styles/base.css" />
   <link rel="stylesheet" href="./src/styles/shell.css" />
   <link rel="stylesheet" href="./src/styles/vocab.css" />
 </head>
-<body class="antialiased selection:bg-blue-100 selection:text-blue-900">
-
-  <!-- Top Sticky Header -->
-  <header class="sticky top-0 z-30 ios-blur border-b border-black/5 px-4 pt-3 pb-2.5">
-    <div class="header-wrap max-w-md mx-auto flex items-center justify-between gap-3">
-      <div class="flex items-center gap-2.5">
-        <div class="vocab-brand-icon w-9 h-9 rounded-xl flex items-center justify-center text-white shadow-sm shrink-0">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24" width="20" height="20">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
-          </svg>
-        </div>
-        <div>
-          <h1 class="text-[17px] font-bold tracking-tight text-gray-900 leading-tight flex items-center gap-1.5">
-            <span>英语综合词库查词</span>
-            <span class="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-200/60 hidden sm:inline-block">人教高中 + 四六级全量</span>
-          </h1>
-          <p id="headerStats" class="text-[11px] text-gray-500 font-medium">已内置 9 册词库 · 11,160 词条</p>
-        </div>
+<body>
+  <div class="vc-stage">
+    <!-- 顶部出版物页头 -->
+    <header class="vc-header">
+      <div class="vc-header-title">
+        <div class="vc-eyebrow">VOCABULARY · 教材与四六级词典</div>
+        <h1>英语查词</h1>
+        <p class="vc-stats-line" id="headerStats">正在加载词库 (11,160+ 词)...</p>
       </div>
-      <div class="flex items-center gap-2">
-        <!-- Desktop Header Tabs -->
-        <div class="desktop-header-tabs items-center gap-1 bg-gray-100/90 p-1 rounded-xl text-xs font-semibold">
-          <button type="button" class="desktop-nav-tab px-3 py-1 rounded-lg text-blue-600 bg-white shadow-xs" data-tab="lookup">🔍 智能查词</button>
-          <button type="button" class="desktop-nav-tab px-3 py-1 rounded-lg text-gray-600 hover:text-gray-900" data-tab="browse">📚 课本浏览</button>
-          <button type="button" class="desktop-nav-tab px-3 py-1 rounded-lg text-gray-600 hover:text-gray-900" data-tab="import">⚙️ 词库管理</button>
-        </div>
-        <button id="quickImportBtn" type="button" class="ios-btn-active flex items-center gap-1 bg-blue-50 text-blue-600 border border-blue-200/80 px-3 py-1.5 rounded-full text-xs font-semibold shrink-0">
-          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24" width="14" height="14">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+
+      <div class="vc-header-actions">
+        <button type="button" class="vc-btn vc-btn-ghost" id="btnAccentToggle" title="切换美音 / 英音发音">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+            <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
           </svg>
-          <span>导入CSV</span>
+          <span id="accentLabel">美音 US</span>
+        </button>
+        <button type="button" class="vc-btn vc-btn-ghost" id="randomWordBtn" title="随机抽词查看详情">
+          <span>随机一词</span>
+        </button>
+        <button type="button" class="vc-btn vc-btn-ghost" id="btnOpenBatchModal">
+          <span>批量判词</span>
+        </button>
+        <button type="button" class="vc-btn vc-btn-ghost" id="btnOpenManagerModal">
+          <span>词库管理</span>
         </button>
       </div>
-    </div>
-  </header>
+    </header>
 
-  <!-- Main Content Container -->
-  <main class="app-container max-w-md mx-auto px-4 pt-3 pb-8">
-  <nav class="mobile-tab-nav mb-3 ios-card p-1" aria-label="查词功能切换">
-    <div class="grid grid-cols-3 gap-1">
-      <button type="button" data-tab="lookup" class="nav-tab-btn flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-semibold text-[#007AFF]">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24" width="16" height="16">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
-        </svg>
-        <span>课本查词</span>
-      </button>
-      <button type="button" data-tab="browse" class="nav-tab-btn flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-medium text-gray-400">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="16" height="16">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 010 3.75H5.625a1.875 1.875 0 010-3.75z" />
-        </svg>
-        <span>词表浏览</span>
-      </button>
-      <button type="button" data-tab="import" class="nav-tab-btn flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-medium text-gray-400">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="16" height="16">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
-        </svg>
-        <span>CSV词库</span>
-      </button>
-    </div>
-  </nav>
-  <div class="app-layout-grid">
-    <!-- Left Column: Search / Browse / Import -->
-    <div class="app-left-column space-y-4 min-w-0">
+    <!-- 主搜索与词库范围栏 -->
+    <section class="vc-search-bar-wrap" aria-label="查词与范围筛选">
+      <form id="searchForm" class="vc-search-form" autocomplete="off">
+        <div class="vc-search-box">
+          <svg class="vc-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="11" cy="11" r="7"/>
+            <path d="M21 21l-4.35-4.35"/>
+          </svg>
+          <input
+            id="wordInput"
+            type="search"
+            inputmode="text"
+            enterkeyhint="search"
+            autocapitalize="off"
+            autocorrect="off"
+            spellcheck="false"
+            placeholder="查单词、变形词、短语或中文释义（如 apply / looking / 放弃）..."
+            class="vc-search-input"
+          />
+          <span class="vc-kbd-hints" aria-hidden="true">/ 聚焦 · ↑↓ 切换 · ↵ 发音</span>
+          <button type="button" id="clearInputBtn" class="vc-clear-btn" hidden aria-label="清空搜索">✕</button>
+        </div>
+      </form>
 
-    <!-- TAB 1: 查词 (Lookup View) -->
-    <section id="viewLookup" class="space-y-4">
-      
-      <!-- Search Input Card -->
-      <div class="ios-card p-3.5 space-y-3">
-        <form id="searchForm" class="flex items-center gap-2" autocomplete="off">
-          <div class="ios-search-box flex-1 flex items-center px-3 py-2.5">
-            <svg class="w-5 h-5 text-gray-500 shrink-0 mr-2" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24" width="20" height="20">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
-            </svg>
-            <input
-              id="wordInput"
-              type="search"
-              inputmode="text"
-              enterkeyhint="search"
-              autocapitalize="off"
-              autocorrect="off"
-              spellcheck="false"
-              placeholder="输入单词或字母片段，边输边筛 (如 sign)..."
-              class="w-full bg-transparent text-gray-900 placeholder-gray-500 focus:outline-none text-[16px] leading-snug"
-            />
-            <button
-              id="clearInputBtn"
-              type="button"
-              aria-label="清空输入"
-              class="hidden ml-1.5 w-5 h-5 rounded-full bg-gray-400/80 text-white flex items-center justify-center text-xs font-bold shrink-0"
-            >
-              ×
-            </button>
-          </div>
-          <button
-            id="submitSearchBtn"
-            type="submit"
-            class="ios-btn-active shrink-0 bg-[#007AFF] hover:bg-blue-600 text-white font-semibold px-4 py-2.5 rounded-xl text-[15px] shadow-sm transition"
-          >
-            查询
-          </button>
-        </form>
+      <div class="vc-scope-bar" id="lookupBookFilterBar" role="tablist" aria-label="选择词库范围"></div>
 
-        <!-- Book Scope Filter Pills -->
-        <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar pt-0.5" id="lookupBookFilterBar">
-          <!-- Populated dynamically -->
+      <!-- 选定具体册别后自动展开的单元/字体筛选条 -->
+      <div class="vc-subfilter-row" id="subFilterRow" hidden>
+        <div class="vc-subfilter-controls">
+          <select id="browseUnitSelect" class="vc-select" aria-label="按单元或字母组筛选">
+            <option value="ALL">全部单元</option>
+          </select>
+          <select id="browseFontSelect" class="vc-select" aria-label="按重点级别筛选">
+            <option value="ALL">全部级别</option>
+            <option value="黑体">黑体（课标重点）</option>
+            <option value="白体">白体（认读词汇）</option>
+            <option value="专有名词">专有名词 (△)</option>
+          </select>
+        </div>
+        <span class="vc-subfilter-stats" id="subFilterStats"></span>
+      </div>
+    </section>
+
+    <!-- 主双栏工作台：左侧精简列表 + 右侧实时详情 -->
+    <main class="vc-workbench">
+      <section class="vc-list-pane" aria-label="词条匹配列表">
+        <!-- 变形识别提示条 -->
+        <div class="vc-lemma-banner" id="lemmaBanner" hidden>
+          <div class="vc-lemma-text" id="lemmaBannerText"></div>
+          <button type="button" class="vc-btn-mini" id="btnOpenDirectFromBanner">拓展词卡 ›</button>
         </div>
 
-        <!-- Batch Import Word List CSV Bar on Input Screen -->
-        <div class="pt-2 border-t border-gray-100 flex items-center justify-between gap-2 flex-wrap">
-          <input id="batchWordCsvInput" type="file" accept=".csv,.txt,text/csv,text/plain" class="hidden" />
-          <button
-            id="importBatchWordCsvBtn"
-            type="button"
-            class="ios-btn-active flex-1 bg-emerald-50 text-emerald-700 border border-emerald-200 px-3 py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 shadow-sm"
-          >
-            <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
-            </svg>
-            <span>📋 导入单词CSV批量判定 (表格输出)</span>
-          </button>
-          <button
-            id="demoBatchWordCsvBtn"
-            type="button"
-            class="ios-btn-active shrink-0 bg-purple-50 text-purple-700 border border-purple-200 px-3 py-2 rounded-xl text-xs font-semibold"
-            title="一键体验批量判断表格"
-          >
-            ✨ 示例表格
-          </button>
+        <!-- 空闲态：最近查询 + 快速试一试 -->
+        <div class="vc-idle-panel" id="idleHelperPanel">
+          <div class="vc-idle-block" id="historySection" hidden>
+            <div class="vc-idle-head">
+              <span>最近查询</span>
+              <button type="button" class="vc-text-btn" id="clearHistoryBtn">清空</button>
+            </div>
+            <div class="vc-chip-wrap" id="historyChips"></div>
+          </div>
+
+          <div class="vc-idle-block">
+            <div class="vc-idle-head">
+              <span>快速体验</span>
+              <span class="vc-idle-tip">支持英文原词、变形还原、片段及中文反查</span>
+            </div>
+            <div class="vc-chip-wrap">
+              <button type="button" data-quick-word="applied" class="quick-word-chip vc-quick-chip">applied <span>变形 → apply</span></button>
+              <button type="button" data-quick-word="adapt" class="quick-word-chip vc-quick-chip">adapt <span>多册聚合</span></button>
+              <button type="button" data-quick-word="sign" class="quick-word-chip vc-quick-chip">sign <span>短语匹配</span></button>
+              <button type="button" data-quick-word="recognise" class="quick-word-chip vc-quick-chip">recognise <span>英美拼写</span></button>
+              <button type="button" data-quick-word="放弃" class="quick-word-chip vc-quick-chip">放弃 <span>中文反查</span></button>
+              <button type="button" data-quick-word="serendipity" class="quick-word-chip vc-quick-chip is-miss">serendipity <span>未收录测试</span></button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 列表统计条 -->
+        <div class="vc-list-meta" id="listMetaBar" hidden>
+          <span id="listMetaText"></span>
+        </div>
+
+        <!-- 紧凑词条单行列表 -->
+        <div class="vc-word-list" id="wordListContainer" role="listbox" aria-label="匹配词条"></div>
+
+        <!-- 加载更多 -->
+        <div class="vc-load-more-wrap" id="listLoadMoreWrap" hidden>
+          <button type="button" id="listLoadMoreBtn" class="vc-btn vc-btn-ghost vc-btn-full">加载更多词条</button>
+        </div>
+
+        <!-- 无结果 / 纠错提示 -->
+        <div class="vc-empty-box" id="emptyResultBox" hidden></div>
+      </section>
+
+      <!-- 右侧固定词典详情面板（移动端为滑出抽屉） -->
+      <aside class="vc-detail-pane" id="detailPane" aria-label="单词完整详情">
+        <div class="vc-detail-placeholder" id="detailPlaceholder">
+          <div class="vc-placeholder-mark">Aa</div>
+          <h3>即输即查 · 同根词族谱</h3>
+          <p>在左侧输入英文单词、变形词、短语或中文释义，即可实时展开全部课本出处、词形变化、同根派生词与真人发音。</p>
+        </div>
+
+        <div class="vc-detail-card" id="detailCard" hidden>
+          <!-- 面包屑导航栈 + 手机端关闭按钮 -->
+          <div class="vc-detail-topbar" id="detailTopbar">
+            <div class="vc-breadcrumb" id="detailBreadcrumbBar" hidden>
+              <button type="button" class="vc-back-btn" id="btnDetailBack">← 返回</button>
+              <div class="vc-breadcrumb-trail" id="detailBreadcrumbTrail"></div>
+            </div>
+            <button type="button" class="vc-mobile-close-btn" id="mobileDetailCloseBtn" aria-label="关闭单词详情">✕ 关闭</button>
+          </div>
+
+          <!-- 单词主标题栏 -->
+          <div class="vc-detail-head">
+            <div class="vc-detail-title-col">
+              <div class="vc-detail-title-row">
+                <h2 id="detailWordTitle">word</h2>
+                <span class="vc-pos-badge" id="detailWordPos"></span>
+              </div>
+              <div class="vc-detail-badges" id="detailWordBadges"></div>
+            </div>
+            <div class="vc-detail-actions">
+              <button type="button" class="vc-btn vc-btn-primary" id="detailSpeakBtn" title="朗读发音 (Enter)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+                  <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+                  <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+                </svg>
+                <span id="detailSpeakLabel">发音</span>
+              </button>
+              <button type="button" class="vc-btn vc-btn-ghost" id="detailCopyBtn" title="复制词条信息">复制</button>
+            </div>
+          </div>
+
+          <!-- 滚动正文 -->
+          <div class="vc-detail-body" id="detailBodyContent"></div>
+        </div>
+      </aside>
+    </main>
+  </div>
+
+  <!-- 模态窗 1：批量单词课本判定（支持粘贴文本或上传 CSV） -->
+  <div class="vc-modal-backdrop" id="batchModal" hidden role="dialog" aria-modal="true" aria-labelledby="batchModalTitle">
+    <div class="vc-modal vc-modal-lg">
+      <div class="vc-modal-head">
+        <div>
+          <h3 id="batchModalTitle">批量单词课本判定</h3>
+          <p class="vc-modal-sub">直接粘贴英文文本/单词表，或导入 CSV/TXT 文件，自动还原变形并检测所属课本与单元</p>
+        </div>
+        <button type="button" class="vc-icon-close" data-close-modal="batchModal" aria-label="关闭">✕</button>
+      </div>
+
+      <div class="vc-batch-input-bar">
+        <textarea id="batchTextInput" class="vc-textarea" rows="3" placeholder="粘贴英文段落或每行一个单词（如：applied, resilience, took care of, serendipity）..."></textarea>
+        <div class="vc-batch-input-actions">
+          <button type="button" class="vc-btn vc-btn-primary" id="btnRunBatchText">开始判定</button>
+          <input id="batchWordCsvInput" type="file" accept=".csv,.txt,text/csv,text/plain" multiple hidden />
+          <button type="button" class="vc-btn vc-btn-ghost" id="importBatchWordCsvBtn">导入 CSV/TXT</button>
+          <button type="button" class="vc-btn vc-btn-ghost" id="demoBatchWordCsvBtn">示例词表</button>
         </div>
       </div>
 
-      <!-- Batch CSV Word Check Table Result Container -->
-      <div id="batchCheckResultSection" class="ios-card p-3.5 space-y-3 hidden animate-fade-in">
-        <div class="flex items-center justify-between gap-2 flex-wrap">
-          <div>
-            <h2 class="text-sm font-bold text-gray-900 flex items-center gap-1.5">
-              <span>📊 批量单词课本判定表</span>
-              <span id="batchFileNameBadge" class="text-[11px] font-medium text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-100"></span>
-            </h2>
-            <p id="batchSummaryStats" class="text-xs text-gray-500 mt-0.5">正在统计...</p>
+      <div class="vc-batch-results" id="batchCheckResultSection" hidden>
+        <div class="vc-batch-toolbar">
+          <div class="vc-batch-stats-col">
+            <span class="vc-batch-file-badge" id="batchFileNameBadge"></span>
+            <span class="vc-batch-summary" id="batchSummaryStats"></span>
           </div>
-          <div class="flex items-center gap-1.5">
-            <button id="exportBatchCsvBtn" type="button" class="ios-btn-active text-xs font-semibold bg-[#007AFF] text-white px-2.5 py-1.5 rounded-lg shadow-sm">
-              📥 导出CSV
-            </button>
-            <button id="copyBatchTableBtn" type="button" class="ios-btn-active text-xs font-semibold bg-gray-100 text-gray-700 px-2.5 py-1.5 rounded-lg">
-              📋 复制
-            </button>
-            <button id="closeBatchTableBtn" type="button" class="ios-btn-active text-xs font-bold bg-red-50 text-red-600 px-2.5 py-1.5 rounded-lg" title="关闭批量表格">
-              ✕
-            </button>
+          <div class="vc-batch-export-actions">
+            <div class="vc-seg-group" id="batchStatusFilterBar">
+              <button type="button" data-batch-filter="ALL" class="batch-filter-pill vc-seg-btn active">全部</button>
+              <button type="button" data-batch-filter="YES" class="batch-filter-pill vc-seg-btn">收录</button>
+              <button type="button" data-batch-filter="NO" class="batch-filter-pill vc-seg-btn">未收录</button>
+            </div>
+            <button type="button" class="vc-btn vc-btn-ghost" id="copyBatchTableBtn">复制表格</button>
+            <button type="button" class="vc-btn vc-btn-ghost" id="exportBatchCsvBtn">导出 CSV</button>
           </div>
         </div>
 
-        <!-- Status Filter Pills for Batch Table -->
-        <div class="flex items-center justify-between gap-2 flex-wrap pt-0.5">
-          <div class="flex items-center gap-1.5" id="batchStatusFilterBar">
-            <button type="button" data-batch-filter="ALL" class="batch-filter-pill px-2.5 py-1 rounded-full text-xs font-semibold bg-[#007AFF] text-white">全部</button>
-            <button type="button" data-batch-filter="YES" class="batch-filter-pill px-2.5 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-600">✅ 在课本中</button>
-            <button type="button" data-batch-filter="NO" class="batch-filter-pill px-2.5 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-600">❌ 不在课本中</button>
-          </div>
-          <span class="text-[11px] text-gray-400">💡 点击任意行可打开单词卡片</span>
-        </div>
-
-        <!-- Scrollable Table Container -->
-        <div class="batch-table-wrap max-h-[86vh] overflow-y-auto">
-          <table class="batch-table">
+        <div class="vc-batch-table-wrap">
+          <table class="vc-batch-table">
             <thead>
               <tr>
-                <th style="width: 38px;">#</th>
-                <th>导入单词</th>
-                <th>是否课本单词</th>
-                <th>匹配课本词条 &amp; 释义</th>
-                <th>所在课本与单元</th>
-                <th style="width: 58px;">详情</th>
+                <th style="width:36px;">#</th>
+                <th>输入单词</th>
+                <th>判定结果</th>
+                <th>匹配词条与释义</th>
+                <th>课本与单元</th>
+                <th style="width:68px;">详情</th>
               </tr>
             </thead>
-            <tbody id="batchTableBody">
-              <!-- Populated dynamically -->
-            </tbody>
+            <tbody id="batchTableBody"></tbody>
           </table>
         </div>
       </div>
+    </div>
+  </div>
 
-      <!-- Quick Sample / History Chips (Shown when input is empty) -->
-      <div id="IdleHelperPanel" class="space-y-3.5">
-        <!-- Recent Searches -->
-        <div id="historySection" class="ios-card p-3.5 hidden">
-          <div class="flex items-center justify-between mb-2">
-            <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">最近查询</span>
-            <button id="clearHistoryBtn" type="button" class="text-xs text-gray-400 hover:text-red-500">清空</button>
-          </div>
-          <div id="historyChips" class="flex flex-wrap gap-1.5"></div>
-        </div>
-
-        <!-- Quick Try & Random Test Card -->
-        <div class="ios-card p-4">
-          <div class="flex items-center justify-between mb-2.5">
-            <div>
-              <h2 class="text-sm font-bold text-gray-800">快速试一试</h2>
-              <p class="text-xs text-gray-500 mt-0.5">点击下方词条直接体验课本定位与未收录提示</p>
-            </div>
-            <button id="randomWordBtn" type="button" class="ios-btn-active text-xs font-semibold text-blue-600 bg-blue-50 px-2.5 py-1.5 rounded-lg flex items-center gap-1">
-              <span>🎲 随机抽词</span>
-            </button>
-          </div>
-          <div class="flex flex-wrap gap-2 mt-2">
-            <button type="button" data-quick-word="looking" class="quick-word-chip ios-btn-active px-3 py-1.5 rounded-xl bg-purple-50 text-purple-700 border border-purple-200 text-xs font-medium">looking <span class="text-[10px] text-purple-700">变形识别 → look</span></button>
-            <button type="button" data-quick-word="applied" class="quick-word-chip ios-btn-active px-3 py-1.5 rounded-xl bg-purple-50 text-purple-700 border border-purple-200 text-xs font-medium">applied <span class="text-[10px] text-purple-700">变形识别 → apply</span></button>
-            <button type="button" data-quick-word="sign" class="quick-word-chip ios-btn-active px-3 py-1.5 rounded-xl bg-blue-50 text-blue-700 border border-blue-200/80 text-xs font-medium">sign <span class="text-[10px] text-blue-600">片段匹配 sign up 等</span></button>
-            <button type="button" data-quick-word="adapt" class="quick-word-chip ios-btn-active px-3 py-1.5 rounded-xl bg-gray-100 text-gray-800 text-xs font-medium">adapt <span class="text-[10px] text-blue-600">多册出现</span></button>
-            <button type="button" data-quick-word="abandon" class="quick-word-chip ios-btn-active px-3 py-1.5 rounded-xl bg-gray-100 text-gray-800 text-xs font-medium">abandon <span class="text-[10px] text-gray-500">选必三</span></button>
-            <button type="button" data-quick-word="recognise" class="quick-word-chip ios-btn-active px-3 py-1.5 rounded-xl bg-gray-100 text-gray-800 text-xs font-medium">recognise / recognize</button>
-            <button type="button" data-quick-word="above all" class="quick-word-chip ios-btn-active px-3 py-1.5 rounded-xl bg-gray-100 text-gray-800 text-xs font-medium">above all <span class="text-[10px] text-gray-500">短语</span></button>
-            <button type="button" data-quick-word="serendipity" class="quick-word-chip ios-btn-active px-3 py-1.5 rounded-xl bg-red-50 text-red-600 border border-red-100 text-xs font-medium">serendipity <span class="text-[10px]">测试不在课本中</span></button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Search Results Area -->
-      <div id="searchResultContainer" class="space-y-3"></div>
-
-    </section>
-
-    <!-- TAB 2: 词表浏览 & 中文反查 (Browse Textbook View) -->
-    <section id="viewBrowse" class="space-y-3.5 hidden">
-      <div class="ios-card p-3.5 space-y-3">
-        <div class="flex items-center justify-between">
-          <h2 class="text-[15px] font-bold text-gray-900">按课本/四六级分册浏览与释义反查</h2>
-          <span id="browseCountBadge" class="text-xs font-semibold text-blue-600 bg-blue-50 px-2.5 py-0.5 rounded-full">0 词</span>
-        </div>
-
-        <!-- Filter Controls -->
-        <div class="grid grid-cols-2 gap-2">
-          <div>
-            <label for="browseBookSelect" class="block text-[11px] font-medium text-gray-500 mb-1">选择册别</label>
-            <select id="browseBookSelect" class="w-full bg-gray-100 text-gray-900 rounded-xl px-2.5 py-2 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500">
-              <!-- Populated dynamically -->
-            </select>
-          </div>
-          <div>
-            <label for="browseUnitSelect" class="block text-[11px] font-medium text-gray-500 mb-1">选择单元</label>
-            <select id="browseUnitSelect" class="w-full bg-gray-100 text-gray-900 rounded-xl px-2.5 py-2 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500">
-              <option value="ALL">全部单元</option>
-              <option value="w">Welcome Unit</option>
-              <option value="1">Unit 1</option>
-              <option value="2">Unit 2</option>
-              <option value="3">Unit 3</option>
-              <option value="4">Unit 4</option>
-              <option value="5">Unit 5</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="flex items-center gap-2">
-          <div class="ios-search-box flex-1 flex items-center px-3 py-2">
-            <input
-              id="browseFilterInput"
-              type="search"
-              placeholder="输入中文释义或英文前缀筛选 (如: 放弃)..."
-              class="w-full bg-transparent text-gray-900 placeholder-gray-500 focus:outline-none text-sm"
-            />
-          </div>
-          <select id="browseFontSelect" aria-label="字体筛选" class="bg-gray-100 text-gray-800 rounded-xl px-2.5 py-2 text-xs font-medium focus:outline-none">
-            <option value="ALL">全部字体</option>
-            <option value="黑体">黑体(重点)</option>
-            <option value="白体">白体</option>
-            <option value="专有名词">专有名词(△)</option>
-          </select>
-        </div>
-      </div>
-
-      <!-- Browse List -->
-      <div id="browseListContainer" class="space-y-2"></div>
-
-      <!-- Load More Button -->
-      <div id="browseLoadMoreWrap" class="text-center pt-1 hidden">
-        <button id="browseLoadMoreBtn" type="button" class="ios-btn-active w-full py-2.5 rounded-xl bg-white border border-gray-200 text-blue-600 font-semibold text-sm shadow-sm">
-          加载更多词条
-        </button>
-      </div>
-    </section>
-
-    <!-- TAB 3: 导入/管理 CSV 词库 (CSV Manager View) -->
-    <section id="viewImport" class="space-y-4 hidden">
-      <!-- Upload Card -->
-      <div class="ios-card p-4 space-y-3.5">
-        <div class="flex items-start gap-3">
-          <div class="w-10 h-10 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="24" height="24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m6.75 12l-3-3m0 0l-3 3m3-3v6m-1.5-15H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-            </svg>
-          </div>
-          <div>
-            <h2 class="text-[16px] font-bold text-gray-900">导入单词 CSV</h2>
-            <p class="text-xs text-gray-500 mt-0.5 leading-relaxed">
-              系统已预置全部 <strong>7 册人教版高中英语词汇表</strong>（2,625词）及<strong>大学英语四级（4,544词）、六级（3,991词）全量词库</strong>。您随时可从 iPhone「文件」App 导入自定义 CSV 词汇表。
-            </p>
-          </div>
-        </div>
-
-        <!-- Import Mode Radio -->
-        <div class="bg-gray-100 p-2.5 rounded-xl space-y-1.5">
-          <span class="block text-[11px] font-semibold text-gray-500 px-1">导入方式</span>
-          <div class="grid grid-cols-2 gap-2">
-            <label class="flex items-center gap-2 bg-white p-2 rounded-lg border border-gray-200/80 cursor-pointer">
-              <input type="radio" name="importMode" value="merge" checked class="text-blue-600 focus:ring-blue-500" />
-              <span class="text-xs font-medium text-gray-800">追加合并到词库</span>
-            </label>
-            <label class="flex items-center gap-2 bg-white p-2 rounded-lg border border-gray-200/80 cursor-pointer">
-              <input type="radio" name="importMode" value="replace" class="text-blue-600 focus:ring-blue-500" />
-              <span class="text-xs font-medium text-gray-800">覆盖替换原词库</span>
-            </label>
-          </div>
-          <label class="flex items-center gap-2 bg-blue-50/80 p-2 rounded-lg border border-blue-200 cursor-pointer mt-1">
-            <input type="checkbox" id="syncToD1Checkbox" class="rounded text-blue-600 focus:ring-blue-500" />
-            <span class="text-xs font-semibold text-blue-900">☁️ 同时同步至 Cloudflare D1 云端数据库 (需管理员密码)</span>
-          </label>
-        </div>
-
-        <!-- File Input Trigger -->
+  <!-- 模态窗 2：词库管理（导入 CSV / 同步 D1 / 分册总览） -->
+  <div class="vc-modal-backdrop" id="managerModal" hidden role="dialog" aria-modal="true" aria-labelledby="managerModalTitle">
+    <div class="vc-modal">
+      <div class="vc-modal-head">
         <div>
-          <input id="csvFileInput" type="file" accept=".csv,text/csv,text/plain" multiple class="hidden" />
-          <button
-            id="selectCsvFilesBtn"
-            type="button"
-            class="ios-btn-active w-full py-3 rounded-xl bg-[#007AFF] text-white font-semibold text-[15px] shadow-sm flex items-center justify-center gap-2"
-          >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24" width="20" height="20">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-            </svg>
-            <span>从 iPhone 选择 CSV 文件 (支持多选)</span>
-          </button>
+          <h3 id="managerModalTitle">词库管理与 CSV 导入</h3>
+          <p class="vc-modal-sub" id="loadedSummaryText">共 9 册 · 11,160 词条</p>
         </div>
-
-        <!-- Supported CSV Format Note -->
-        <div class="bg-blue-50/70 border border-blue-100 rounded-xl p-3 text-xs text-gray-600 space-y-1">
-          <div class="font-semibold text-blue-800">💡 支持的 CSV 表头格式（自动识别 UTF-8 / GBK 编码）：</div>
-          <p class="leading-relaxed">标准列：<code class="bg-white px-1.5 py-0.5 rounded border border-blue-100 text-blue-700">册, 单元, 单词, 词性, 释义, 字体, 备注</code>（也支持包含「单词/英文」「释义/中文」「位置/单元/册」的任意自定义 CSV 表头，并自动合并跨行拆分的词条）。</p>
-        </div>
+        <button type="button" class="vc-icon-close" data-close-modal="managerModal" aria-label="关闭">✕</button>
       </div>
 
-      <!-- Currently Loaded Books Summary -->
-      <div class="ios-card p-4 space-y-3">
-        <div class="flex items-center justify-between">
-          <div>
-            <h3 class="text-sm font-bold text-gray-900">当前已加载的综合词库</h3>
-            <p id="loadedSummaryText" class="text-xs text-gray-500 mt-0.5">共 9 册 · 11,160 个词条</p>
+      <div class="vc-manager-scroll">
+        <div class="vc-manager-card">
+          <div class="vc-manager-modes">
+            <label class="vc-radio-pill">
+              <input type="radio" name="importMode" value="merge" checked />
+              <span>追加合并到当前词库</span>
+            </label>
+            <label class="vc-radio-pill">
+              <input type="radio" name="importMode" value="replace" />
+              <span>覆盖替换原词库</span>
+            </label>
           </div>
-          <button
-            id="resetDefaultDbBtn"
-            type="button"
-            class="ios-btn-active text-xs font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-lg"
-          >
-            恢复默认全量词库
-          </button>
+
+          <label class="vc-check-row">
+            <input type="checkbox" id="syncToD1Checkbox" />
+            <span>同时同步至 Cloudflare D1 云端数据库（需管理员密码）</span>
+          </label>
+
+          <input id="csvFileInput" type="file" accept=".csv,text/csv,text/plain" multiple hidden />
+          <button type="button" class="vc-btn vc-btn-primary vc-btn-full" id="selectCsvFilesBtn">选择 CSV 文件导入（支持多选 / UTF-8 &amp; GBK）</button>
+          <p class="vc-manager-hint">支持标准列：<code>册, 单元, 单词, 词性, 释义, 字体, 备注</code> 或自定义表头。</p>
         </div>
 
-        <div id="loadedBooksList" class="divide-y divide-gray-100">
-          <!-- Populated dynamically -->
-        </div>
-      </div>
-    </section>
-
-      </div>
-    <!-- Right Column: Desktop Pinned Detail Panel -->
-    <div class="desktop-only-panel sticky top-20">
-      <div id="desktopDetailPanel" class="ios-card p-5 bg-white shadow-sm border border-gray-100 rounded-2xl max-h-[calc(100vh-6.5rem)] overflow-y-auto">
-        <div id="desktopDetailPlaceholder" class="py-16 px-6 text-center text-gray-400">
-          <div class="text-4xl mb-3">📖</div>
-          <div class="text-sm font-bold text-gray-700">点击左侧单词查看详情</div>
-          <div class="text-xs text-gray-400 mt-2 max-w-xs mx-auto leading-relaxed">
-            实时查看对应课本出处、所有变形词（时态/复数/比较级）、同根词家族族谱、一词多义与多音频朗读。
+        <div class="vc-manager-card">
+          <div class="vc-manager-list-head">
+            <span>已加载词库分册</span>
+            <button type="button" class="vc-text-btn" id="resetDefaultDbBtn">恢复默认全量词库</button>
           </div>
-        </div>
-        <div id="desktopDetailContent" class="space-y-4 hidden">
-          <!-- Word header -->
-          <div class="flex items-start justify-between gap-3 border-b border-gray-100 pb-3">
-            <div>
-              <div class="flex items-center gap-2 flex-wrap">
-                <h2 id="desktopWordTitle" class="text-2xl font-bold text-gray-900 tracking-tight break-words">word</h2>
-                <span id="desktopWordPos" class="text-xs font-semibold italic text-blue-700 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-100">n.</span>
-              </div>
-              <div id="desktopWordBadges" class="flex items-center flex-wrap gap-1.5 mt-1.5"></div>
-            </div>
-            <div class="flex items-center gap-1.5 shrink-0">
-              <button id="desktopSpeakBtn" type="button" class="ios-btn-active px-3 py-1.5 rounded-full bg-blue-50 text-blue-600 text-xs font-semibold flex items-center gap-1">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.114 5.636a9 9 0 010 12.728M16.463 8.288a5.25 5.25 0 010 7.424M6.75 8.25l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.01 9.01 0 012.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75z"/></svg>
-                <span>发音</span>
-              </button>
-            </div>
-          </div>
-          <!-- Word Body -->
-          <div id="desktopBodyContent" class="space-y-3.5"></div>
+          <div class="vc-books-list" id="loadedBooksList"></div>
         </div>
       </div>
     </div>
   </div>
-</main>
 
-  <!-- Word Detail Card Modal (iOS Bottom Sheet) -->
-  <div id="wordDetailModal" class="fixed inset-0 z-50 hidden flex flex-col justify-end bg-black/45 backdrop-blur-md">
-    <div id="wordDetailBackdrop" class="flex-1 w-full"></div>
-    <div class="w-full max-w-md mx-auto bg-[#F2F2F7] rounded-2xl max-h-[86vh] flex flex-col shadow-lg animate-slide-up overflow-hidden" style="border-bottom-left-radius: 0; border-bottom-right-radius: 0;">
-      <!-- Sheet Grabber & Sticky Top Bar -->
-      <div class="bg-white px-4 pt-2.5 pb-3 border-b border-gray-200/80 shrink-0">
-        <div class="w-10 h-1 bg-gray-300 rounded-full mx-auto mb-2.5" style="height: 4px; background-color: #D1D5DB;"></div>
-        <div class="flex items-start justify-between gap-2">
-          <div class="min-w-0 flex-1">
-            <div class="flex items-center flex-wrap gap-2">
-              <h2 id="modalWordTitle" class="text-xl font-bold text-gray-900 tracking-tight break-words">word</h2>
-              <span id="modalWordPos" class="text-xs font-semibold italic text-blue-700 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-100"></span>
-            </div>
-            <div id="modalWordBadges" class="flex items-center flex-wrap gap-1.5 mt-1"></div>
-          </div>
-          <div class="flex items-center gap-1.5 shrink-0">
-            <button id="modalSpeakBtn" type="button" class="ios-btn-active px-3 py-1.5 rounded-full bg-blue-50 text-blue-600 text-xs font-semibold flex items-center gap-1" title="朗读发音">
-              <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M19.114 5.636a9 9 0 010 12.728M16.463 8.288a5.25 5.25 0 010 7.424M6.75 8.25l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.01 9.01 0 012.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75z" />
-              </svg>
-              <span>发音</span>
-            </button>
-            <button id="modalCloseBtn" type="button" aria-label="关闭单词卡片" class="ios-btn-active w-8 h-8 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center font-bold text-sm" style="width: 32px; height: 32px;">
-              ✕
-            </button>
-          </div>
-        </div>
-      </div>
+  <div class="toast" id="toastBanner"><span id="toastText">已复制到剪贴板</span></div>
 
-      <!-- Scrollable Modal Body -->
-      <div id="modalBodyContent" class="p-4 space-y-3.5 overflow-y-auto pb-safe">
-        <!-- Populated dynamically -->
-      </div>
-    </div>
-  </div>
-
-  <!-- Toast Notification -->
-  <div id="toastBanner" class="fixed top-16 left-1/2 -translate-x-1/2 z-50 pointer-events-none opacity-0 transition-all duration-200 transform -translate-y-2">
-    <div id="toastInner" class="bg-gray-900/90 text-white text-xs font-medium px-4 py-2.5 rounded-full shadow-lg flex items-center gap-2 backdrop-blur-md">
-      <span id="toastText">操作成功</span>
-    </div>
-  </div>
-
-  <script type="module" src="/src/pages/vocab/main.ts"></script>
+  <script type="module" src="./src/pages/vocab/main.ts"></script>
 </body>
 </html>
