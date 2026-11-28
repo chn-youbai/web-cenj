@@ -260,6 +260,12 @@ function renderFileList(): void {
           <div class="pan-row-actions">
             ${previewKind !== "none" ? `<button type="button" class="pan-act-btn" data-act="preview" data-id="${escapeHtml(file.id)}">预览</button>` : ""}
             <a class="pan-act-btn primary" href="${escapeHtml(downloadUrl)}" download="${escapeHtml(file.name)}">下载</a>
+            ${
+              file.asset_url &&
+              (file.storage_tier === "gh_single" || file.storage_tier === "external_link")
+                ? `<a class="pan-act-btn" href="${escapeHtml(file.asset_url)}" target="_blank" rel="noopener noreferrer" title="直接访问源地址（开代理时可满速下载）">直连</a>`
+                : ""
+            }
             ${!isPrivate ? `<button type="button" class="pan-act-btn" data-act="copy" data-id="${escapeHtml(file.id)}">复制链接</button>` : ""}
             ${
               state.isAdmin

@@ -406,6 +406,44 @@ export async function streamPanFileResponse(
     );
   }
 
+  const edgeCache =
+    typeof caches !== "undefined" && "default" in caches
+      ? (caches as unknown as { default: Cache }).default
+      : null;
+  const isCacheablePublic =
+    !isHead &&
+    !rangeHeader &&
+    file.visibility === "public" &&
+    file.storage_tier !== "gh_chunked" &&
+    Number(file.size) > 0 &&
+    Number(file.size) <= 50 * 1024 * 1024;
+
+  let edgeCacheKey: Request | null = null;
+  if (edgeCache && isCacheablePublic) {
+    const reqUrl = new URL(context.request.url);
+    const cacheUrl = new URL(`${reqUrl.origin}/__pan_edge_cache/${encodeURIComponent(file.id)}`);
+    cacheUrl.searchParams.set("inline", inline ? "1" : "0");
+    cacheUrl.searchParams.set("v", String(file.updated_at || 0));
+    edgeCacheKey = new Request(cacheUrl.toString(), { method: "GET" });
+
+    try {
+      const cached = await edgeCache.match(edgeCacheKey);
+      if (cached) {
+        const hitHeaders = new Headers(cached.headers);
+        hitHeaders.set(
+          "Access-Control-Allow-Origin",
+          corsHeaders["Access-Control-Allow-Origin"] || "*",
+        );
+        if (corsHeaders.Vary) {
+          hitHeaders.set("Vary", corsHeaders.Vary);
+        }
+        return new Response(cached.body, { status: cached.status, headers: hitHeaders });
+      }
+    } catch {
+      // ignore edge cache read error
+    }
+  }
+
   const baseHeaders = new Headers();
   baseHeaders.set("Access-Control-Allow-Origin", corsHeaders["Access-Control-Allow-Origin"] || "*");
   if (corsHeaders.Vary) {
@@ -422,10 +460,10 @@ export async function streamPanFileResponse(
   baseHeaders.set("ETag", `"${file.id}-${file.updated_at || 0}"`);
   baseHeaders.set(
     "Cache-Control",
-    file.visibility === "private" ? "private, no-store" : "public, max-age=300",
+    file.visibility === "private" ? "private, no-store" : "public, max-age=86400",
   );
 
-  // Tier 1: Cloudflare D1 chunked blobs (<= 20 MB)
+  // Tier 1: Cloudflare D1 chunked blobs (<= 20 MB) with 4-chunk parallel prefetch
   if (file.storage_tier === "cf_d1") {
     const totalSize = Number(file.size) || 0;
     const range = parseRangeHeader(rangeHeader, totalSize);
@@ -445,22 +483,39 @@ export async function streamPanFileResponse(
 
     const firstChunk = Math.floor(start / CF_D1_CHUNK_BYTES);
     const lastChunk = Math.floor(end / CF_D1_CHUNK_BYTES);
+    const PREFETCH_BATCH = 4;
 
     const stream = new ReadableStream<Uint8Array>({
       async start(controller) {
         try {
-          for (let idx = firstChunk; idx <= lastChunk; idx++) {
-            const row = await db
-              .prepare("SELECT data FROM pan_blobs WHERE file_id = ? AND chunk_index = ?")
-              .bind(file.id, idx)
-              .first<{ data?: unknown }>();
-            if (!row?.data) break;
-            const chunkBytes = toUint8Array(row.data);
-            const chunkGlobalStart = idx * CF_D1_CHUNK_BYTES;
-            const sliceStart = Math.max(0, start - chunkGlobalStart);
-            const sliceEnd = Math.min(chunkBytes.byteLength, end - chunkGlobalStart + 1);
-            if (sliceEnd > sliceStart) {
-              controller.enqueue(chunkBytes.subarray(sliceStart, sliceEnd));
+          for (let batchStart = firstChunk; batchStart <= lastChunk; batchStart += PREFETCH_BATCH) {
+            const batchEnd = Math.min(lastChunk, batchStart + PREFETCH_BATCH - 1);
+            const indices: number[] = [];
+            for (let idx = batchStart; idx <= batchEnd; idx++) {
+              indices.push(idx);
+            }
+            const rows = await Promise.all(
+              indices.map((idx) =>
+                db
+                  .prepare("SELECT data FROM pan_blobs WHERE file_id = ? AND chunk_index = ?")
+                  .bind(file.id, idx)
+                  .first<{ data?: unknown }>(),
+              ),
+            );
+            for (let i = 0; i < indices.length; i++) {
+              const idx = indices[i]!;
+              const row = rows[i];
+              if (!row?.data) {
+                controller.close();
+                return;
+              }
+              const chunkBytes = toUint8Array(row.data);
+              const chunkGlobalStart = idx * CF_D1_CHUNK_BYTES;
+              const sliceStart = Math.max(0, start - chunkGlobalStart);
+              const sliceEnd = Math.min(chunkBytes.byteLength, end - chunkGlobalStart + 1);
+              if (sliceEnd > sliceStart) {
+                controller.enqueue(chunkBytes.subarray(sliceStart, sliceEnd));
+              }
             }
           }
           controller.close();
@@ -470,7 +525,11 @@ export async function streamPanFileResponse(
       },
     });
 
-    return new Response(stream, { status, headers: baseHeaders });
+    const resp = new Response(stream, { status, headers: baseHeaders });
+    if (edgeCache && edgeCacheKey) {
+      context.waitUntil(edgeCache.put(edgeCacheKey, resp.clone()).catch(() => undefined));
+    }
+    return resp;
   }
 
   // Tier 3: GitHub Releases chunked (> 90 MB, 80 MB/chunk)
