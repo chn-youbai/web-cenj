@@ -25,10 +25,31 @@ export const PAN_TIER_LABELS: Record<PanStorageTier, string> = {
   external_link: "外链",
 };
 
-export function selectUploadTier(sizeBytes: number): "cf_d1" | "gh_single" | "gh_chunked" {
+export type PanUploadTierPreference = "auto" | "cf_d1" | "gh_single" | "gh_chunked";
+
+export function selectUploadTier(
+  sizeBytes: number,
+  preferredTier: PanUploadTierPreference = "auto",
+): "cf_d1" | "gh_single" | "gh_chunked" {
+  if (preferredTier !== "auto") {
+    return preferredTier;
+  }
   if (sizeBytes <= PAN_CF_D1_LIMIT) return "cf_d1";
   if (sizeBytes <= PAN_GH_SINGLE_LIMIT) return "gh_single";
   return "gh_chunked";
+}
+
+export function validateUploadTierSize(
+  sizeBytes: number,
+  tier: "cf_d1" | "gh_single" | "gh_chunked",
+): string | null {
+  if (tier === "cf_d1" && sizeBytes > PAN_CF_D1_LIMIT) {
+    return "CF 边缘极速 (D1) 仅支持 ≤ 20 MB 文件，请改用自动分级或 GitHub 存储";
+  }
+  if (tier === "gh_single" && sizeBytes > PAN_GH_SINGLE_LIMIT) {
+    return "GitHub 直传单次上限 90 MB，请改用自动分级或 GitHub 分片";
+  }
+  return null;
 }
 
 export function inferPanCategory(fileName: string, mimeType = ""): PanCategory {

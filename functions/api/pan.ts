@@ -35,6 +35,8 @@ import {
 
 export { CF_D1_CHUNK_BYTES, CF_D1_MAX_BYTES } from "../_lib/pan-storage";
 
+const GH_SINGLE_MAX_BYTES = 90 * 1024 * 1024;
+
 function decodeHeaderValue(raw: string | null): string {
   if (!raw) return "";
   try {
@@ -53,7 +55,7 @@ export const onRequestOptions: PagesFunction<Env> = async (context) => {
         "Access-Control-Allow-Origin": origin,
         "Access-Control-Allow-Methods": "GET, POST, PATCH, DELETE, OPTIONS",
         "Access-Control-Allow-Headers":
-          "Content-Type, Authorization, Range, X-API-Key, X-Admin-Password, x-admin-key, X-Access-Pwd, X-GitHub-Token, X-File-Name, X-Pan-Visibility, X-Pan-Category, X-Pan-Note, X-Pan-Mime, X-Pan-Size, X-Pan-Folder, X-Pan-Overwrite",
+          "Content-Type, Authorization, Range, X-API-Key, X-Admin-Password, x-admin-key, X-Access-Pwd, X-GitHub-Token, X-File-Name, X-Pan-Visibility, X-Pan-Category, X-Pan-Note, X-Pan-Mime, X-Pan-Size, X-Pan-Folder, X-Pan-Overwrite, X-Pan-Storage-Tier",
         "Access-Control-Max-Age": "86400",
         Vary: "Origin",
       },
@@ -574,6 +576,33 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       readFormText("note") || decodeHeaderValue(context.request.headers.get("X-Pan-Note"))
     ).slice(0, 300);
 
+    const rawRequestedTier = (
+      readFormText("storage_tier") ||
+      decodeHeaderValue(context.request.headers.get("X-Pan-Storage-Tier")) ||
+      url.searchParams.get("storage_tier") ||
+      ""
+    ).toLowerCase();
+
+    if (rawRequestedTier && !["auto", "cf_d1", "gh_single"].includes(rawRequestedTier)) {
+      return jsonResponse(
+        {
+          status: "error",
+          error: "storage_tier 仅支持 auto、cf_d1 或 gh_single（分片请走 chunk 接口）",
+        },
+        400,
+        corsHeaders,
+      );
+    }
+
+    const requestedTier = (rawRequestedTier || "auto") as "auto" | "cf_d1" | "gh_single";
+    if (requestedTier !== "auto" && !(authCtx.authenticated && authCtx.isAdmin)) {
+      return jsonResponse(
+        { status: "error", error: "仅管理员可指定上传储存方式" },
+        authCtx.authenticated ? 403 : 401,
+        corsHeaders,
+      );
+    }
+
     const declaredSize = formFile
       ? formFile.size
       : Number.parseInt(
@@ -582,6 +611,28 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
             "0",
           10,
         ) || 0;
+
+    if (requestedTier === "cf_d1" && declaredSize > CF_D1_MAX_BYTES) {
+      return jsonResponse(
+        {
+          status: "error",
+          error: "CF D1 边缘库单文件上限 20MB，请选择 GitHub 直传或分片存储",
+        },
+        413,
+        corsHeaders,
+      );
+    }
+
+    if (requestedTier === "gh_single" && declaredSize > GH_SINGLE_MAX_BYTES) {
+      return jsonResponse(
+        {
+          status: "error",
+          error: "GitHub 直传单文件上限 90MB，请使用分片上传",
+        },
+        413,
+        corsHeaders,
+      );
+    }
 
     if (overwriteFlag) {
       const existing = await db
@@ -599,8 +650,11 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       await ensureFolderHierarchy(db, visibility, folderPath, now);
     }
 
-    // <= 20 MB: Cloudflare D1 chunked blob storage
-    if (declaredSize <= CF_D1_MAX_BYTES) {
+    const useD1 =
+      requestedTier === "cf_d1" || (requestedTier === "auto" && declaredSize <= CF_D1_MAX_BYTES);
+
+    // Cloudflare D1 chunked blob storage (<= 20 MB)
+    if (useD1) {
       const buf = formFile ? await formFile.arrayBuffer() : await context.request.arrayBuffer();
       const actualSize = buf.byteLength;
       if (actualSize > CF_D1_MAX_BYTES) {
@@ -643,13 +697,13 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       return jsonResponse({ status: "ok", file } satisfies PanUploadResponse, 201, corsHeaders);
     }
 
-    // > 20 MB: stream directly to GitHub Releases v_pan
+    // Stream directly to GitHub Releases v_pan
     const token =
       context.request.headers.get("X-GitHub-Token") ||
       getEnvString(context.env, "GITHUB_MEDIA_TOKEN");
     if (!token) {
       return jsonResponse(
-        { status: "error", error: "上传 >20MB 文件需要服务端配置 GITHUB_MEDIA_TOKEN" },
+        { status: "error", error: "上传至 GitHub Releases 需要服务端配置 GITHUB_MEDIA_TOKEN" },
         503,
         corsHeaders,
       );

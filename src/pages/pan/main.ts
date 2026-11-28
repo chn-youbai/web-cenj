@@ -21,6 +21,7 @@ import {
   PAN_TIER_LABELS,
   type PanCategoryFilter,
   type PanSortBy,
+  type PanUploadTierPreference,
   type PanVisibilityFilter,
   filterAndSortPanFiles,
   formatFileSize,
@@ -28,6 +29,7 @@ import {
   getPreviewKind,
   inferPanCategory,
   selectUploadTier,
+  validateUploadTierSize,
 } from "./utils";
 
 initAppShell({ activePage: "pan" });
@@ -118,6 +120,7 @@ function syncAdminUI(): void {
   const toggleBtn = optById("btnToggleAdmin");
   const toggleText = optById("btnToggleAdminText");
   const visSwitch = optById("panVisSwitch");
+  const uploadAdminOpts = optById("uploadAdminOptions");
   const uploadVisWrap = optById("uploadVisToggleWrap");
   const linkVisField = optById("linkVisField");
   const apiLocked = optById("apiKeysLockedState");
@@ -126,6 +129,7 @@ function syncAdminUI(): void {
   if (toggleBtn) toggleBtn.classList.toggle("is-unlocked", state.isAdmin);
   if (toggleText) toggleText.textContent = state.isAdmin ? "已解锁 · 锁定" : "私密解锁";
   if (visSwitch) visSwitch.hidden = !state.isAdmin;
+  if (uploadAdminOpts) uploadAdminOpts.hidden = !state.isAdmin;
   if (uploadVisWrap) uploadVisWrap.hidden = !state.isAdmin;
   if (linkVisField) linkVisField.hidden = !state.isAdmin;
   if (apiLocked) apiLocked.hidden = state.isAdmin;
@@ -136,6 +140,8 @@ function syncAdminUI(): void {
     state.apiKeys = [];
     const uploadPrivateCheck = optById<HTMLInputElement>("uploadPrivateCheck");
     if (uploadPrivateCheck) uploadPrivateCheck.checked = false;
+    const uploadStorageSelect = optById<HTMLSelectElement>("uploadStorageSelect");
+    if (uploadStorageSelect) uploadStorageSelect.value = "auto";
   }
 }
 
@@ -350,11 +356,34 @@ function xhrUpload(
 }
 
 async function uploadSingleFile(file: File): Promise<void> {
-  const tier = selectUploadTier(file.size);
+  const uploadStorageSelect = optById<HTMLSelectElement>("uploadStorageSelect");
+  const rawPreferred = state.isAdmin ? uploadStorageSelect?.value || "auto" : "auto";
+  const preferredTier: PanUploadTierPreference =
+    rawPreferred === "cf_d1" || rawPreferred === "gh_single" || rawPreferred === "gh_chunked"
+      ? rawPreferred
+      : "auto";
+  const tier = selectUploadTier(file.size, preferredTier);
   const uploadPrivateCheck = optById<HTMLInputElement>("uploadPrivateCheck");
   const visibility: PanVisibility =
     state.isAdmin && uploadPrivateCheck?.checked ? "private" : "public";
   const category = inferPanCategory(file.name, file.type);
+
+  const tierSizeError = validateUploadTierSize(file.size, tier);
+  if (tierSizeError) {
+    state.queue.unshift({
+      id: `q_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+      name: file.name,
+      size: file.size,
+      tierLabel:
+        tier === "cf_d1" ? "CF 极速" : tier === "gh_single" ? "GitHub 直传" : "GitHub 分片",
+      progress: 0,
+      status: "error",
+      detail: tierSizeError,
+    });
+    renderQueue();
+    showToast(`「${file.name}」${tierSizeError}`);
+    return;
+  }
 
   const task: QueueTask = {
     id: `q_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
@@ -379,11 +408,19 @@ async function uploadSingleFile(file: File): Promise<void> {
         "X-Pan-Visibility": visibility,
         "X-Pan-Size": String(file.size),
       };
+      if (state.isAdmin && preferredTier !== "auto") {
+        headers["X-Pan-Storage-Tier"] = tier;
+      }
 
       const res = await xhrUpload("/api/pan?action=upload", file, headers, (loaded, total) => {
         const pct = Math.min(99, Math.round((loaded / Math.max(1, total)) * 100));
         task.progress = pct;
-        task.detail = pct >= 99 ? "写入边缘索引..." : `${pct}%`;
+        task.detail =
+          pct >= 99
+            ? tier === "cf_d1"
+              ? "写入边缘索引..."
+              : "同步 GitHub Releases..."
+            : `${pct}%`;
         renderQueue();
       });
 

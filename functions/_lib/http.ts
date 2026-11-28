@@ -6,7 +6,7 @@ export const DEFAULT_CORS_HEADERS: Record<string, string> = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, PATCH, PUT, DELETE, HEAD, OPTIONS",
   "Access-Control-Allow-Headers":
-    "Content-Type, Authorization, Range, X-API-Key, X-Admin-Password, x-admin-key, X-Access-Pwd, X-Clash-Daemon-Secret, X-GitHub-Token, X-File-Name, X-Title, X-Duration, X-Poster-Url, X-Pan-Visibility, X-Pan-Category, X-Pan-Note, X-Pan-Mime, X-Pan-Size, X-Pan-Folder, X-Pan-Overwrite, X-Media-Kind, X-Media-Album, X-Media-Visibility, X-Media-Width, X-Media-Height, X-Media-Size, X-Media-Desc, X-Media-Mime",
+    "Content-Type, Authorization, Range, X-API-Key, X-Admin-Password, x-admin-key, X-Access-Pwd, X-Clash-Daemon-Secret, X-GitHub-Token, X-File-Name, X-Title, X-Duration, X-Poster-Url, X-Pan-Visibility, X-Pan-Category, X-Pan-Note, X-Pan-Mime, X-Pan-Size, X-Pan-Folder, X-Pan-Overwrite, X-Pan-Storage-Tier, X-Media-Kind, X-Media-Album, X-Media-Visibility, X-Media-Width, X-Media-Height, X-Media-Size, X-Media-Desc, X-Media-Mime",
   "Access-Control-Max-Age": "86400",
 };
 

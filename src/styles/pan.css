@@ -309,6 +309,35 @@ body {
   font-weight: 600;
 }
 
+.pan-upload-admin-opts {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.pan-upload-admin-opts[hidden] {
+  display: none;
+}
+
+.pan-upload-tier-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  color: var(--c-label-2);
+}
+
+.pan-upload-tier-label {
+  white-space: nowrap;
+}
+
+.pan-upload-tier-select {
+  min-height: 28px;
+  padding: 2px 8px;
+  font-size: 12px;
+}
+
 .pan-upload-vis-toggle {
   display: inline-flex;
   align-items: center;
@@ -317,6 +346,10 @@ body {
   color: var(--c-label-2);
   cursor: pointer;
   user-select: none;
+}
+
+.pan-upload-vis-toggle[hidden] {
+  display: none;
 }
 
 .pan-upload-vis-toggle input {

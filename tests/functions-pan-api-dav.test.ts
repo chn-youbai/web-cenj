@@ -815,4 +815,136 @@ describe("Pan API Keys, Cross-Origin Hosting & WebDAV", () => {
     ).json()) as PanListResponse;
     expect(finalList.files.some((f) => f.name === "hello.md" || f.name === "moved.md")).toBe(false);
   });
+
+  it("restricts explicit storage_tier upload overrides to admin and enforces tier limits", async () => {
+    const db = createFullMockPanDb();
+    const env: Env = { DB: db, ADMIN_PASSWORD: "admin-secret" };
+
+    // Anonymous caller cannot force storage tier
+    const anonOverride = await postPan(
+      makeCtx(
+        new Request("https://example.com/api/pan?action=upload", {
+          method: "POST",
+          headers: {
+            "X-File-Name": "test.txt",
+            "X-Pan-Size": "5",
+            "X-Pan-Storage-Tier": "gh_single",
+          },
+          body: "hello",
+        }),
+        env,
+      ).ctx,
+    );
+    expect(anonOverride.status).toBe(401);
+
+    // Create a write-capable API key (non-admin) and verify 403 on storage tier override
+    const keyResp = (await (
+      await createPanKey(
+        makeCtx(
+          new Request("https://example.com/api/pan-keys", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-Admin-Password": "admin-secret",
+            },
+            body: JSON.stringify({ label: "uploader", can_write: true }),
+          }),
+          env,
+        ).ctx,
+      )
+    ).json()) as PanApiKeyCreateResponse;
+    const rawKey = keyResp.secret ?? "";
+    expect(rawKey.length).toBeGreaterThan(10);
+
+    const keyOverride = await postPan(
+      makeCtx(
+        new Request("https://example.com/api/pan?action=upload", {
+          method: "POST",
+          headers: {
+            "X-API-Key": rawKey,
+            "X-File-Name": "test.txt",
+            "X-Pan-Size": "5",
+            "X-Pan-Storage-Tier": "gh_single",
+          },
+          body: "hello",
+        }),
+        env,
+      ).ctx,
+    );
+    expect(keyOverride.status).toBe(403);
+
+    // Admin with invalid tier -> 400
+    const badTier = await postPan(
+      makeCtx(
+        new Request("https://example.com/api/pan?action=upload", {
+          method: "POST",
+          headers: {
+            "X-Admin-Password": "admin-secret",
+            "X-File-Name": "test.txt",
+            "X-Pan-Size": "5",
+            "X-Pan-Storage-Tier": "invalid_tier",
+          },
+          body: "hello",
+        }),
+        env,
+      ).ctx,
+    );
+    expect(badTier.status).toBe(400);
+
+    // Admin forcing cf_d1 above 20MB -> 413
+    const d1TooBig = await postPan(
+      makeCtx(
+        new Request("https://example.com/api/pan?action=upload", {
+          method: "POST",
+          headers: {
+            "X-Admin-Password": "admin-secret",
+            "X-File-Name": "big.bin",
+            "X-Pan-Size": String(21 * 1024 * 1024),
+            "X-Pan-Storage-Tier": "cf_d1",
+          },
+          body: "tiny",
+        }),
+        env,
+      ).ctx,
+    );
+    expect(d1TooBig.status).toBe(413);
+
+    // Admin forcing cf_d1 on small file -> 201 stored in cf_d1
+    const d1Ok = await postPan(
+      makeCtx(
+        new Request("https://example.com/api/pan?action=upload", {
+          method: "POST",
+          headers: {
+            "X-Admin-Password": "admin-secret",
+            "X-File-Name": "small.txt",
+            "X-Pan-Size": "5",
+            "X-Pan-Storage-Tier": "cf_d1",
+          },
+          body: "hello",
+        }),
+        env,
+      ).ctx,
+    );
+    expect(d1Ok.status).toBe(201);
+    const d1Json = (await d1Ok.json()) as PanUploadResponse;
+    expect(d1Json.file?.storage_tier).toBe("cf_d1");
+
+    // Admin forcing gh_single on 5-byte file routes to GitHub branch (503 without token instead of D1)
+    const ghForced = await postPan(
+      makeCtx(
+        new Request("https://example.com/api/pan?action=upload", {
+          method: "POST",
+          headers: {
+            "X-Admin-Password": "admin-secret",
+            "X-File-Name": "small-gh.txt",
+            "X-Pan-Size": "5",
+            "X-Pan-Storage-Tier": "gh_single",
+          },
+          body: "hello",
+        }),
+        env,
+      ).ctx,
+    );
+    expect(ghForced.status).toBe(503);
+  });
 });

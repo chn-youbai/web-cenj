@@ -96,10 +96,26 @@
           <button type="button" class="pan-chip" data-cat="other">其他</button>
         </div>
 
-        <label class="pan-upload-vis-toggle" id="uploadVisToggleWrap" hidden>
-          <input type="checkbox" id="uploadPrivateCheck">
-          <span>本次上传设为私密</span>
-        </label>
+        <div class="pan-upload-admin-opts" id="uploadAdminOptions" hidden>
+          <label class="pan-upload-tier-wrap" for="uploadStorageSelect">
+            <span class="pan-upload-tier-label">储存方式</span>
+            <select
+              id="uploadStorageSelect"
+              class="pan-select pan-upload-tier-select"
+              aria-label="上传储存方式"
+            >
+              <option value="auto">自动分级 (≤20M 边缘 / >20M GitHub)</option>
+              <option value="cf_d1">CF 边缘极速 (D1, ≤20MB)</option>
+              <option value="gh_single">GitHub 直传 (≤90MB)</option>
+              <option value="gh_chunked">GitHub 分片 (80MB/片)</option>
+            </select>
+          </label>
+
+          <label class="pan-upload-vis-toggle" id="uploadVisToggleWrap" hidden>
+            <input type="checkbox" id="uploadPrivateCheck">
+            <span>本次上传设为私密</span>
+          </label>
+        </div>
       </div>
     </section>
 
