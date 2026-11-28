@@ -164,7 +164,7 @@ npm run format && npm run check
 | `/api/pan-file` | `GET`, `HEAD` | 公开免密；私密需 `ADMIN_PASSWORD` | 网盘文件分级流式下载/在线预览（支持 D1 分块流、GitHub 分片零内存流式拼接与 `Range` 断点续传） |
 | `/api/download` | `GET`, `HEAD` | 公开 | 历史预置安装包边缘流式直链下载（向后兼容保留） |
 | `/api/subscription` | `GET`, `POST` | `ADMIN_PASSWORD` 或 `ACCESS_PASSWORD` | 机场流量查询（D1 缓存 24 小时自动刷新）、VPN07 刷新、美区 Apple ID 凭证下发 |
-| `/api/sub` | `GET`, `HEAD` | 永久直链 / `?token=tmp_...` | 多客户端订阅下发：支持 Clash YAML、`v2rayN`（自动识别 UA 或 `?format=v2ray` 返回原生节点列表），支持永久直链（`?type=djjc\|vpn07`）与限时/限次/可吊销的临时私人链接（`?token=...`） |
+| `/api/sub` | `GET`, `HEAD` | 永久直链 / `?token=tmp_...` | 多客户端订阅下发：支持 Clash YAML、`v2rayN`（自动识别 UA 或 `?format=v2ray` 返回原生节点列表），支持永久直链（`?type=djjc\|vpn07`）与限时/限次/可吊销的临时私人链接（`?token=...`），并在 [`key.html`](./key.html) 内置本地 SVG/PNG 订阅二维码生成 |
 | `/api/sub-links` | `GET`, `POST`, `PATCH`, `DELETE` | `ADMIN_PASSWORD` | 临时私人订阅链接生成、状态查询、吊销与删除 |
 | `/api/*` | `*` | - | `[[catchall]].ts` 返回规范 404 JSON |
 

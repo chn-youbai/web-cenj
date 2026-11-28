@@ -453,6 +453,56 @@ body {
   padding: 16px;
 }
 
+.key-modal-backdrop[hidden] {
+  display: none;
+}
+
+.key-qr-fmt-tabs {
+  display: inline-flex;
+  align-self: flex-start;
+  gap: 3px;
+  padding: 3px;
+  border-radius: var(--r-sm);
+  background: var(--c-bg-subtle);
+  border: 1px solid var(--c-separator);
+}
+
+.key-qr-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.key-qr-box {
+  padding: 12px;
+  border-radius: var(--r-lg);
+  background: #ffffff;
+  border: 1px solid var(--c-separator);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.key-qr-box svg {
+  display: block;
+  width: 210px;
+  height: 210px;
+}
+
+.key-qr-url {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--c-separator);
+  background: var(--c-bg);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--c-label-2);
+  word-break: break-all;
+  text-align: center;
+}
+
 .key-modal {
   width: min(460px, 100%);
   padding: 18px 20px;

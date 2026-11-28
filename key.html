@@ -65,6 +65,7 @@
 
         <div class="key-actions-row">
           <button type="button" class="key-btn key-btn-primary" id="btnCopyPermUrl">复制永久直链</button>
+          <button type="button" class="key-btn key-btn-ghost" id="btnQrPermUrl">订阅二维码</button>
           <button type="button" class="key-btn key-btn-ghost" id="btnCopyRawUrl">复制官方原生直链</button>
           <button type="button" class="key-btn key-btn-ghost" id="btnRefreshSub">强制刷新流量</button>
           <button type="button" class="key-btn key-btn-ghost" id="btnOpenBindModal">绑定账号凭据</button>
@@ -167,6 +168,28 @@
           <button type="submit" class="key-btn key-btn-primary" id="btnSaveBind">保存并同步</button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- 订阅二维码弹窗 -->
+  <div class="key-modal-backdrop" id="qrModal" hidden role="dialog" aria-modal="true" aria-labelledby="qrModalTitle">
+    <div class="key-modal">
+      <div class="key-modal-head">
+        <h3 id="qrModalTitle">订阅二维码</h3>
+        <button type="button" class="key-icon-close" id="btnCloseQrModal" aria-label="关闭">✕</button>
+      </div>
+      <div class="key-qr-fmt-tabs" id="qrFmtTabs" role="group" aria-label="二维码客户端格式">
+        <button type="button" class="key-seg-btn active" id="qrFmtV2ray">v2rayN / v2rayNG 节点</button>
+        <button type="button" class="key-seg-btn" id="qrFmtAuto">Clash / 通用格式</button>
+      </div>
+      <div class="key-qr-stage">
+        <div class="key-qr-box" id="qrCodeBox" aria-label="订阅二维码图像"></div>
+        <code class="key-qr-url" id="qrUrlCode">--</code>
+      </div>
+      <div class="key-modal-actions">
+        <button type="button" class="key-btn key-btn-ghost" id="btnQrDownload">保存图片</button>
+        <button type="button" class="key-btn key-btn-primary" id="btnQrCopy">复制链接</button>
+      </div>
     </div>
   </div>
 

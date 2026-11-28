@@ -9,6 +9,7 @@ import type {
   SubscriptionResponse,
   TempSubLinkItem,
 } from "@shared/types";
+import QRCode from "qrcode";
 
 initAppShell({ activePage: "key" });
 
@@ -17,6 +18,9 @@ const state = {
   rawUrls: { djjc: "", vpn07: "" } as Record<AirportType, string>,
   appleId: null as AppleIdGuideCredentials | null,
   tempLinks: [] as TempSubLinkItem[],
+  qrTitle: "订阅二维码",
+  qrBaseUrl: "",
+  qrFormat: "v2ray" as "v2ray" | "auto",
 };
 
 function permanentUrlFor(airport: AirportType): string {
@@ -91,6 +95,7 @@ function renderTempLinks(): void {
             <div class="key-temp-meta">${escapeHtml(usesText)} · ${escapeHtml(formatExpiry(item.expires_at))}</div>
           </div>
           <div class="key-temp-actions">
+            <button type="button" class="key-btn key-btn-ghost key-btn-sm" data-act="qr" data-token="${escapeHtml(item.token)}">二维码</button>
             <button type="button" class="key-btn key-btn-ghost key-btn-sm" data-act="copy" data-token="${escapeHtml(item.token)}">复制</button>
             ${
               item.status === "active"
@@ -186,6 +191,54 @@ function closeBindModal(): void {
   if (modal) modal.hidden = true;
 }
 
+function getActiveQrUrl(): string {
+  if (!state.qrBaseUrl) return "";
+  if (state.qrFormat === "v2ray") {
+    return state.qrBaseUrl.includes("?")
+      ? `${state.qrBaseUrl}&format=v2ray`
+      : `${state.qrBaseUrl}?format=v2ray`;
+  }
+  return state.qrBaseUrl;
+}
+
+async function renderQrModal(): Promise<void> {
+  const titleEl = optById("qrModalTitle");
+  const boxEl = optById("qrCodeBox");
+  const urlEl = optById("qrUrlCode");
+  if (titleEl) titleEl.textContent = state.qrTitle;
+  optById("qrFmtV2ray")?.classList.toggle("active", state.qrFormat === "v2ray");
+  optById("qrFmtAuto")?.classList.toggle("active", state.qrFormat === "auto");
+
+  const targetUrl = getActiveQrUrl();
+  if (urlEl) urlEl.textContent = targetUrl || "--";
+  if (!boxEl || !targetUrl) return;
+
+  try {
+    const svg = await QRCode.toString(targetUrl, {
+      type: "svg",
+      margin: 2,
+      width: 210,
+      color: { dark: "#141413", light: "#ffffff" },
+    });
+    boxEl.innerHTML = svg;
+  } catch {
+    boxEl.textContent = "二维码生成失败";
+  }
+}
+
+function openQrModal(title: string, baseUrl: string): void {
+  state.qrTitle = title;
+  state.qrBaseUrl = baseUrl;
+  const modal = optById("qrModal");
+  if (modal) modal.hidden = false;
+  void renderQrModal();
+}
+
+function closeQrModal(): void {
+  const modal = optById("qrModal");
+  if (modal) modal.hidden = true;
+}
+
 function bindEvents(): void {
   optById("tabDjjc")?.addEventListener("click", () => switchAirport("djjc"));
   optById("tabVpn07")?.addEventListener("click", () => switchAirport("vpn07"));
@@ -194,6 +247,52 @@ function bindEvents(): void {
     void copyToClipboard(permanentUrlFor(state.currentAirport)).then((ok) => {
       showToast(ok ? "永久私人直链已复制" : "复制失败");
     });
+  });
+
+  optById("btnQrPermUrl")?.addEventListener("click", () => {
+    const label = state.currentAirport === "vpn07" ? "VPN07 订阅二维码" : "顶级机场 订阅二维码";
+    openQrModal(label, permanentUrlFor(state.currentAirport));
+  });
+
+  optById("qrFmtV2ray")?.addEventListener("click", () => {
+    state.qrFormat = "v2ray";
+    void renderQrModal();
+  });
+
+  optById("qrFmtAuto")?.addEventListener("click", () => {
+    state.qrFormat = "auto";
+    void renderQrModal();
+  });
+
+  optById("btnCloseQrModal")?.addEventListener("click", closeQrModal);
+  optById("qrModal")?.addEventListener("click", (e) => {
+    if (e.target === optById("qrModal")) closeQrModal();
+  });
+
+  optById("btnQrCopy")?.addEventListener("click", () => {
+    const url = getActiveQrUrl();
+    if (!url) return;
+    void copyToClipboard(url).then((ok) => {
+      showToast(ok ? "订阅链接已复制" : "复制失败");
+    });
+  });
+
+  optById("btnQrDownload")?.addEventListener("click", async () => {
+    const url = getActiveQrUrl();
+    if (!url) return;
+    try {
+      const dataUrl = await QRCode.toDataURL(url, {
+        width: 512,
+        margin: 2,
+        color: { dark: "#141413", light: "#ffffff" },
+      });
+      const a = document.createElement("a");
+      a.href = dataUrl;
+      a.download = `sub-${state.currentAirport}-${state.qrFormat}.png`;
+      a.click();
+    } catch {
+      showToast("二维码图片生成失败");
+    }
   });
 
   optById("btnCopyRawUrl")?.addEventListener("click", () => {
@@ -289,7 +388,11 @@ function bindEvents(): void {
     const token = btn.dataset.token || "";
     if (!token) return;
 
-    if (act === "copy") {
+    if (act === "qr") {
+      const item = state.tempLinks.find((entry) => entry.token === token);
+      const title = item?.label ? `${item.label} · 临时订阅` : "临时私人订阅二维码";
+      openQrModal(title, tempUrlFor(token));
+    } else if (act === "copy") {
       const ok = await copyToClipboard(tempUrlFor(token));
       showToast(ok ? "临时订阅链接已复制" : "复制失败");
     } else if (act === "revoke") {
