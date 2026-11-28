@@ -229,3 +229,14 @@ export function filterAndSortPanFiles(
   });
   return sorted;
 }
+
+export function buildGitHubMirrorUrl(assetUrl: string): string {
+  const clean = assetUrl.trim();
+  if (
+    clean.startsWith("https://github.com/") ||
+    clean.startsWith("https://raw.githubusercontent.com/")
+  ) {
+    return `https://ghfast.top/${clean}`;
+  }
+  return "";
+}

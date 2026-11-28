@@ -23,6 +23,7 @@ import {
   type PanSortBy,
   type PanUploadTierPreference,
   type PanVisibilityFilter,
+  buildGitHubMirrorUrl,
   filterAndSortPanFiles,
   formatFileSize,
   formatRelativeTime,
@@ -241,6 +242,10 @@ function renderFileList(): void {
       const folderBadge = file.folder_path
         ? `<span class="pan-tag is-folder">/${escapeHtml(file.folder_path)}</span>`
         : "";
+      const canDirect =
+        Boolean(file.asset_url) &&
+        (file.storage_tier === "gh_single" || file.storage_tier === "external_link");
+      const mirrorUrl = canDirect ? buildGitHubMirrorUrl(file.asset_url) : "";
 
       return `
         <article class="pan-row" data-file-id="${escapeHtml(file.id)}">
@@ -267,8 +272,12 @@ function renderFileList(): void {
             ${previewKind !== "none" ? `<button type="button" class="pan-act-btn" data-act="preview" data-id="${escapeHtml(file.id)}">预览</button>` : ""}
             <a class="pan-act-btn primary" href="${escapeHtml(downloadUrl)}" download="${escapeHtml(file.name)}">下载</a>
             ${
-              file.asset_url &&
-              (file.storage_tier === "gh_single" || file.storage_tier === "external_link")
+              mirrorUrl
+                ? `<a class="pan-act-btn" href="${escapeHtml(mirrorUrl)}" target="_blank" rel="noopener noreferrer" title="国内 GitHub 镜像加速直下（免代理绕开 Cloudflare 国际出口限速）">镜像加速</a>`
+                : ""
+            }
+            ${
+              canDirect
                 ? `<a class="pan-act-btn" href="${escapeHtml(file.asset_url)}" target="_blank" rel="noopener noreferrer" title="直接访问源地址（开代理时可满速下载）">直连</a>`
                 : ""
             }

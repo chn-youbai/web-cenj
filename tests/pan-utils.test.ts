@@ -1,6 +1,7 @@
 import {
   PAN_CF_D1_LIMIT,
   PAN_GH_SINGLE_LIMIT,
+  buildGitHubMirrorUrl,
   filterAndSortPanFiles,
   formatFileSize,
   getPreviewKind,
@@ -101,5 +102,15 @@ describe("pan utils", () => {
         sortBy: "downloads",
       }).map((i) => i.id),
     ).toEqual(["2"]);
+  });
+
+  it("builds domestic GitHub mirror acceleration URLs only for GitHub origins", () => {
+    expect(buildGitHubMirrorUrl("https://github.com/a/b/releases/download/v1/app.zip")).toBe(
+      "https://ghfast.top/https://github.com/a/b/releases/download/v1/app.zip",
+    );
+    expect(buildGitHubMirrorUrl("https://raw.githubusercontent.com/a/b/main/x.txt")).toBe(
+      "https://ghfast.top/https://raw.githubusercontent.com/a/b/main/x.txt",
+    );
+    expect(buildGitHubMirrorUrl("https://example.com/file.zip")).toBe("");
   });
 });
