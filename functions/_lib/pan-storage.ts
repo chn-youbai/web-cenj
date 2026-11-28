@@ -578,7 +578,6 @@ export async function streamPanFileResponse(
     }
 
     const { readable, writable } = createStreamPair(contentLength);
-    const MAX_SUB_FETCH = 16 * 1024 * 1024;
 
     const pump = (async () => {
       const writer = writable.getWriter();
@@ -594,77 +593,76 @@ export async function streamPanFileResponse(
 
           const reqStart = Math.max(0, start - chunkStart);
           const reqEnd = Math.min(chunk.size - 1, end - chunkStart);
+          const expectedChunkBytes = reqEnd - reqStart + 1;
+          let writtenInChunk = 0;
+          let lastErr: unknown = null;
 
-          for (let sliceStart = reqStart; sliceStart <= reqEnd; ) {
-            const sliceEnd = Math.min(reqEnd, sliceStart + MAX_SUB_FETCH - 1);
-            const expectedSliceBytes = sliceEnd - sliceStart + 1;
-            let writtenInSlice = 0;
-            let lastErr: unknown = null;
-
-            for (let attempt = 0; attempt < 3 && writtenInSlice < expectedSliceBytes; attempt++) {
-              const curStart = sliceStart + writtenInSlice;
-              const headers = new Headers({
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-              });
-              if (curStart > 0 || sliceEnd < chunk.size - 1) {
-                headers.set("Range", `bytes=${curStart}-${sliceEnd}`);
-              }
-
-              let writeFailed = false;
-              try {
-                const upstream = await fetch(chunk.url, { headers, redirect: "follow" });
-                if (!upstream.ok || !upstream.body) {
-                  throw new Error(`分片 ${chunk.index} 拉取失败 (${upstream.status})`);
-                }
-                let skipRemaining = upstream.status === 200 && curStart > 0 ? curStart : 0;
-                const reader = upstream.body.getReader();
-                while (writtenInSlice < expectedSliceBytes) {
-                  const { done, value } = await reader.read();
-                  if (done) break;
-                  if (!value || value.byteLength === 0) continue;
-
-                  let slice = value;
-                  if (skipRemaining > 0) {
-                    if (slice.byteLength <= skipRemaining) {
-                      skipRemaining -= slice.byteLength;
-                      continue;
-                    }
-                    slice = slice.subarray(skipRemaining);
-                    skipRemaining = 0;
-                  }
-
-                  const remainingNeeded = expectedSliceBytes - writtenInSlice;
-                  if (slice.byteLength > remainingNeeded) {
-                    slice = slice.subarray(0, remainingNeeded);
-                  }
-
-                  try {
-                    await writer.write(slice);
-                  } catch (writeErr) {
-                    writeFailed = true;
-                    await reader.cancel().catch(() => undefined);
-                    throw writeErr;
-                  }
-                  writtenInSlice += slice.byteLength;
-                  if (writtenInSlice >= expectedSliceBytes) {
-                    await reader.cancel().catch(() => undefined);
-                    break;
-                  }
-                }
-              } catch (err) {
-                lastErr = err;
-                if (writeFailed || attempt >= 2) {
-                  throw err;
-                }
-              }
+          for (let attempt = 0; attempt < 3 && writtenInChunk < expectedChunkBytes; attempt++) {
+            const curStart = reqStart + writtenInChunk;
+            const headers = new Headers({
+              "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+            });
+            if (curStart > 0 || reqEnd < chunk.size - 1) {
+              headers.set("Range", `bytes=${curStart}-${reqEnd}`);
             }
 
-            if (writtenInSlice < expectedSliceBytes) {
-              throw lastErr instanceof Error
-                ? lastErr
-                : new Error(`分片 ${chunk.index} 数据流提前结束`);
+            let writeFailed = false;
+            try {
+              const upstream = await fetch(chunk.url, { headers, redirect: "follow" });
+              if (!upstream.ok || !upstream.body) {
+                throw new Error(`分片 ${chunk.index} 拉取失败 (${upstream.status})`);
+              }
+              let skipRemaining = upstream.status === 200 && curStart > 0 ? curStart : 0;
+              const reader = upstream.body.getReader();
+              while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                if (!value || value.byteLength === 0) continue;
+
+                let slice = value;
+                if (skipRemaining > 0) {
+                  if (slice.byteLength <= skipRemaining) {
+                    skipRemaining -= slice.byteLength;
+                    continue;
+                  }
+                  slice = slice.subarray(skipRemaining);
+                  skipRemaining = 0;
+                }
+
+                const remainingNeeded = expectedChunkBytes - writtenInChunk;
+                let clipped = false;
+                if (slice.byteLength > remainingNeeded) {
+                  slice = slice.subarray(0, remainingNeeded);
+                  clipped = true;
+                }
+
+                try {
+                  await writer.write(slice);
+                } catch (writeErr) {
+                  writeFailed = true;
+                  await reader.cancel().catch(() => undefined);
+                  throw writeErr;
+                }
+                writtenInChunk += slice.byteLength;
+                if (clipped || writtenInChunk >= expectedChunkBytes) {
+                  if (clipped) {
+                    await reader.cancel().catch(() => undefined);
+                  }
+                  break;
+                }
+              }
+            } catch (err) {
+              lastErr = err;
+              if (writeFailed || attempt >= 2) {
+                throw err;
+              }
             }
-            sliceStart = sliceEnd + 1;
+          }
+
+          if (writtenInChunk < expectedChunkBytes) {
+            throw lastErr instanceof Error
+              ? lastErr
+              : new Error(`分片 ${chunk.index} 数据流提前结束`);
           }
         }
         await writer.close();

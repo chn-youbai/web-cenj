@@ -119,7 +119,22 @@ const PAN_PRESET_FILES = [
   },
 ] as const;
 
+const panReadyDbs = new WeakMap<object, Promise<void>>();
+
 export async function ensurePanTables(db: D1Database): Promise<void> {
+  const existing = panReadyDbs.get(db);
+  if (existing) {
+    return existing;
+  }
+  const initPromise = initPanTablesOnce(db).catch((err) => {
+    panReadyDbs.delete(db);
+    throw err;
+  });
+  panReadyDbs.set(db, initPromise);
+  return initPromise;
+}
+
+async function initPanTablesOnce(db: D1Database): Promise<void> {
   try {
     await db
       .prepare(`
