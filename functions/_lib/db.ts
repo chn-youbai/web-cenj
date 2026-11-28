@@ -275,6 +275,50 @@ async function initPanTablesOnce(db: D1Database): Promise<void> {
   }
 }
 
+const panClipsReadyDbs = new WeakMap<object, Promise<void>>();
+
+export async function ensurePanClipsTable(db: D1Database): Promise<void> {
+  const existing = panClipsReadyDbs.get(db);
+  if (existing) {
+    return existing;
+  }
+  const initPromise = initPanClipsTableOnce(db).catch((err) => {
+    panClipsReadyDbs.delete(db);
+    throw err;
+  });
+  panClipsReadyDbs.set(db, initPromise);
+  return initPromise;
+}
+
+async function initPanClipsTableOnce(db: D1Database): Promise<void> {
+  try {
+    await db
+      .prepare(`
+      CREATE TABLE IF NOT EXISTS pan_clips (
+        id TEXT PRIMARY KEY,
+        kind TEXT NOT NULL DEFAULT 'text',
+        content TEXT NOT NULL DEFAULT '',
+        image_data BLOB DEFAULT NULL,
+        image_mime TEXT NOT NULL DEFAULT '',
+        image_size INTEGER NOT NULL DEFAULT 0,
+        visibility TEXT NOT NULL DEFAULT 'public',
+        burn_after_read INTEGER NOT NULL DEFAULT 0,
+        expires_at INTEGER NOT NULL,
+        created_at INTEGER NOT NULL
+      )
+    `)
+      .run();
+
+    await db
+      .prepare(
+        "CREATE INDEX IF NOT EXISTS idx_pan_clips_exp_created ON pan_clips(expires_at, created_at DESC)",
+      )
+      .run();
+  } catch (err) {
+    console.error("ensurePanClipsTable error:", err);
+  }
+}
+
 const GALLERY_MIGRATE_KEY = "migrated_legacy_videos_v1";
 
 export async function ensureGalleryTables(db: D1Database): Promise<void> {

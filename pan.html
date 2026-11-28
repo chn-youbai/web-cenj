@@ -38,6 +38,16 @@
           </svg>
           <span id="btnToggleAdminText">私密解锁</span>
         </button>
+        <button type="button" class="pan-btn pan-btn-ghost" id="btnOpenClipModal">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="9" y="3" width="6" height="4" rx="1"/>
+            <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/>
+            <path d="M9 12h6"/>
+            <path d="M9 16h4"/>
+          </svg>
+          <span>临时剪切板</span>
+          <span class="pan-clip-badge" id="panClipBadge" hidden>0</span>
+        </button>
         <button type="button" class="pan-btn pan-btn-ghost" id="btnOpenLinkModal">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
@@ -380,6 +390,73 @@
           <div class="pan-key-list" id="apiKeyList"></div>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- 模态窗 6：临时共享剪切板 -->
+  <div class="pan-modal-backdrop" id="clipModal" hidden role="dialog" aria-modal="true" aria-labelledby="clipModalTitle">
+    <div class="pan-modal pan-modal-lg">
+      <div class="pan-modal-head">
+        <div>
+          <h3 id="clipModalTitle">临时共享剪切板</h3>
+          <span class="pan-preview-sub">公开可看可发 · 支持文本、代码、链接与直接 Ctrl+V 粘贴截图 · 到期或即焚自动清理</span>
+        </div>
+        <button type="button" class="pan-icon-close" data-close-modal="clipModal" aria-label="关闭">✕</button>
+      </div>
+
+      <form id="clipForm" class="pan-clip-composer">
+        <textarea
+          id="clipTextInput"
+          class="pan-clip-textarea"
+          placeholder="输入或粘贴文字、网址、代码片段；也可直接在这里 Ctrl+V 粘贴截图图片（支持 ≤5MB 图片）..."
+          maxlength="100000"
+        ></textarea>
+
+        <div class="pan-clip-paste-wrap" id="clipPastePreviewWrap" hidden>
+          <div class="pan-clip-paste-info">
+            <img id="clipPastePreviewImg" class="pan-clip-paste-thumb" alt="待发送截图预览">
+            <span class="pan-clip-paste-meta" id="clipPastePreviewMeta"></span>
+          </div>
+          <button type="button" class="pan-act-btn" id="btnClearClipImage">移除图片</button>
+        </div>
+
+        <input type="file" id="clipImageInput" accept="image/*" hidden>
+
+        <div class="pan-clip-toolbar">
+          <div class="pan-clip-opts">
+            <select id="clipTtlSelect" class="pan-select pan-clip-ttl-select" aria-label="有效期">
+              <option value="10">10 分钟后销毁</option>
+              <option value="60">1 小时后销毁</option>
+              <option value="1440" selected>24 小时后销毁</option>
+              <option value="10080">7 天后销毁</option>
+            </select>
+
+            <label class="pan-upload-vis-toggle">
+              <input type="checkbox" id="clipBurnCheck">
+              <span>阅后即焚（提取一次后销毁）</span>
+            </label>
+
+            <label class="pan-upload-vis-toggle" id="clipPrivateWrap" hidden>
+              <input type="checkbox" id="clipPrivateCheck">
+              <span>设为私密</span>
+            </label>
+          </div>
+
+          <div class="pan-clip-actions-right">
+            <button type="button" class="pan-btn pan-btn-ghost" id="btnPickClipImage">选择图片</button>
+            <button type="submit" class="pan-btn pan-btn-primary" id="btnSaveClip">发布剪切板</button>
+          </div>
+        </div>
+      </form>
+
+      <div id="clipBurnedReveal" hidden></div>
+
+      <div class="pan-clip-list-head">
+        <span id="clipListMeta">正在加载剪切板...</span>
+        <button type="button" class="pan-text-btn" id="btnRefreshClips">刷新列表</button>
+      </div>
+
+      <div class="pan-clip-scroll" id="clipList"></div>
     </div>
   </div>
 

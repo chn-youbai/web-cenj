@@ -7,6 +7,10 @@ import type {
   PanApiKeyItem,
   PanApiKeysListResponse,
   PanCategory,
+  PanClipConsumeResponse,
+  PanClipCreateResponse,
+  PanClipItem,
+  PanClipsListResponse,
   PanFileItem,
   PanListResponse,
   PanListStats,
@@ -22,6 +26,7 @@ import {
   type PanVisibilityFilter,
   buildGitHubMirrorUrl,
   filterAndSortPanFiles,
+  formatClipRemaining,
   formatFileSize,
   formatRelativeTime,
   getPreviewKind,
@@ -62,6 +67,9 @@ const state = {
   queue: [] as QueueTask[],
   apiKeys: [] as PanApiKeyItem[],
   apiTab: "docs" as "docs" | "keys",
+  clips: [] as PanClipItem[],
+  clipPastedFile: null as File | null,
+  clipPastedUrl: "",
   pendingAdminAction: null as (() => void) | null,
 };
 
@@ -123,6 +131,7 @@ function syncAdminUI(): void {
   const linkVisField = optById("linkVisField");
   const apiLocked = optById("apiKeysLockedState");
   const apiUnlocked = optById("apiKeysUnlockedWrap");
+  const clipPrivateWrap = optById("clipPrivateWrap");
 
   if (toggleBtn) toggleBtn.classList.toggle("is-unlocked", state.isAdmin);
   if (toggleText) toggleText.textContent = state.isAdmin ? "已解锁 · 锁定" : "私密解锁";
@@ -130,6 +139,7 @@ function syncAdminUI(): void {
   if (uploadAdminOpts) uploadAdminOpts.hidden = !state.isAdmin;
   if (uploadVisWrap) uploadVisWrap.hidden = !state.isAdmin;
   if (linkVisField) linkVisField.hidden = !state.isAdmin;
+  if (clipPrivateWrap) clipPrivateWrap.hidden = !state.isAdmin;
   if (apiLocked) apiLocked.hidden = state.isAdmin;
   if (apiUnlocked) apiUnlocked.hidden = !state.isAdmin;
 
@@ -140,6 +150,8 @@ function syncAdminUI(): void {
     if (uploadPrivateCheck) uploadPrivateCheck.checked = false;
     const uploadStorageSelect = optById<HTMLSelectElement>("uploadStorageSelect");
     if (uploadStorageSelect) uploadStorageSelect.value = "auto";
+    const clipPrivateCheck = optById<HTMLInputElement>("clipPrivateCheck");
+    if (clipPrivateCheck) clipPrivateCheck.checked = false;
   }
 }
 
@@ -678,6 +690,201 @@ function switchApiTab(tab: "docs" | "keys"): void {
   }
 }
 
+function setClipPastedImage(file: File | null): void {
+  if (state.clipPastedUrl) {
+    URL.revokeObjectURL(state.clipPastedUrl);
+    state.clipPastedUrl = "";
+  }
+  state.clipPastedFile = file;
+
+  const wrap = optById("clipPastePreviewWrap");
+  const imgEl = optById<HTMLImageElement>("clipPastePreviewImg");
+  const metaEl = optById("clipPastePreviewMeta");
+  if (!wrap || !imgEl || !metaEl) return;
+
+  if (!file) {
+    wrap.hidden = true;
+    imgEl.removeAttribute("src");
+    metaEl.textContent = "";
+    return;
+  }
+
+  if (file.size > 5 * 1024 * 1024) {
+    state.clipPastedFile = null;
+    wrap.hidden = true;
+    showToast("截图大小不能超过 5 MB");
+    return;
+  }
+
+  const objUrl = URL.createObjectURL(file);
+  state.clipPastedUrl = objUrl;
+  imgEl.src = objUrl;
+  metaEl.textContent = `${file.name || "粘贴截图"} · ${formatFileSize(file.size)}`;
+  wrap.hidden = false;
+}
+
+function updateClipBadge(): void {
+  const badge = optById("panClipBadge");
+  if (!badge) return;
+  const count = state.clips.length;
+  badge.textContent = String(count);
+  badge.hidden = count === 0;
+}
+
+function renderClipList(): void {
+  const listEl = optById("clipList");
+  const metaEl = optById("clipListMeta");
+  if (!listEl) return;
+
+  updateClipBadge();
+  if (metaEl) {
+    metaEl.textContent =
+      state.clips.length > 0 ? `当前共有 ${state.clips.length} 条有效剪切板` : "暂无有效剪切板";
+  }
+
+  if (state.clips.length === 0) {
+    listEl.innerHTML =
+      '<div class="pan-clip-empty">还没有共享内容 · 在上方输入文字或直接 Ctrl+V 粘贴截图即可立即跨设备提取</div>';
+    return;
+  }
+
+  listEl.innerHTML = state.clips
+    .map((clip) => {
+      const kindLabel = clip.kind === "mixed" ? "图文" : clip.kind === "image" ? "截图" : "文本";
+      const remainText = formatClipRemaining(clip.expires_at);
+      const timeText = formatRelativeTime(clip.created_at);
+
+      return `
+        <article class="pan-clip-card" data-clip-id="${escapeHtml(clip.id)}">
+          <div class="pan-clip-card-head">
+            <div class="pan-clip-tags">
+              <span class="pan-tag">${kindLabel}</span>
+              ${clip.visibility === "private" ? '<span class="pan-tag is-private">私密</span>' : ""}
+              ${clip.burn_after_read ? '<span class="pan-tag is-burn">阅后即焚</span>' : ""}
+            </div>
+            <span class="pan-clip-time">${escapeHtml(timeText)} · ${escapeHtml(remainText)}</span>
+          </div>
+
+          ${
+            clip.burn_after_read
+              ? `<div class="pan-clip-masked">内容已保护 · 点击下方「查看并复制（即焚）」后将从云端永久销毁</div>`
+              : `
+                ${clip.content ? `<pre class="pan-clip-pre">${escapeHtml(clip.content)}</pre>` : ""}
+                ${
+                  clip.has_image && clip.image_url
+                    ? `<img class="pan-clip-thumb" src="${escapeHtml(clip.image_url)}" alt="共享截图" data-act="clip-dl-img" data-id="${escapeHtml(clip.id)}" title="点击保存原图">`
+                    : ""
+                }
+              `
+          }
+
+          <div class="pan-clip-card-actions">
+            ${
+              clip.burn_after_read
+                ? `<button type="button" class="pan-act-btn primary" data-act="clip-consume" data-id="${escapeHtml(clip.id)}">查看并复制（即焚）</button>`
+                : `
+                  ${clip.content ? `<button type="button" class="pan-act-btn primary" data-act="clip-copy-text" data-id="${escapeHtml(clip.id)}">复制文字</button>` : ""}
+                  ${clip.has_image && clip.image_url ? `<button type="button" class="pan-act-btn" data-act="clip-copy-img" data-id="${escapeHtml(clip.id)}">复制图片</button><button type="button" class="pan-act-btn" data-act="clip-dl-img" data-id="${escapeHtml(clip.id)}">下载图片</button>` : ""}
+                `
+            }
+            ${state.isAdmin ? `<button type="button" class="pan-act-btn danger" data-act="clip-delete" data-id="${escapeHtml(clip.id)}">删除</button>` : ""}
+          </div>
+        </article>
+      `;
+    })
+    .join("");
+}
+
+function showBurnedReveal(clip: PanClipItem, imageDataUrl?: string): void {
+  const box = optById("clipBurnedReveal");
+  if (!box) return;
+  box.hidden = false;
+  box.innerHTML = `
+    <div class="pan-clip-card is-burned-reveal">
+      <div class="pan-clip-card-head">
+        <div class="pan-clip-tags">
+          <span class="pan-tag is-burn">已提取并从云端销毁</span>
+          ${clip.visibility === "private" ? '<span class="pan-tag is-private">私密</span>' : ""}
+        </div>
+        <button type="button" class="pan-text-btn" id="btnDismissBurnedReveal">收起</button>
+      </div>
+      ${clip.content ? `<pre class="pan-clip-pre">${escapeHtml(clip.content)}</pre>` : ""}
+      ${imageDataUrl ? `<img class="pan-clip-thumb" src="${escapeHtml(imageDataUrl)}" alt="即焚截图">` : ""}
+      <div class="pan-clip-card-actions">
+        ${clip.content ? `<button type="button" class="pan-act-btn primary" id="btnCopyBurnedText">再次复制文字</button>` : ""}
+        ${imageDataUrl ? `<a class="pan-act-btn" href="${escapeHtml(imageDataUrl)}" download="${escapeHtml(clip.id)}.png">保存截图</a>` : ""}
+      </div>
+    </div>
+  `;
+
+  optById("btnDismissBurnedReveal")?.addEventListener("click", () => {
+    box.hidden = true;
+    box.innerHTML = "";
+  });
+  optById("btnCopyBurnedText")?.addEventListener("click", () => {
+    void copyToClipboard(clip.content).then((ok) => {
+      showToast(ok ? "文字已复制" : "复制失败");
+    });
+  });
+}
+
+async function copyImageUrlToClipboard(imageUrl: string): Promise<boolean> {
+  if (typeof ClipboardItem === "undefined" || !navigator.clipboard?.write) {
+    return false;
+  }
+  try {
+    const resp = await fetch(imageUrl);
+    if (!resp.ok) return false;
+    let blob = await resp.blob();
+    if (blob.type !== "image/png") {
+      const bitmapUrl = URL.createObjectURL(blob);
+      try {
+        const img = new Image();
+        await new Promise<void>((resolve, reject) => {
+          img.onload = () => resolve();
+          img.onerror = () => reject(new Error("img decode error"));
+          img.src = bitmapUrl;
+        });
+        const canvas = document.createElement("canvas");
+        canvas.width = img.naturalWidth || img.width;
+        canvas.height = img.naturalHeight || img.height;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return false;
+        ctx.drawImage(img, 0, 0);
+        const pngBlob = await new Promise<Blob | null>((resolve) =>
+          canvas.toBlob((b) => resolve(b), "image/png"),
+        );
+        if (!pngBlob) return false;
+        blob = pngBlob;
+      } finally {
+        URL.revokeObjectURL(bitmapUrl);
+      }
+    }
+    await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function fetchPanClips(silent = false): Promise<void> {
+  try {
+    const resp = await fetch("/api/pan-clips", {
+      headers: getAuthHeaders(),
+      cache: "no-store",
+    });
+    const data = (await resp.json()) as PanClipsListResponse;
+    if (resp.ok && data.status === "ok") {
+      state.clips = data.clips || [];
+      renderClipList();
+    } else if (!silent) {
+      showToast(data.message || "加载剪切板失败");
+    }
+  } catch {
+    if (!silent) showToast("加载剪切板失败");
+  }
+}
+
 function bindEvents(): void {
   const fileInput = optById<HTMLInputElement>("panFileInput");
   optById("btnTriggerUpload")?.addEventListener("click", () => fileInput?.click());
@@ -932,6 +1139,7 @@ function bindEvents(): void {
       }
       showToast("已锁定私密空间");
       void fetchPanList(true);
+      void fetchPanClips(true);
       return;
     }
     requireAdmin(() => {
@@ -968,6 +1176,7 @@ function bindEvents(): void {
         // ignore
       }
       closeModal("adminModal");
+      void fetchPanClips(true);
       const pending = state.pendingAdminAction;
       state.pendingAdminAction = null;
       if (pending) pending();
@@ -1105,6 +1314,195 @@ function bindEvents(): void {
     }
   });
 
+  // Temporary shared clipboard modal
+  const clipModal = optById("clipModal");
+  const clipTextInput = optById<HTMLTextAreaElement>("clipTextInput");
+  const clipImageInput = optById<HTMLInputElement>("clipImageInput");
+
+  optById("btnOpenClipModal")?.addEventListener("click", () => {
+    openModal("clipModal");
+    void fetchPanClips();
+    window.setTimeout(() => clipTextInput?.focus(), 40);
+  });
+
+  optById("btnRefreshClips")?.addEventListener("click", () => {
+    void fetchPanClips().then(() => showToast("剪切板已刷新"));
+  });
+
+  optById("btnPickClipImage")?.addEventListener("click", () => clipImageInput?.click());
+  optById("btnClearClipImage")?.addEventListener("click", () => setClipPastedImage(null));
+
+  clipImageInput?.addEventListener("change", () => {
+    const file = clipImageInput.files?.[0] ?? null;
+    setClipPastedImage(file);
+    clipImageInput.value = "";
+  });
+
+  window.addEventListener("paste", (e) => {
+    if (!clipModal || clipModal.hidden) return;
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    for (const item of items) {
+      if (item.type.startsWith("image/")) {
+        const blob = item.getAsFile();
+        if (blob) {
+          e.preventDefault();
+          setClipPastedImage(blob);
+          showToast("已粘贴截图，点击「发布剪切板」即可共享");
+          return;
+        }
+      }
+    }
+  });
+
+  optById<HTMLFormElement>("clipForm")?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const content = clipTextInput?.value || "";
+    const imageFile = state.clipPastedFile;
+    if (!content.trim() && !imageFile) {
+      showToast("请输入文字内容或粘贴截图图片");
+      return;
+    }
+
+    const ttlMinutes = Number.parseInt(
+      optById<HTMLSelectElement>("clipTtlSelect")?.value || "1440",
+      10,
+    );
+    const burnAfterRead = Boolean(optById<HTMLInputElement>("clipBurnCheck")?.checked);
+    const visibility: PanVisibility =
+      state.isAdmin && optById<HTMLInputElement>("clipPrivateCheck")?.checked
+        ? "private"
+        : "public";
+
+    const submitBtn = optById<HTMLButtonElement>("btnSaveClip");
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.textContent = "发布中...";
+    }
+
+    try {
+      let resp: Response;
+      if (imageFile) {
+        const fd = new FormData();
+        fd.append("content", content);
+        fd.append("image", imageFile, imageFile.name || "screenshot.png");
+        fd.append("ttlMinutes", String(ttlMinutes));
+        if (burnAfterRead) fd.append("burn_after_read", "1");
+        fd.append("visibility", visibility);
+        resp = await fetch("/api/pan-clips", {
+          method: "POST",
+          headers: getAuthHeaders(),
+          body: fd,
+        });
+      } else {
+        resp = await fetch("/api/pan-clips", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...getAuthHeaders(),
+          },
+          body: JSON.stringify({
+            content,
+            ttlMinutes,
+            burn_after_read: burnAfterRead,
+            visibility,
+          }),
+        });
+      }
+
+      const data = (await resp.json()) as PanClipCreateResponse;
+      if (!resp.ok || data.status !== "ok") {
+        showToast(data.error || "发布剪切板失败");
+      } else {
+        if (clipTextInput) clipTextInput.value = "";
+        setClipPastedImage(null);
+        const burnChk = optById<HTMLInputElement>("clipBurnCheck");
+        if (burnChk) burnChk.checked = false;
+        showToast("已发布到临时共享剪切板");
+        await fetchPanClips(true);
+      }
+    } catch {
+      showToast("网络错误，发布失败");
+    } finally {
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = "发布剪切板";
+      }
+    }
+  });
+
+  optById("clipList")?.addEventListener("click", async (e) => {
+    const btn = (e.target as HTMLElement).closest<HTMLElement>("[data-act]");
+    if (!btn) return;
+    const act = btn.dataset.act;
+    const id = btn.dataset.id || "";
+    const clip = state.clips.find((c) => c.id === id);
+    if (!clip) return;
+
+    if (act === "clip-copy-text") {
+      const ok = await copyToClipboard(clip.content);
+      showToast(ok ? "文字已复制到剪贴板" : "复制失败");
+    } else if (act === "clip-copy-img") {
+      if (!clip.image_url) return;
+      const ok = await copyImageUrlToClipboard(clip.image_url);
+      showToast(ok ? "截图已复制到剪贴板" : "当前浏览器不支持直拷图片，请点「下载图片」");
+    } else if (act === "clip-dl-img") {
+      if (!clip.image_url) return;
+      const a = document.createElement("a");
+      a.href = clip.image_url;
+      const ext = clip.image_mime.includes("jpeg")
+        ? "jpg"
+        : clip.image_mime.includes("webp")
+          ? "webp"
+          : "png";
+      a.download = `${clip.id}.${ext}`;
+      a.click();
+    } else if (act === "clip-consume") {
+      try {
+        const resp = await fetch("/api/pan-clips?action=consume", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...getAuthHeaders(),
+          },
+          body: JSON.stringify({ id: clip.id }),
+        });
+        const data = (await resp.json()) as PanClipConsumeResponse;
+        if (!resp.ok || data.status !== "ok" || !data.clip) {
+          showToast(data.error || "提取失败或内容已被销毁");
+          await fetchPanClips(true);
+          return;
+        }
+        if (data.clip.content) {
+          await copyToClipboard(data.clip.content);
+        }
+        showBurnedReveal(data.clip, data.image_data_url);
+        showToast(data.clip.content ? "已提取并复制，云端副本已销毁" : "已提取，云端副本已销毁");
+        await fetchPanClips(true);
+      } catch {
+        showToast("提取失败");
+      }
+    } else if (act === "clip-delete") {
+      requireAdmin(async () => {
+        try {
+          const resp = await fetch(`/api/pan-clips?id=${encodeURIComponent(clip.id)}`, {
+            method: "DELETE",
+            headers: getAuthHeaders(),
+          });
+          const data = (await resp.json()) as { status?: string; error?: string };
+          if (!resp.ok || data.status !== "ok") {
+            showToast(data.error || "删除失败");
+          } else {
+            showToast("已删除该条剪切板");
+            await fetchPanClips(true);
+          }
+        } catch {
+          showToast("删除失败");
+        }
+      });
+    }
+  });
+
   // Modal close handlers
   for (const closeBtn of document.querySelectorAll<HTMLElement>("[data-close-modal]")) {
     closeBtn.addEventListener("click", () => {
@@ -1119,7 +1517,14 @@ function bindEvents(): void {
   }
   window.addEventListener("keydown", (e) => {
     if (e.key === "Escape") {
-      for (const id of ["apiModal", "previewModal", "editModal", "linkModal", "adminModal"]) {
+      for (const id of [
+        "clipModal",
+        "apiModal",
+        "previewModal",
+        "editModal",
+        "linkModal",
+        "adminModal",
+      ]) {
         const el = optById(id);
         if (el && !el.hidden) closeModal(id);
       }
@@ -1129,3 +1534,8 @@ function bindEvents(): void {
 
 bindEvents();
 void fetchPanList();
+void fetchPanClips(true);
+if (new URLSearchParams(window.location.search).get("clip") === "1") {
+  openModal("clipModal");
+  void fetchPanClips();
+}

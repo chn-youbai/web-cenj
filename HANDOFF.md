@@ -82,9 +82,9 @@ web-cenj/
 │   ├── _middleware.ts            # CORS 预检与 /api/* 异常统一 JSON 兜底
 │   ├── _lib/                     # auth.ts, db.ts, env.ts, http.ts, pan-auth.ts, pan-storage.ts
 │   ├── dav/                      # [[path]].ts（标准 WebDAV 服务端 /dav/public/ & /dav/private/）
-│   └── api/                      # auth, board, clash, click, derivatives, download, media, media-file, pan, pan-file,
-│                                 # pan-keys, pan-raw/[[path]], recite-sync, recite-vocab, sub, sub-links, subscription,
-│                                 # takeout, upload-asset, video, videos, vocab, [[catchall]]
+│   └── api/                      # auth, board, clash, click, derivatives, download, media, media-file, pan, pan-clips,
+│                                 # pan-file, pan-keys, pan-raw/[[path]], recite-sync, recite-vocab, sub, sub-links,
+│                                 # subscription, takeout, upload-asset, video, videos, vocab, [[catchall]]
 │
 ├── data/
 │   ├── schema.sql                # D1 7 张表建表 SQL
@@ -161,6 +161,7 @@ npm run format && npm run check
 | `/api/media` | `GET`, `POST`, `PATCH`, `DELETE` | 公开浏览/上传；私密/编辑/删除需 `ADMIN_PASSWORD` | 统一视界画廊媒体库 CRUD、`≤20MB` D1 分块存储（`cf_d1`）、`>20MB` GitHub Releases 直传/80MB 分片（`v_media`）、缩略图/封面写入与旧 `videos` 无感迁移 |
 | `/api/media-file` | `GET`, `HEAD` | 公开免密；私密需 `ADMIN_PASSWORD` | 画廊原图/缩略图/视频分级流式输出（支持 WebP 缩略图缓存、D1 分块流、GitHub 分片零内存拼接与 `Range 206`） |
 | `/api/pan` | `GET`, `POST`, `PATCH`, `DELETE` | 公开浏览/上传；私密/编辑/删除需 `ADMIN_PASSWORD` | 云端文件库 CRUD、`≤20MB` D1 分块存储（`cf_d1`）、`>20MB` GitHub Releases 直传/80MB 分片（`v_pan`）与外链登记 |
+| `/api/pan-clips` | `GET`, `POST`, `DELETE` | 公开查看与发布；私密/删除需 `ADMIN_PASSWORD` | 网盘临时共享剪切板：文本/代码/粘贴截图（D1 存储），支持有效期自动清理、阅后即焚一次性提取与管理员私密管理 |
 | `/api/pan-file` | `GET`, `HEAD` | 公开免密；私密需 `ADMIN_PASSWORD` | 网盘文件分级流式下载/在线预览（支持 D1 分块流、GitHub 分片零内存流式拼接与 `Range` 断点续传） |
 | `/api/download` | `GET`, `HEAD` | 公开 | 历史预置安装包边缘流式直链下载（向后兼容保留） |
 | `/api/subscription` | `GET`, `POST` | `ADMIN_PASSWORD` 或 `ACCESS_PASSWORD` | 机场流量查询（D1 缓存 24 小时自动刷新）、VPN07 刷新、美区 Apple ID 凭证下发 |
@@ -169,7 +170,7 @@ npm run format && npm run check
 | `/api/*` | `*` | - | `[[catchall]].ts` 返回规范 404 JSON |
 
 ### D1 数据库初始化与词库脚本（[`data/schema.sql`](./data/schema.sql)）
-D1 核心表：`textbook_words`、`word_derivatives`、`site_stats`、`videos`、`clash_control`、`recite_sync`、`guestbook_messages`，以及按需幂等自动创建的网盘表（`pan_files`、`pan_blobs`、`pan_meta` via [`ensurePanTables`](./functions/_lib/db.ts)）、画廊媒体表（`media_items`、`media_blobs`、`media_thumbs`、`media_meta` via [`ensureGalleryTables`](./functions/_lib/db.ts)）与临时订阅链接表 `sub_temp_links`（[`ensureSubLinksTable`](./functions/_lib/db.ts)）。初始化与词库维护命令：
+D1 核心表：`textbook_words`、`word_derivatives`、`site_stats`、`videos`、`clash_control`、`recite_sync`、`guestbook_messages`，以及按需幂等自动创建的网盘表（`pan_files`、`pan_blobs`、`pan_meta`、`pan_clips` via [`ensurePanTables`](./functions/_lib/db.ts) & [`ensurePanClipsTable`](./functions/_lib/db.ts)）、画廊媒体表（`media_items`、`media_blobs`、`media_thumbs`、`media_meta` via [`ensureGalleryTables`](./functions/_lib/db.ts)）与临时订阅链接表 `sub_temp_links`（[`ensureSubLinksTable`](./functions/_lib/db.ts)）。初始化与词库维护命令：
 ```bash
 npx wrangler d1 execute web-vocab-db --remote --file=data/schema.sql
 python scripts/seed_d1.py
@@ -198,6 +199,7 @@ python scripts/verify_vocab.py
   - **英语查词系统重构（[`vocab.html`](./vocab.html) / [`src/pages/vocab/*`](./src/pages/vocab/main.ts) / [`src/styles/vocab.css`](./src/styles/vocab.css)）**：彻底迁移至全站统一的 Claude Editorial 暖纸/暖炭黑双模式双栏工作台（桌面端左精简聚合列表 + 右实时完整词典详情，移动端紧凑列表 + 滑出详情抽屉）；支持中英双语混搜（英文原词/变形还原/中文释义反查）、同词多册聚合展示、`/` `↑` `↓` `Enter` `Esc` 键盘全操控、同根词连续跳转面包屑返回栈、有道真人美音/英音切换（离线自动回退浏览器 TTS）；分册浏览融入范围筛选条，「批量判词（支持粘贴文本与上传 CSV）」与「词库管理」轻量收纳至顶部工具弹窗。
   - **网盘下载加速优化**：[`functions/_lib/pan-storage.ts`](./functions/_lib/pan-storage.ts) 新增公开文件 `caches.default` 边缘缓存、`cf_d1` 4 分块并发预读、使用 `FixedLengthStream` 在 `GET` 响应中保留 `Content-Length`（防止长连接中途断流时浏览器误判下载完成导致文件残缺）并为 `gh_chunked` 增设断流自动 `Range` 偏移重试；[`functions/_lib/db.ts`](./functions/_lib/db.ts) 对 `ensurePanTables` 按 `D1Database` 实例做 Isolate 级缓存避免重复建表查询；[`src/pages/pan/main.ts`](./src/pages/pan/main.ts) 与 [`src/pages/pan/utils.ts`](./src/pages/pan/utils.ts) 为 GitHub 直传与外链文件增加「镜像加速」（`ghfast.top` 免代理国内加速）与「直连」原链入口。
   - **网盘管理员上传储存方式自选（`auto` / `cf_d1` / `gh_single`）**：[`pan.html`](./pan.html) 在管理员解锁后于 `#uploadAdminOptions` 中展示储存方式下拉框（`#uploadStorageSelect`，移除易断流且无法单链镜像的 `gh_chunked` 分片上传模式，引导 `>90MB` 大文件改用「添加外链」自动走 GitHub 国内「镜像加速」）；[`src/pages/pan/main.ts`](./src/pages/pan/main.ts) 与 [`src/pages/pan/utils.ts`](./src/pages/pan/utils.ts) 支持按选定储存方式校验大小上限（`cf_d1 ≤ 20MB`、`gh_single ≤ 90MB`）并透传 `X-Pan-Storage-Tier` 请求头；[`functions/api/pan.ts`](./functions/api/pan.ts) 在服务端严格校验仅管理员（`isAdmin`）可覆盖默认分级策略（历史已有 `gh_chunked` 记录仍保持下载/删除兼容）。
+  - **网盘临时共享剪切板（[`functions/api/pan-clips.ts`](./functions/api/pan-clips.ts) / [`pan.html`](./pan.html) `#clipModal`）**：页头新增「临时剪切板」按钮（带实时有效条目角标，支持 `?clip=1` 直达），支持纯文本/代码/链接及 `Ctrl+V` 直接粘贴或选图上传截图（≤5 MB 存 D1 `pan_clips` 表）、可选有效期（`10 分钟 / 1 小时 / 24 小时 / 7 天`）与**阅后即焚**（列表中隐藏正文与图片，提取一次即原子销毁），并沿用网盘公开可看可发、管理员（`ADMIN_PASSWORD`）可发私密条目与删除任意条目的权限边界。
 - **待收尾 / 可选清理事项**：
   1. **仓库内历史遗留冗余资产（非功能阻塞，但可择机清理）**：
      - [`src/styles/index.css`](./src/styles/index.css#L974-L1229) 末尾仍残留约 250 行旧版游乐场（`.g2048-*`、`.puzzle-*`、`.memory-*`）CSS 样式；游乐场已独立使用 [`src/styles/games.css`](./src/styles/games.css)。

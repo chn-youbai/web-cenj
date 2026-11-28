@@ -448,3 +448,46 @@ export interface SubLinksListResponse {
   message?: string;
   error?: string;
 }
+
+/* ---------- 网盘临时共享剪切板 (/api/pan-clips) ---------- */
+export type PanClipKind = "text" | "image" | "mixed";
+
+export interface PanClipItem {
+  id: string;
+  kind: PanClipKind;
+  content: string;
+  preview: string;
+  has_image: boolean;
+  image_mime: string;
+  image_size: number;
+  image_url?: string;
+  visibility: PanVisibility;
+  burn_after_read: boolean;
+  expires_at: number;
+  created_at: number;
+}
+
+export interface PanClipsListResponse {
+  status: "ok" | "error";
+  isAdmin: boolean;
+  clips: PanClipItem[];
+  activeCount: number;
+  message?: string;
+  error?: string;
+}
+
+export interface PanClipCreateResponse {
+  status: "ok" | "error";
+  clip?: PanClipItem;
+  message?: string;
+  error?: string;
+}
+
+export interface PanClipConsumeResponse {
+  status: "ok" | "error";
+  clip?: PanClipItem;
+  image_data_url?: string;
+  burned?: boolean;
+  message?: string;
+  error?: string;
+}

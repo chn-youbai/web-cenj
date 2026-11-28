@@ -237,3 +237,15 @@ export function buildGitHubMirrorUrl(assetUrl: string): string {
   }
   return "";
 }
+
+export function formatClipRemaining(expiresAt: number, now = Date.now()): string {
+  const diffMs = expiresAt - now;
+  if (!Number.isFinite(diffMs) || diffMs <= 0) return "已过期";
+  const mins = Math.ceil(diffMs / 60_000);
+  if (mins <= 1) return "即将过期";
+  if (mins < 60) return `剩余 ${mins} 分钟`;
+  const hours = Math.ceil(mins / 60);
+  if (hours < 48) return `剩余 ${hours} 小时`;
+  const days = Math.ceil(hours / 24);
+  return `剩余 ${days} 天`;
+}

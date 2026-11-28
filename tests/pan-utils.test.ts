@@ -3,6 +3,7 @@ import {
   PAN_GH_SINGLE_LIMIT,
   buildGitHubMirrorUrl,
   filterAndSortPanFiles,
+  formatClipRemaining,
   formatFileSize,
   getPreviewKind,
   inferPanCategory,
@@ -110,5 +111,14 @@ describe("pan utils", () => {
       "https://ghfast.top/https://raw.githubusercontent.com/a/b/main/x.txt",
     );
     expect(buildGitHubMirrorUrl("https://example.com/file.zip")).toBe("");
+  });
+
+  it("formats temporary clipboard remaining lifetimes", () => {
+    const now = 1_000_000;
+    expect(formatClipRemaining(now - 1000, now)).toBe("已过期");
+    expect(formatClipRemaining(now + 40_000, now)).toBe("即将过期");
+    expect(formatClipRemaining(now + 15 * 60_000, now)).toBe("剩余 15 分钟");
+    expect(formatClipRemaining(now + 12 * 3600_000, now)).toBe("剩余 12 小时");
+    expect(formatClipRemaining(now + 5 * 24 * 3600_000, now)).toBe("剩余 5 天");
   });
 });
