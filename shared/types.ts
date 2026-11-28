@@ -297,11 +297,14 @@ export interface PanFileItem {
   category: PanCategory;
   visibility: PanVisibility;
   storage_tier: PanStorageTier;
+  folder_path?: string;
   asset_url: string;
   asset_id?: number | null;
   chunks?: PanChunkMeta[];
   note: string;
   downloads: number;
+  direct_url?: string;
+  download_url?: string;
   created_at: number;
   updated_at: number;
 }
@@ -332,6 +335,40 @@ export interface PanUploadResponse {
 export interface PanChunkUploadResponse {
   status: "ok" | "error";
   chunk?: PanChunkMeta;
+  message?: string;
+  error?: string;
+}
+
+export type PanApiKeyStatus = "active" | "expired" | "revoked";
+
+export interface PanApiKeyItem {
+  id: string;
+  label: string;
+  key_prefix: string;
+  can_read: boolean;
+  can_write: boolean;
+  can_delete: boolean;
+  can_private: boolean;
+  allowed_origins: string[];
+  expires_at: number | null;
+  revoked: boolean;
+  status: PanApiKeyStatus;
+  use_count: number;
+  last_used_at: number | null;
+  created_at: number;
+}
+
+export interface PanApiKeysListResponse {
+  status: "ok" | "error";
+  keys: PanApiKeyItem[];
+  message?: string;
+  error?: string;
+}
+
+export interface PanApiKeyCreateResponse {
+  status: "ok" | "error";
+  key?: PanApiKeyItem;
+  secret?: string;
   message?: string;
   error?: string;
 }

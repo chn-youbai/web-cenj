@@ -3,6 +3,9 @@ import { copyToClipboard, escapeHtml, optById } from "@/core/dom";
 import { initAppShell } from "@/core/shell";
 import { showToast } from "@/core/toast";
 import type {
+  PanApiKeyCreateResponse,
+  PanApiKeyItem,
+  PanApiKeysListResponse,
   PanCategory,
   PanChunkMeta,
   PanChunkUploadResponse,
@@ -57,6 +60,8 @@ const state = {
   visibility: "all" as PanVisibilityFilter,
   sortBy: "newest" as PanSortBy,
   queue: [] as QueueTask[],
+  apiKeys: [] as PanApiKeyItem[],
+  apiTab: "docs" as "docs" | "keys",
   pendingAdminAction: null as (() => void) | null,
 };
 
@@ -77,6 +82,13 @@ function buildFileUrl(file: PanFileItem, inline = false): string {
     params.set("pwd", state.adminPassword);
   }
   return `/api/pan-file?${params.toString()}`;
+}
+
+function buildFriendlyDirectUrl(file: PanFileItem, download = false): string {
+  const base =
+    file.direct_url ||
+    `/api/pan-raw/${encodeURIComponent(file.id)}/${encodeURIComponent(file.name)}`;
+  return download ? `${base}?download=1` : base;
 }
 
 function getFileExtBadge(fileName: string): string {
@@ -108,15 +120,20 @@ function syncAdminUI(): void {
   const visSwitch = optById("panVisSwitch");
   const uploadVisWrap = optById("uploadVisToggleWrap");
   const linkVisField = optById("linkVisField");
+  const apiLocked = optById("apiKeysLockedState");
+  const apiUnlocked = optById("apiKeysUnlockedWrap");
 
   if (toggleBtn) toggleBtn.classList.toggle("is-unlocked", state.isAdmin);
   if (toggleText) toggleText.textContent = state.isAdmin ? "已解锁 · 锁定" : "私密解锁";
   if (visSwitch) visSwitch.hidden = !state.isAdmin;
   if (uploadVisWrap) uploadVisWrap.hidden = !state.isAdmin;
   if (linkVisField) linkVisField.hidden = !state.isAdmin;
+  if (apiLocked) apiLocked.hidden = state.isAdmin;
+  if (apiUnlocked) apiUnlocked.hidden = !state.isAdmin;
 
   if (!state.isAdmin) {
     state.visibility = "all";
+    state.apiKeys = [];
     const uploadPrivateCheck = optById<HTMLInputElement>("uploadPrivateCheck");
     if (uploadPrivateCheck) uploadPrivateCheck.checked = false;
   }
@@ -215,6 +232,9 @@ function renderFileList(): void {
       const isPrivate = file.visibility === "private";
       const sizeText = formatFileSize(file.size);
       const timeText = formatRelativeTime(file.created_at);
+      const folderBadge = file.folder_path
+        ? `<span class="pan-tag is-folder">/${escapeHtml(file.folder_path)}</span>`
+        : "";
 
       return `
         <article class="pan-row" data-file-id="${escapeHtml(file.id)}">
@@ -224,6 +244,7 @@ function renderFileList(): void {
               <div class="pan-row-title-line">
                 <span class="pan-row-name">${escapeHtml(file.name)}</span>
                 ${isPrivate ? '<span class="pan-tag is-private">私密</span>' : ""}
+                ${folderBadge}
                 <span class="pan-tag ${file.storage_tier === "cf_d1" ? "is-cf" : ""}">${escapeHtml(tierTag)}</span>
                 <span class="pan-tag">${escapeHtml(PAN_CATEGORY_LABELS[file.category])}</span>
               </div>
@@ -548,13 +569,139 @@ function openEditModal(file: PanFileItem): void {
   const nameEl = optById<HTMLInputElement>("editNameInput");
   const catEl = optById<HTMLSelectElement>("editCatSelect");
   const visEl = optById<HTMLSelectElement>("editVisSelect");
+  const folderEl = optById<HTMLInputElement>("editFolderInput");
   const noteEl = optById<HTMLInputElement>("editNoteInput");
   if (idEl) idEl.value = file.id;
   if (nameEl) nameEl.value = file.name;
   if (catEl) catEl.value = file.category;
   if (visEl) visEl.value = file.visibility;
+  if (folderEl) folderEl.value = file.folder_path || "";
   if (noteEl) noteEl.value = file.note || "";
   openModal("editModal");
+}
+
+function renderApiDocs(): void {
+  const origin = window.location.origin;
+  const davCode = optById("davEndpointCode");
+  const uploadCode = optById("uploadSnippetCode");
+  const directCode = optById("directLinkSnippetCode");
+
+  if (davCode) {
+    davCode.textContent = [
+      `挂载地址: ${origin}/dav/`,
+      `公开空间: ${origin}/dav/public/`,
+      `私密空间: ${origin}/dav/private/`,
+      "用户名: cenj (任意)",
+      "密码: 填写在「API Key 管理」生成的密钥 (cjp_...)",
+    ].join("\n");
+  }
+
+  if (uploadCode) {
+    uploadCode.textContent = [
+      "// 1. 跨站表单上传（公开文件可免密；私密/白名单需携带 Authorization）",
+      "const form = new FormData();",
+      "form.append('file', fileInput.files[0]);",
+      "form.append('folder_path', 'assets/2026'); // 可选目录",
+      `const res = await fetch('${origin}/api/pan?action=upload', {`,
+      "  method: 'POST',",
+      "  // headers: { Authorization: 'Bearer cjp_你的密钥' },",
+      "  body: form",
+      "});",
+      "const { file } = await res.json();",
+      `console.log('${origin}' + file.direct_url);`,
+    ].join("\n");
+  }
+
+  if (directCode) {
+    directCode.textContent = [
+      `预览 / 媒体直链: ${origin}/api/pan-raw/<id>/<filename>`,
+      `强制下载直链:   ${origin}/api/pan-raw/<id>/<filename>?download=1`,
+    ].join("\n");
+  }
+}
+
+function renderApiKeyList(): void {
+  const listEl = optById("apiKeyList");
+  if (!listEl) return;
+
+  if (state.apiKeys.length === 0) {
+    listEl.innerHTML = '<p class="pan-modal-desc">暂无 API Key，请在上方创建第一把接入密钥。</p>';
+    return;
+  }
+
+  listEl.innerHTML = state.apiKeys
+    .map((k) => {
+      const perms: string[] = [];
+      if (k.can_read) perms.push("读");
+      if (k.can_write) perms.push("写");
+      if (k.can_delete) perms.push("删");
+      if (k.can_private) perms.push("私密");
+
+      const statusText =
+        k.status === "revoked" ? "已吊销" : k.status === "expired" ? "已过期" : "生效中";
+      const originsText =
+        k.allowed_origins.length > 0 ? k.allowed_origins.join(", ") : "允许全部来源 (*)";
+      const expireText = k.expires_at
+        ? `过期: ${new Date(k.expires_at).toLocaleDateString()}`
+        : "永久有效";
+      const usedText = k.last_used_at
+        ? `调用 ${k.use_count} 次 · 最近 ${formatRelativeTime(k.last_used_at)}`
+        : "尚未使用";
+
+      return `
+        <div class="pan-key-card" data-key-id="${escapeHtml(k.id)}">
+          <div class="pan-key-card-top">
+            <div>
+              <span class="pan-key-label">${escapeHtml(k.label)}</span>
+              <code class="pan-key-prefix">${escapeHtml(k.key_prefix)}...</code>
+              <span class="pan-tag ${k.status === "active" ? "is-cf" : "is-private"}">${statusText}</span>
+            </div>
+            <div class="pan-key-actions">
+              <button type="button" class="pan-act-btn" data-key-act="toggle" data-key-id="${escapeHtml(k.id)}">${k.revoked ? "恢复" : "吊销"}</button>
+              <button type="button" class="pan-act-btn danger" data-key-act="delete" data-key-id="${escapeHtml(k.id)}">删除</button>
+            </div>
+          </div>
+          <div class="pan-key-meta">
+            <span>权限: ${escapeHtml(perms.join(" / ") || "无")}</span>
+            <span>CORS: ${escapeHtml(originsText)}</span>
+            <span>${escapeHtml(expireText)}</span>
+            <span>${escapeHtml(usedText)}</span>
+          </div>
+        </div>
+      `;
+    })
+    .join("");
+}
+
+async function fetchApiKeys(): Promise<void> {
+  if (!state.isAdmin) return;
+  try {
+    const resp = await fetch("/api/pan-keys", {
+      headers: getAuthHeaders(),
+      cache: "no-store",
+    });
+    const data = (await resp.json()) as PanApiKeysListResponse;
+    if (resp.ok && data.status === "ok") {
+      state.apiKeys = data.keys || [];
+      renderApiKeyList();
+    }
+  } catch {
+    showToast("加载 API Key 列表失败");
+  }
+}
+
+function switchApiTab(tab: "docs" | "keys"): void {
+  state.apiTab = tab;
+  const docsPane = optById("apiDocsPane");
+  const keysPane = optById("apiKeysPane");
+  if (docsPane) docsPane.hidden = tab !== "docs";
+  if (keysPane) keysPane.hidden = tab !== "keys";
+  for (const btn of document.querySelectorAll<HTMLButtonElement>("[data-api-tab]")) {
+    btn.classList.toggle("active", btn.dataset.apiTab === tab);
+  }
+  if (tab === "keys" && state.isAdmin) {
+    void fetchApiKeys();
+  }
 }
 
 function bindEvents(): void {
@@ -648,6 +795,155 @@ function bindEvents(): void {
   optById("btnClearQueue")?.addEventListener("click", () => {
     state.queue = state.queue.filter((t) => t.status === "uploading" || t.status === "pending");
     renderQueue();
+  });
+
+  // API / WebDAV Modal
+  optById("btnOpenApiModal")?.addEventListener("click", () => {
+    renderApiDocs();
+    const secretBox = optById("newApiKeyBox");
+    if (secretBox) secretBox.hidden = true;
+    syncAdminUI();
+    switchApiTab(state.apiTab);
+    openModal("apiModal");
+  });
+
+  for (const tabBtn of document.querySelectorAll<HTMLButtonElement>("[data-api-tab]")) {
+    tabBtn.addEventListener("click", () => {
+      const tab = tabBtn.dataset.apiTab === "keys" ? "keys" : "docs";
+      switchApiTab(tab);
+    });
+  }
+
+  optById("btnCopyDavUrl")?.addEventListener("click", () => {
+    void copyToClipboard(`${window.location.origin}/dav/`).then((ok) => {
+      showToast(ok ? "WebDAV 挂载地址已复制" : "复制失败");
+    });
+  });
+
+  optById("btnCopyUploadSnippet")?.addEventListener("click", () => {
+    const code = optById("uploadSnippetCode")?.textContent || "";
+    void copyToClipboard(code).then((ok) => {
+      showToast(ok ? "跨站上传示例代码已复制" : "复制失败");
+    });
+  });
+
+  optById("btnUnlockFromApiModal")?.addEventListener("click", () => {
+    requireAdmin(() => {
+      syncAdminUI();
+      void fetchApiKeys();
+      showToast("已解锁管理权限，可创建 API Key");
+    });
+  });
+
+  optById<HTMLFormElement>("apiKeyCreateForm")?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const label = (optById<HTMLInputElement>("apiKeyLabelInput")?.value || "").trim();
+    const ttlRaw = optById<HTMLSelectElement>("apiKeyTtlSelect")?.value || "";
+    const ttlDays = ttlRaw ? Number.parseInt(ttlRaw, 10) : null;
+    const canRead = Boolean(optById<HTMLInputElement>("apiKeyReadCheck")?.checked);
+    const canWrite = Boolean(optById<HTMLInputElement>("apiKeyWriteCheck")?.checked);
+    const canDelete = Boolean(optById<HTMLInputElement>("apiKeyDeleteCheck")?.checked);
+    const canPrivate = Boolean(optById<HTMLInputElement>("apiKeyPrivateCheck")?.checked);
+    const allowedOrigins = (optById<HTMLInputElement>("apiKeyOriginsInput")?.value || "").trim();
+    const submitBtn = optById<HTMLButtonElement>("apiKeyCreateBtn");
+
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.textContent = "生成中...";
+    }
+
+    try {
+      const resp = await fetch("/api/pan-keys", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...getAuthHeaders(),
+        },
+        body: JSON.stringify({
+          label,
+          ttlDays,
+          can_read: canRead,
+          can_write: canWrite,
+          can_delete: canDelete,
+          can_private: canPrivate,
+          allowed_origins: allowedOrigins,
+        }),
+      });
+      const data = (await resp.json()) as PanApiKeyCreateResponse;
+      if (!resp.ok || data.status !== "ok" || !data.secret) {
+        showToast(data.error || "生成 API Key 失败");
+      } else {
+        const box = optById("newApiKeyBox");
+        const valEl = optById("newApiKeySecretVal");
+        if (valEl) valEl.textContent = data.secret;
+        if (box) box.hidden = false;
+        optById<HTMLFormElement>("apiKeyCreateForm")?.reset();
+        const readChk = optById<HTMLInputElement>("apiKeyReadCheck");
+        const writeChk = optById<HTMLInputElement>("apiKeyWriteCheck");
+        if (readChk) readChk.checked = true;
+        if (writeChk) writeChk.checked = true;
+        showToast("已生成新 API Key");
+        await fetchApiKeys();
+      }
+    } catch {
+      showToast("网络错误，生成失败");
+    } finally {
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = "生成 API Key";
+      }
+    }
+  });
+
+  optById("btnCopyNewSecret")?.addEventListener("click", () => {
+    const secret = optById("newApiKeySecretVal")?.textContent || "";
+    if (!secret) return;
+    void copyToClipboard(secret).then((ok) => {
+      showToast(ok ? "API Key 已复制到剪贴板" : "复制失败");
+    });
+  });
+
+  optById("apiKeyList")?.addEventListener("click", async (e) => {
+    const btn = (e.target as HTMLElement).closest<HTMLButtonElement>("[data-key-act]");
+    if (!btn) return;
+    const act = btn.dataset.keyAct;
+    const keyId = btn.dataset.keyId;
+    if (!keyId) return;
+    const target = state.apiKeys.find((k) => k.id === keyId);
+    if (!target) return;
+
+    if (act === "toggle") {
+      try {
+        const resp = await fetch("/api/pan-keys", {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            ...getAuthHeaders(),
+          },
+          body: JSON.stringify({ id: keyId, revoked: !target.revoked }),
+        });
+        if (resp.ok) {
+          showToast(target.revoked ? "已恢复密钥" : "已吊销密钥");
+          await fetchApiKeys();
+        }
+      } catch {
+        showToast("操作失败");
+      }
+    } else if (act === "delete") {
+      if (!window.confirm(`确定永久删除密钥「${target.label}」吗？`)) return;
+      try {
+        const resp = await fetch(`/api/pan-keys?id=${encodeURIComponent(keyId)}`, {
+          method: "DELETE",
+          headers: getAuthHeaders(),
+        });
+        if (resp.ok) {
+          showToast("已删除密钥");
+          await fetchApiKeys();
+        }
+      } catch {
+        showToast("删除失败");
+      }
+    }
   });
 
   // Admin unlock / lock
@@ -769,6 +1065,7 @@ function bindEvents(): void {
     const category = (optById<HTMLSelectElement>("editCatSelect")?.value || "other") as PanCategory;
     const visibility = (optById<HTMLSelectElement>("editVisSelect")?.value ||
       "public") as PanVisibility;
+    const folderPath = (optById<HTMLInputElement>("editFolderInput")?.value || "").trim();
     const note = (optById<HTMLInputElement>("editNoteInput")?.value || "").trim();
     const submitBtn = optById<HTMLButtonElement>("editSubmitBtn");
 
@@ -783,7 +1080,7 @@ function bindEvents(): void {
           "Content-Type": "application/json",
           ...getAuthHeaders(),
         },
-        body: JSON.stringify({ id, name, category, visibility, note }),
+        body: JSON.stringify({ id, name, category, visibility, folder_path: folderPath, note }),
       });
       const data = (await resp.json()) as PanUploadResponse;
       if (!resp.ok || data.status !== "ok") {
@@ -815,9 +1112,9 @@ function bindEvents(): void {
     if (act === "preview") {
       void openPreviewModal(file);
     } else if (act === "copy") {
-      const fullUrl = `${window.location.origin}${buildFileUrl(file, false)}`;
+      const fullUrl = `${window.location.origin}${buildFriendlyDirectUrl(file, false)}`;
       void copyToClipboard(fullUrl).then((ok) => {
-        showToast(ok ? "高速直链已复制到剪贴板" : "复制失败");
+        showToast(ok ? "友好直链已复制到剪贴板" : "复制失败");
       });
     } else if (act === "toggle-vis") {
       requireAdmin(() => {
@@ -848,7 +1145,7 @@ function bindEvents(): void {
   }
   window.addEventListener("keydown", (e) => {
     if (e.key === "Escape") {
-      for (const id of ["previewModal", "editModal", "linkModal", "adminModal"]) {
+      for (const id of ["apiModal", "previewModal", "editModal", "linkModal", "adminModal"]) {
         const el = optById(id);
         if (el && !el.hidden) closeModal(id);
       }

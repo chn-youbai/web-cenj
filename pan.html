@@ -24,6 +24,13 @@
       </div>
 
       <div class="pan-header-actions">
+        <button type="button" class="pan-btn pan-btn-ghost" id="btnOpenApiModal">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M16 18l6-6-6-6"/>
+            <path d="M8 6l-6 6 6 6"/>
+          </svg>
+          <span>API / WebDAV</span>
+        </button>
         <button type="button" class="pan-btn pan-btn-ghost" id="btnToggleAdmin">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
@@ -228,6 +235,10 @@
           </label>
         </div>
         <label class="pan-field">
+          <span>目录路径（可选，与 WebDAV 同步）</span>
+          <input type="text" id="editFolderInput" class="pan-input" placeholder="留空为根目录，例如：docs/2026">
+        </label>
+        <label class="pan-field">
           <span>备注</span>
           <input type="text" id="editNoteInput" class="pan-input" placeholder="可选备注说明">
         </label>
@@ -253,6 +264,105 @@
       <div class="pan-modal-actions">
         <a id="previewOpenRawLink" class="pan-btn pan-btn-ghost" href="#" target="_blank" rel="noopener noreferrer">新窗口打开</a>
         <a id="previewDownloadLink" class="pan-btn pan-btn-primary" href="#" download>高速下载</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- 模态窗 5：API / WebDAV 外部接入与密钥管理 -->
+  <div class="pan-modal-backdrop" id="apiModal" hidden role="dialog" aria-modal="true" aria-labelledby="apiModalTitle">
+    <div class="pan-modal pan-modal-lg">
+      <div class="pan-modal-head">
+        <div class="pan-preview-head-meta">
+          <h3 id="apiModalTitle">API / WebDAV 外部接入</h3>
+          <span class="pan-preview-sub">WebDAV 磁盘挂载 · 跨站文件托管 · 友好直链</span>
+        </div>
+        <button type="button" class="pan-icon-close" data-close-modal="apiModal" aria-label="关闭">✕</button>
+      </div>
+
+      <div class="pan-api-tabs" role="tablist">
+        <button type="button" class="pan-seg-btn active" data-api-tab="docs">接入文档</button>
+        <button type="button" class="pan-seg-btn" data-api-tab="keys">API Key 管理</button>
+      </div>
+
+      <div class="pan-api-scroll" id="apiDocsPane">
+        <div class="pan-doc-block">
+          <div class="pan-doc-head">
+            <h4>1. WebDAV 挂载（Finder / Windows / Rclone / Infuse / Obsidian）</h4>
+            <button type="button" class="pan-act-btn" id="btnCopyDavUrl">复制挂载地址</button>
+          </div>
+          <p class="pan-doc-desc">支持完整目录树（<code>/dav/public/</code> 与 <code>/dav/private/</code>）、在线读写、创建子目录与移动重命名（单次 PUT 上限 90 MB）。鉴权使用 <strong>HTTP Basic Auth</strong>：用户名任意（如 <code>cenj</code>），密码填写生成的 <strong>API Key</strong>。</p>
+          <pre class="pan-doc-code" id="davEndpointCode"></pre>
+        </div>
+
+        <div class="pan-doc-block">
+          <div class="pan-doc-head">
+            <h4>2. 跨站文件上传（免密公开上传 / Bearer Key 私密上传）</h4>
+            <button type="button" class="pan-act-btn" id="btnCopyUploadSnippet">复制 JS 示例</button>
+          </div>
+          <p class="pan-doc-desc">公开空间上传可直接免密调用；若上传至私密空间、按路径覆盖或启用 CORS 白名单，请携带 <code>Authorization: Bearer &lt;API_KEY&gt;</code>。支持 <code>multipart/form-data</code> 与原始二进制流，响应体将直接返回 <code>file.direct_url</code>。</p>
+          <pre class="pan-doc-code" id="uploadSnippetCode"></pre>
+        </div>
+
+        <div class="pan-doc-block">
+          <div class="pan-doc-head">
+            <h4>3. 友好直链引用（img / video / 外部下载）</h4>
+          </div>
+          <p class="pan-doc-desc">公开文件直链免鉴权，支持 <code>Range 206</code> 视频拖拽与跨域引用；拼接 <code>?download=1</code> 可触发强制下载。</p>
+          <pre class="pan-doc-code" id="directLinkSnippetCode"></pre>
+        </div>
+      </div>
+
+      <div class="pan-api-scroll" id="apiKeysPane" hidden>
+        <div class="pan-api-locked" id="apiKeysLockedState">
+          <p class="pan-modal-desc">创建、查看或吊销 API Key 需要先解锁管理员权限（<code>ADMIN_PASSWORD</code>）。</p>
+          <button type="button" class="pan-btn pan-btn-primary" id="btnUnlockFromApiModal">立即解锁管理权限</button>
+        </div>
+
+        <div id="apiKeysUnlockedWrap" hidden>
+          <form id="apiKeyCreateForm" class="pan-key-form">
+            <div class="pan-field-row">
+              <label class="pan-field">
+                <span>密钥备注名称</span>
+                <input type="text" id="apiKeyLabelInput" class="pan-input" placeholder="例如：Mac Finder / 个人博客图床" required>
+              </label>
+              <label class="pan-field">
+                <span>有效期</span>
+                <select id="apiKeyTtlSelect" class="pan-select">
+                  <option value="">永久有效</option>
+                  <option value="7">7 天</option>
+                  <option value="30" selected>30 天</option>
+                  <option value="90">90 天</option>
+                  <option value="365">365 天</option>
+                </select>
+              </label>
+            </div>
+
+            <div class="pan-key-perms">
+              <label class="pan-upload-vis-toggle"><input type="checkbox" id="apiKeyReadCheck" checked> <span>读取 / 列目录</span></label>
+              <label class="pan-upload-vis-toggle"><input type="checkbox" id="apiKeyWriteCheck" checked> <span>上传 / 新建目录</span></label>
+              <label class="pan-upload-vis-toggle"><input type="checkbox" id="apiKeyDeleteCheck"> <span>删除 / 移动</span></label>
+              <label class="pan-upload-vis-toggle"><input type="checkbox" id="apiKeyPrivateCheck"> <span>访问私密空间</span></label>
+            </div>
+
+            <div class="pan-field-row pan-key-origin-row">
+              <label class="pan-field">
+                <span>CORS 允许来源域名（可选，留空允许 *）</span>
+                <input type="text" id="apiKeyOriginsInput" class="pan-input" placeholder="例如：https://blog.example.com, https://*.example.com">
+              </label>
+              <button type="submit" class="pan-btn pan-btn-primary" id="apiKeyCreateBtn">生成 API Key</button>
+            </div>
+          </form>
+
+          <div class="pan-new-secret-box" id="newApiKeyBox" hidden>
+            <div class="pan-new-secret-head">
+              <strong>新密钥已生成（仅展示这一次，请妥善保存）</strong>
+              <button type="button" class="pan-act-btn primary" id="btnCopyNewSecret">复制密钥</button>
+            </div>
+            <code class="pan-new-secret-val" id="newApiKeySecretVal"></code>
+          </div>
+
+          <div class="pan-key-list" id="apiKeyList"></div>
+        </div>
       </div>
     </div>
   </div>

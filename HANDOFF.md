@@ -80,9 +80,11 @@ web-cenj/
 │
 ├── functions/                    # Cloudflare Pages Functions 边缘后端
 │   ├── _middleware.ts            # CORS 预检与 /api/* 异常统一 JSON 兜底
-│   ├── _lib/                     # auth.ts, db.ts, env.ts, http.ts
-│   └── api/                      # auth, board, clash, click, derivatives, download, recite-sync, recite-vocab,
-│                                 # sub, subscription, takeout, upload-asset, video, videos, vocab, [[catchall]]
+│   ├── _lib/                     # auth.ts, db.ts, env.ts, http.ts, pan-auth.ts, pan-storage.ts
+│   ├── dav/                      # [[path]].ts（标准 WebDAV 服务端 /dav/public/ & /dav/private/）
+│   └── api/                      # auth, board, clash, click, derivatives, download, media, media-file, pan, pan-file,
+│                                 # pan-keys, pan-raw/[[path]], recite-sync, recite-vocab, sub, sub-links, subscription,
+│                                 # takeout, upload-asset, video, videos, vocab, [[catchall]]
 │
 ├── data/
 │   ├── schema.sql                # D1 7 张表建表 SQL
@@ -92,9 +94,9 @@ web-cenj/
 │   └── csv/                      # 原始课本 CSV 与说明（data/csv/README.md）
 │
 ├── scripts/                      # Python 词库处理、照片清单与 D1 同步工具
-├── tests/                        # Vitest 单元测试（共 9 个文件，44 条用例）
+├── tests/                        # Vitest 单元测试（含 functions-pan-api-dav.test.ts 等）
 ├── public/                       # 静态资源与 _headers（/assets/* immutable 强缓存配置）
-├── vite.config.ts                # 10 入口 MPA 配置 + data/*.json 静态注入插件 + /api 代理(8788)
+├── vite.config.ts                # 11 入口 MPA 配置 + data/*.json 静态注入 + /api & /dav 代理(8788)
 ├── wrangler.jsonc                # Pages 构建目录 dist + D1 (web-vocab-db) 绑定配置
 ├── biome.json                    # Biome 规则（注意忽略了 *.html、scripts、data、public）
 └── .env.example                  # Cloudflare 环境变量清单模板
@@ -192,6 +194,7 @@ python scripts/verify_vocab.py
   - **视界画廊与视频系统重构（[`gallery.html`](./gallery.html) / [`src/pages/gallery/*`](./src/pages/gallery/main.ts) / [`functions/api/media.ts`](./functions/api/media.ts) / [`functions/api/media-file.ts`](./functions/api/media-file.ts)）**：保留 121 张航拍图作为默认「航拍精选」相册（游乐场拼图/翻卡零破坏），并将原「投递视频」合并进画廊（侧边栏精简为 8 项，[`upload.html`](./upload.html) 自动重定向 `./gallery.html?upload=1`）；支持照片+视频双上传与全页拖拽、`≤20MB CF D1 / 20–90MB GitHub 直传 / >90MB 80MB 分片` 分级存储、浏览器自动生成 WebP 缩略图与视频首帧封面、自定义相册、与网盘一致的公开/私密双模式权限控制、升级版滚轮/双指缩放与原图下载灯箱，以及旧 `videos` 表无感自动迁移。
   - **已合入 `main` 并清理旧文档**：已合并 PR #7，删除过期冗余的 `PROJECT_ARCHITECTURE.md`，全部内容整合至本 `HANDOFF.md`。
   - **中文字体本地化打包与静态资源强缓存**：全站 10 个 HTML 已移除外部 `fonts.loli.net` CDN 依赖，改为通过 `@fontsource-variable/noto-serif-sc` 在 [`src/core/fonts.ts`](./src/core/fonts.ts) 本地打包并在 [`src/styles/base.css`](./src/styles/base.css) `--font-serif` 优先引用 `"Noto Serif SC Variable"`；新增 [`public/_headers`](./public/_headers) 为 `/assets/*` 配置 `Cache-Control: public, max-age=31536000, immutable`。
+  - **网盘外部接口（标准 WebDAV + 跨站文件托管 + 多 API Key）**：新增 [`functions/dav/[[path]].ts`](./functions/dav/%5B%5Bpath%5D%5D.ts)（`/dav/public/` 与 `/dav/private/` 完整目录树、Basic Auth 鉴权）、[`functions/api/pan-raw/[[path]].ts`](./functions/api/pan-raw/%5B%5Bpath%5D%5D.ts) 友好直链、[`functions/api/pan-keys.ts`](./functions/api/pan-keys.ts)（D1 SHA-256 多密钥与 CORS 白名单管理）；扩展 [`functions/api/pan.ts`](./functions/api/pan.ts) 支持 `multipart/form-data` 上传与 `folder_path`；[`pan.html`](./pan.html) 顶部常驻「API / WebDAV」接入文档与密钥管理弹窗。
 - **待收尾 / 可选清理事项**：
   1. **仓库内历史遗留冗余资产（非功能阻塞，但可择机清理）**：
      - [`src/styles/index.css`](./src/styles/index.css#L974-L1229) 末尾仍残留约 250 行旧版游乐场（`.g2048-*`、`.puzzle-*`、`.memory-*`）CSS 样式；游乐场已独立使用 [`src/styles/games.css`](./src/styles/games.css)。

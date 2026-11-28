@@ -191,7 +191,8 @@ export function filterAndSortPanFiles(
     if (opts.category !== "all" && item.category !== opts.category) return false;
     if (opts.visibility !== "all" && item.visibility !== opts.visibility) return false;
     if (q) {
-      const hay = `${item.name} ${item.note} ${PAN_CATEGORY_LABELS[item.category]}`.toLowerCase();
+      const hay =
+        `${item.name} ${item.folder_path || ""} ${item.note} ${PAN_CATEGORY_LABELS[item.category]}`.toLowerCase();
       if (!hay.includes(q)) return false;
     }
     return true;

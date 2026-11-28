@@ -131,6 +131,7 @@ export async function ensurePanTables(db: D1Database): Promise<void> {
         category TEXT NOT NULL DEFAULT 'other',
         visibility TEXT NOT NULL DEFAULT 'public',
         storage_tier TEXT NOT NULL DEFAULT 'cf_d1',
+        folder_path TEXT NOT NULL DEFAULT '',
         asset_url TEXT NOT NULL DEFAULT '',
         asset_id INTEGER DEFAULT NULL,
         chunks_json TEXT NOT NULL DEFAULT '[]',
@@ -142,9 +143,22 @@ export async function ensurePanTables(db: D1Database): Promise<void> {
     `)
       .run();
 
+    try {
+      await db
+        .prepare("ALTER TABLE pan_files ADD COLUMN folder_path TEXT NOT NULL DEFAULT ''")
+        .run();
+    } catch {
+      // column already exists
+    }
+
     await db
       .prepare(
         "CREATE INDEX IF NOT EXISTS idx_pan_files_vis_created ON pan_files(visibility, created_at DESC)",
+      )
+      .run();
+    await db
+      .prepare(
+        "CREATE INDEX IF NOT EXISTS idx_pan_files_vis_folder ON pan_files(visibility, folder_path, name)",
       )
       .run();
 
@@ -157,6 +171,42 @@ export async function ensurePanTables(db: D1Database): Promise<void> {
         PRIMARY KEY (file_id, chunk_index)
       )
     `)
+      .run();
+
+    await db
+      .prepare(`
+      CREATE TABLE IF NOT EXISTS pan_folders (
+        visibility TEXT NOT NULL,
+        path TEXT NOT NULL,
+        created_at INTEGER NOT NULL,
+        PRIMARY KEY (visibility, path)
+      )
+    `)
+      .run();
+
+    await db
+      .prepare(`
+      CREATE TABLE IF NOT EXISTS pan_api_keys (
+        id TEXT PRIMARY KEY,
+        label TEXT NOT NULL DEFAULT '',
+        key_prefix TEXT NOT NULL,
+        key_hash TEXT NOT NULL UNIQUE,
+        can_read INTEGER NOT NULL DEFAULT 1,
+        can_write INTEGER NOT NULL DEFAULT 1,
+        can_delete INTEGER NOT NULL DEFAULT 0,
+        can_private INTEGER NOT NULL DEFAULT 0,
+        allowed_origins TEXT NOT NULL DEFAULT '',
+        expires_at INTEGER DEFAULT NULL,
+        revoked INTEGER NOT NULL DEFAULT 0,
+        use_count INTEGER NOT NULL DEFAULT 0,
+        last_used_at INTEGER DEFAULT NULL,
+        created_at INTEGER NOT NULL
+      )
+    `)
+      .run();
+
+    await db
+      .prepare("CREATE INDEX IF NOT EXISTS idx_pan_api_keys_hash ON pan_api_keys(key_hash)")
       .run();
 
     await db

@@ -17,6 +17,7 @@ interface FileRow {
   category: string;
   visibility: string;
   storage_tier: string;
+  folder_path: string;
   asset_url: string;
   asset_id: number | null;
   chunks_json: string;
@@ -30,6 +31,7 @@ function createMockPanDb() {
   const files = new Map<string, FileRow>();
   const blobs = new Map<string, Uint8Array>();
   const meta = new Map<string, string>();
+  const folders = new Map<string, { visibility: string; path: string; created_at: number }>();
 
   const makeStmt = (sql: string, args: unknown[] = []): D1PreparedStatement => {
     const s = sql.trim().replace(/\s+/g, " ");
@@ -67,6 +69,13 @@ function createMockPanDb() {
       async run() {
         if (s.startsWith("INSERT OR REPLACE INTO pan_meta")) {
           meta.set(String(args[0]), String(args[1]));
+        } else if (s.startsWith("INSERT OR IGNORE INTO pan_folders")) {
+          const vis = String(args[0]);
+          const path = String(args[1]);
+          const key = `${vis}:${path}`;
+          if (!folders.has(key)) {
+            folders.set(key, { visibility: vis, path, created_at: Number(args[2]) });
+          }
         } else if (s.startsWith("INSERT OR IGNORE INTO pan_files")) {
           const id = String(args[0]);
           if (!files.has(id)) {
@@ -78,6 +87,7 @@ function createMockPanDb() {
               category: String(args[4]),
               visibility: String(args[5]),
               storage_tier: String(args[6]),
+              folder_path: "",
               asset_url: String(args[7]),
               asset_id: null,
               chunks_json: "[]",
@@ -100,13 +110,14 @@ function createMockPanDb() {
               category: String(args[4]),
               visibility: String(args[5]),
               storage_tier: "cf_d1",
+              folder_path: String(args[6]),
               asset_url: "",
               asset_id: null,
               chunks_json: "[]",
-              note: String(args[6]),
+              note: String(args[7]),
               downloads: 0,
-              created_at: Number(args[7]),
-              updated_at: Number(args[8]),
+              created_at: Number(args[8]),
+              updated_at: Number(args[9]),
             });
           } else if (isLink) {
             files.set(id, {
@@ -117,13 +128,14 @@ function createMockPanDb() {
               category: String(args[4]),
               visibility: String(args[5]),
               storage_tier: "external_link",
-              asset_url: String(args[6]),
+              folder_path: String(args[6]),
+              asset_url: String(args[7]),
               asset_id: null,
               chunks_json: "[]",
-              note: String(args[7]),
+              note: String(args[8]),
               downloads: 0,
-              created_at: Number(args[8]),
-              updated_at: Number(args[9]),
+              created_at: Number(args[9]),
+              updated_at: Number(args[10]),
             });
           }
         } else if (s.startsWith("INSERT INTO pan_blobs")) {
@@ -132,13 +144,14 @@ function createMockPanDb() {
           const row = files.get(String(args[0]));
           if (row) row.downloads += 1;
         } else if (s.startsWith("UPDATE pan_files SET name = ?")) {
-          const row = files.get(String(args[5]));
+          const row = files.get(String(args[6]));
           if (row) {
             row.name = String(args[0]);
             row.category = String(args[1]);
             row.visibility = String(args[2]);
-            row.note = String(args[3]);
-            row.updated_at = Number(args[4]);
+            row.folder_path = String(args[3]);
+            row.note = String(args[4]);
+            row.updated_at = Number(args[5]);
           }
         } else if (s.startsWith("DELETE FROM pan_blobs")) {
           const prefix = `${String(args[0])}:`;

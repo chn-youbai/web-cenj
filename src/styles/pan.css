@@ -875,3 +875,200 @@ body {
     flex-direction: column;
   }
 }
+
+.pan-tag.is-folder {
+  font-family: var(--font-mono);
+  color: var(--c-label);
+}
+
+/* ---------- API / WebDAV 弹窗 ---------- */
+.pan-api-tabs {
+  display: inline-flex;
+  align-self: flex-start;
+  gap: 2px;
+  padding: 3px;
+  border-radius: var(--r-sm);
+  background: var(--c-bg-subtle);
+  border: 1px solid var(--c-separator);
+}
+
+.pan-api-scroll {
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 62vh;
+  padding-right: 2px;
+}
+
+.pan-doc-block {
+  border: 1px solid var(--c-separator);
+  border-radius: var(--r-md);
+  background: var(--c-bg);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pan-doc-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.pan-doc-head h4 {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--c-label);
+}
+
+.pan-doc-desc {
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--c-label-2);
+}
+
+.pan-doc-desc code {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: var(--c-surface);
+  border: 1px solid var(--c-separator);
+}
+
+.pan-doc-code {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--c-separator);
+  background: var(--c-surface);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--c-label);
+  overflow-x: auto;
+  white-space: pre;
+}
+
+.pan-api-locked {
+  padding: 24px 12px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.pan-key-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--c-separator);
+  background: var(--c-bg);
+}
+
+.pan-key-perms {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
+.pan-key-origin-row {
+  align-items: flex-end;
+}
+
+.pan-new-secret-box {
+  padding: 12px 14px;
+  border-radius: var(--r-md);
+  border: 1px solid color-mix(in srgb, var(--c-success) 45%, var(--c-separator));
+  background: color-mix(in srgb, var(--c-success) 8%, var(--c-surface));
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pan-new-secret-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 12.5px;
+  color: var(--c-success);
+}
+
+.pan-new-secret-val {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  word-break: break-all;
+  padding: 8px 10px;
+  border-radius: var(--r-sm);
+  background: var(--c-surface);
+  border: 1px solid var(--c-separator);
+  color: var(--c-label);
+}
+
+.pan-key-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pan-key-card {
+  padding: 11px 13px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--c-separator);
+  background: var(--c-surface);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.pan-key-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.pan-key-card-top > div:first-child {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.pan-key-label {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--c-label);
+}
+
+.pan-key-prefix {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--c-label-2);
+}
+
+.pan-key-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pan-key-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--c-label-3);
+}
