@@ -12,5 +12,11 @@
       "database_name": "web-vocab-db",
       "database_id": "5e691588-a2df-428a-b786-d5f9703c9554"
     }
+  ],
+  "kv_namespaces": [
+    {
+      "binding": "CLICKS_KV",
+      "id": "c45f6c3c1878427799785da4f984e52c"
+    }
   ]
 }

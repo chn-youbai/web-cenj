@@ -97,7 +97,7 @@ web-cenj/
 ├── tests/                        # Vitest 单元测试（含 functions-pan-api-dav.test.ts 等）
 ├── public/                       # 静态资源与 _headers（/assets/* immutable 强缓存配置）
 ├── vite.config.ts                # 11 入口 MPA 配置 + data/*.json 静态注入 + /api & /dav 代理(8788)
-├── wrangler.jsonc                # Pages 构建目录 dist + D1 (web-vocab-db) 绑定配置
+├── wrangler.jsonc                # Pages 构建目录 dist + D1 (web-vocab-db) + KV (CLICKS_KV) 绑定配置
 ├── biome.json                    # Biome 规则（注意忽略了 *.html、scripts、data、public）
 └── .env.example                  # Cloudflare 环境变量清单模板
 ```
