@@ -185,4 +185,79 @@ describe("functions /api/sub-links and /api/sub temporary links", () => {
     );
     expect(delResp.status).toBe(200);
   });
+
+  it("forwards v2rayN User-Agent and format=v2ray without forcing Clash YAML", async () => {
+    const { vi } = await import("vitest");
+    const db = {
+      prepare(sql: string) {
+        return {
+          bind() {
+            return this;
+          },
+          async first<T>() {
+            if (sql.includes("FROM clash_control")) {
+              return {
+                payload: JSON.stringify({ subscribe_url: "https://upstream.example.com/sub" }),
+                updated_at: "2026-11-28T00:00:00Z",
+              } as T;
+            }
+            return null;
+          },
+        };
+      },
+    } as unknown as D1Database;
+    const env: Env = { DB: db };
+
+    const seenUAs: string[] = [];
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockImplementation(async (_input, init) => {
+      const ua = new Headers(init?.headers).get("User-Agent") || "";
+      seenUAs.push(ua);
+      if (ua.includes("v2rayN")) {
+        return new Response("dm1lc3M6Ly9ub2RlMQ==", {
+          status: 200,
+          headers: { "Content-Type": "text/plain; charset=utf-8" },
+        });
+      }
+      return new Response("proxies: []", {
+        status: 200,
+        headers: { "Content-Type": "text/yaml; charset=utf-8" },
+      });
+    });
+
+    try {
+      const v2Resp = await handleSub(
+        makeCtx(
+          new Request("https://example.com/api/sub?type=vpn07", {
+            headers: { "User-Agent": "v2rayN/7.25.6" },
+          }),
+          env,
+        ).ctx,
+      );
+      expect(v2Resp.status).toBe(200);
+      expect(v2Resp.headers.get("Content-Type")).toContain("text/plain");
+      expect(await v2Resp.text()).toBe("dm1lc3M6Ly9ub2RlMQ==");
+
+      const formatResp = await handleSub(
+        makeCtx(
+          new Request("https://example.com/api/sub?type=vpn07&format=v2ray", {
+            headers: { "User-Agent": "Mozilla/5.0" },
+          }),
+          env,
+        ).ctx,
+      );
+      expect(formatResp.status).toBe(200);
+      expect(await formatResp.text()).toBe("dm1lc3M6Ly9ub2RlMQ==");
+
+      const clashResp = await handleSub(
+        makeCtx(new Request("https://example.com/api/sub?type=vpn07"), env).ctx,
+      );
+      expect(clashResp.status).toBe(200);
+      expect(clashResp.headers.get("Content-Type")).toContain("text/yaml");
+      expect(await clashResp.text()).toBe("proxies: []");
+
+      expect(seenUAs).toEqual(["v2rayN/7.25.6", "v2rayN/7.25.6", "ClashMetaForAndroid/v2.11.36"]);
+    } finally {
+      fetchSpy.mockRestore();
+    }
+  });
 });

@@ -83,7 +83,24 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   }
 
   const clientUA = request.headers.get("User-Agent") || "";
-  const upstreamUA = clientUA.toLowerCase().includes("clash") ? clientUA : CLASH_UA;
+  const formatParam = (
+    url.searchParams.get("format") ||
+    url.searchParams.get("flag") ||
+    ""
+  ).toLowerCase();
+  const isV2rayClient =
+    formatParam === "v2ray" ||
+    formatParam === "v2rayn" ||
+    formatParam === "v2rayng" ||
+    formatParam === "base64" ||
+    /v2ray|nekobox|nekoray|shadowrocket|quantumult|loon|surge|sing-box/i.test(clientUA);
+  const upstreamUA = isV2rayClient
+    ? /v2ray|nekobox|nekoray/i.test(clientUA)
+      ? clientUA
+      : "v2rayN/7.25.6"
+    : clientUA.toLowerCase().includes("clash")
+      ? clientUA
+      : CLASH_UA;
 
   if (airportType === "djjc" || airportType === "dingji") {
     const d1Config = await getClashPayloadJson<{ token?: string }>(env.DB, "djjc_config");
@@ -124,7 +141,12 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     }
 
     const forwardHeaders = new Headers();
-    forwardHeaders.set("Content-Type", "text/yaml; charset=utf-8");
+    forwardHeaders.set(
+      "Content-Type",
+      isV2rayClient
+        ? upstreamRes.headers.get("Content-Type") || "text/plain; charset=utf-8"
+        : "text/yaml; charset=utf-8",
+    );
     forwardHeaders.set("Access-Control-Allow-Origin", "*");
     forwardHeaders.set("Cache-Control", "no-cache, private");
 
@@ -176,7 +198,12 @@ export const onRequest: PagesFunction<Env> = async (context) => {
       });
 
       const forwardHeaders = new Headers();
-      forwardHeaders.set("Content-Type", "text/yaml; charset=utf-8");
+      forwardHeaders.set(
+        "Content-Type",
+        isV2rayClient
+          ? res.headers.get("Content-Type") || "text/plain; charset=utf-8"
+          : "text/yaml; charset=utf-8",
+      );
       forwardHeaders.set("Access-Control-Allow-Origin", "*");
       forwardHeaders.set("Cache-Control", "no-cache, private");
 
