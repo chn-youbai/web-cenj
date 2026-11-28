@@ -13,7 +13,7 @@
 `web-cenj` 是一个部署在 **Cloudflare Pages 全球边缘网络** 上的个人数字空间与工具集（10 个独立页面、暖纸感/暖炭黑双色设计），集成了 **英语词典与高亮速记卡、航拍图库与流媒体点播、资源网盘与代理订阅中心、休闲游乐场，以及仅通过暗号指令进入的记账/留言/Clash 云控工具**。
 
 ### 核心技术栈
-- **前端多页应用（Vite 6 MPA）**：纯原生 TypeScript（`strict: true` + `noUncheckedIndexedAccess: true`）+ 模块化 CSS + `@fontsource` 本地打包字体（`Newsreader`、`Plus Jakarta Sans`、`IBM Plex Mono`）。无 React/Vue 运行时框架。
+- **前端多页应用（Vite 6 MPA）**：纯原生 TypeScript（`strict: true` + `noUncheckedIndexedAccess: true`）+ 模块化 CSS + `@fontsource` 本地打包字体（`Newsreader`、`Noto Serif SC Variable`、`Plus Jakarta Sans`、`IBM Plex Mono`，已移除外部 `fonts.loli.net` CDN 依赖）。无 React/Vue 运行时框架。
 - **全站统一外壳（App Shell & Quick Pick）**：所有 10 个页面均通过 `initAppShell({ activePage })` 注入左侧导航栏、移动端顶栏/抽屉、明暗主题自动同步、以及 **VS Code 风格 Quick Pick 全局命令面板（`⌘K` / `⌘⇧P`）**。
 - **边缘后端（Cloudflare Pages Functions）**：位于 [`functions/`](./functions/)，包含全局中间件 `_middleware.ts`、公共库 `_lib/*` 和 16 个 TypeScript `/api/*` 路由（含 `[[catchall]].ts` 兜底）。
 - **前后端共享契约**：[`shared/types.ts`](./shared/types.ts) 定义前后端共用数据结构，前后端分别使用 [`tsconfig.json`](./tsconfig.json) 与 [`tsconfig.functions.json`](./tsconfig.functions.json) 校验。
@@ -93,6 +93,7 @@ web-cenj/
 │
 ├── scripts/                      # Python 词库处理、照片清单与 D1 同步工具
 ├── tests/                        # Vitest 单元测试（共 9 个文件，44 条用例）
+├── public/                       # 静态资源与 _headers（/assets/* immutable 强缓存配置）
 ├── vite.config.ts                # 10 入口 MPA 配置 + data/*.json 静态注入插件 + /api 代理(8788)
 ├── wrangler.jsonc                # Pages 构建目录 dist + D1 (web-vocab-db) 绑定配置
 ├── biome.json                    # Biome 规则（注意忽略了 *.html、scripts、data、public）
@@ -190,6 +191,7 @@ python scripts/verify_vocab.py
   - **资源网盘彻底重构（[`pan.html`](./pan.html) / [`src/pages/pan/*`](./src/pages/pan/main.ts) / [`functions/api/pan.ts`](./functions/api/pan.ts) / [`functions/api/pan-file.ts`](./functions/api/pan-file.ts)）**：移出原有机场订阅与 Apple ID 前端界面（后端 `/api/sub` 与 `/api/subscription` 保持兼容），重构为统一 Claude Editorial 风格的云端文件库；实现按体积自动分级存储（`≤ 20 MB` 走 Cloudflare D1 `512 KB` 分块直存、`20–90 MB` 单步直传 GitHub Releases `v_pan`、`> 90 MB` 自动 `80 MB` 分片并在下载端 `TransformStream` 零内存流式拼接 + 支持外链登记），支持公开/私密双模式（免密公开浏览/下载/上传，私密空间与删除/编辑强制校验 `ADMIN_PASSWORD`）、拖拽多文件上传、常见文件在线预览与首批 3 个经典安装包自动一次性预置。
   - **视界画廊与视频系统重构（[`gallery.html`](./gallery.html) / [`src/pages/gallery/*`](./src/pages/gallery/main.ts) / [`functions/api/media.ts`](./functions/api/media.ts) / [`functions/api/media-file.ts`](./functions/api/media-file.ts)）**：保留 121 张航拍图作为默认「航拍精选」相册（游乐场拼图/翻卡零破坏），并将原「投递视频」合并进画廊（侧边栏精简为 8 项，[`upload.html`](./upload.html) 自动重定向 `./gallery.html?upload=1`）；支持照片+视频双上传与全页拖拽、`≤20MB CF D1 / 20–90MB GitHub 直传 / >90MB 80MB 分片` 分级存储、浏览器自动生成 WebP 缩略图与视频首帧封面、自定义相册、与网盘一致的公开/私密双模式权限控制、升级版滚轮/双指缩放与原图下载灯箱，以及旧 `videos` 表无感自动迁移。
   - **已合入 `main` 并清理旧文档**：已合并 PR #7，删除过期冗余的 `PROJECT_ARCHITECTURE.md`，全部内容整合至本 `HANDOFF.md`。
+  - **中文字体本地化打包与静态资源强缓存**：全站 10 个 HTML 已移除外部 `fonts.loli.net` CDN 依赖，改为通过 `@fontsource-variable/noto-serif-sc` 在 [`src/core/fonts.ts`](./src/core/fonts.ts) 本地打包并在 [`src/styles/base.css`](./src/styles/base.css) `--font-serif` 优先引用 `"Noto Serif SC Variable"`；新增 [`public/_headers`](./public/_headers) 为 `/assets/*` 配置 `Cache-Control: public, max-age=31536000, immutable`。
 - **待收尾 / 可选清理事项**：
   1. **仓库内历史遗留冗余资产（非功能阻塞，但可择机清理）**：
      - [`src/styles/index.css`](./src/styles/index.css#L974-L1229) 末尾仍残留约 250 行旧版游乐场（`.g2048-*`、`.puzzle-*`、`.memory-*`）CSS 样式；游乐场已独立使用 [`src/styles/games.css`](./src/styles/games.css)。

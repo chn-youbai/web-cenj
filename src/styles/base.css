@@ -6,8 +6,8 @@
 
 :root {
   /* 排印体系（方案 2：极致文艺全衬线风） */
-  --font-serif: "Newsreader Variable", "Newsreader", "Noto Serif SC", "Songti SC", "STSong",
-    "Source Han Serif SC", "Source Han Serif CN", Georgia, serif;
+  --font-serif: "Newsreader Variable", "Newsreader", "Noto Serif SC Variable", "Noto Serif SC",
+    "Songti SC", "STSong", "Source Han Serif SC", "Source Han Serif CN", Georgia, serif;
   --font-sans: "Plus Jakarta Sans Variable", "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont,
     "PingFang SC", "Hiragino Sans GB", "Helvetica Neue", "Microsoft YaHei", sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
