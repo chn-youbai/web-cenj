@@ -2,7 +2,6 @@ import type { PanCategory, PanFileItem, PanStorageTier, PanVisibility } from "@s
 
 export const PAN_CF_D1_LIMIT = 20 * 1024 * 1024; // <= 20 MB -> Cloudflare D1 边缘直存
 export const PAN_GH_SINGLE_LIMIT = 90 * 1024 * 1024; // 20 - 90 MB -> GitHub Releases 单步直传
-export const PAN_GH_CHUNK_SIZE = 80 * 1024 * 1024; // > 90 MB -> GitHub Releases 80 MB 分片
 
 export type PanPreviewKind = "image" | "text" | "pdf" | "audio" | "video" | "none";
 export type PanSortBy = "newest" | "downloads" | "size" | "name";
@@ -25,29 +24,27 @@ export const PAN_TIER_LABELS: Record<PanStorageTier, string> = {
   external_link: "外链",
 };
 
-export type PanUploadTierPreference = "auto" | "cf_d1" | "gh_single" | "gh_chunked";
+export type PanUploadTierPreference = "auto" | "cf_d1" | "gh_single";
 
 export function selectUploadTier(
   sizeBytes: number,
   preferredTier: PanUploadTierPreference = "auto",
-): "cf_d1" | "gh_single" | "gh_chunked" {
+): "cf_d1" | "gh_single" {
   if (preferredTier !== "auto") {
     return preferredTier;
   }
-  if (sizeBytes <= PAN_CF_D1_LIMIT) return "cf_d1";
-  if (sizeBytes <= PAN_GH_SINGLE_LIMIT) return "gh_single";
-  return "gh_chunked";
+  return sizeBytes <= PAN_CF_D1_LIMIT ? "cf_d1" : "gh_single";
 }
 
 export function validateUploadTierSize(
   sizeBytes: number,
-  tier: "cf_d1" | "gh_single" | "gh_chunked",
+  tier: "cf_d1" | "gh_single",
 ): string | null {
   if (tier === "cf_d1" && sizeBytes > PAN_CF_D1_LIMIT) {
-    return "CF 边缘极速 (D1) 仅支持 ≤ 20 MB 文件，请改用自动分级或 GitHub 存储";
+    return "CF 边缘极速 (D1) 仅支持 ≤ 20 MB 文件，请改用自动分级或 GitHub 直传";
   }
   if (tier === "gh_single" && sizeBytes > PAN_GH_SINGLE_LIMIT) {
-    return "GitHub 直传单次上限 90 MB，请改用自动分级或 GitHub 分片";
+    return "本地直传上限 90 MB，大文件请改用右上角「添加外链」（填入 GitHub 链接可自动镜像加速，无大小限制）";
   }
   return null;
 }

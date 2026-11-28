@@ -13,24 +13,22 @@ import type { PanFileItem } from "@shared/types";
 import { describe, expect, it } from "vitest";
 
 describe("pan utils", () => {
-  it("routes <=20MB to cf_d1, 20-90MB to gh_single, >90MB to gh_chunked", () => {
+  it("routes <=20MB to cf_d1 and >20MB to gh_single", () => {
     expect(selectUploadTier(1024)).toBe("cf_d1");
     expect(selectUploadTier(PAN_CF_D1_LIMIT)).toBe("cf_d1");
     expect(selectUploadTier(PAN_CF_D1_LIMIT + 1)).toBe("gh_single");
     expect(selectUploadTier(PAN_GH_SINGLE_LIMIT)).toBe("gh_single");
-    expect(selectUploadTier(PAN_GH_SINGLE_LIMIT + 1)).toBe("gh_chunked");
+    expect(selectUploadTier(PAN_GH_SINGLE_LIMIT + 1)).toBe("gh_single");
   });
 
   it("honors explicit preferredTier overrides and validates tier size limits", () => {
     expect(selectUploadTier(1024, "gh_single")).toBe("gh_single");
-    expect(selectUploadTier(1024, "gh_chunked")).toBe("gh_chunked");
     expect(selectUploadTier(PAN_CF_D1_LIMIT + 1, "cf_d1")).toBe("cf_d1");
 
     expect(validateUploadTierSize(1024, "cf_d1")).toBeNull();
     expect(validateUploadTierSize(PAN_CF_D1_LIMIT + 1, "cf_d1")).toContain("20 MB");
     expect(validateUploadTierSize(PAN_GH_SINGLE_LIMIT, "gh_single")).toBeNull();
-    expect(validateUploadTierSize(PAN_GH_SINGLE_LIMIT + 1, "gh_single")).toContain("90 MB");
-    expect(validateUploadTierSize(500 * 1024 * 1024, "gh_chunked")).toBeNull();
+    expect(validateUploadTierSize(PAN_GH_SINGLE_LIMIT + 1, "gh_single")).toContain("添加外链");
   });
 
   it("infers file categories accurately from extension and MIME", () => {

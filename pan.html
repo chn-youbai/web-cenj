@@ -104,10 +104,9 @@
               class="pan-select pan-upload-tier-select"
               aria-label="上传储存方式"
             >
-              <option value="auto">自动分级 (≤20M 边缘 / >20M GitHub)</option>
+              <option value="auto">自动分级 (≤20M 边缘 / 20–90M GitHub)</option>
               <option value="cf_d1">CF 边缘极速 (D1, ≤20MB)</option>
-              <option value="gh_single">GitHub 直传 (≤90MB)</option>
-              <option value="gh_chunked">GitHub 分片 (80MB/片)</option>
+              <option value="gh_single">GitHub 直传 (≤90MB · 带镜像加速)</option>
             </select>
           </label>
 
@@ -121,7 +120,7 @@
 
     <!-- 拖拽上传轻提示条 -->
     <div class="pan-drop-bar" id="panDropBar" role="button" tabindex="0" aria-label="拖拽或点击选择文件上传">
-      <span>拖拽任意文件到此处或点击上传 · ≤20MB 走 CF 边缘极速，>20MB 自动走 GitHub 直传/分片</span>
+      <span>拖拽任意文件到此处或点击上传 · ≤20MB 走 CF 边缘极速，20–90MB 走 GitHub 直传（带国内镜像加速），>90MB 请点「添加外链」</span>
     </div>
 
     <!-- 上传任务队列 -->
@@ -176,6 +175,7 @@
         <h3 id="linkModalTitle">添加外链资源</h3>
         <button type="button" class="pan-icon-close" data-close-modal="linkModal" aria-label="关闭">✕</button>
       </div>
+      <p class="pan-modal-desc">支持登记大于 90MB 的软件/资源直链（无 100MB 限制）；填入 GitHub Releases 地址时将自动生成国内「镜像加速」按钮。</p>
       <form id="linkForm" class="pan-form">
         <label class="pan-field">
           <span>资源名称</span>

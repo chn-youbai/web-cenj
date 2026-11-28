@@ -7,8 +7,6 @@ import type {
   PanApiKeyItem,
   PanApiKeysListResponse,
   PanCategory,
-  PanChunkMeta,
-  PanChunkUploadResponse,
   PanFileItem,
   PanListResponse,
   PanListStats,
@@ -17,7 +15,6 @@ import type {
 } from "@shared/types";
 import {
   PAN_CATEGORY_LABELS,
-  PAN_GH_CHUNK_SIZE,
   PAN_TIER_LABELS,
   type PanCategoryFilter,
   type PanSortBy,
@@ -368,9 +365,7 @@ async function uploadSingleFile(file: File): Promise<void> {
   const uploadStorageSelect = optById<HTMLSelectElement>("uploadStorageSelect");
   const rawPreferred = state.isAdmin ? uploadStorageSelect?.value || "auto" : "auto";
   const preferredTier: PanUploadTierPreference =
-    rawPreferred === "cf_d1" || rawPreferred === "gh_single" || rawPreferred === "gh_chunked"
-      ? rawPreferred
-      : "auto";
+    rawPreferred === "cf_d1" || rawPreferred === "gh_single" ? rawPreferred : "auto";
   const tier = selectUploadTier(file.size, preferredTier);
   const uploadPrivateCheck = optById<HTMLInputElement>("uploadPrivateCheck");
   const visibility: PanVisibility =
@@ -383,8 +378,7 @@ async function uploadSingleFile(file: File): Promise<void> {
       id: `q_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
       name: file.name,
       size: file.size,
-      tierLabel:
-        tier === "cf_d1" ? "CF 极速" : tier === "gh_single" ? "GitHub 直传" : "GitHub 分片",
+      tierLabel: tier === "cf_d1" ? "CF 极速" : "GitHub 直传",
       progress: 0,
       status: "error",
       detail: tierSizeError,
@@ -398,7 +392,7 @@ async function uploadSingleFile(file: File): Promise<void> {
     id: `q_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
     name: file.name,
     size: file.size,
-    tierLabel: tier === "cf_d1" ? "CF 极速" : tier === "gh_single" ? "GitHub 直传" : "GitHub 分片",
+    tierLabel: tier === "cf_d1" ? "CF 极速" : "GitHub 直传",
     progress: 0,
     status: "uploading",
     detail: "准备上传...",
@@ -407,109 +401,37 @@ async function uploadSingleFile(file: File): Promise<void> {
   renderQueue();
 
   try {
-    if (tier === "cf_d1" || tier === "gh_single") {
-      const headers: Record<string, string> = {
-        ...getAuthHeaders(),
-        "Content-Type": file.type || "application/octet-stream",
-        "X-File-Name": encodeURIComponent(file.name),
-        "X-Pan-Mime": encodeURIComponent(file.type || "application/octet-stream"),
-        "X-Pan-Category": category,
-        "X-Pan-Visibility": visibility,
-        "X-Pan-Size": String(file.size),
-      };
-      if (state.isAdmin && preferredTier !== "auto") {
-        headers["X-Pan-Storage-Tier"] = tier;
-      }
-
-      const res = await xhrUpload("/api/pan?action=upload", file, headers, (loaded, total) => {
-        const pct = Math.min(99, Math.round((loaded / Math.max(1, total)) * 100));
-        task.progress = pct;
-        task.detail =
-          pct >= 99
-            ? tier === "cf_d1"
-              ? "写入边缘索引..."
-              : "同步 GitHub Releases..."
-            : `${pct}%`;
-        renderQueue();
-      });
-
-      const parsed = JSON.parse(res.text || "{}") as PanUploadResponse;
-      if (res.status >= 200 && res.status < 300 && parsed.status === "ok") {
-        task.progress = 100;
-        task.status = "done";
-        task.detail = "已完成";
-        renderQueue();
-        await fetchPanList(true);
-      } else {
-        throw new Error(parsed.error || parsed.message || `上传失败 (${res.status})`);
-      }
-      return;
+    const headers: Record<string, string> = {
+      ...getAuthHeaders(),
+      "Content-Type": file.type || "application/octet-stream",
+      "X-File-Name": encodeURIComponent(file.name),
+      "X-Pan-Mime": encodeURIComponent(file.type || "application/octet-stream"),
+      "X-Pan-Category": category,
+      "X-Pan-Visibility": visibility,
+      "X-Pan-Size": String(file.size),
+    };
+    if (state.isAdmin && preferredTier !== "auto") {
+      headers["X-Pan-Storage-Tier"] = tier;
     }
 
-    // > 90 MB: 80 MB chunked upload to GitHub Releases
-    const totalChunks = Math.ceil(file.size / PAN_GH_CHUNK_SIZE);
-    const uploadedChunks: PanChunkMeta[] = [];
-
-    for (let idx = 0; idx < totalChunks; idx++) {
-      const start = idx * PAN_GH_CHUNK_SIZE;
-      const end = Math.min(file.size, start + PAN_GH_CHUNK_SIZE);
-      const blob = file.slice(start, end);
-
-      const res = await xhrUpload(
-        `/api/pan?action=chunk&index=${idx}`,
-        blob,
-        {
-          ...getAuthHeaders(),
-          "Content-Type": "application/octet-stream",
-          "X-File-Name": encodeURIComponent(file.name),
-          "X-Pan-Visibility": visibility,
-        },
-        (loaded, total) => {
-          const overall = Math.min(
-            98,
-            Math.round(((idx + loaded / Math.max(1, total)) / totalChunks) * 100),
-          );
-          task.progress = overall;
-          task.detail = `分片 ${idx + 1}/${totalChunks} · ${overall}%`;
-          renderQueue();
-        },
-      );
-
-      const parsed = JSON.parse(res.text || "{}") as PanChunkUploadResponse;
-      if (res.status < 200 || res.status >= 300 || parsed.status !== "ok" || !parsed.chunk) {
-        throw new Error(parsed.error || `分片 ${idx + 1} 上传失败 (${res.status})`);
-      }
-      uploadedChunks.push(parsed.chunk);
-    }
-
-    task.detail = "合并分片索引...";
-    renderQueue();
-
-    const commitResp = await fetch("/api/pan?action=commit_chunks", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...getAuthHeaders(),
-      },
-      body: JSON.stringify({
-        name: file.name,
-        size: file.size,
-        mime_type: file.type || "application/octet-stream",
-        category,
-        visibility,
-        chunks: uploadedChunks,
-      }),
+    const res = await xhrUpload("/api/pan?action=upload", file, headers, (loaded, total) => {
+      const pct = Math.min(99, Math.round((loaded / Math.max(1, total)) * 100));
+      task.progress = pct;
+      task.detail =
+        pct >= 99 ? (tier === "cf_d1" ? "写入边缘索引..." : "同步 GitHub Releases...") : `${pct}%`;
+      renderQueue();
     });
-    const commitData = (await commitResp.json()) as PanUploadResponse;
-    if (!commitResp.ok || commitData.status !== "ok") {
-      throw new Error(commitData.error || "分片索引保存失败");
-    }
 
-    task.progress = 100;
-    task.status = "done";
-    task.detail = "已完成";
-    renderQueue();
-    await fetchPanList(true);
+    const parsed = JSON.parse(res.text || "{}") as PanUploadResponse;
+    if (res.status >= 200 && res.status < 300 && parsed.status === "ok") {
+      task.progress = 100;
+      task.status = "done";
+      task.detail = "已完成";
+      renderQueue();
+      await fetchPanList(true);
+    } else {
+      throw new Error(parsed.error || parsed.message || `上传失败 (${res.status})`);
+    }
   } catch (err) {
     task.status = "error";
     task.detail = err instanceof Error ? err.message : "上传失败";
