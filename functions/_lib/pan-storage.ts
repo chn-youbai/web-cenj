@@ -377,6 +377,19 @@ function buildContentDisposition(fileName: string, inline: boolean): string {
   return `${type}; filename="${safeAscii}"; filename*=UTF-8''${encoded}`;
 }
 
+function createStreamPair(expectedBytes: number): {
+  readable: ReadableStream<Uint8Array>;
+  writable: WritableStream<Uint8Array>;
+} {
+  if (typeof FixedLengthStream === "function" && expectedBytes > 0) {
+    return new FixedLengthStream(expectedBytes) as unknown as {
+      readable: ReadableStream<Uint8Array>;
+      writable: WritableStream<Uint8Array>;
+    };
+  }
+  return new TransformStream<Uint8Array, Uint8Array>();
+}
+
 export async function streamPanFileResponse(
   context: EventContext<Env, string, unknown>,
   file: PanFileRow,
@@ -484,48 +497,48 @@ export async function streamPanFileResponse(
     const firstChunk = Math.floor(start / CF_D1_CHUNK_BYTES);
     const lastChunk = Math.floor(end / CF_D1_CHUNK_BYTES);
     const PREFETCH_BATCH = 4;
+    const { readable, writable } = createStreamPair(contentLength);
 
-    const stream = new ReadableStream<Uint8Array>({
-      async start(controller) {
-        try {
-          for (let batchStart = firstChunk; batchStart <= lastChunk; batchStart += PREFETCH_BATCH) {
-            const batchEnd = Math.min(lastChunk, batchStart + PREFETCH_BATCH - 1);
-            const indices: number[] = [];
-            for (let idx = batchStart; idx <= batchEnd; idx++) {
-              indices.push(idx);
+    const d1Pump = (async () => {
+      const writer = writable.getWriter();
+      try {
+        for (let batchStart = firstChunk; batchStart <= lastChunk; batchStart += PREFETCH_BATCH) {
+          const batchEnd = Math.min(lastChunk, batchStart + PREFETCH_BATCH - 1);
+          const indices: number[] = [];
+          for (let idx = batchStart; idx <= batchEnd; idx++) {
+            indices.push(idx);
+          }
+          const rows = await Promise.all(
+            indices.map((idx) =>
+              db
+                .prepare("SELECT data FROM pan_blobs WHERE file_id = ? AND chunk_index = ?")
+                .bind(file.id, idx)
+                .first<{ data?: unknown }>(),
+            ),
+          );
+          for (let i = 0; i < indices.length; i++) {
+            const idx = indices[i]!;
+            const row = rows[i];
+            if (!row?.data) {
+              throw new Error(`D1 分块 ${idx} 缺失`);
             }
-            const rows = await Promise.all(
-              indices.map((idx) =>
-                db
-                  .prepare("SELECT data FROM pan_blobs WHERE file_id = ? AND chunk_index = ?")
-                  .bind(file.id, idx)
-                  .first<{ data?: unknown }>(),
-              ),
-            );
-            for (let i = 0; i < indices.length; i++) {
-              const idx = indices[i]!;
-              const row = rows[i];
-              if (!row?.data) {
-                controller.close();
-                return;
-              }
-              const chunkBytes = toUint8Array(row.data);
-              const chunkGlobalStart = idx * CF_D1_CHUNK_BYTES;
-              const sliceStart = Math.max(0, start - chunkGlobalStart);
-              const sliceEnd = Math.min(chunkBytes.byteLength, end - chunkGlobalStart + 1);
-              if (sliceEnd > sliceStart) {
-                controller.enqueue(chunkBytes.subarray(sliceStart, sliceEnd));
-              }
+            const chunkBytes = toUint8Array(row.data);
+            const chunkGlobalStart = idx * CF_D1_CHUNK_BYTES;
+            const sliceStart = Math.max(0, start - chunkGlobalStart);
+            const sliceEnd = Math.min(chunkBytes.byteLength, end - chunkGlobalStart + 1);
+            if (sliceEnd > sliceStart) {
+              await writer.write(chunkBytes.subarray(sliceStart, sliceEnd));
             }
           }
-          controller.close();
-        } catch (err) {
-          controller.error(err);
         }
-      },
-    });
+        await writer.close();
+      } catch (err) {
+        await writer.abort(err).catch(() => undefined);
+      }
+    })();
 
-    const resp = new Response(stream, { status, headers: baseHeaders });
+    context.waitUntil(d1Pump);
+    const resp = new Response(readable, { status, headers: baseHeaders });
     if (edgeCache && edgeCacheKey) {
       context.waitUntil(edgeCache.put(edgeCacheKey, resp.clone()).catch(() => undefined));
     }
@@ -564,7 +577,8 @@ export async function streamPanFileResponse(
       return new Response(null, { status, headers: baseHeaders });
     }
 
-    const { readable, writable } = new TransformStream<Uint8Array, Uint8Array>();
+    const { readable, writable } = createStreamPair(contentLength);
+    const MAX_SUB_FETCH = 16 * 1024 * 1024;
 
     const pump = (async () => {
       const writer = writable.getWriter();
@@ -580,28 +594,82 @@ export async function streamPanFileResponse(
 
           const reqStart = Math.max(0, start - chunkStart);
           const reqEnd = Math.min(chunk.size - 1, end - chunkStart);
-          const headers = new Headers({
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-          });
-          if (reqStart > 0 || reqEnd < chunk.size - 1) {
-            headers.set("Range", `bytes=${reqStart}-${reqEnd}`);
-          }
 
-          const upstream = await fetch(chunk.url, { headers, redirect: "follow" });
-          if (!upstream.ok || !upstream.body) {
-            throw new Error(`分片 ${chunk.index} 拉取失败 (${upstream.status})`);
-          }
+          for (let sliceStart = reqStart; sliceStart <= reqEnd; ) {
+            const sliceEnd = Math.min(reqEnd, sliceStart + MAX_SUB_FETCH - 1);
+            const expectedSliceBytes = sliceEnd - sliceStart + 1;
+            let writtenInSlice = 0;
+            let lastErr: unknown = null;
 
-          const reader = upstream.body.getReader();
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-            if (value) await writer.write(value);
+            for (let attempt = 0; attempt < 3 && writtenInSlice < expectedSliceBytes; attempt++) {
+              const curStart = sliceStart + writtenInSlice;
+              const headers = new Headers({
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+              });
+              if (curStart > 0 || sliceEnd < chunk.size - 1) {
+                headers.set("Range", `bytes=${curStart}-${sliceEnd}`);
+              }
+
+              let writeFailed = false;
+              try {
+                const upstream = await fetch(chunk.url, { headers, redirect: "follow" });
+                if (!upstream.ok || !upstream.body) {
+                  throw new Error(`分片 ${chunk.index} 拉取失败 (${upstream.status})`);
+                }
+                let skipRemaining = upstream.status === 200 && curStart > 0 ? curStart : 0;
+                const reader = upstream.body.getReader();
+                while (writtenInSlice < expectedSliceBytes) {
+                  const { done, value } = await reader.read();
+                  if (done) break;
+                  if (!value || value.byteLength === 0) continue;
+
+                  let slice = value;
+                  if (skipRemaining > 0) {
+                    if (slice.byteLength <= skipRemaining) {
+                      skipRemaining -= slice.byteLength;
+                      continue;
+                    }
+                    slice = slice.subarray(skipRemaining);
+                    skipRemaining = 0;
+                  }
+
+                  const remainingNeeded = expectedSliceBytes - writtenInSlice;
+                  if (slice.byteLength > remainingNeeded) {
+                    slice = slice.subarray(0, remainingNeeded);
+                  }
+
+                  try {
+                    await writer.write(slice);
+                  } catch (writeErr) {
+                    writeFailed = true;
+                    await reader.cancel().catch(() => undefined);
+                    throw writeErr;
+                  }
+                  writtenInSlice += slice.byteLength;
+                  if (writtenInSlice >= expectedSliceBytes) {
+                    await reader.cancel().catch(() => undefined);
+                    break;
+                  }
+                }
+              } catch (err) {
+                lastErr = err;
+                if (writeFailed || attempt >= 2) {
+                  throw err;
+                }
+              }
+            }
+
+            if (writtenInSlice < expectedSliceBytes) {
+              throw lastErr instanceof Error
+                ? lastErr
+                : new Error(`分片 ${chunk.index} 数据流提前结束`);
+            }
+            sliceStart = sliceEnd + 1;
           }
         }
         await writer.close();
       } catch (err) {
-        await writer.abort(err);
+        await writer.abort(err).catch(() => undefined);
       }
     })();
 

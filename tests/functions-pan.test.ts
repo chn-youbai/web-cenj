@@ -338,4 +338,75 @@ describe("functions /api/pan and /api/pan-file", () => {
     );
     expect(delOk.status).toBe(200);
   });
+
+  it("recovers gh_chunked stream cleanly via Range retry when upstream drops mid-chunk", async () => {
+    const { vi } = await import("vitest");
+    const { streamPanFileResponse } = await import("../functions/_lib/pan-storage");
+    const db = createMockPanDb();
+    const env: Env = { DB: db, ADMIN_PASSWORD: "secret-admin-pass" };
+    const fullBytes = new TextEncoder().encode("ABCDEFGHIJKL"); // 12 bytes across 2 chunks (7 + 5)
+
+    let firstChunkCalls = 0;
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockImplementation(async (input, init) => {
+      const url = String(input);
+      const rangeHdr = new Headers(init?.headers).get("Range") || "";
+      const m = /^bytes=(\d+)-(\d+)$/.exec(rangeHdr);
+      const start = m ? Number(m[1]) : 0;
+      const end = m ? Number(m[2]) : undefined;
+
+      if (url.endsWith("part0")) {
+        firstChunkCalls++;
+        if (firstChunkCalls === 1) {
+          // Simulate upstream dropping after 4 bytes ("ABCD") before closing prematurely
+          return new Response(
+            new ReadableStream({
+              start(c) {
+                c.enqueue(fullBytes.slice(0, 4));
+                c.close();
+              },
+            }),
+            { status: 206 },
+          );
+        }
+        return new Response(fullBytes.slice(start, (end ?? 6) + 1), { status: 206 });
+      }
+      return new Response(fullBytes.slice(7 + start, 7 + (end ?? 4) + 1), { status: 206 });
+    });
+
+    try {
+      const dlCtx = makeCtx(new Request("https://example.com/api/pan-file?id=chunked_1"), env);
+      const resp = await streamPanFileResponse(
+        dlCtx.ctx,
+        {
+          id: "chunked_1",
+          name: "recover.bin",
+          size: 12,
+          mime_type: "application/octet-stream",
+          category: "other",
+          visibility: "public",
+          storage_tier: "gh_chunked",
+          folder_path: "",
+          asset_url: "",
+          asset_id: null,
+          chunks_json: JSON.stringify([
+            { index: 0, url: "https://example.com/part0", size: 7 },
+            { index: 1, url: "https://example.com/part1", size: 5 },
+          ]),
+          note: "",
+          downloads: 0,
+          created_at: 1,
+          updated_at: 1,
+        },
+        { isHead: false, inline: false },
+      );
+
+      expect(resp.status).toBe(200);
+      expect(resp.headers.get("Content-Length")).toBe("12");
+      expect(await resp.text()).toBe("ABCDEFGHIJKL");
+      expect(firstChunkCalls).toBe(2);
+      await dlCtx.flush();
+    } finally {
+      fetchSpy.mockRestore();
+    }
+  });
 });
